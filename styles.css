@@ -369,11 +369,6 @@
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 활성 카드의 헤더 색상 */
-.card-navigator-cards .card-item.active .card-header {
-	color: var(--text-on-accent);
-}
-
 /* 빈 상태 메시지 */
 .card-navigator-empty {
 	text-align: center;

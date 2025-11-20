@@ -330,13 +330,19 @@ export class CardRenderer {
      * 바디: 테두리 없음
      */
     private applySectionStyle(
-        element: HTMLElement, 
+        element: HTMLElement,
         style: import('../types').CardSectionStyleSettings,
         sectionType: 'header' | 'body' | 'footer'
     ): void {
         element.style.fontSize = `${style.fontSize}px`;
         element.style.backgroundColor = style.backgroundColor;
-        
+
+        // ⭐ 배경색의 밝기에 따라 글자색 자동 조정
+        const textColor = this.getContrastColor(style.backgroundColor);
+        if (textColor) {
+            element.style.color = textColor;
+        }
+
         if (sectionType === 'header') {
             element.style.borderBottomColor = style.borderColor;
             element.style.borderBottomWidth = `${style.borderWidth}px`;
@@ -346,6 +352,67 @@ export class CardRenderer {
             element.style.borderTopWidth = `${style.borderWidth}px`;
             element.style.borderTopStyle = style.borderWidth > 0 ? 'solid' : 'none';
         }
+    }
+
+    /**
+     * 배경색의 밝기를 계산하여 적절한 글자색을 반환합니다
+     *
+     * @param backgroundColor - CSS 배경색 값
+     * @returns 대비가 좋은 글자색 (밝은 배경: null, 어두운 배경: --text-on-accent)
+     */
+    private getContrastColor(backgroundColor: string): string | null {
+        // CSS 변수인 경우 계산된 값 가져오기
+        if (backgroundColor.startsWith('var(')) {
+            const computedStyle = getComputedStyle(document.body);
+            const varName = backgroundColor.match(/var\((--[^)]+)\)/)?.[1];
+            if (varName) {
+                backgroundColor = computedStyle.getPropertyValue(varName).trim();
+            }
+        }
+
+        // 특정 accent 변수인 경우 흰색 반환
+        if (backgroundColor.includes('accent') || backgroundColor === 'var(--interactive-accent)') {
+            return 'var(--text-on-accent)';
+        }
+
+        // RGB/RGBA/HEX 색상인 경우 밝기 계산
+        const rgb = this.parseColor(backgroundColor);
+        if (rgb) {
+            const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+            // 밝기가 0.5 이하면 어두운 배경 → 밝은 글자
+            return luminance < 0.5 ? 'var(--text-on-accent)' : null;
+        }
+
+        return null;
+    }
+
+    /**
+     * CSS 색상 문자열을 RGB 값으로 파싱합니다
+     */
+    private parseColor(color: string): { r: number; g: number; b: number } | null {
+        // HEX 형식 (#RRGGBB 또는 #RGB)
+        if (color.startsWith('#')) {
+            let hex = color.substring(1);
+            if (hex.length === 3) {
+                hex = hex.split('').map(c => c + c).join('');
+            }
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return { r, g, b };
+        }
+
+        // RGB 또는 RGBA 형식
+        const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+        if (match) {
+            return {
+                r: parseInt(match[1]),
+                g: parseInt(match[2]),
+                b: parseInt(match[3])
+            };
+        }
+
+        return null;
     }
 
     /**
