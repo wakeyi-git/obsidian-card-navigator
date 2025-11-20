@@ -800,34 +800,19 @@
 
 /* =============================================================================
    ⭐ Phase 5 완료: 설정 탭 UI 스타일
-   탭 기반 설정 인터페이스
+   탭 기반 설정 인터페이스 - Obsidian 기본 스타일과 통일
    ============================================================================= */
 
-/* 설정 컨테이너 */
-.card-navigator-settings {
-	padding: 20px;
-}
-
-.card-navigator-settings h2 {
-	margin: 0 0 20px 0;
-	padding-bottom: 10px;
-	border-bottom: 2px solid var(--background-modifier-border);
-	font-size: 1.5em;
-	color: var(--text-normal);
-}
-
-/* 탭 바 - 모던하고 심플한 디자인 */
+/* 탭 바 - Obsidian 스타일: 심플하고 플랫한 디자인 */
 .setting-tab-bar {
 	display: flex;
-	gap: 6px;
-	margin-bottom: 24px;
-	/* border-bottom 제거 - 더 깔끔한 디자인 */
-	padding: 4px;
+	gap: 0;
+	margin-bottom: 0;
+	padding: 0;
 	overflow-x: auto;
 	overflow-y: hidden;
-	/* 작은 화면에서 스크롤 가능 */
-	background: var(--background-secondary);
-	border-radius: 8px;
+	background: transparent;
+	border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .setting-tab-bar::-webkit-scrollbar {
@@ -839,27 +824,24 @@
 	border-radius: 2px;
 }
 
-/* 탭 버튼 - 배경색 기반 강조 */
+/* 탭 버튼 - Obsidian 기본 스타일과 통일 */
 .setting-tab-button {
 	flex: 0 0 auto;
-	/* 자동 너비 */
 	display: flex;
 	align-items: center;
-	gap: 6px;
-	padding: 10px 18px;
+	gap: 8px;
+	padding: 12px 24px;
 	background: transparent;
 	border: none;
-	/* border-bottom 제거 - 더 심플한 디자인 */
+	border-bottom: 2px solid transparent;
 	color: var(--text-muted);
-	font-size: 0.95em;
+	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
-	transition: all 0.2s ease;
+	transition: all 0.15s ease;
 	white-space: nowrap;
-	/* 텍스트 줄바꿈 방지 */
 	outline: none;
-	border-radius: 6px;
-	/* 둥근 모서리 */
+	border-radius: 0;
 }
 
 /* 탭 버튼 아이콘 */
@@ -883,16 +865,16 @@
 
 .setting-tab-button:hover {
 	color: var(--text-normal);
-	background: var(--background-modifier-hover);
-	/* 전체 둥근 모서리 유지 */
+	background: transparent;
+	border-bottom-color: var(--background-modifier-border-hover);
 }
 
 .setting-tab-button.is-active {
 	color: var(--interactive-accent);
-	/* 활성 탭은 배경색으로 강조 */
-	background: var(--background-primary);
+	background: transparent;
 	font-weight: 600;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	border-bottom-color: var(--interactive-accent);
+	box-shadow: none;
 }
 
 .setting-tab-button:focus {
@@ -903,18 +885,18 @@
 /* 탭 콘텐츠 컨테이너 */
 .setting-tab-content {
 	min-height: 400px;
-	/* 최소 높이로 갑작스러운 높이 변화 방지 */
+	padding: 24px 0;
 }
 
 /* 탭 패널 */
 .setting-tab-pane {
-	animation: fadeIn 0.3s ease;
+	animation: fadeIn 0.2s ease;
 }
 
 @keyframes fadeIn {
 	from {
 		opacity: 0;
-		transform: translateY(10px);
+		transform: translateY(5px);
 	}
 	to {
 		opacity: 1;
@@ -922,65 +904,30 @@
 	}
 }
 
-/* 설정 섹션 */
-.setting-tab-pane h3 {
-	margin: 24px 0 12px 0;
-	padding-bottom: 8px;
-	border-bottom: 1px solid var(--background-modifier-border);
-	font-size: 1.1em;
-	color: var(--text-normal);
-	font-weight: 600;
-}
-
-.setting-tab-pane h3:first-child {
-	margin-top: 0;
-}
-
-/* 설정 항목 그룹 */
-.setting-item-group {
-	margin-bottom: 20px;
-	padding: 16px;
-	background: var(--background-secondary);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 6px;
-}
-
-.setting-item-group h4 {
-	margin: 0 0 12px 0;
-	font-size: 1em;
-	color: var(--text-normal);
-	font-weight: 600;
-}
-
 /* 반응형: 작은 화면 */
 @media (max-width: 768px) {
-	.card-navigator-settings {
-		padding: 12px;
-	}
-	
 	.setting-tab-button {
-		padding: 8px 16px;
-		font-size: 0.9em;
+		padding: 10px 16px;
+		font-size: 13px;
 	}
-	
+
 	.setting-tab-content {
 		min-height: 300px;
+		padding: 16px 0;
 	}
 }
 
 /* 반응형: 매우 작은 화면 */
 @media (max-width: 480px) {
-	.setting-tab-bar {
-		gap: 2px;
-	}
-	
 	.setting-tab-button {
 		padding: 8px 12px;
-		font-size: 0.85em;
+		font-size: 12px;
+		gap: 6px;
 	}
-	
-	.setting-item-group {
-		padding: 12px;
+
+	.setting-tab-button .setting-tab-icon svg {
+		width: 14px;
+		height: 14px;
 	}
 }
 
@@ -1334,7 +1281,7 @@
 }
 
 .card-settings-container .card-base-settings h3 {
-	margin: 0 0 16px 0;
+	margin: 0 0 12px 0;
 	font-size: 14px;
 	font-weight: 500;
 	color: var(--text-normal);
@@ -1614,7 +1561,6 @@
 .card-settings-container .settings-content {
 	display: flex;
 	flex-direction: column;
-	gap: 20px;
 }
 
 /* ========================================
@@ -1681,7 +1627,7 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 12px;
+	margin-bottom: 0.75em;
 	padding: 8px 0;
 }
 

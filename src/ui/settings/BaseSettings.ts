@@ -40,10 +40,11 @@ export abstract class BaseSettings {
     }
 
     /**
-     * ⭐ 수정: Obsidian 표준 헤딩 스타일 사용
-     * 
      * 설정 헤더를 생성합니다
-     * 
+     *
+     * Obsidian 공식 문서에 따라 setHeading()을 사용하여 헤더를 생성합니다.
+     * 참고: https://docs.obsidian.md/Plugins/User+interface/Settings
+     *
      * @param containerEl - 컨테이너 요소
      * @param title - 헤더 제목
      * @param description - 헤더 설명 (선택사항)
@@ -53,12 +54,11 @@ export abstract class BaseSettings {
         title: string,
         description?: string
     ): void {
-        // Obsidian 표준 헤딩 스타일 사용
-        const heading = new Setting(containerEl)
-            .setHeading()
-            .setName(title);
-        
-        // 설명이 있으면 별도의 div로 추가
+        new Setting(containerEl)
+            .setName(title)
+            .setHeading();
+
+        // 설명이 있으면 별도의 설명 요소로 추가
         if (description) {
             containerEl.createEl('div', {
                 text: description,
