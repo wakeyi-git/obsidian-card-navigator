@@ -371,7 +371,7 @@
 
 /* 활성 카드의 헤더 색상 */
 .card-navigator-cards .card-item.active .card-header {
-	color: var(--interactive-accent);
+	color: var(--text-on-accent);
 }
 
 /* 빈 상태 메시지 */
@@ -1850,7 +1850,7 @@ button:focus-visible {
 .card-body.markdown-preview-view,
 .card-header.markdown-preview-view,
 .card-footer.markdown-preview-view {
-	padding: 10px 12px;
+	/* padding: 10px 12px; */
 	line-height: 1.6;
 	/* ⭐ 줄바꿈 보존 (2024-11-17) */
 	white-space: normal;
@@ -1990,18 +1990,24 @@ button:focus-visible {
 }
 
 /* 문단 */
-.card-body.markdown-preview-view p {
-	margin: 0.5em 0;
-	/* ⭐ 줄바꿈 보존 (2024-11-17) */
+.card-body.markdown-preview-view p,
+.card-header.markdown-preview-view p,
+.card-footer.markdown-preview-view p {
+	margin: 0.5em 0; /* 문단 간격 복원 (빈 줄로 구분된 경우) */
+	line-height: 1.5; /* <br>로 연결된 줄 간격 적절하게 조정 */
 	white-space: pre-wrap; /* 공백과 줄바꿈 모두 보존 */
 	word-break: break-word; /* 긴 단어 줄바꿈 */
 }
 
-.card-body.markdown-preview-view p:first-child {
+.card-body.markdown-preview-view p:first-child,
+.card-header.markdown-preview-view p:first-child,
+.card-footer.markdown-preview-view p:first-child {
 	margin-top: 0;
 }
 
-.card-body.markdown-preview-view p:last-child {
+.card-body.markdown-preview-view p:last-child,
+.card-header.markdown-preview-view p:last-child,
+.card-footer.markdown-preview-view p:last-child {
 	margin-bottom: 0;
 }
 

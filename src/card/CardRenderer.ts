@@ -545,18 +545,81 @@ export class CardRenderer {
                 sourcePath: sourcePath,
                 containerClass: container.className
             });
-            
+
+            // ⭐ 마크다운 하드 라인 브레이크 처리: 빈 줄은 유지하고, 일반 줄은 <br> 태그로 변환
+            const lines = text.split('\n');
+            const processedLines: string[] = [];
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmed = line.trimEnd();
+
+                // 빈 줄은 문단 구분자로 유지
+                if (trimmed === '') {
+                    processedLines.push('');
+                    continue;
+                }
+
+                // 다음 줄도 확인
+                const nextLine = i + 1 < lines.length ? lines[i + 1].trimEnd() : '';
+
+                // 다음 줄이 빈 줄이면 현재 줄은 그대로 (문단 끝)
+                if (nextLine === '') {
+                    processedLines.push(trimmed);
+                } else {
+                    // 다음 줄이 내용이 있으면 <br> 태그 추가
+                    processedLines.push(trimmed + '  ');
+                }
+            }
+
+            const processedText = processedLines.join('\n');
+
+            this.logger.debug('Card', 'Processed markdown text:', {
+                original: text.substring(0, 200),
+                processed: processedText.substring(0, 200)
+            });
+
             await MarkdownRenderer.render(
                 this.app,
-                text,
+                processedText,
                 container,
                 sourcePath,
                 this.component
             );
-            
+
+            // ⭐ 렌더링 후 <br> 태그 뒤의 줄바꿈 제거
+            // white-space: pre-wrap 때문에 <br>\n이 이중 줄바꿈을 만드는 문제 해결
+            const paragraphs = container.querySelectorAll('p');
+            paragraphs.forEach(p => {
+                // <br> 뒤의 텍스트 노드에 있는 줄바꿈을 제거
+                const walker = document.createTreeWalker(
+                    p,
+                    NodeFilter.SHOW_TEXT,
+                    null
+                );
+
+                const textNodesToProcess: { node: Text; newValue: string }[] = [];
+
+                while (walker.nextNode()) {
+                    const textNode = walker.currentNode as Text;
+                    // <br> 바로 다음 텍스트 노드인지 확인
+                    if (textNode.previousSibling?.nodeName === 'BR') {
+                        const newValue = textNode.textContent?.replace(/^\n/, '') || '';
+                        if (newValue !== textNode.textContent) {
+                            textNodesToProcess.push({ node: textNode, newValue });
+                        }
+                    }
+                }
+
+                // TreeWalker 순회 후에 수정
+                textNodesToProcess.forEach(({ node, newValue }) => {
+                    node.textContent = newValue;
+                });
+            });
+
             this.logger.debug('Card', t().debug.card.markdownRendererComplete, {
                 childrenCount: container.children.length,
-                innerHTML: container.innerHTML.substring(0, 200)
+                innerHTML: container.innerHTML.substring(0, 500)
             });
         } catch (error) {
             this.logger.error('Card', t().debug.card.markdownRenderError, error);

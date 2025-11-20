@@ -133,6 +133,14 @@ Create and manage presets for different use cases:
 - Quick browse preset with minimal info
 - Focus preset with large cards and spacing
 
+## 📚 Documentation
+
+Comprehensive documentation is available in the [docs/](docs/) directory:
+
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - Complete architectural overview, design patterns, and component details
+- **[Testing Guide](docs/TESTING_GUIDE.md)** - How to write and run tests, best practices, and troubleshooting
+- **[Improvement Plan](docs/IMPROVEMENT_PLAN.md)** - Roadmap for future enhancements and quality improvements
+
 ## 🛠️ Development
 
 ### Prerequisites
@@ -174,17 +182,26 @@ npm run test:watch
 npm run test:coverage
 ```
 
+For detailed testing information, see the [Testing Guide](docs/TESTING_GUIDE.md).
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+Before contributing, please read:
+- **[Architecture Guide](docs/ARCHITECTURE.md)** to understand the codebase structure
+- **[Testing Guide](docs/TESTING_GUIDE.md)** to learn how to write tests
+- **[Improvement Plan](docs/IMPROVEMENT_PLAN.md)** to see current priorities
 
 ### Guidelines
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+3. Write tests for your changes
+4. Ensure all tests pass (`npm test`)
+5. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+6. Push to the branch (`git push origin feature/AmazingFeature`)
+7. Open a Pull Request
 
 ## 🐛 Bug Reports & Feature Requests
 

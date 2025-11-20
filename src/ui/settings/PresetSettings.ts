@@ -15,7 +15,7 @@ export class PresetSettings extends BaseSettings {
     
     constructor(plugin: any) {
         super(plugin);
-        this.logger = new DebugLogger(plugin.settings);
+        this.logger = new DebugLogger(() => plugin.settings);
     }
     /**
      * 프리셋 설정을 렌더링합니다
