@@ -18,7 +18,7 @@ Navigate your Obsidian notes with a beautiful card-based interface. Browse by fo
 
 - **Flexible Sections**: Configure Header, Body, and Footer independently
 - **Rich Content Types**: Display filename, path, headings, body text, tags, dates, and more
-- **Multiple Rendering Modes**: Choose between plain text, markdown, or markdown with HTML
+- **Multiple Rendering Modes**: Choose between plain text or markdown with HTML
 - **State-Based Styling**: Different styles for normal, active, and focused cards
 
 ### 📐 Layout Options
