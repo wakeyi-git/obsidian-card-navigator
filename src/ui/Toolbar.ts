@@ -1,0 +1,508 @@
+import { App, Menu, setIcon } from 'obsidian';
+import { SortCriteria, SortOrder } from '../types';
+import CardNavigatorPlugin from '../main';
+import { CardNavigatorView } from '../view';
+import { FolderSuggestModal } from './FolderSuggestModal';
+import { TagSuggestModal } from './TagSuggestModal';
+import { DebugLogger } from '../utils/DebugLogger';
+
+/**
+ * Card Navigator 툴바
+ * 
+ * 툴바 UI 생성 및 관리를 담당합니다.
+ * 모드 표시, 모드 전환, 정렬 옵션, 검색창 토글 기능을 제공합니다.
+ */
+export class Toolbar {
+	private app: App;
+	private view: CardNavigatorView;
+	private plugin: CardNavigatorPlugin;
+	private logger: DebugLogger;
+	
+	private toolbarElement: HTMLElement | null = null;
+	private modeDisplayElement: HTMLElement | null = null;
+	private modeToggleIcon: HTMLElement | null = null;
+	private searchInputContainer: HTMLElement | null = null;
+
+	constructor(app: App, view: CardNavigatorView, plugin: CardNavigatorPlugin) {
+		this.app = app;
+		this.view = view;
+		this.plugin = plugin;
+		// ✅ 함수를 전달하여 항상 최신 settings를 참조
+		this.logger = new DebugLogger(() => this.plugin.settingsManager.getSettings());
+	}
+
+	/**
+	 * 툴바 렌더링
+	 * 
+	 * @param container - 툴바를 추가할 컨테이너
+	 */
+	public render(container: HTMLElement): void {
+		this.createToolbar(container);
+	}
+
+	/**
+	 * 툴바 DOM 생성
+	 */
+	private createToolbar(container: HTMLElement): void {
+		this.toolbarElement = container.createEl('div', {
+			cls: 'card-navigator-toolbar'
+		});
+
+		this.modeDisplayElement = this.toolbarElement.createEl('div', {
+			cls: 'toolbar-mode-display'
+		});
+		this.updateModeDisplay();
+
+		const iconGroup = this.toolbarElement.createEl('div', {
+			cls: 'toolbar-icon-group'
+		});
+
+		this.modeToggleIcon = iconGroup.createEl('div', {
+			cls: ['clickable-icon', 'mode-toggle-icon']
+		});
+		
+		this.modeToggleIcon.addEventListener('click', async () => {
+			await this.onModeToggleClick();
+		});
+		
+		const modeToggle = iconGroup.createEl('div', {
+			cls: 'clickable-icon',
+			attr: { 'aria-label': '모드 전환 (폴더/태그)' }
+		});
+		setIcon(modeToggle, 'repeat');
+		
+		modeToggle.addEventListener('click', async () => {
+			await this.onModeSwitch();
+		});
+
+		const sortButton = iconGroup.createEl('div', {
+			cls: 'clickable-icon',
+			attr: { 'aria-label': '정렬 기준 선택' }
+		});
+		setIcon(sortButton, 'arrow-up-down');
+		
+		sortButton.addEventListener('click', (event) => {
+			this.showSortMenu(event);
+		});
+
+		this.updateModeToggleIcon();
+		
+		const searchButton = iconGroup.createEl('div', {
+			cls: 'clickable-icon',
+			attr: { 'aria-label': '검색' }
+		});
+		setIcon(searchButton, 'search');
+		
+		searchButton.addEventListener('click', () => {
+			this.onSearchToggle();
+		});
+	}
+
+	/**
+	 * 모드 표시 업데이트
+	 * 
+	 * 폴더 모드: 현재 폴더명 표시 (클릭 가능)
+	 * 태그 모드: 현재 태그 표시 (클릭 가능)
+	 */
+	public updateModeDisplay(): void {
+		if (!this.modeDisplayElement) return;
+
+		const parent = this.modeDisplayElement.parentElement;
+		if (!parent) return;
+
+		const newElement = document.createElement('div');
+		newElement.classList.add('toolbar-mode-display', 'clickable');
+		newElement.setAttribute('aria-label', '클릭하여 폴더/태그 선택');
+
+		parent.replaceChild(newElement, this.modeDisplayElement);
+		this.modeDisplayElement = newElement;
+
+		const settings = this.plugin.settingsManager.getSettings();
+
+		// settings가 null인 경우 기본 텍스트 표시
+		if (!settings) {
+			this.modeDisplayElement.createEl('span', {
+				text: '설정 없음'
+			});
+			return;
+		}
+
+		if (settings.currentMode === 'folder') {
+			let displayText = '전체';
+			
+			if (settings.folderMode.useActiveFolder) {
+				const activeFile = this.app.workspace.getActiveFile();
+				if (activeFile && activeFile.parent) {
+					displayText = activeFile.parent.name || '루트';
+				}
+			} else if (settings.folderMode.specifiedFolder) {
+				const folder = this.app.vault.getAbstractFileByPath(settings.folderMode.specifiedFolder);
+				if (folder) {
+					displayText = folder.name;
+				}
+			}
+			
+			const iconEl = this.modeDisplayElement.createEl('span', {
+				cls: 'mode-display-icon'
+			});
+			setIcon(iconEl, 'folder');
+			
+			this.modeDisplayElement.createEl('span', {
+				cls: 'mode-display-text',
+				text: displayText
+			});
+			
+			this.modeDisplayElement.addEventListener('mousedown', (e) => {
+				e.preventDefault(); // 포커스 변경 방지
+				this.openFolderSelector();
+			});
+		} else {
+			let displayText = '모든 태그';
+			let fullTagList = '';
+			
+			const normalizeTag = (tag: string): string => {
+				if (!tag) return '';
+				if (tag.startsWith('#')) return tag;
+				return '#' + tag;
+			};
+			
+			if (settings.tagMode.useActiveFileTags) {
+				const activeFile = this.app.workspace.getActiveFile();
+				if (activeFile) {
+					const cache = this.app.metadataCache.getFileCache(activeFile);
+					
+					const inlineTags = cache?.tags?.map(t => normalizeTag(t.tag)) || [];
+					
+					const rawFrontmatterTags = cache?.frontmatter?.tags;
+					let frontmatterTags: string[] = [];
+					
+					if (rawFrontmatterTags) {
+						if (Array.isArray(rawFrontmatterTags)) {
+							frontmatterTags = rawFrontmatterTags.map((t: any) => {
+								if (typeof t === 'string') {
+									return normalizeTag(t.trim());
+								}
+								return '';
+							}).filter((t: string) => t);
+						} else if (typeof rawFrontmatterTags === 'string') {
+							frontmatterTags = rawFrontmatterTags
+								.split(',')
+								.map(t => normalizeTag(t.trim()))
+								.filter(t => t);
+						}
+					}
+					
+					const allTags = [...new Set([...inlineTags, ...frontmatterTags])];
+					
+					this.logger.debug('UI', '활성 파일 태그', {
+						file: activeFile.basename,
+						inlineTags,
+						frontmatterTags,
+						allTags
+					});
+					
+					if (allTags.length > 0) {
+						const firstTag = allTags[0];
+						const MAX_TAG_LENGTH = 20;
+						
+						if (firstTag.length > MAX_TAG_LENGTH) {
+							displayText = firstTag.slice(0, MAX_TAG_LENGTH) + '...';
+						} else {
+							displayText = firstTag;
+						}
+						
+						if (allTags.length > 1) {
+							displayText += ` +${allTags.length - 1}`;
+						}
+						
+						fullTagList = allTags.join(', ');
+					}
+				}
+			} else if (settings.tagMode.specifiedTags.length > 0) {
+				const normalizedTags = settings.tagMode.specifiedTags.map(normalizeTag);
+				const firstTag = normalizedTags[0];
+				const MAX_TAG_LENGTH = 20;
+				
+				if (firstTag.length > MAX_TAG_LENGTH) {
+					displayText = firstTag.slice(0, MAX_TAG_LENGTH) + '...';
+				} else {
+					displayText = firstTag;
+				}
+				
+				if (normalizedTags.length > 1) {
+					displayText += ` +${normalizedTags.length - 1}`;
+				}
+				
+				fullTagList = normalizedTags.join(', ');
+			}
+			
+			const iconEl = this.modeDisplayElement.createEl('span', {
+				cls: 'mode-display-icon'
+			});
+			setIcon(iconEl, 'tag');
+			
+			const textEl = this.modeDisplayElement.createEl('span', {
+				cls: 'mode-display-text',
+				text: displayText
+			});
+			
+			if (fullTagList) {
+				textEl.setAttribute('title', fullTagList);
+			}
+			
+			this.modeDisplayElement.addEventListener('mousedown', (e) => {
+				e.preventDefault(); // 포커스 변경 방지
+				this.openTagSelector();
+			});
+		}
+	}
+
+	/**
+	 * 모드 토글 아이콘 업데이트
+	 * 
+	 * 현재 모드(폴더/태그)와 설정(활성/지정)에 따라 아이콘을 변경합니다.
+	 * 
+	 * 폴더 모드:
+	 * - 활성 폴더: folder-sync 아이콘
+	 * - 폴더 지정: folder 아이콘
+	 * 
+	 * 태그 모드:
+	 * - 활성 파일 태그: file-text 아이콘
+	 * - 태그 지정: tags 아이콘
+	 */
+	public updateModeToggleIcon(): void {
+		if (!this.modeToggleIcon) return;
+
+		const settings = this.plugin.settingsManager.getSettings();
+
+		// settings가 null인 경우 기본 아이콘 표시
+		if (!settings) {
+			setIcon(this.modeToggleIcon, 'folder');
+			this.modeToggleIcon.setAttribute('aria-label', '모드 전환');
+			return;
+		}
+
+		this.modeToggleIcon.removeClass('mode-active');
+
+		if (settings.currentMode === 'folder') {
+			if (settings.folderMode.useActiveFolder) {
+				setIcon(this.modeToggleIcon, 'folder-sync');
+				this.modeToggleIcon.setAttribute('aria-label', '폴더 지정 모드로 전환');
+				this.modeToggleIcon.addClass('mode-active');
+			} else {
+				setIcon(this.modeToggleIcon, 'folder');
+				this.modeToggleIcon.setAttribute('aria-label', '활성 폴더 모드로 전환');
+			}
+		} else {
+			if (settings.tagMode.useActiveFileTags) {
+				setIcon(this.modeToggleIcon, 'file-text');
+				this.modeToggleIcon.setAttribute('aria-label', '태그 지정 모드로 전환');
+				this.modeToggleIcon.addClass('mode-active');
+			} else {
+				setIcon(this.modeToggleIcon, 'tags');
+				this.modeToggleIcon.setAttribute('aria-label', '활성 파일 태그 모드로 전환');
+			}
+		}
+	}
+	
+	/**
+	 * 모드 토글 클릭 처리
+	 * 
+	 * 현재 모드와 설정에 따라 적절한 동작을 수행합니다:
+	 * - 폴더 모드 + 활성 폴더 → 폴더 선택 모달
+	 * - 폴더 모드 + 폴더 지정 → 활성 폴더로 전환
+	 * - 태그 모드 + 활성 파일 태그 → 태그 선택 모달
+	 * - 태그 모드 + 태그 지정 → 활성 파일 태그로 전환
+	 */
+	private async onModeToggleClick(): Promise<void> {
+		const settings = this.plugin.settingsManager.getSettings();
+		
+		if (settings.currentMode === 'folder') {
+			if (settings.folderMode.useActiveFolder) {
+				this.openFolderSelector();
+			} else {
+				await this.onFolderModeToActive();
+			}
+		} else {
+			if (settings.tagMode.useActiveFileTags) {
+				this.openTagSelector();
+			} else {
+				await this.onTagModeToActive();
+			}
+		}
+	}
+
+	/**
+	 * 검색 입력창 컨테이너 설정
+	 */
+	public setSearchInputContainer(container: HTMLElement): void {
+		this.searchInputContainer = container;
+	}
+
+	/**
+	 * 검색 입력창 토글
+	 */
+	private onSearchToggle(): void {
+		if (!this.searchInputContainer) return;
+
+		const isHidden = this.searchInputContainer.style.display === 'none';
+		
+		if (isHidden) {
+			this.searchInputContainer.style.display = 'block';
+			
+			const input = this.searchInputContainer.querySelector('input');
+			if (input) {
+				input.focus();
+			}
+		} else {
+			this.searchInputContainer.style.display = 'none';
+			this.view.clearSearch();
+		}
+	}
+
+	/**
+	 * 정렬 메뉴 표시
+	 */
+	private showSortMenu(event: MouseEvent): void {
+		const settings = this.plugin.settingsManager.getSettings();
+		const menu = new Menu();
+
+		const sortOptions: Array<{
+			label: string;
+			criteria: SortCriteria;
+			order: SortOrder;
+		}> = [
+			{ label: '파일명 (A-Z)', criteria: 'name', order: 'asc' },
+			{ label: '파일명 (Z-A)', criteria: 'name', order: 'desc' },
+			{ label: '수정일 (최신순)', criteria: 'modified', order: 'desc' },
+			{ label: '수정일 (오래된순)', criteria: 'modified', order: 'asc' },
+			{ label: '생성일 (최신순)', criteria: 'created', order: 'desc' },
+			{ label: '생성일 (오래된순)', criteria: 'created', order: 'asc' },
+			{ label: '파일 크기 (큰 순)', criteria: 'size', order: 'desc' },
+			{ label: '파일 크기 (작은 순)', criteria: 'size', order: 'asc' }
+		];
+
+		sortOptions.forEach(option => {
+			menu.addItem(item => {
+				item.setTitle(option.label);
+				
+				if (settings.sort.criteria === option.criteria && 
+				    settings.sort.order === option.order) {
+					item.setIcon('check');
+				}
+				
+				item.onClick(async () => {
+					settings.sort.criteria = option.criteria;
+					settings.sort.order = option.order;
+					await this.plugin.settingsManager.updateSettings({ sort: settings.sort });
+					await this.view.refresh();
+				});
+			});
+		});
+
+		menu.showAtMouseEvent(event);
+	}
+
+	/**
+	 * 폴더 선택 모달 열기
+	 */
+	private openFolderSelector(): void {
+		const modal = new FolderSuggestModal(this.app, async (folder) => {
+			if (folder) {
+				const settings = this.plugin.settingsManager.getSettings();
+				settings.folderMode.useActiveFolder = false;
+				settings.folderMode.specifiedFolder = folder.path === '/' ? '' : folder.path;
+				
+				await this.plugin.settingsManager.updateSettings({
+					folderMode: settings.folderMode
+				});
+				
+				await this.view.refresh();
+				this.updateModeDisplay();
+				this.updateModeToggleIcon();
+			}
+		});
+		
+		modal.open();
+	}
+
+	/**
+	 * 태그 선택 모달 열기
+	 */
+	private openTagSelector(): void {
+		const modal = new TagSuggestModal(this.app, async (tag) => {
+			if (tag) {
+				const settings = this.plugin.settingsManager.getSettings();
+				settings.tagMode.useActiveFileTags = false;
+				settings.tagMode.specifiedTags = [tag];
+				
+				await this.plugin.settingsManager.updateSettings({
+					tagMode: settings.tagMode
+				});
+				
+				await this.view.refresh();
+				this.updateModeDisplay();
+				this.updateModeToggleIcon();
+			}
+		});
+		
+		modal.open();
+	}
+
+	/**
+	 * 모드 전환 (폴더 ↔ 태그)
+	 */
+	private async onModeSwitch(): Promise<void> {
+		const settings = this.plugin.settingsManager.getSettings();
+		settings.currentMode = settings.currentMode === 'folder' ? 'tag' : 'folder';
+		await this.plugin.settingsManager.updateSettings({ currentMode: settings.currentMode });
+		
+		await this.view.refresh();
+		this.updateModeDisplay();
+		this.updateModeToggleIcon();
+	}
+
+	/**
+	 * 폴더 모드를 활성 폴더로 전환
+	 */
+	private async onFolderModeToActive(): Promise<void> {
+		const settings = this.plugin.settingsManager.getSettings();
+		settings.folderMode.useActiveFolder = true;
+		settings.folderMode.specifiedFolder = undefined;
+		
+		await this.plugin.settingsManager.updateSettings({
+			folderMode: settings.folderMode
+		});
+		
+		await this.view.refresh();
+		this.updateModeDisplay();
+		this.updateModeToggleIcon();
+	}
+
+	/**
+	 * 태그 모드를 활성 파일 태그로 전환
+	 */
+	private async onTagModeToActive(): Promise<void> {
+		const settings = this.plugin.settingsManager.getSettings();
+		settings.tagMode.useActiveFileTags = true;
+		settings.tagMode.specifiedTags = [];
+		
+		await this.plugin.settingsManager.updateSettings({
+			tagMode: settings.tagMode
+		});
+		
+		await this.view.refresh();
+		this.updateModeDisplay();
+		this.updateModeToggleIcon();
+	}
+
+	/**
+	 * 툴바 정리
+	 */
+	public destroy(): void {
+		this.toolbarElement = null;
+		this.modeDisplayElement = null;
+		this.modeToggleIcon = null;
+		this.searchInputContainer = null;
+	}
+}

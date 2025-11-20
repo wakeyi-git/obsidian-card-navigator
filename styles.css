@@ -1,0 +1,2383 @@
+/* Resets Obsidian's default view-content padding for cleaner integration */
+.view-content.card-navigator-container {
+    padding: 0;
+    border: none;
+}
+
+/* Card Navigator 메인 컨테이너 */
+.card-navigator-container {
+	background: var(--background-primary);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	padding: 0 10px;
+	/* ⭐ 버그 수정 (2024-11-20): 하단 패딩 추가로 상태 표시줄 영역 확보 */
+	padding-bottom: 20px;
+}
+
+/* 헤더 섹션 */
+.card-navigator-header {
+	margin-bottom: 10px;
+	/* padding-bottom: 10px; */
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.card-navigator-header h4 {
+	margin: 0 0 10px 0;
+	font-size: 1.2em;
+	color: var(--text-normal);
+}
+
+/* =============================================================================
+   ⭐ Phase 5 UI 개선: 툴바 스타일
+   ============================================================================= */
+
+/* 툴바 컨테이너 */
+.card-navigator-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px;
+	/* margin-bottom: 8px; */
+	gap: 8px;
+}
+
+/* 모드 표시 영역 */
+.toolbar-mode-display {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 0.9em;
+	color: var(--text-normal);
+	font-weight: 500;
+	overflow: hidden;
+	padding: 4px 8px;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.toolbar-mode-display:hover {
+	background: var(--background-modifier-hover);
+}
+
+.toolbar-mode-display.clickable {
+	cursor: pointer;
+}
+
+/* 모드 표시 아이콘 */
+.toolbar-mode-display .mode-display-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	color: var(--text-muted);
+}
+
+.toolbar-mode-display .mode-display-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* 모드 표시 텍스트 */
+.toolbar-mode-display .mode-display-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* 툴바 아이콘 그룹 */
+.toolbar-icon-group {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+/* 툴바 아이콘 버튼 - Obsidian 표준 플랫 스타일 */
+.toolbar-icon-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	margin: 0;
+	background: transparent;
+	border: none;
+	border-radius: 4px;
+	color: var(--icon-color);
+	cursor: pointer;
+	outline: none;
+	box-shadow: none;
+	/* 플랫 스타일: 윤곽선과 그림자 제거 */
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.toolbar-icon-button:hover {
+	background: var(--background-modifier-hover);
+	color: var(--icon-color-hover);
+	box-shadow: none;
+	/* 호버 시 배경색만 변경 */
+}
+
+.toolbar-icon-button:active {
+	background: var(--background-modifier-active-hover);
+	color: var(--icon-color-active);
+	box-shadow: none;
+	/* 액티브 시에도 그림자 없음 */
+}
+
+.toolbar-icon-button:focus {
+	outline: none;
+	box-shadow: none;
+	/* 포커스 시에도 윤곽선 없음 */
+}
+
+.toolbar-icon-button svg {
+	width: 16px;
+	height: 16px;
+	pointer-events: none;
+	/* SVG는 이벤트를 받지 않음 */
+}
+
+/* 검색 입력 래퍼 (토글 가능) */
+.search-input-container-wrapper {
+	padding: 0 10px;
+	margin-bottom: 10px;
+	animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* 카드 컨테이너 (그리드 레이아웃) */
+.card-navigator-cards {
+	display: grid;
+	/* ⭐ Phase 3 개선 (2024-11-14): CSS Grid auto-fit 활용 */
+	/* grid-template-columns는 LayoutManager가 동적으로 설정 */
+	/* 초기값 제거: LayoutManager의 설정과 충돌 방지 */
+	
+	/* ⭐ Phase 3 개선: grid-auto-rows로 카드 높이 유연하게 관리 */
+	/* 최소 높이를 보장하면서 내용에 맞게 자동 조정 */
+	grid-auto-rows: minmax(var(--card-min-height, 100px), auto);
+	
+	/* ⭐ 버그 수정 2024-11-14: 균등배분 대신 시작점 정렬 */
+	/* align-content: stretch (기본값) → start로 변경 */
+	align-content: start;
+	/* justify-content도 명시적으로 설정 (가로 모드 대비) */
+	justify-content: start;
+	
+	gap: 10px;
+	/* ⭐ Phase 3: overflow는 LayoutManager가 모드별로 동적 설정 */
+	/* overflow-y: auto 제거 - JavaScript가 제어 */
+	flex: 1;
+	/* ⭐ Phase 3: flex 버그 방지 - min-height: 0으로 스크롤 활성화 */
+	min-height: 0;
+	/* ⭐ Phase 3: CSS 변수 기본값 설정 */
+	padding: 0 2px 0 10px;
+	--card-min-width: 150px;
+	--card-min-height: 100px;
+	--card-max-width: 400px;
+	--card-max-height: 300px;
+}
+
+/* ⭐ 개별 카드 - CSS 변수 기반 스타일 (충돌 방지) */
+.card-navigator-cards .card-item {
+	/* ⭐ card-navigator- 접두사 사용 */
+	background: var(--card-navigator-bg-normal, var(--background-secondary));
+	font-size: var(--card-navigator-font-size-normal, 14px);
+	border: var(--card-navigator-border-width-normal, 1px) solid var(--card-navigator-border-color-normal, var(--background-modifier-border));
+	border-radius: var(--card-navigator-border-radius-normal, 5px);
+	
+	/* 기본 레이아웃 */
+	cursor: pointer;
+	transition: all 0.2s ease;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	
+	/* ⭐ Phase 3 개선 (2024-11-14): 카드 크기 제약 */
+	/* min-height: 0 - 그리드 오버플로우 방지 */
+	min-width: 0;
+	min-height: 0;
+	/* max 값은 유지 - 카드가 너무 커지는 것 방지 */
+	max-width: var(--card-max-width, 400px);
+	max-height: var(--card-max-height, 300px);
+	/* ⭐ height: 100% 제거 - grid-auto-rows가 높이 관리 */
+	
+	/* ⭐ 버그 수정 2024-11-14: 포커스 문제 해결 */
+	user-select: none; /* 텍스트 선택 방지 */
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	outline: none; /* 포커스 윤곽선 제거 */
+	-webkit-tap-highlight-color: transparent; /* 모바일 터치 하이라이트 제거 */
+}
+
+/* ⭐ 활성 카드 - CSS 변수 기반 스타일 */
+.card-navigator-cards .card-item.active {
+	background: var(--card-navigator-bg-active, var(--background-secondary));
+	font-size: var(--card-navigator-font-size-active, 14px);
+	border: var(--card-navigator-border-width-active, 2px) solid var(--card-navigator-border-color-active, var(--interactive-accent));
+	border-radius: var(--card-navigator-border-radius-active, 5px);
+}
+
+/* ⭐ 포커스 카드 - CSS 변수 기반 스타일 (Phase 3에서 사용) */
+.card-navigator-cards .card-item.focused {
+	background: var(--card-navigator-bg-focused, var(--background-secondary-alt));
+	font-size: var(--card-navigator-font-size-focused, 14px);
+	border: var(--card-navigator-border-width-focused, 2px) solid var(--card-navigator-border-color-focused, var(--interactive-accent));
+	border-radius: var(--card-navigator-border-radius-focused, 5px);
+	/* outline: 2px solid var(--interactive-accent); */
+	/* outline-offset: 2px; */
+}
+
+/* 카드 헤더 */
+.card-navigator-cards .card-header {
+	padding: 10px 12px;
+	background: var(--background-primary-alt);
+	border-bottom: 1px solid var(--background-modifier-border);
+	font-weight: 600;
+	font-size: 0.95em;
+	color: var(--text-normal);
+}
+
+/* ⭐ 일반 텍스트 모드 헤더: 1줄 제한 (2024-11-17) */
+.card-navigator-cards .card-header:not(.card-markdown-content) {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ⭐ Markdown 렌더링 모드 헤더: 줄바꿈 허용 (2024-11-17) */
+.card-navigator-cards .card-header.card-markdown-content {
+	white-space: normal !important;
+	text-overflow: clip !important;
+	overflow: visible !important;
+}
+
+/* 카드 바디 */
+.card-navigator-cards .card-body {
+	padding: 12px;
+	flex: 1;
+	font-size: 0.85em;
+	color: var(--text-muted);
+	line-height: 1.5;
+}
+
+/* ⭐ 일반 텍스트 모드: 4줄로 제한 (2024-11-17 수정) */
+.card-navigator-cards .card-body:not(.card-markdown-content) {
+	overflow: hidden;
+	display: -webkit-box;
+	/* -webkit-line-clamp: 4; */
+	-webkit-box-orient: vertical;
+}
+
+/* ⭐ Markdown 렌더링 모드: 모든 내용 표시 (2024-11-17) */
+.card-navigator-cards .card-body.card-markdown-content {
+	/* line-clamp 완전히 제거 */
+	display: block !important;
+	/* -webkit-line-clamp: unset !important; */
+	-webkit-box-orient: unset !important;
+	overflow: visible !important;
+	/* 스크롤 가능하게 */
+	overflow-y: auto !important;
+	/* 최대 높이 설정 */
+	max-height: 300px;
+}
+
+/* ⭐ 마크다운 렌더링 시 바디 스타일 조정 */
+.card-navigator-cards .card-body p {
+	margin: 0 0 0.5em 0;
+}
+
+.card-navigator-cards .card-body p:last-child {
+	margin-bottom: 0;
+}
+
+.card-navigator-cards .card-body strong {
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.card-navigator-cards .card-body em {
+	font-style: italic;
+}
+
+.card-navigator-cards .card-body code {
+	background: var(--code-background);
+	padding: 2px 4px;
+	border-radius: 3px;
+	font-family: var(--font-monospace);
+	font-size: 0.9em;
+}
+
+.card-navigator-cards .card-body a {
+	color: var(--link-color);
+	text-decoration: none;
+}
+
+.card-navigator-cards .card-body a:hover {
+	text-decoration: underline;
+}
+
+/* 카드 풋터 */
+.card-navigator-cards .card-footer {
+    padding: 8px 12px;
+    background: var(--background-primary-alt);
+    border-top: 1px solid var(--background-modifier-border);
+    font-size: 0.75em;
+    color: var(--text-faint);
+}
+
+/* ⭐ 일반 텍스트 모드 풋터: 1줄 제한 (2024-11-17) */
+.card-navigator-cards .card-footer:not(.card-markdown-content) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ⭐ Markdown 렌더링 모드 풋터: 줄바꿈 허용 (2024-11-17) */
+.card-navigator-cards .card-footer.card-markdown-content {
+    white-space: normal !important;
+    text-overflow: clip !important;
+    overflow: visible !important;
+}
+
+/* 카드 제목 (Phase 1과 호환성 유지) */
+.card-navigator-cards .card-title {
+	font-size: 0.9em;
+	color: var(--text-normal);
+	text-align: center;
+	word-break: break-word;
+}
+
+/* 카드 호버 효과 */
+.card-navigator-cards .card-item:hover {
+	background: var(--background-secondary-alt);
+	border-color: var(--interactive-accent);
+	transform: translateY(-2px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 활성 카드의 헤더 색상 */
+.card-navigator-cards .card-item.active .card-header {
+	color: var(--interactive-accent);
+}
+
+/* 빈 상태 메시지 */
+.card-navigator-empty {
+	text-align: center;
+	padding: 40px 20px;
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+/* 스크롤바 스타일 (옵션) */
+.card-navigator-cards::-webkit-scrollbar {
+	width: 8px;
+}
+
+.card-navigator-cards::-webkit-scrollbar-track {
+	background: var(--background-primary);
+}
+
+.card-navigator-cards::-webkit-scrollbar-thumb {
+	background: var(--background-modifier-border);
+	border-radius: 4px;
+}
+
+.card-navigator-cards::-webkit-scrollbar-thumb:hover {
+	background: var(--text-muted);
+}
+
+/* =============================================================================
+   ⭐ Phase 4: 검색 & 필터 스타일
+   ⭐ Obsidian 표준 검색 스타일을 따릅니다
+   ============================================================================= */
+
+/* ⭐ 검색 입력 컨테이너 - Obsidian 표준 스타일 사용 */
+.card-navigator-header .search-input-container {
+	display: flex;
+	align-items: center;
+	position: relative;
+	/* margin-bottom: 8px; */
+}
+
+/* ⭐ 검색 입력 필드 - Obsidian 표준 스타일 상속 */
+.card-navigator-header .search-input {
+	width: 100%;
+	/* Obsidian의 기본 스타일을 상속받습니다 */
+	/* 자동 돋보기 아이콘도 Obsidian이 자동으로 표시합니다 */
+}
+
+/* ⭐ 검색 지우기 버튼 - Obsidian 표준 스타일 상속 + 세로 중앙 정렬 */
+.card-navigator-header .search-input-clear-button {
+	/* Obsidian의 기본 스타일을 상속받습니다 */
+	/* ⭐ 버그 수정: 세로 중앙 정렬 추가 */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* 검색어 하이라이트 */
+.card-navigator-cards mark {
+	background: var(--text-highlight-bg);
+	color: var(--text-normal);
+	padding: 2px 0;
+	border-radius: 2px;
+}
+
+/* 자동완성 제안 항목 */
+.search-suggestion-item {
+	padding: 8px 12px;
+	cursor: pointer;
+	border-radius: 4px;
+	font-size: 0.9em;
+	color: var(--text-normal);
+	transition: background 0.2s ease;
+}
+
+.search-suggestion-item:hover {
+	background: var(--background-modifier-hover);
+}
+
+.search-suggestion-item.is-selected {
+	background: var(--background-modifier-active-hover);
+}
+
+/* 필터 모달 배경 */
+.filter-modal-backdrop {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+}
+
+/* 필터 모달 */
+.filter-modal {
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+	max-width: 500px;
+	width: 90%;
+	max-height: 80vh;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+/* 필터 모달 헤더 */
+.filter-modal-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 20px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.filter-modal-header h3 {
+	margin: 0;
+	font-size: 1.2em;
+	color: var(--text-normal);
+}
+
+.filter-modal-close {
+	background: transparent;
+	border: none;
+	color: var(--text-muted);
+	font-size: 1.8em;
+	cursor: pointer;
+	padding: 0;
+	line-height: 1;
+	width: 30px;
+	height: 30px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 4px;
+	transition: all 0.2s ease;
+}
+
+.filter-modal-close:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+/* 필터 모달 본문 */
+.filter-modal-body {
+	flex: 1;
+	overflow-y: auto;
+	padding: 20px;
+}
+
+/* 필터 섹션 */
+.filter-section {
+	margin-bottom: 20px;
+}
+
+.filter-section:last-child {
+	margin-bottom: 0;
+}
+
+.filter-section h4 {
+	margin: 0 0 12px 0;
+	font-size: 1em;
+	color: var(--text-normal);
+	font-weight: 600;
+}
+
+.filter-description {
+	margin: 0 0 8px 0;
+	font-size: 0.85em;
+	color: var(--text-muted);
+	line-height: 1.4;
+}
+
+/* 필터 입력 필드 */
+.filter-input {
+	width: 100%;
+	padding: 8px 12px;
+	background: var(--background-primary-alt);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	color: var(--text-normal);
+	font-size: 0.9em;
+	transition: border-color 0.2s ease;
+}
+
+.filter-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+}
+
+.filter-input::placeholder {
+	color: var(--text-faint);
+}
+
+/* 필터 텍스트 영역 */
+.filter-textarea {
+	width: 100%;
+	min-height: 80px;
+	padding: 8px 12px;
+	background: var(--background-primary-alt);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	color: var(--text-normal);
+	font-size: 0.9em;
+	font-family: var(--font-interface);
+	resize: vertical;
+	transition: border-color 0.2s ease;
+}
+
+.filter-textarea:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+}
+
+/* 날짜 필터 그룹 */
+.filter-date-group {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.filter-date-group label {
+	min-width: 60px;
+	font-size: 0.9em;
+	color: var(--text-muted);
+}
+
+.filter-date-input {
+	flex: 1;
+	padding: 6px 10px;
+	background: var(--background-primary-alt);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	color: var(--text-normal);
+	font-size: 0.85em;
+	transition: border-color 0.2s ease;
+}
+
+.filter-date-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+}
+
+/* 필터 모달 푸터 */
+.filter-modal-footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	padding: 16px 20px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.filter-modal-footer button {
+	padding: 8px 16px;
+	border-radius: 4px;
+	font-size: 0.9em;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.filter-modal-footer button.mod-cta {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+}
+
+.filter-modal-footer button.mod-cta:hover {
+	background: var(--interactive-accent-hover);
+}
+
+.filter-modal-footer button:not(.mod-cta) {
+	background: transparent;
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+}
+
+.filter-modal-footer button:not(.mod-cta):hover {
+	background: var(--background-modifier-hover);
+}
+
+/* =============================================================================
+   ⭐ Phase 5 Stage 2: 인터랙션 시스템 스타일
+   ============================================================================= */
+
+/* 드래그 중 카드 스타일 */
+.card-navigator-cards .card-item.dragging {
+	opacity: 0.5;
+	transform: rotate(5deg);
+	transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* 드롭 타겟 카드 스타일 */
+.card-navigator-cards .card-item.drop-target {
+	border: 2px dashed var(--interactive-accent);
+	background: var(--interactive-accent-hover);
+	opacity: 0.8;
+}
+
+/* 인라인 편집기 스타일 */
+.card-inline-editor {
+	width: 100%;
+	min-height: 40px;
+	padding: 8px;
+	border: 2px solid var(--interactive-accent);
+	border-radius: 4px;
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	font-size: inherit;
+	font-family: inherit;
+	resize: vertical;
+	box-sizing: border-box;
+	outline: none;
+	transition: border-color 0.2s ease;
+}
+
+.card-inline-editor:focus {
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+/* =============================================================================
+   ⭐ Phase 5 Stage 3: 다중 선택 시스템 스타일
+   ============================================================================= */
+
+/* 선택된 카드 스타일 */
+.card-navigator-cards .card-item.selected {
+	outline: 3px solid var(--interactive-accent);
+	outline-offset: -3px;
+	box-shadow: 0 0 0 1px var(--interactive-accent);
+}
+
+/* 선택된 카드의 헤더 */
+.card-navigator-cards .card-item.selected .card-header {
+	background: var(--interactive-accent-hover);
+	color: var(--text-on-accent);
+}
+
+/* 선택 정보 바 */
+.selection-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 12px;
+	margin-bottom: 10px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	animation: slideDown 0.2s ease;
+}
+
+/* 선택 카운트 */
+.selection-count {
+	font-size: 0.9em;
+	font-weight: 600;
+	color: var(--interactive-accent);
+}
+
+/* 일괄 작업 버튼 컨테이너 */
+.batch-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* 일괄 작업 버튼 */
+.batch-action-btn {
+	padding: 6px 12px;
+	font-size: 0.85em;
+	background: var(--background-primary-alt);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.batch-action-btn:hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
+	color: var(--interactive-accent);
+}
+
+.batch-action-btn:active {
+	background: var(--background-modifier-active-hover);
+	transform: scale(0.98);
+}
+
+/* 위험한 작업 버튼 (삭제 등) */
+.batch-action-danger {
+	color: var(--text-error);
+}
+
+.batch-action-danger:hover {
+	border-color: var(--text-error);
+	background: var(--background-modifier-error);
+	color: var(--text-error);
+}
+
+/* 반응형: 작은 화면에서 버튼 조정 */
+@media (max-width: 600px) {
+	.selection-bar {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+	}
+	
+	.batch-actions {
+		width: 100%;
+		justify-content: flex-end;
+		flex-wrap: wrap;
+	}
+	
+	.batch-action-btn {
+		flex: 0 0 auto;
+	}
+}
+
+/* =============================================================================
+   ⭐ Phase 5 완료: 설정 탭 UI 스타일
+   탭 기반 설정 인터페이스
+   ============================================================================= */
+
+/* 설정 컨테이너 */
+.card-navigator-settings {
+	padding: 20px;
+}
+
+.card-navigator-settings h2 {
+	margin: 0 0 20px 0;
+	padding-bottom: 10px;
+	border-bottom: 2px solid var(--background-modifier-border);
+	font-size: 1.5em;
+	color: var(--text-normal);
+}
+
+/* 탭 바 - 모던하고 심플한 디자인 */
+.setting-tab-bar {
+	display: flex;
+	gap: 6px;
+	margin-bottom: 24px;
+	/* border-bottom 제거 - 더 깔끔한 디자인 */
+	padding: 4px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	/* 작은 화면에서 스크롤 가능 */
+	background: var(--background-secondary);
+	border-radius: 8px;
+}
+
+.setting-tab-bar::-webkit-scrollbar {
+	height: 4px;
+}
+
+.setting-tab-bar::-webkit-scrollbar-thumb {
+	background: var(--background-modifier-border);
+	border-radius: 2px;
+}
+
+/* 탭 버튼 - 배경색 기반 강조 */
+.setting-tab-button {
+	flex: 0 0 auto;
+	/* 자동 너비 */
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 10px 18px;
+	background: transparent;
+	border: none;
+	/* border-bottom 제거 - 더 심플한 디자인 */
+	color: var(--text-muted);
+	font-size: 0.95em;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+	/* 텍스트 줄바꿈 방지 */
+	outline: none;
+	border-radius: 6px;
+	/* 둥근 모서리 */
+}
+
+/* 탭 버튼 아이콘 */
+.setting-tab-button .setting-tab-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: inherit;
+	flex-shrink: 0;
+}
+
+.setting-tab-button .setting-tab-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* 탭 버튼 텍스트 */
+.setting-tab-button .setting-tab-label {
+	color: inherit;
+}
+
+.setting-tab-button:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+	/* 전체 둥근 모서리 유지 */
+}
+
+.setting-tab-button.is-active {
+	color: var(--interactive-accent);
+	/* 활성 탭은 배경색으로 강조 */
+	background: var(--background-primary);
+	font-weight: 600;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.setting-tab-button:focus {
+	outline: none;
+	box-shadow: none;
+}
+
+/* 탭 콘텐츠 컨테이너 */
+.setting-tab-content {
+	min-height: 400px;
+	/* 최소 높이로 갑작스러운 높이 변화 방지 */
+}
+
+/* 탭 패널 */
+.setting-tab-pane {
+	animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* 설정 섹션 */
+.setting-tab-pane h3 {
+	margin: 24px 0 12px 0;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	font-size: 1.1em;
+	color: var(--text-normal);
+	font-weight: 600;
+}
+
+.setting-tab-pane h3:first-child {
+	margin-top: 0;
+}
+
+/* 설정 항목 그룹 */
+.setting-item-group {
+	margin-bottom: 20px;
+	padding: 16px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+}
+
+.setting-item-group h4 {
+	margin: 0 0 12px 0;
+	font-size: 1em;
+	color: var(--text-normal);
+	font-weight: 600;
+}
+
+/* 반응형: 작은 화면 */
+@media (max-width: 768px) {
+	.card-navigator-settings {
+		padding: 12px;
+	}
+	
+	.setting-tab-button {
+		padding: 8px 16px;
+		font-size: 0.9em;
+	}
+	
+	.setting-tab-content {
+		min-height: 300px;
+	}
+}
+
+/* 반응형: 매우 작은 화면 */
+@media (max-width: 480px) {
+	.setting-tab-bar {
+		gap: 2px;
+	}
+	
+	.setting-tab-button {
+		padding: 8px 12px;
+		font-size: 0.85em;
+	}
+	
+	.setting-item-group {
+		padding: 12px;
+	}
+}
+
+/* =============================================================================
+   ⭐ Phase 5: 프리셋 목록 스타일
+   ============================================================================= */
+
+/* 프리셋 아이템 컨테이너 */
+.card-navigator-preset-item {
+	margin-bottom: 16px;
+	padding: 16px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	transition: all 0.2s ease;
+}
+
+.card-navigator-preset-item:hover {
+	background: var(--background-secondary-alt);
+	border-color: var(--interactive-accent);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 프리셋 정보 영역 */
+.preset-info {
+	margin-bottom: 12px;
+}
+
+/* 프리셋 이름 */
+.preset-name {
+	margin: 0 0 6px 0;
+	font-size: 1.05em;
+	color: var(--text-normal);
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+/* 프리셋 아이콘 */
+.preset-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--interactive-accent);
+}
+
+.preset-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* 프리셋 설명 */
+.preset-description {
+	margin: 4px 0;
+	font-size: 0.9em;
+	color: var(--text-muted);
+	line-height: 1.4;
+}
+
+/* 프리셋 날짜 */
+.preset-date {
+	margin: 4px 0;
+	font-size: 0.85em;
+	color: var(--text-faint);
+}
+
+/* 프리셋 버튼 영역 */
+.preset-buttons {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.preset-buttons button {
+	padding: 6px 14px;
+	font-size: 0.85em;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.preset-buttons button.mod-cta {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+}
+
+.preset-buttons button.mod-cta:hover {
+	background: var(--interactive-accent-hover);
+}
+
+.preset-buttons button:not(.mod-cta):not(.mod-warning) {
+	background: var(--background-primary);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+}
+
+.preset-buttons button:not(.mod-cta):not(.mod-warning):hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
+	color: var(--interactive-accent);
+}
+
+.preset-buttons button.mod-warning {
+	background: transparent;
+	color: var(--text-error);
+	border: 1px solid var(--background-modifier-border);
+}
+
+.preset-buttons button.mod-warning:hover {
+	background: var(--background-modifier-error);
+	border-color: var(--text-error);
+}
+
+/* 반응형: 작은 화면 */
+@media (max-width: 768px) {
+	.card-navigator-preset-item {
+		padding: 12px;
+	}
+	
+	.preset-buttons {
+		width: 100%;
+	}
+	
+	.preset-buttons button {
+		flex: 1;
+		min-width: 0;
+	}
+}
+
+/* =============================================================================
+   ⭐ Phase 5: 프리셋 매핑 스타일
+   ============================================================================= */
+
+/* 매핑 섹션 컨테이너 */
+.card-navigator-preset-mapping {
+	margin-top: 24px;
+	padding: 16px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+}
+
+.card-navigator-preset-mapping h4 {
+	margin: 0 0 16px 0;
+	font-size: 1em;
+	color: var(--text-normal);
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+/* 매핑 아이템 컨테이너 */
+.card-navigator-mapping-item {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 12px;
+	padding: 12px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	transition: all 0.2s ease;
+}
+
+.card-navigator-mapping-item:hover {
+	background: var(--background-primary-alt);
+	border-color: var(--interactive-accent);
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.card-navigator-mapping-item:last-child {
+	margin-bottom: 0;
+}
+
+/* 매핑 정보 영역 */
+.mapping-info {
+	flex: 1;
+	min-width: 0;
+	/* 오버플로우 방지 */
+}
+
+/* 매핑 대상 (폴더/태그) */
+.mapping-target {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 4px;
+	overflow: hidden;
+}
+
+/* 매핑 아이콘 */
+.mapping-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--interactive-accent);
+	flex-shrink: 0;
+}
+
+.mapping-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* 매핑 대상 텍스트 */
+.mapping-target-text {
+	font-weight: 600;
+	font-size: 0.95em;
+	color: var(--text-normal);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* 하위 폴더 포함 배지 */
+.mapping-subfolder-badge {
+	font-size: 0.8em;
+	color: var(--text-muted);
+	font-weight: normal;
+}
+
+/* 매핑된 프리셋 이름 */
+.mapping-preset-name {
+	font-size: 0.85em;
+	color: var(--text-muted);
+	margin: 0;
+}
+
+/* 매핑 버튼 영역 */
+.mapping-buttons {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+}
+
+/* 우선순위 변경 버튼 */
+.mapping-priority-btn {
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: transparent;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	color: var(--text-muted);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.mapping-priority-btn:hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
+	color: var(--interactive-accent);
+}
+
+.mapping-priority-btn:active {
+	background: var(--background-modifier-active-hover);
+	transform: scale(0.95);
+}
+
+.mapping-priority-btn svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* 매핑 삭제 버튼 */
+.mapping-delete-btn {
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: transparent;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	color: var(--text-error);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.mapping-delete-btn:hover {
+	background: var(--background-modifier-error);
+	border-color: var(--text-error);
+}
+
+.mapping-delete-btn:active {
+	background: var(--background-modifier-error);
+	transform: scale(0.95);
+}
+
+.mapping-delete-btn svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* 반응형: 작은 화면 */
+@media (max-width: 768px) {
+	.card-navigator-mapping-item {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	
+	.mapping-buttons {
+		justify-content: flex-end;
+		margin-top: 8px;
+	}
+}
+
+/* =============================================================================
+   ⭐ Phase 3: Interactive Card Settings - 미리 보기 기반 설정 UI
+   실시간 업데이트 및 고급 애니메이션
+   통합 날짜: 2024-11-16
+   ============================================================================= */
+
+/* ========================================
+   메인 컨테이너
+   ======================================== */
+
+.card-settings-container {
+	/* ⭐ Grid 레이아웃으로 변경 (2024-11-16): 좌측(미리보기) + 우측(기본 설정) + 하단(섹션 설정) */
+	display: grid;
+	grid-template-columns: 300px 1fr; /* 미리보기 300px, 기본 설정은 나머지 공간 차지 */
+	grid-template-rows: auto 1fr;
+	gap: 20px;
+	padding: 0;
+	max-width: 100%;
+	margin: 0;
+}
+
+/* ========================================
+   카드 기본 설정 섹션 (우측 항상 표시) - 위치 변경
+   ======================================== */
+
+.card-settings-container .card-base-settings {
+	/* Grid 위치: 우측 상단 - 변경 */
+	grid-row: 1;
+	grid-column: 2; /* 1에서 2로 변경 */
+	padding: 0;
+	overflow-y: auto;
+	max-height: 600px;
+}
+
+.card-settings-container .card-base-settings h3 {
+	margin: 0 0 16px 0;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--text-normal);
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* ⭐ 현재 상태 라벨 (2024-11-16 추가) */
+.card-settings-container .current-state-label {
+	margin-bottom: 16px;
+	padding: 0;
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--text-muted);
+	text-align: left;
+}
+
+/* ========================================
+   미리 보기 섹션 - 위치 변경
+   ======================================== */
+
+.card-settings-container .card-preview-section {
+	/* Grid 위치: 좌측 상단 - 변경 */
+	grid-row: 1;
+	grid-column: 1; /* 2에서 1로 변경 */
+}
+
+/* 미리 보기 헤더 */
+.card-settings-container .preview-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 16px;
+}
+
+/* ⭐ 미리보기 힌트 (2024-11-16) */
+.card-settings-container .preview-hint {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 12px;
+	padding: 0;
+	font-size: 12px;
+	color: var(--text-muted);
+	line-height: 1.4;
+}
+
+.card-settings-container .preview-hint-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--interactive-accent);
+	flex-shrink: 0;
+}
+
+.card-settings-container .preview-hint-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+.card-settings-container .preview-header h3 {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+/* 상태 탭 */
+.card-settings-container .preview-state-tabs {
+	display: flex;
+	gap: 4px;
+}
+
+.card-settings-container .preview-state-tabs button {
+	padding: 6px 14px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--text-muted);
+	
+	/* 🎨 Phase 3: 부드러운 전환 */
+	transition: all 0.2s ease;
+}
+
+.card-settings-container .preview-state-tabs button:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+	border-color: var(--background-modifier-border-hover);
+	
+	/* 살짝 위로 올라가는 효과 */
+	transform: translateY(-1px);
+}
+
+.card-settings-container .preview-state-tabs button.active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-settings-container .preview-state-tabs button.active:hover {
+	background: var(--interactive-accent-hover);
+	transform: translateY(0);
+}
+
+/* ========================================
+   미리 보기 카드
+   ======================================== */
+
+.card-settings-container .preview-card {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	overflow: hidden;
+	background: var(--background-primary);
+	/* ⭐ min-height 감소 (2024-11-16): 빈 공간 최소화 */
+	min-height: 150px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	
+	/* 🎨 Phase 3: 카드 전체에 트랜지션 */
+	transition: all 0.3s ease;
+}
+
+/* 카드 섹션 */
+.card-settings-container .card-section {
+	padding: 14px;
+	cursor: pointer;
+	position: relative;
+	border-bottom: 1px solid var(--background-modifier-border);
+	
+	/* 🎨 Phase 3: 섹션 전환 효과 */
+	transition: all 0.25s ease;
+}
+
+.card-settings-container .card-section:last-child {
+	border-bottom: none;
+}
+
+.card-settings-container .card-section:hover {
+	background-color: var(--background-modifier-hover);
+	
+	/* 살짝 확대 효과 */
+	transform: scale(1.01);
+}
+
+.card-settings-container .card-section.selected {
+	/* 선택된 섹션 하이라이트 */
+	box-shadow: inset 0 0 0 2px var(--interactive-accent);
+	background-color: var(--background-modifier-hover);
+	
+	/* 🎨 Phase 3: 펄스 애니메이션 (첫 선택 시) */
+	animation: pulse-once 0.4s ease-out;
+}
+
+@keyframes pulse-once {
+	0% {
+		box-shadow: inset 0 0 0 2px var(--interactive-accent);
+	}
+	50% {
+		box-shadow: inset 0 0 0 4px var(--interactive-accent);
+	}
+	100% {
+		box-shadow: inset 0 0 0 2px var(--interactive-accent);
+	}
+}
+
+.card-settings-container .card-section.selected:hover {
+	transform: scale(1);
+}
+
+.card-settings-container .card-section.hidden {
+	display: none;
+}
+
+/* 섹션 콘텐츠 */
+.card-settings-container .section-content {
+	/* 🎨 Phase 3: 텍스트 변경 시 페이드 효과 */
+	transition: opacity 0.2s ease;
+}
+
+/* 섹션 라벨 - 항상 표시 (Phase 5: 개선) */
+.card-settings-container .section-label {
+	position: absolute;
+	top: 6px;
+	right: 10px;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+	opacity: 0.6; /* 항상 표시 */
+	pointer-events: none;
+	background: var(--background-primary);
+	padding: 3px 8px;
+	border-radius: 4px;
+	color: var(--text-muted);
+	border: 1px solid var(--background-modifier-border);
+	
+	/* 🎨 Phase 3: 라벨 페이드 인/아웃 */
+	transition: all 0.2s ease;
+}
+
+.card-settings-container .card-section:hover .section-label {
+	opacity: 0.9;
+	color: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+}
+
+.card-settings-container .card-section.selected .section-label {
+	opacity: 1;
+	color: var(--text-on-accent);
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+}
+
+/* ========================================
+   선택된 섹션 설정 (하단 전체 너비)
+   ======================================== */
+
+.card-settings-container .card-section-settings {
+	/* Grid 위치: 하단 전체 */
+	grid-row: 2;
+	grid-column: 1 / -1; /* 전체 너비 */
+}
+
+/* 설정 제목 컨테이너 */
+.card-settings-container .settings-title-container {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+/* 섹션 아이콘 */
+.card-settings-container .settings-section-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--interactive-accent);
+}
+
+.card-settings-container .settings-section-icon svg {
+	width: 20px;
+	height: 20px;
+}
+
+/* 설정 헤더 - 개선된 레이아웃 */
+.card-settings-container .settings-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 16px;
+	padding: 0 0 8px 0;
+	border-bottom: 1px solid var(--background-modifier-border);
+	
+	/* 🎨 Phase 3: 헤더 변경 시 페이드 */
+	transition: all 0.3s ease;
+}
+
+.card-settings-container .settings-header h2 {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--text-normal);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.card-settings-container .current-state {
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--text-muted);
+}
+
+/* 설정 콘텐츠 */
+.card-settings-container .settings-content {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+/* ========================================
+   설정 그룹 (Phase 5: 개선된 구조)
+   ======================================== */
+
+.card-settings-container .settings-group {
+	padding: 0;
+	margin-bottom: 16px;
+}
+
+/* 그룹 제목 */
+.card-settings-container .settings-group-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--text-normal);
+}
+
+.card-settings-container .settings-group-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--interactive-accent);
+}
+
+.card-settings-container .settings-group-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* 그룹 설명 */
+.card-settings-container .settings-group-description {
+	font-size: 11px;
+	color: var(--text-muted);
+	line-height: 1.4;
+	margin-bottom: 12px;
+}
+
+/* 설정 항목 그룹 제목 */
+.card-settings-container .setting-item-heading {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--text-normal);
+	margin: 16px 0 8px 0;
+	padding: 0;
+}
+
+/* 구분선 */
+.card-settings-container .settings-divider {
+	height: 1px;
+	background: var(--background-modifier-border);
+	margin: 20px 0;
+}
+
+/* ========================================
+   Phase 4: 스타일 설정 헤더 (제목 + 기본값 복구 버튼)
+   ======================================== */
+
+.card-settings-container .style-settings-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 12px;
+	padding: 8px 0;
+}
+
+.card-settings-container .style-settings-header .setting-item-heading {
+	margin: 0 !important;
+	padding: 0 !important;
+	border: none !important;
+}
+
+/* Phase 4: 기본값 복구 버튼 스타일 */
+.card-settings-container .style-settings-header button.mod-warning {
+	font-size: 12px;
+	padding: 4px 12px;
+	background: transparent;
+	color: var(--text-error);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.card-settings-container .style-settings-header button.mod-warning:hover {
+	background: var(--background-modifier-error);
+	border-color: var(--text-error);
+}
+
+/* ========================================
+   고급 설정
+   ======================================== */
+
+.card-settings-container details {
+	margin-top: 20px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	overflow: hidden;
+	
+	/* 🎨 Phase 3: 접기/펴기 애니메이션 */
+	transition: all 0.3s ease;
+}
+
+.card-settings-container details[open] {
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.card-settings-container summary {
+	cursor: pointer;
+	padding: 12px 16px;
+	background: var(--background-secondary);
+	font-weight: 500;
+	color: var(--text-normal);
+	user-select: none;
+	
+	/* 🎨 Phase 3: 호버 효과 */
+	transition: all 0.2s ease;
+}
+
+.card-settings-container summary:hover {
+	background: var(--background-modifier-hover);
+}
+
+.card-settings-container summary::marker {
+	color: var(--text-muted);
+}
+
+.card-settings-container .advanced-settings-content {
+	padding: 16px;
+	background: var(--background-primary);
+	
+	/* 🎨 Phase 3: 펼쳐질 때 페이드 인 */
+	animation: slideDownSettings 0.3s ease-out;
+}
+
+@keyframes slideDownSettings {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Phase 4: 고급 설정 내부 섹션 */
+.card-settings-container .advanced-section {
+	margin-bottom: 16px;
+}
+
+.card-settings-container .advanced-section:last-child {
+	margin-bottom: 0;
+}
+
+.card-settings-container .advanced-section h4 {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text-normal);
+	margin: 0 0 10px 0;
+	padding: 0 0 6px 0;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* ========================================
+   섹션별 배경색 설정 (Phase 3 추가)
+   ======================================== */
+
+.card-settings-container .section-color-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: 16px;
+	padding: 0;
+}
+
+.card-settings-container .section-color-settings .setting-item {
+	background: none;
+	border: none;
+	padding: 8px 0;
+}
+
+/* ========================================
+   반응형 디자인
+   ======================================== */
+
+/* ⭐ 1024px 이하: Grid 레이아웃 조정 */
+@media (max-width: 1024px) {
+	.card-settings-container {
+		grid-template-columns: 1fr;
+		grid-template-rows: auto auto auto;
+	}
+	
+	.card-settings-container .card-base-settings {
+		grid-row: 1;
+		grid-column: 1;
+		max-height: none;
+	}
+	
+	.card-settings-container .card-preview-section {
+		grid-row: 2;
+		grid-column: 1;
+	}
+	
+	.card-settings-container .card-section-settings {
+		grid-row: 3;
+		grid-column: 1;
+	}
+}
+
+@media (max-width: 768px) {
+	.card-settings-container {
+		gap: 16px;
+	}
+	
+	.card-settings-container .preview-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 12px;
+	}
+	
+	.card-settings-container .preview-state-tabs {
+		width: 100%;
+		justify-content: stretch;
+	}
+	
+	.card-settings-container .preview-state-tabs button {
+		flex: 1;
+	}
+}
+
+/* ========================================
+   로딩 및 저장 상태 표시 (Phase 3 추가)
+   ======================================== */
+
+.settings-saving {
+	position: relative;
+}
+
+.settings-saving::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background: var(--interactive-accent);
+	
+	/* 저장 중 애니메이션 */
+	animation: saving-progress 0.6s ease-in-out;
+}
+
+@keyframes saving-progress {
+	from {
+		transform: translateX(-100%);
+	}
+	to {
+		transform: translateX(100%);
+	}
+}
+
+/* ========================================
+   접근성
+   ======================================== */
+
+.card-settings-container .card-section:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 2px;
+}
+
+button:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 2px;
+}
+
+/* =============================================================================
+   ⭐ Markdown HTML 렌더링 모드 스타일
+   Obsidian 읽기 뷰와 동일한 스타일 적용
+   2024-11-17 업데이트: 줄바꿈 및 여백 개선
+   ============================================================================= */
+
+/* 기본 레이아웃 */
+.card-body.markdown-preview-view,
+.card-header.markdown-preview-view,
+.card-footer.markdown-preview-view {
+	padding: 10px 12px;
+	line-height: 1.6;
+	/* ⭐ 줄바꿈 보존 (2024-11-17) */
+	white-space: normal;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+}
+
+/* 제목 스타일 */
+.card-body.markdown-preview-view h1,
+.card-body.markdown-preview-view h2,
+.card-body.markdown-preview-view h3,
+.card-body.markdown-preview-view h4,
+.card-body.markdown-preview-view h5,
+.card-body.markdown-preview-view h6 {
+	font-weight: var(--font-bold);
+	margin-top: 1em;
+	margin-bottom: 0.5em;
+	color: var(--text-normal);
+}
+
+.card-body.markdown-preview-view h1 {
+	font-size: 1.8em;
+}
+
+.card-body.markdown-preview-view h2 {
+	font-size: 1.5em;
+}
+
+.card-body.markdown-preview-view h3 {
+	font-size: 1.3em;
+}
+
+.card-body.markdown-preview-view h4 {
+	font-size: 1.1em;
+}
+
+.card-body.markdown-preview-view h5 {
+	font-size: 1em;
+}
+
+.card-body.markdown-preview-view h6 {
+	font-size: 0.9em;
+}
+
+/* 리스트 */
+.card-body.markdown-preview-view ul,
+.card-body.markdown-preview-view ol {
+	padding-left: 1.5em;
+	margin: 0.5em 0;
+}
+
+.card-body.markdown-preview-view li {
+	margin: 0.25em 0;
+}
+
+/* 코드 블록 */
+.card-body.markdown-preview-view pre {
+	background-color: var(--code-background);
+	border-radius: 4px;
+	padding: 8px;
+	overflow-x: auto;
+	margin: 0.5em 0;
+}
+
+.card-body.markdown-preview-view pre code {
+	background: none;
+	padding: 0;
+}
+
+/* 인라인 코드 */
+.card-body.markdown-preview-view code {
+	background-color: var(--code-background);
+	padding: 2px 4px;
+	border-radius: 2px;
+	font-family: var(--font-monospace);
+	font-size: 0.9em;
+}
+
+/* 인용문 */
+.card-body.markdown-preview-view blockquote {
+	border-left: 3px solid var(--quote-opening-modifier);
+	padding-left: 1em;
+	margin-left: 0;
+	margin: 0.5em 0;
+	color: var(--text-muted);
+}
+
+/* 표 */
+.card-body.markdown-preview-view table {
+	border-collapse: collapse;
+	width: 100%;
+	margin: 0.5em 0;
+}
+
+.card-body.markdown-preview-view table th,
+.card-body.markdown-preview-view table td {
+	border: 1px solid var(--background-modifier-border);
+	padding: 6px 12px;
+	text-align: left;
+}
+
+.card-body.markdown-preview-view table th {
+	background-color: var(--background-primary-alt);
+	font-weight: var(--font-bold);
+}
+
+/* 링크 */
+.card-body.markdown-preview-view a {
+	color: var(--link-color);
+	text-decoration: none;
+}
+
+.card-body.markdown-preview-view a:hover {
+	text-decoration: underline;
+}
+
+/* 내부 링크 */
+.card-body.markdown-preview-view .internal-link {
+	color: var(--link-color);
+	cursor: pointer;
+}
+
+/* 이미지 */
+.card-body.markdown-preview-view img {
+	max-width: 100%;
+	height: auto;
+	display: block;
+	margin: 0.5em 0;
+	border-radius: 4px;
+}
+
+/* 가로선 */
+.card-body.markdown-preview-view hr {
+	border: none;
+	border-top: 1px solid var(--background-modifier-border);
+	margin: 1em 0;
+}
+
+/* 문단 */
+.card-body.markdown-preview-view p {
+	margin: 0.5em 0;
+	/* ⭐ 줄바꿈 보존 (2024-11-17) */
+	white-space: pre-wrap; /* 공백과 줄바꿈 모두 보존 */
+	word-break: break-word; /* 긴 단어 줄바꿈 */
+}
+
+.card-body.markdown-preview-view p:first-child {
+	margin-top: 0;
+}
+
+.card-body.markdown-preview-view p:last-child {
+	margin-bottom: 0;
+}
+
+/* 강조 텍스트 */
+.card-body.markdown-preview-view strong,
+.card-body.markdown-preview-view b {
+	font-weight: var(--font-bold);
+	color: var(--text-normal);
+}
+
+.card-body.markdown-preview-view em,
+.card-body.markdown-preview-view i {
+	font-style: italic;
+}
+
+/* 취소선 */
+.card-body.markdown-preview-view s,
+.card-body.markdown-preview-view del {
+	text-decoration: line-through;
+	opacity: 0.7;
+}
+
+/* 하이라이트 */
+.card-body.markdown-preview-view mark {
+	background: var(--text-highlight-bg);
+	color: var(--text-normal);
+	padding: 2px 0;
+	border-radius: 2px;
+}
+
+/* 체크박스 */
+.card-body.markdown-preview-view input[type="checkbox"] {
+	margin-right: 0.5em;
+}
+
+/* 각주 */
+.card-body.markdown-preview-view .footnote-ref {
+	font-size: 0.8em;
+	vertical-align: super;
+}
+
+/* ⭐ Markdown 렌더링 모드 풋터: 줄바꿈 허용 (2024-11-17) */
+.card-navigator-cards .card-footer.card-markdown-content {
+	white-space: normal;
+	text-overflow: clip;
+	overflow: visible;
+}
+
+/* =============================================================================
+   ⭐ 검색 제안 UI (Search Suggestions) - 2024-11-17
+   Obsidian 스타일과 동일한 검색 옵션 표시
+   ============================================================================= */
+
+/* 검색 제안 항목 기본 스타일 */
+.search-suggestion-item {
+    padding: 2px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.1s ease;
+}
+
+/* 검색 연산자 항목 (연산자 + 설명) */
+.search-operator-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 2px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.1s ease;
+}
+
+/* 검색 연산자 텍스트 (path:, file:, tag: 등) */
+.search-operator {
+    font-family: var(--font-monospace);
+    font-weight: 500;
+    color: var(--text-normal);
+    flex-shrink: 0;
+}
+
+/* 검색 연산자 설명 (일치하는 파일 경로, 태그 검색 등) */
+.search-operator-description {
+    color: var(--text-muted);
+    font-size: 0.9em;
+    flex-grow: 1;
+    text-align: left;
+}
+
+/* ⭐ 호버 효과 - 음영 중복 방지 */
+/* Obsidian의 suggestion-item.is-selected와 중복되지 않도록 설정 */
+.suggestion-item.is-selected .search-suggestion-item,
+.suggestion-item.is-selected .search-operator-item {
+    /* 선택된 항목은 Obsidian 기본 스타일 사용 */
+    /* 추가 배경색 없음 - 중복 방지 */
+    background-color: transparent !important;
+}
+
+/* 직접 호버 시만 배경색 적용 (선택되지 않은 경우) */
+.suggestion-item:not(.is-selected) .search-suggestion-item:hover,
+.suggestion-item:not(.is-selected) .search-operator-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+/* ⭐ Markdown 렌더링 모드 풋터: 줄바꿈 허용 (2024-11-17) */
+.card-navigator-cards .card-footer.card-markdown-content {
+	white-space: normal;
+	text-overflow: clip;
+	overflow: visible;
+}
+
+/* =============================================================================
+   ⭐ 태그 스타일
+   카드 내 태그 표시 스타일
+   2024-11-17 추가
+   ============================================================================= */
+
+/* 태그 링크 기본 스타일 */
+.card-navigator-cards .tag-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 10px;
+	margin: 0 4px 4px 0;
+	background: var(--tag-background);
+	border: 1px solid var(--tag-border);
+	border-radius: 12px;
+	font-size: 0.85em;
+	color: var(--tag-color);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	user-select: none;
+	white-space: nowrap;
+}
+
+/* 태그 호버 효과 */
+.card-navigator-cards .tag-link:hover {
+	background: var(--tag-background-hover);
+	border-color: var(--tag-border-hover);
+	color: var(--text-accent);
+	transform: translateY(-1px);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 태그 클릭 효과 */
+.card-navigator-cards .tag-link:active {
+	transform: translateY(0);
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+/* =============================================================================
+   ⭐ Viewport 플레이스홀더 스타일
+   대량 파일 렌더링 성능 최적화를 위한 플레이스홀더
+   2024-11-18 추가
+   ============================================================================= */
+
+/* 플레이스홀더 기본 스타일 - 렌더링되지 않은 카드에만 적용 */
+.card-navigator-cards .card-item.card-placeholder:not(.card-rendered) {
+	/* ⚠️ 중요: background, border 등 카드 스타일과 충돌하는 속성 제거 */
+	/* 플레이스홀더는 레이아웃과 로딩 표시만 담당 */
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	overflow: hidden;
+	/* background, border, border-radius는 .card-item의 기본 스타일 사용 */
+}
+
+/* 로딩 인디케이터 컨테이너 */
+.card-navigator-cards .card-loading-indicator {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	color: var(--text-muted);
+}
+
+/* 로딩 스피너 */
+.card-navigator-cards .loading-spinner {
+	width: 30px;
+	height: 30px;
+	border: 3px solid var(--background-modifier-border);
+	border-top-color: var(--interactive-accent);
+	border-radius: 50%;
+	animation: card-loading-spin 0.8s linear infinite;
+}
+
+/* 로딩 텍스트 */
+.card-navigator-cards .loading-text {
+	font-size: 0.85em;
+	color: var(--text-muted);
+	max-width: 80%;
+	text-align: center;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* 스피너 애니메이션 */
+@keyframes card-loading-spin {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+/* 플레이스홀더 호버 효과 - 제거 (card-item의 기본 호버 효과 사용) */
+/* .card-navigator-cards .card-placeholder:hover는 제거됨 */
+
+/* 활성 플레이스홀더 - 제거 (card-item.active의 기본 스타일 사용) */
+/* .card-navigator-cards .card-placeholder.active는 제거됨 */
+
+/* 렌더링 완료된 카드 */
+.card-navigator-cards .card-rendered {
+	/* 플레이스홀더 스타일 제거 */
+	border-style: solid;
+}
+
+/* 렌더링 전환 애니메이션 */
+.card-navigator-cards .card-placeholder.card-rendered {
+	animation: card-fade-in 0.3s ease-in-out;
+}
+
+@keyframes card-fade-in {
+	0% {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* =============================================================================
+   ⭐ 다중 선택 및 일괄 작업 스타일
+   ============================================================================= */
+
+/* 선택 바 컨테이너 */
+.selection-bar {
+	position: sticky;
+	top: 0;
+	z-index: 100;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 8px 12px;
+	margin: 8px 0;
+	/* ⭐ 버그 수정 (2024-11-20): 하단 여백 추가로 상태 표시줄과 겹침 방지 */
+	margin-bottom: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 선택 개수 표시 */
+.selection-count {
+	font-size: 0.9em;
+	color: var(--text-normal);
+	font-weight: 500;
+}
+
+/* 일괄 작업 버튼 컨테이너 */
+.batch-actions {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}
+
+/* 일괄 작업 버튼 */
+.batch-action-btn {
+	padding: 4px 12px;
+	font-size: 0.85em;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--interactive-normal);
+	color: var(--text-normal);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+/* 일괄 작업 버튼 호버 */
+.batch-action-btn:hover {
+	background: var(--interactive-hover);
+	border-color: var(--interactive-accent);
+}
+
+/* 일괄 작업 버튼 활성 */
+.batch-action-btn:active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	transform: translateY(1px);
+}
+
+/* 위험한 작업 버튼 (삭제 등) */
+.batch-action-danger {
+	border-color: var(--background-modifier-error);
+	color: var(--text-error);
+}
+
+/* 위험한 작업 버튼 호버 */
+.batch-action-danger:hover {
+	background: var(--background-modifier-error);
+	color: var(--text-on-accent);
+}
+
+/* 선택된 카드 스타일 */
+.card-navigator-cards .card-item.selected {
+	border: 2px solid var(--interactive-accent);
+	box-shadow: 0 0 0 3px var(--interactive-accent-hover);
+	background: var(--background-secondary);
+}
+
+/* 선택된 카드 호버 */
+.card-navigator-cards .card-item.selected:hover {
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 3px var(--interactive-accent-hover), 0 4px 8px rgba(0, 0, 0, 0.1);
+}
