@@ -52,7 +52,7 @@ Card Navigator provides three powerful ways to browse your notes:
 
 ## 🚀 Installation
 
-### From Community Plugins (Recommended)
+### From Community Plugins (Not yet)
 
 1. Open Obsidian Settings
 2. Go to **Community plugins** and disable Safe mode
@@ -61,7 +61,7 @@ Card Navigator provides three powerful ways to browse your notes:
 
 ### Manual Installation
 
-1. Download the latest release from [GitHub Releases](https://github.com/wakeyi/obsidian-card-navigator/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/wakeyi-git/obsidian-card-navigator/releases)
 2. Extract the files to your vault's plugins folder: `<vault>/.obsidian/plugins/card-navigator/`
 3. Reload Obsidian
 4. Enable the plugin in Settings → Community plugins
@@ -124,7 +124,6 @@ Configure what appears in each section of your cards:
 ### Rendering Modes
 
 - **Plain**: Display content as plain text
-- **Markdown**: Render markdown formatting
 - **Markdown + HTML**: Full markdown rendering with HTML support
 
 ### Preset System
@@ -145,7 +144,7 @@ Create and manage presets for different use cases:
 
 ```bash
 # Clone the repository
-git clone https://github.com/wakeyi/obsidian-card-navigator.git
+git clone https://github.com/wakeyi-git/obsidian-card-navigator.git
 cd obsidian-card-navigator
 
 # Install dependencies
@@ -189,9 +188,9 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## 🐛 Bug Reports & Feature Requests
 
-- **Bug Reports**: Please use the [GitHub Issues](https://github.com/wakeyi/obsidian-card-navigator/issues) page
+- **Bug Reports**: Please use the [GitHub Issues](https://github.com/wakeyi-git/obsidian-card-navigator/issues) page
 - **Feature Requests**: Open an issue with the "enhancement" label
-- **Questions**: Use the [Discussions](https://github.com/wakeyi/obsidian-card-navigator/discussions) page
+- **Questions**: Use the [Discussions](https://github.com/wakeyi-git/obsidian-card-navigator/discussions) page
 
 ## ⚠️ Known Limitations
 
@@ -218,11 +217,3 @@ If you find this plugin helpful, consider supporting its development:
 - ⭐ Star this repository on GitHub
 - 🐛 Report bugs and request features
 - 📝 Share your experience and spread the word
-- ☕ [Buy me a coffee](https://buymeacoffee.com/wakeyi) (optional)
-
----
-
-**Made with ❤️ for the Obsidian community**
-# obsidian-card-navigator
-# obsidian-card-navigator
-# obsidian-card-navigator

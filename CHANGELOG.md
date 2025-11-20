@@ -89,6 +89,6 @@ Future updates will be listed here.
 
 ## Links
 
-- [GitHub Repository](https://github.com/wakeyi/obsidian-card-navigator)
-- [Report Issues](https://github.com/wakeyi/obsidian-card-navigator/issues)
-- [Documentation](https://github.com/wakeyi/obsidian-card-navigator/blob/main/README.md)
+- [GitHub Repository](https://github.com/wakeyi-git/obsidian-card-navigator)
+- [Report Issues](https://github.com/wakeyi-git/obsidian-card-navigator/issues)
+- [Documentation](https://github.com/wakeyi-git/obsidian-card-navigator/blob/main/README.md)

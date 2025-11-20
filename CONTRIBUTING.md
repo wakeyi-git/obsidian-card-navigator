@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Card Navigator! This document pro
 
 ### Reporting Bugs
 
-Before creating a bug report, please check the [existing issues](https://github.com/wakeyi/obsidian-card-navigator/issues) to avoid duplicates.
+Before creating a bug report, please check the [existing issues](https://github.com/wakeyi-git/obsidian-card-navigator/issues) to avoid duplicates.
 
 When filing a bug report, include:
 - **Description**: Clear description of the issue
@@ -309,9 +309,9 @@ Contributors will be recognized in:
 
 ## 📞 Getting Help
 
-- **Questions**: Open a [Discussion](https://github.com/wakeyi/obsidian-card-navigator/discussions)
-- **Issues**: File an [Issue](https://github.com/wakeyi/obsidian-card-navigator/issues)
-- **Contact**: Reach out to [@wakeyi](https://github.com/wakeyi)
+- **Questions**: Open a [Discussion](https://github.com/wakeyi-git/obsidian-card-navigator/discussions)
+- **Issues**: File an [Issue](https://github.com/wakeyi-git/obsidian-card-navigator/issues)
+- **Contact**: Reach out to [@wakeyi](https://github.com/wakeyi-git)
 
 ## 📜 License
 
