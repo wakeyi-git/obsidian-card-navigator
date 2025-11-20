@@ -4,6 +4,7 @@ import { BaseSettings } from './BaseSettings';
 import { CardSectionSettings, CardStyleSettings, CardSectionStyleSettings, DEFAULT_SETTINGS } from '../../types';
 import { debounce } from '../../utils/debounce';
 import { DebugLogger } from '../../utils/DebugLogger';
+import { t } from '../../i18n';
 
 /**
  * 미리 보기 기반 인터랙티브 카드 설정 UI
@@ -79,7 +80,7 @@ export class InteractiveCardSettings extends BaseSettings {
             }
         }
         
-        this.logger.debug('Settings', '프론트매터 속성 수집 완료', {
+        this.logger.debug('Settings', t().interactiveCardSettings.propertyCollectionComplete, {
             count: this.availableProperties.size
         });
     }
@@ -102,7 +103,7 @@ export class InteractiveCardSettings extends BaseSettings {
             });
         }
         
-        this.logger.debug('Settings', '현재 파일 속성 로드', {
+        this.logger.debug('Settings', t().interactiveCardSettings.currentFilePropertiesLoaded, {
             count: this.currentFileProperties.size
         });
     }
@@ -176,18 +177,18 @@ export class InteractiveCardSettings extends BaseSettings {
      */
     private renderCardBaseSettings(container: HTMLElement): void {
         const section = container.createDiv({ cls: 'card-base-settings'});
-        
-        section.createEl('h3', { text: '카드 기본 설정' });
-        
+
+        section.createEl('h3', { text: t().settingsTab.cardSettings.cardBaseSettings });
+
         const descEl = section.createDiv({ cls: 'setting-item-description'});
-        descEl.setText('모든 카드에 공통으로 적용되는 스타일을 설정합니다. 각 섹션(헤더/바디/풋터)의 배경색은 해당 섹션 설정에서 변경할 수 있습니다.');
+        descEl.setText(t().settingsTab.cardSettings.cardBaseSettingsDescription);
         descEl.style.marginBottom = '12px';
         descEl.style.fontSize = '0.9em';
         descEl.style.color = 'var(--text-muted)';
-        
+
         const currentStateLabel = section.createDiv({ cls: 'current-state-label'});
-        currentStateLabel.setText(`현재: ${this.getStateLabel()}`);
-        
+        currentStateLabel.setText(t().settingsTab.cardSettings.currentState(this.getStateLabel()));
+
         this.cardBaseSettingsContent = section.createDiv({ cls: 'card-base-settings-content'});
         this.updateCardBaseSettings();
     }
@@ -204,8 +205,8 @@ export class InteractiveCardSettings extends BaseSettings {
         const style = this.getCurrentCardStyle();
         
         new Setting(this.cardBaseSettingsContent)
-            .setName('테두리 색')
-            .setDesc('카드 전체의 외곽 테두리 색상입니다')
+            .setName(t().settingsTab.cardSettings.borderColor)
+            .setDesc(t().settingsTab.cardSettings.borderColorDescription)
             .addColorPicker(color => color
                 .setValue(this.extractColorValue(style.borderColor))
                 .onChange(async (value) => {
@@ -217,7 +218,7 @@ export class InteractiveCardSettings extends BaseSettings {
             )
             .addExtraButton(button => button
                 .setIcon('reset')
-                .setTooltip('기본값으로 복구')
+                .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                 .onClick(async () => {
                     const defaultStyle = this.getDefaultCardStyle();
                     style.borderColor = defaultStyle.borderColor;
@@ -225,13 +226,13 @@ export class InteractiveCardSettings extends BaseSettings {
                     this.updateCardBaseSettings();
                     this.updatePreviewStyles();
                     this.forceViewRender();
-                    new Notice('테두리 색을 기본값으로 복구했습니다');
+                    new Notice(t().notices.interactiveCard.borderColorReset);
                 })
             );
-        
+
         new Setting(this.cardBaseSettingsContent)
-            .setName('테두리 두께')
-            .setDesc('카드 외곽 테두리의 두께입니다 (px). 0으로 설정하면 테두리가 표시되지 않습니다')
+            .setName(t().settingsTab.cardSettings.borderThickness)
+            .setDesc(t().settingsTab.cardSettings.borderThicknessDescription)
             .addText(text => text
                 .setValue(String(style.borderWidth))
                 .onChange((value) => {
@@ -246,7 +247,7 @@ export class InteractiveCardSettings extends BaseSettings {
             )
             .addExtraButton(button => button
                 .setIcon('reset')
-                .setTooltip('기본값으로 복구')
+                .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                 .onClick(async () => {
                     const defaultStyle = this.getDefaultCardStyle();
                     style.borderWidth = defaultStyle.borderWidth;
@@ -254,13 +255,13 @@ export class InteractiveCardSettings extends BaseSettings {
                     this.updateCardBaseSettings();
                     this.updatePreviewStyles();
                     this.forceViewRender();
-                    new Notice('테두리 두께를 기본값으로 복구했습니다');
+                    new Notice(t().notices.interactiveCard.borderThicknessReset);
                 })
             );
-        
+
         new Setting(this.cardBaseSettingsContent)
-            .setName('테두리 둥글기')
-            .setDesc('카드 모서리의 둥근 정도입니다 (px). 값이 클수록 더 둥글게 표시됩니다')
+            .setName(t().settingsTab.cardSettings.borderRadius)
+            .setDesc(t().settingsTab.cardSettings.borderRadiusDescription)
             .addText(text => text
                 .setValue(String(style.borderRadius))
                 .onChange((value) => {
@@ -275,7 +276,7 @@ export class InteractiveCardSettings extends BaseSettings {
             )
             .addExtraButton(button => button
                 .setIcon('reset')
-                .setTooltip('기본값으로 복구')
+                .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                 .onClick(async () => {
                     const defaultStyle = this.getDefaultCardStyle();
                     style.borderRadius = defaultStyle.borderRadius;
@@ -283,7 +284,7 @@ export class InteractiveCardSettings extends BaseSettings {
                     this.updateCardBaseSettings();
                     this.updatePreviewStyles();
                     this.forceViewRender();
-                    new Notice('테두리 둥글기를 기본값으로 복구했습니다');
+                    new Notice(t().notices.interactiveCard.borderRadiusReset);
                 })
             );
     }
@@ -320,7 +321,7 @@ export class InteractiveCardSettings extends BaseSettings {
         const hint = section.createDiv({ cls: 'preview-hint'});
         const hintIcon = hint.createSpan({ cls: 'preview-hint-icon'});
         setIcon(hintIcon, 'lightbulb');
-        hint.createSpan({ cls: ''}).setText('섹션을 클릭하여 설정을 변경하세요');
+        hint.createSpan({ cls: ''}).setText(t().settingsTab.cardSettings.clickSectionHint);
         
         this.bindSectionClickEvents();
     }
@@ -333,9 +334,9 @@ export class InteractiveCardSettings extends BaseSettings {
      */
     private createStateTabs(container: HTMLElement): void {
         const states = [
-            { key: 'normal' as const, label: '일반' },
-            { key: 'active' as const, label: '활성' },
-            { key: 'focused' as const, label: '포커스' }
+            { key: 'normal' as const, label: t().settingsTab.cardSettings.stateName.normal },
+            { key: 'active' as const, label: t().settingsTab.cardSettings.stateName.active },
+            { key: 'focused' as const, label: t().settingsTab.cardSettings.stateName.focused }
         ];
 
         states.forEach((state, index) => {
@@ -343,16 +344,16 @@ export class InteractiveCardSettings extends BaseSettings {
                 text: state.label,
                 cls: state.key === this.selectedState ? 'active' : ''
             });
-            
+
             button.setAttribute('role', 'tab');
             button.setAttribute('aria-selected', (state.key === this.selectedState).toString());
-            button.setAttribute('aria-label', `${state.label} 카드 상태`);
-            
+            button.setAttribute('aria-label', `${state.label} ${t().settingsTab.cardSettings.stateLabel[state.key]}`);
+
             button.addEventListener('click', () => {
                 this.switchState(state.key);
                 this.currentTabIndex = index;
             }, { signal: this.abortController?.signal });
-            
+
             button.addEventListener('keydown', (e: KeyboardEvent) => {
                 if (e.key === 'ArrowLeft' && index > 0) {
                     e.preventDefault();
@@ -390,12 +391,12 @@ export class InteractiveCardSettings extends BaseSettings {
         }
         
         this.updateCardBaseSettings();
-        
+
         const stateLabel = document.querySelector('.current-state-label');
         if (stateLabel) {
-            stateLabel.textContent = `현재: ${this.getStateLabel()}`;
+            stateLabel.textContent = t().settingsTab.cardSettings.currentState(this.getStateLabel());
         }
-        
+
         this.updateSectionSettings();
     }
 
@@ -414,12 +415,12 @@ export class InteractiveCardSettings extends BaseSettings {
             if (this.selectedSection === 'header') {
                 headerSection.addClass('selected');
             }
-            
+
             headerSection.createEl('span', {
                 cls: 'section-label',
-                text: '헤더'
+                text: t().settingsTab.cardSettings.sectionLabel.header
             });
-            
+
             const headerContent = headerSection.createEl('div', {
                 cls: 'section-content'
             });
@@ -430,19 +431,19 @@ export class InteractiveCardSettings extends BaseSettings {
                 headerContent.textContent = headerContentText;
             }
         }
-        
+
         if (settings.body.enabled) {
             const bodySection = card.createDiv({ cls: 'card-section card-body'});
             bodySection.dataset.section = 'body';
             if (this.selectedSection === 'body') {
                 bodySection.addClass('selected');
             }
-            
+
             bodySection.createEl('span', {
                 cls: 'section-label',
-                text: '바디'
+                text: t().settingsTab.cardSettings.sectionLabel.body
             });
-            
+
             const bodyContent = bodySection.createEl('div', {
                 cls: 'section-content'
             });
@@ -453,19 +454,19 @@ export class InteractiveCardSettings extends BaseSettings {
                 bodyContent.textContent = bodyContentText;
             }
         }
-        
+
         if (settings.footer.enabled) {
             const footerSection = card.createDiv({ cls: 'card-section card-footer'});
             footerSection.dataset.section = 'footer';
             if (this.selectedSection === 'footer') {
                 footerSection.addClass('selected');
             }
-            
+
             footerSection.createEl('span', {
                 cls: 'section-label',
-                text: '풋터'
+                text: t().settingsTab.cardSettings.sectionLabel.footer
             });
-            
+
             const footerContent = footerSection.createEl('div', {
                 cls: 'section-content'
             });
@@ -490,38 +491,39 @@ export class InteractiveCardSettings extends BaseSettings {
      */
     private getSampleContent(section: 'header' | 'body' | 'footer'): string {
         const settings = this.plugin.settings[section];
-        
+        const sampleContent = t().settingsTab.cardSettings.sampleContent;
+
         switch (settings.contentType) {
             case 'filename':
-                return '샘플파일.md';
+                return sampleContent.filename;
             case 'file-path':
-                return 'folder/subfolder/샘플파일.md';
+                return sampleContent.filePath;
             case 'first-header':
-                return '# 첫 번째 헤더';
+                return sampleContent.firstHeader;
             case 'content':
-                return '본문 내용이 여기에 표시됩니다. 마크다운 문법이 적용될 수 있습니다.';
+                return sampleContent.content;
             case 'tags':
-                return '#태그1 #태그2 #태그3';
+                return sampleContent.tags;
             case 'created-date':
-                return '생성: 2024-11-16';
+                return sampleContent.createdDate;
             case 'modified-date':
-                return '수정: 2024-11-16';
+                return sampleContent.modifiedDate;
             case 'property':
                 if (settings.customProperty) {
                     const realValue = this.currentFileProperties.get(settings.customProperty);
                     if (realValue) {
-                        return `${settings.customProperty}: ${realValue}`;
+                        return sampleContent.propertyWithName(settings.customProperty, realValue);
                     } else {
-                        return `${settings.customProperty}: (속성 없음)`;
+                        return sampleContent.propertyNotFound(settings.customProperty);
                     }
                 }
-                return '속성: 값';
+                return sampleContent.property;
             case 'backlinks':
-                return '<span class="internal-link" data-file-path="note1.md" style="cursor: pointer; color: var(--link-color);">노트1</span>, <span class="internal-link" data-file-path="note2.md" style="cursor: pointer; color: var(--link-color);">노트2</span>';
+                return `<span class="internal-link" data-file-path="note1.md" style="cursor: pointer; color: var(--link-color);">${sampleContent.backlinks.link1}</span>, <span class="internal-link" data-file-path="note2.md" style="cursor: pointer; color: var(--link-color);">${sampleContent.backlinks.link2}</span>`;
             case 'outgoing-links':
-                return '<span class="internal-link" data-file-path="reference1.md" style="cursor: pointer; color: var(--link-color);">참조문1</span>, <span class="internal-link" data-file-path="reference2.md" style="cursor: pointer; color: var(--link-color);">참조문2</span>';
+                return `<span class="internal-link" data-file-path="reference1.md" style="cursor: pointer; color: var(--link-color);">${sampleContent.outgoingLinks.link1}</span>, <span class="internal-link" data-file-path="reference2.md" style="cursor: pointer; color: var(--link-color);">${sampleContent.outgoingLinks.link2}</span>`;
             default:
-                return '샘플 텍스트';
+                return sampleContent.default;
         }
     }
 
@@ -537,11 +539,11 @@ export class InteractiveCardSettings extends BaseSettings {
         const sections = this.previewCard.querySelectorAll('.card-section');
         sections.forEach((section, index) => {
             const sectionEl = section as HTMLElement;
-            
+
             sectionEl.setAttribute('tabindex', '0');
             sectionEl.setAttribute('role', 'button');
-            sectionEl.setAttribute('aria-label', `${this.getSectionLabelByIndex(index)} 영역 선택`);
-            
+            sectionEl.setAttribute('aria-label', `${this.getSectionLabelByIndex(index)} ${t().settingsTab.cardSettings.sectionEnabled(this.getSectionLabelByIndex(index))}`);
+
             sectionEl.addEventListener('click', () => {
                 const sectionType = sectionEl.dataset.section as 'header' | 'body' | 'footer';
                 if (sectionType) {
@@ -568,8 +570,12 @@ export class InteractiveCardSettings extends BaseSettings {
      * 인덱스로 섹션 라벨을 반환합니다
      */
     private getSectionLabelByIndex(index: number): string {
-        const labels = ['헤더', '바디', '풋터'];
-        return labels[index] || '영역';
+        const sections: ('header' | 'body' | 'footer')[] = ['header', 'body', 'footer'];
+        const section = sections[index];
+        if (section) {
+            return t().settingsTab.cardSettings.sectionLabel[section];
+        }
+        return t().settingsTab.cardSettings.sectionLabel.header;
     }
     
     /**
@@ -771,12 +777,12 @@ export class InteractiveCardSettings extends BaseSettings {
     private addContentSettings(container: HTMLElement): void {
         const settings = this.plugin.settings;
         const sectionSettings = settings[this.selectedSection];
-        
-        new Setting(container).setHeading().setName(`${this.getSectionLabel()} 내용 설정`);
-        
+
+        new Setting(container).setHeading().setName(t().settingsTab.cardSettings.sectionContentSettings(this.getSectionLabel()));
+
         new Setting(container)
-            .setName(`${this.getSectionLabel()} 표시`)
-            .setDesc(`카드에 ${this.getSectionLabel()} 영역을 표시할지 결정합니다`)
+            .setName(t().settingsTab.cardSettings.sectionEnabled(this.getSectionLabel()))
+            .setDesc(t().settingsTab.cardSettings.sectionEnabledDescription(this.getSectionLabel()))
             .addToggle(toggle => toggle
                 .setValue(sectionSettings.enabled)
                 .onChange(async (value) => {
@@ -785,21 +791,21 @@ export class InteractiveCardSettings extends BaseSettings {
                     this.refreshPreviewCard();
                 })
             );
-        
+
         new Setting(container)
-            .setName('표시 내용')
-            .setDesc('이 영역에 표시할 정보를 선택합니다. 선택한 내용에 따라 각 파일에서 해당 정보를 추출하여 표시합니다')
+            .setName(t().settingsTab.cardSettings.displayContent)
+            .setDesc(t().settingsTab.cardSettings.displayContentDescription)
             .addDropdown(dropdown => dropdown
-                .addOption('filename', '파일명')
-                .addOption('file-path', '파일 경로')
-                .addOption('first-header', '첫 번째 헤더')
-                .addOption('content', '본문 내용')
-                .addOption('tags', '태그')
-                .addOption('created-date', '생성일')
-                .addOption('modified-date', '수정일')
-                .addOption('property', '프론트매터 속성')
-                .addOption('backlinks', '백링크 (이 파일을 링크하는 파일들)')
-                .addOption('outgoing-links', '나가는 링크 (이 파일에서 링크하는 파일들)')
+                .addOption('filename', t().settingsTab.cardSettings.contentType.filename)
+                .addOption('file-path', t().settingsTab.cardSettings.contentType.filePath)
+                .addOption('first-header', t().settingsTab.cardSettings.contentType.firstHeader)
+                .addOption('content', t().settingsTab.cardSettings.contentType.content)
+                .addOption('tags', t().settingsTab.cardSettings.contentType.tags)
+                .addOption('created-date', t().settingsTab.cardSettings.contentType.createdDate)
+                .addOption('modified-date', t().settingsTab.cardSettings.contentType.modifiedDate)
+                .addOption('property', t().settingsTab.cardSettings.contentType.property)
+                .addOption('backlinks', t().settingsTab.cardSettings.contentType.backlinks)
+                .addOption('outgoing-links', t().settingsTab.cardSettings.contentType.outgoingLinks)
                 .setValue(sectionSettings.contentType)
                 .onChange(async (value) => {
                     sectionSettings.contentType = value as any;
@@ -810,14 +816,14 @@ export class InteractiveCardSettings extends BaseSettings {
             )
             .addExtraButton(button => button
                 .setIcon('reset')
-                .setTooltip('기본값으로 복구')
+                .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                 .onClick(async () => {
                     const defaultSettings = this.getDefaultSectionSettings();
                     sectionSettings.contentType = defaultSettings.contentType;
                     await this.plugin.saveSettings();
                     this.updateSectionSettings();
                     this.refreshPreviewCard();
-                    new Notice('표시 내용을 기본값으로 복구했습니다');
+                    new Notice(t().notices.interactiveCard.displayContentReset);
                 })
             );
         
@@ -833,11 +839,11 @@ export class InteractiveCardSettings extends BaseSettings {
             }
             
             new Setting(container)
-                .setName('프론트매터 속성명')
-                .setDesc('표시하고자 하는 프론트매터 속성의 이름을 입력하세요. 자동완성에서 선택하거나 직접 입력할 수 있습니다.')
+                .setName(t().settingsTab.cardSettings.propertyName)
+                .setDesc(t().settingsTab.cardSettings.propertyNameDescription)
                 .addText(text => {
                     const inputEl = text
-                        .setPlaceholder('예: author, status, priority')
+                        .setPlaceholder(t().settingsTab.cardSettings.propertyNamePlaceholder)
                         .setValue(sectionSettings.customProperty || '')
                         .onChange((value) => {
                             sectionSettings.customProperty = value;
@@ -845,28 +851,28 @@ export class InteractiveCardSettings extends BaseSettings {
                             this.refreshPreviewCard();
                         })
                         .inputEl;
-                    
+
                     inputEl.setAttribute('list', datalistId);
-                    
+
                     return text;
                 })
                 .addExtraButton(button => button
                     .setIcon('reset')
-                    .setTooltip('속성명 지우기')
+                    .setTooltip(t().settingsTab.cardSettings.clearPropertyName)
                     .onClick(async () => {
                         sectionSettings.customProperty = undefined;
                         await this.plugin.saveSettings();
                         this.updateSectionSettings();
                         this.refreshPreviewCard();
-                        new Notice('속성명을 지웠습니다');
+                        new Notice(t().notices.interactiveCard.propertyNameCleared);
                     })
                 );
         }
         
         if (sectionSettings.contentType === 'content') {
             new Setting(container)
-                .setName('첫 번째 헤더 포함')
-                .setDesc('본문 내용 표시 시 맨 앞에 있는 첫 번째 헤더를 포함할지 결정합니다. 비활성화하면 첫 헤더는 제목으로 간주되어 제외됩니다')
+                .setName(t().settingsTab.cardSettings.includeFirstHeader)
+                .setDesc(t().settingsTab.cardSettings.includeFirstHeaderDescription)
                 .addToggle(toggle => toggle
                     .setValue(sectionSettings.includeFirstHeader || false)
                     .onChange(async (value) => {
@@ -877,22 +883,22 @@ export class InteractiveCardSettings extends BaseSettings {
                 )
                 .addExtraButton(button => button
                     .setIcon('reset')
-                    .setTooltip('기본값으로 복구 (비활성화)')
+                    .setTooltip(t().settingsTab.cardSettings.includeFirstHeaderReset)
                     .onClick(async () => {
                         sectionSettings.includeFirstHeader = false;
                         await this.plugin.saveSettings();
                         this.updateSectionSettings();
                         this.refreshPreviewCard();
-                        new Notice('첫 번째 헤더 포함을 기본값으로 복구했습니다');
+                        new Notice(t().notices.interactiveCard.includeFirstHeaderReset);
                     })
                 );
 
             new Setting(container)
-                .setName('본문 렌더링 모드')
-                .setDesc('본문 내용을 표시하는 방식을 선택합니다. "Markdown HTML" 모드에서는 최대 길이 제한이 적용되지 않습니다')
+                .setName(t().settingsTab.cardSettings.bodyRenderMode)
+                .setDesc(t().settingsTab.cardSettings.bodyRenderModeDescription)
                 .addDropdown(dropdown => dropdown
-                    .addOption('plain', 'Plain Text (마크다운 문법 그대로)')
-                    .addOption('markdown-html', 'Markdown HTML (읽기 뷰 스타일)')
+                    .addOption('plain', t().settingsTab.cardSettings.renderModeOptions.plain)
+                    .addOption('markdown-html', t().settingsTab.cardSettings.renderModeOptions.markdownHtml)
                     .setValue(sectionSettings.contentRenderMode || 'plain')
                     .onChange(async (value) => {
                         sectionSettings.contentRenderMode = value as 'plain' | 'markdown-html';
@@ -903,23 +909,22 @@ export class InteractiveCardSettings extends BaseSettings {
                 )
                 .addExtraButton(button => button
                     .setIcon('reset')
-                    .setTooltip('기본값으로 복구')
+                    .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                     .onClick(async () => {
                         sectionSettings.contentRenderMode = 'plain';
                         await this.plugin.saveSettings();
                         this.updateSectionSettings();
                         this.refreshPreviewCard();
-                        new Notice('본문 렌더링 모드를 기본값으로 복구했습니다');
+                        new Notice(t().notices.interactiveCard.bodyRenderModeReset);
                     })
                 );
         }
-        
-        const maxLengthDesc = sectionSettings.contentType === 'content' && sectionSettings.contentRenderMode === 'markdown-html'
-            ? '표시할 최대 글자 수입니다. ⚠️ 현재 Markdown HTML 렌더링 모드로 설정되어 있어 이 설정이 적용되지 않습니다 (HTML 태그가 잘리는 것을 방지)'
-            : '표시할 최대 글자 수입니다. 내용이 이보다 길면 자동으로 잘리고 "..."이 추가됩니다';
-        
+
+        const isMarkdownHtml = sectionSettings.contentType === 'content' && sectionSettings.contentRenderMode === 'markdown-html';
+        const maxLengthDesc = t().settingsTab.cardSettings.maxLengthDescription(isMarkdownHtml);
+
         new Setting(container)
-            .setName('최대 길이')
+            .setName(t().settingsTab.cardSettings.maxLength)
             .setDesc(maxLengthDesc)
             .addText(text => text
                 .setValue(String(sectionSettings.maxLength || 100))
@@ -934,14 +939,14 @@ export class InteractiveCardSettings extends BaseSettings {
             )
             .addExtraButton(button => button
                 .setIcon('reset')
-                .setTooltip('기본값으로 복구')
+                .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                 .onClick(async () => {
                     const defaultSettings = this.getDefaultSectionSettings();
                     sectionSettings.maxLength = defaultSettings.maxLength;
                     await this.plugin.saveSettings();
                     this.updateSectionSettings();
                     this.refreshPreviewCard();
-                    new Notice('최대 길이를 기본값으로 복구했습니다');
+                    new Notice(t().notices.interactiveCard.maxLengthReset);
                 })
             );
     }
@@ -952,12 +957,12 @@ export class InteractiveCardSettings extends BaseSettings {
     private addSectionStyleSettings(container: HTMLElement): void {
         const sectionSettings = this.plugin.settings[this.selectedSection];
         const style = this.getCurrentSectionStyle();
-        
-        new Setting(container).setHeading().setName(`${this.getSectionLabel()} 스타일 설정`);
-        
+
+        new Setting(container).setHeading().setName(t().settingsTab.cardSettings.sectionStyleSettings(this.getSectionLabel()));
+
         new Setting(container)
-            .setName('폰트 크기')
-            .setDesc(`${this.getSectionLabel()} 영역의 텍스트 크기입니다 (px). 기본값은 일반적으로 14px입니다`)
+            .setName(t().settingsTab.cardSettings.fontSize)
+            .setDesc(t().settingsTab.cardSettings.fontSizeDescription(this.getSectionLabel()))
             .addText(text => text
                 .setValue(String(style.fontSize))
                 .onChange((value) => {
@@ -972,7 +977,7 @@ export class InteractiveCardSettings extends BaseSettings {
             )
             .addExtraButton(button => button
                 .setIcon('reset')
-                .setTooltip('기본값으로 복구')
+                .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                 .onClick(async () => {
                     const defaultStyle = this.getDefaultSectionStyle();
                     style.fontSize = defaultStyle.fontSize;
@@ -980,13 +985,13 @@ export class InteractiveCardSettings extends BaseSettings {
                     this.updateSectionSettings();
                     this.updatePreviewStyles();
                     this.forceViewRender();
-                    new Notice('폰트 크기를 기본값으로 복구했습니다');
+                    new Notice(t().notices.interactiveCard.fontSizeReset);
                 })
             );
-        
+
         new Setting(container)
-            .setName('배경색')
-            .setDesc(`${this.getSectionLabel()} 영역의 배경 색상입니다. 카드 전체 배경과 다른 색을 지정하여 영역을 구분할 수 있습니다`)
+            .setName(t().settingsTab.cardSettings.backgroundColor)
+            .setDesc(t().settingsTab.cardSettings.backgroundColorDescription(this.getSectionLabel()))
             .addColorPicker(color => color
                 .setValue(this.extractColorValue(style.backgroundColor))
                 .onChange(async (value) => {
@@ -998,7 +1003,7 @@ export class InteractiveCardSettings extends BaseSettings {
             )
             .addExtraButton(button => button
                 .setIcon('reset')
-                .setTooltip('기본값으로 복구')
+                .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                 .onClick(async () => {
                     const defaultStyle = this.getDefaultSectionStyle();
                     style.backgroundColor = defaultStyle.backgroundColor;
@@ -1006,14 +1011,14 @@ export class InteractiveCardSettings extends BaseSettings {
                     this.updateSectionSettings();
                     this.updatePreviewStyles();
                     this.forceViewRender();
-                    new Notice('배경색을 기본값으로 복구했습니다');
+                    new Notice(t().notices.interactiveCard.backgroundColorReset);
                 })
             );
-        
+
         if (this.selectedSection === 'header') {
             new Setting(container)
-                .setName('아래 테두리 색')
-                .setDesc('헤더와 바디를 구분하는 테두리의 색상입니다')
+                .setName(t().settingsTab.cardSettings.headerBottomBorderColor)
+                .setDesc(t().settingsTab.cardSettings.headerBottomBorderColorDescription)
                 .addColorPicker(color => color
                     .setValue(this.extractColorValue(style.borderColor))
                     .onChange(async (value) => {
@@ -1025,7 +1030,7 @@ export class InteractiveCardSettings extends BaseSettings {
                 )
                 .addExtraButton(button => button
                     .setIcon('reset')
-                    .setTooltip('기본값으로 복구')
+                    .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                     .onClick(async () => {
                         const defaultStyle = this.getDefaultSectionStyle();
                         style.borderColor = defaultStyle.borderColor;
@@ -1033,13 +1038,13 @@ export class InteractiveCardSettings extends BaseSettings {
                         this.updateSectionSettings();
                         this.updatePreviewStyles();
                         this.forceViewRender();
-                        new Notice('테두리 색을 기본값으로 복구했습니다');
+                        new Notice(t().notices.interactiveCard.borderColorReset);
                     })
                 );
-            
+
             new Setting(container)
-                .setName('아래 테두리 두께')
-                .setDesc('헤더 아래 테두리의 두께입니다 (px). 0으로 설정하면 테두리가 표시되지 않습니다')
+                .setName(t().settingsTab.cardSettings.headerBottomBorderThickness)
+                .setDesc(t().settingsTab.cardSettings.headerBottomBorderThicknessDescription)
                 .addText(text => text
                     .setValue(String(style.borderWidth))
                     .onChange((value) => {
@@ -1054,7 +1059,7 @@ export class InteractiveCardSettings extends BaseSettings {
                 )
                 .addExtraButton(button => button
                     .setIcon('reset')
-                    .setTooltip('기본값으로 복구')
+                    .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                     .onClick(async () => {
                         const defaultStyle = this.getDefaultSectionStyle();
                         style.borderWidth = defaultStyle.borderWidth;
@@ -1062,13 +1067,13 @@ export class InteractiveCardSettings extends BaseSettings {
                         this.updateSectionSettings();
                         this.updatePreviewStyles();
                         this.forceViewRender();
-                        new Notice('테두리 두께를 기본값으로 복구했습니다');
+                        new Notice(t().notices.interactiveCard.borderThicknessReset);
                     })
                 );
         } else if (this.selectedSection === 'footer') {
             new Setting(container)
-                .setName('위 테두리 색')
-                .setDesc('바디와 풋터를 구분하는 테두리의 색상입니다')
+                .setName(t().settingsTab.cardSettings.footerTopBorderColor)
+                .setDesc(t().settingsTab.cardSettings.footerTopBorderColorDescription)
                 .addColorPicker(color => color
                     .setValue(this.extractColorValue(style.borderColor))
                     .onChange(async (value) => {
@@ -1080,7 +1085,7 @@ export class InteractiveCardSettings extends BaseSettings {
                 )
                 .addExtraButton(button => button
                     .setIcon('reset')
-                    .setTooltip('기본값으로 복구')
+                    .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                     .onClick(async () => {
                         const defaultStyle = this.getDefaultSectionStyle();
                         style.borderColor = defaultStyle.borderColor;
@@ -1088,13 +1093,13 @@ export class InteractiveCardSettings extends BaseSettings {
                         this.updateSectionSettings();
                         this.updatePreviewStyles();
                         this.forceViewRender();
-                        new Notice('테두리 색을 기본값으로 복구했습니다');
+                        new Notice(t().notices.interactiveCard.borderColorReset);
                     })
                 );
-            
+
             new Setting(container)
-                .setName('위 테두리 두께')
-                .setDesc('풋터 위 테두리의 두께입니다 (px). 0으로 설정하면 테두리가 표시되지 않습니다')
+                .setName(t().settingsTab.cardSettings.footerTopBorderThickness)
+                .setDesc(t().settingsTab.cardSettings.footerTopBorderThicknessDescription)
                 .addText(text => text
                     .setValue(String(style.borderWidth))
                     .onChange((value) => {
@@ -1109,7 +1114,7 @@ export class InteractiveCardSettings extends BaseSettings {
                 )
                 .addExtraButton(button => button
                     .setIcon('reset')
-                    .setTooltip('기본값으로 복구')
+                    .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                     .onClick(async () => {
                         const defaultStyle = this.getDefaultSectionStyle();
                         style.borderWidth = defaultStyle.borderWidth;
@@ -1117,7 +1122,7 @@ export class InteractiveCardSettings extends BaseSettings {
                         this.updateSectionSettings();
                         this.updatePreviewStyles();
                         this.forceViewRender();
-                        new Notice('테두리 두께를 기본값으로 복구했습니다');
+                        new Notice(t().notices.interactiveCard.borderThicknessReset);
                     })
                 );
         }
@@ -1157,22 +1162,14 @@ export class InteractiveCardSettings extends BaseSettings {
      * 섹션 라벨을 반환합니다
      */
     private getSectionLabel(): string {
-        switch (this.selectedSection) {
-            case 'header': return '헤더';
-            case 'body': return '바디';
-            case 'footer': return '풋터';
-        }
+        return t().settingsTab.cardSettings.sectionLabel[this.selectedSection];
     }
 
     /**
      * 상태 라벨을 반환합니다
      */
     private getStateLabel(): string {
-        switch (this.selectedState) {
-            case 'normal': return '일반 카드';
-            case 'active': return '활성 카드';
-            case 'focused': return '포커스 카드';
-        }
+        return t().settingsTab.cardSettings.stateLabel[this.selectedState];
     }
 
     /**

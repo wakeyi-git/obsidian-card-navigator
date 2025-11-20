@@ -5,6 +5,7 @@ import { CardNavigatorView } from '../view';
 import { FolderSuggestModal } from './FolderSuggestModal';
 import { TagSuggestModal } from './TagSuggestModal';
 import { DebugLogger } from '../utils/DebugLogger';
+import { t } from '../i18n';
 
 /**
  * Card Navigator 툴바
@@ -67,7 +68,7 @@ export class Toolbar {
 		
 		const modeToggle = iconGroup.createEl('div', {
 			cls: 'clickable-icon',
-			attr: { 'aria-label': '모드 전환 (폴더/태그)' }
+			attr: { 'aria-label': t().toolbar.modeSwitch }
 		});
 		setIcon(modeToggle, 'repeat');
 		
@@ -77,7 +78,7 @@ export class Toolbar {
 
 		const sortButton = iconGroup.createEl('div', {
 			cls: 'clickable-icon',
-			attr: { 'aria-label': '정렬 기준 선택' }
+			attr: { 'aria-label': t().toolbar.sortByLabel }
 		});
 		setIcon(sortButton, 'arrow-up-down');
 		
@@ -89,7 +90,7 @@ export class Toolbar {
 		
 		const searchButton = iconGroup.createEl('div', {
 			cls: 'clickable-icon',
-			attr: { 'aria-label': '검색' }
+			attr: { 'aria-label': t().toolbar.searchLabel }
 		});
 		setIcon(searchButton, 'search');
 		
@@ -112,7 +113,7 @@ export class Toolbar {
 
 		const newElement = document.createElement('div');
 		newElement.classList.add('toolbar-mode-display', 'clickable');
-		newElement.setAttribute('aria-label', '클릭하여 폴더/태그 선택');
+		newElement.setAttribute('aria-label', t().toolbar.clickToSelectFolderTag);
 
 		parent.replaceChild(newElement, this.modeDisplayElement);
 		this.modeDisplayElement = newElement;
@@ -122,18 +123,18 @@ export class Toolbar {
 		// settings가 null인 경우 기본 텍스트 표시
 		if (!settings) {
 			this.modeDisplayElement.createEl('span', {
-				text: '설정 없음'
+				text: t().toolbar.noSettings
 			});
 			return;
 		}
 
 		if (settings.currentMode === 'folder') {
-			let displayText = '전체';
-			
+			let displayText: string = t().toolbar.all;
+
 			if (settings.folderMode.useActiveFolder) {
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile && activeFile.parent) {
-					displayText = activeFile.parent.name || '루트';
+					displayText = activeFile.parent.name || t().toolbar.root;
 				}
 			} else if (settings.folderMode.specifiedFolder) {
 				const folder = this.app.vault.getAbstractFileByPath(settings.folderMode.specifiedFolder);
@@ -157,7 +158,7 @@ export class Toolbar {
 				this.openFolderSelector();
 			});
 		} else {
-			let displayText = '모든 태그';
+			let displayText: string = t().toolbar.allTags;
 			let fullTagList = '';
 			
 			const normalizeTag = (tag: string): string => {
@@ -171,30 +172,30 @@ export class Toolbar {
 				if (activeFile) {
 					const cache = this.app.metadataCache.getFileCache(activeFile);
 					
-					const inlineTags = cache?.tags?.map(t => normalizeTag(t.tag)) || [];
-					
+					const inlineTags = cache?.tags?.map(tag => normalizeTag(tag.tag)) || [];
+
 					const rawFrontmatterTags = cache?.frontmatter?.tags;
 					let frontmatterTags: string[] = [];
-					
+
 					if (rawFrontmatterTags) {
 						if (Array.isArray(rawFrontmatterTags)) {
-							frontmatterTags = rawFrontmatterTags.map((t: any) => {
-								if (typeof t === 'string') {
-									return normalizeTag(t.trim());
+							frontmatterTags = rawFrontmatterTags.map((tag: any) => {
+								if (typeof tag === 'string') {
+									return normalizeTag(tag.trim());
 								}
 								return '';
-							}).filter((t: string) => t);
+							}).filter((tag: string) => tag);
 						} else if (typeof rawFrontmatterTags === 'string') {
 							frontmatterTags = rawFrontmatterTags
 								.split(',')
-								.map(t => normalizeTag(t.trim()))
-								.filter(t => t);
+								.map(tag => normalizeTag(tag.trim()))
+								.filter(tag => tag);
 						}
 					}
-					
+
 					const allTags = [...new Set([...inlineTags, ...frontmatterTags])];
-					
-					this.logger.debug('UI', '활성 파일 태그', {
+
+					this.logger.debug('UI', t().uiLabels.ui.activeTags, {
 						file: activeFile.basename,
 						inlineTags,
 						frontmatterTags,
@@ -278,7 +279,7 @@ export class Toolbar {
 		// settings가 null인 경우 기본 아이콘 표시
 		if (!settings) {
 			setIcon(this.modeToggleIcon, 'folder');
-			this.modeToggleIcon.setAttribute('aria-label', '모드 전환');
+			this.modeToggleIcon.setAttribute('aria-label', t().toolbar.modeSwitch);
 			return;
 		}
 
@@ -287,20 +288,20 @@ export class Toolbar {
 		if (settings.currentMode === 'folder') {
 			if (settings.folderMode.useActiveFolder) {
 				setIcon(this.modeToggleIcon, 'folder-sync');
-				this.modeToggleIcon.setAttribute('aria-label', '폴더 지정 모드로 전환');
+				this.modeToggleIcon.setAttribute('aria-label', t().toolbar.modeToggleFolderToSpecific);
 				this.modeToggleIcon.addClass('mode-active');
 			} else {
 				setIcon(this.modeToggleIcon, 'folder');
-				this.modeToggleIcon.setAttribute('aria-label', '활성 폴더 모드로 전환');
+				this.modeToggleIcon.setAttribute('aria-label', t().toolbar.modeToggleFolderToActive);
 			}
 		} else {
 			if (settings.tagMode.useActiveFileTags) {
 				setIcon(this.modeToggleIcon, 'file-text');
-				this.modeToggleIcon.setAttribute('aria-label', '태그 지정 모드로 전환');
+				this.modeToggleIcon.setAttribute('aria-label', t().toolbar.modeToggleTagToSpecific);
 				this.modeToggleIcon.addClass('mode-active');
 			} else {
 				setIcon(this.modeToggleIcon, 'tags');
-				this.modeToggleIcon.setAttribute('aria-label', '활성 파일 태그 모드로 전환');
+				this.modeToggleIcon.setAttribute('aria-label', t().toolbar.modeToggleTagToActive);
 			}
 		}
 	}
@@ -372,14 +373,14 @@ export class Toolbar {
 			criteria: SortCriteria;
 			order: SortOrder;
 		}> = [
-			{ label: '파일명 (A-Z)', criteria: 'name', order: 'asc' },
-			{ label: '파일명 (Z-A)', criteria: 'name', order: 'desc' },
-			{ label: '수정일 (최신순)', criteria: 'modified', order: 'desc' },
-			{ label: '수정일 (오래된순)', criteria: 'modified', order: 'asc' },
-			{ label: '생성일 (최신순)', criteria: 'created', order: 'desc' },
-			{ label: '생성일 (오래된순)', criteria: 'created', order: 'asc' },
-			{ label: '파일 크기 (큰 순)', criteria: 'size', order: 'desc' },
-			{ label: '파일 크기 (작은 순)', criteria: 'size', order: 'asc' }
+			{ label: t().toolbar.sortOptions.nameAsc, criteria: 'name', order: 'asc' },
+			{ label: t().toolbar.sortOptions.nameDesc, criteria: 'name', order: 'desc' },
+			{ label: t().toolbar.sortOptions.modifiedDesc, criteria: 'modified', order: 'desc' },
+			{ label: t().toolbar.sortOptions.modifiedAsc, criteria: 'modified', order: 'asc' },
+			{ label: t().toolbar.sortOptions.createdDesc, criteria: 'created', order: 'desc' },
+			{ label: t().toolbar.sortOptions.createdAsc, criteria: 'created', order: 'asc' },
+			{ label: t().toolbar.sortOptions.sizeDesc, criteria: 'size', order: 'desc' },
+			{ label: t().toolbar.sortOptions.sizeAsc, criteria: 'size', order: 'asc' }
 		];
 
 		sortOptions.forEach(option => {

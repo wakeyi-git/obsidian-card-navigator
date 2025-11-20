@@ -1,5 +1,6 @@
 import { App, Setting } from 'obsidian';
 import { FilterOptions } from '../types';
+import { t } from '../i18n';
 
 /**
  * FilterUI 클래스
@@ -78,11 +79,11 @@ export class FilterUI {
             cls: 'filter-modal-header'
         });
         
-        header.createEl('h3', { text: '필터 옵션' });
-        
+        header.createEl('h3', { text: t().filterUI.filterOptions });
+
         const closeBtn = header.createEl('button', {
             cls: 'filter-modal-close',
-            text: '×'
+            text: t().filterUI.close
         });
         
         closeBtn.addEventListener('click', () => this.hide());
@@ -104,21 +105,21 @@ export class FilterUI {
         
         const applyBtn = footer.createEl('button', {
             cls: 'mod-cta',
-            text: '적용'
+            text: t().filterUI.apply
         });
-        
+
         applyBtn.addEventListener('click', () => {
             this.applyFilters();
         });
-        
+
         const cancelBtn = footer.createEl('button', {
-            text: '취소'
+            text: t().filterUI.cancel
         });
-        
+
         cancelBtn.addEventListener('click', () => this.hide());
-        
+
         const resetBtn = footer.createEl('button', {
-            text: '초기화'
+            text: t().filterUI.reset
         });
         
         resetBtn.addEventListener('click', () => {
@@ -145,14 +146,14 @@ export class FilterUI {
             cls: 'filter-section'
         });
         
-        section.createEl('h4', { text: '태그 필터' });
-        
+        section.createEl('h4', { text: t().filterUI.tagFilter });
+
         // 태그 입력
         const tagInput = section.createEl('input', {
             cls: 'filter-input',
             attr: {
                 type: 'text',
-                placeholder: '태그 입력 (쉼표로 구분)'
+                placeholder: t().filterUI.tagInputPlaceholder
             }
         }) as HTMLInputElement;
         
@@ -182,37 +183,37 @@ export class FilterUI {
             cls: 'filter-section'
         });
         
-        section.createEl('h4', { text: '날짜 필터' });
-        
+        section.createEl('h4', { text: t().filterUI.dateFilter });
+
         // 생성일 필터
         const createdGroup = section.createEl('div', {
             cls: 'filter-date-group'
         });
-        
-        createdGroup.createEl('label', { text: '생성일:' });
-        
+
+        createdGroup.createEl('label', { text: t().filterUI.createdLabel });
+
         const createdFrom = createdGroup.createEl('input', {
             cls: 'filter-date-input',
             attr: {
                 type: 'date'
             }
         }) as HTMLInputElement;
-        
-        createdGroup.createEl('span', { text: '~' });
-        
+
+        createdGroup.createEl('span', { text: t().filterUI.rangeSeparator });
+
         const createdTo = createdGroup.createEl('input', {
             cls: 'filter-date-input',
             attr: {
                 type: 'date'
             }
         }) as HTMLInputElement;
-        
+
         // 수정일 필터
         const modifiedGroup = section.createEl('div', {
             cls: 'filter-date-group'
         });
-        
-        modifiedGroup.createEl('label', { text: '수정일:' });
+
+        modifiedGroup.createEl('label', { text: t().filterUI.modifiedLabel });
         
         const modifiedFrom = modifiedGroup.createEl('input', {
             cls: 'filter-date-input',
@@ -221,7 +222,7 @@ export class FilterUI {
             }
         }) as HTMLInputElement;
         
-        modifiedGroup.createEl('span', { text: '~' });
+        modifiedGroup.createEl('span', { text: t().filterUI.rangeSeparator });
         
         const modifiedTo = modifiedGroup.createEl('input', {
             cls: 'filter-date-input',
@@ -278,18 +279,18 @@ export class FilterUI {
             cls: 'filter-section'
         });
         
-        section.createEl('h4', { text: '속성 필터' });
-        
+        section.createEl('h4', { text: t().filterUI.propertyFilter });
+
         const desc = section.createEl('p', {
             cls: 'filter-description',
-            text: '프론트매터 속성을 key:value 형태로 입력하세요 (한 줄에 하나씩)'
+            text: t().filterUI.propertyDescription
         });
-        
+
         // 속성 입력
         const propertyInput = section.createEl('textarea', {
             cls: 'filter-textarea',
             attr: {
-                placeholder: '예:\nstatus:완료\npriority:high'
+                placeholder: t().filterUI.propertyPlaceholder
             }
         }) as HTMLTextAreaElement;
         

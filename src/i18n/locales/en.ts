@@ -1,0 +1,1045 @@
+/**
+ * English translations
+ */
+export const en = {
+	// Plugin
+	plugin: {
+		name: 'Card Navigator',
+		ribbonTitle: 'Open Card Navigator',
+		loadingStart: 'Card Navigator plugin loading...',
+		loadingComplete: 'Card Navigator plugin loaded!',
+		unloading: 'Card Navigator plugin unloading...',
+	},
+
+	// Commands
+	commands: {
+		selectAll: 'Select all cards',
+		focusCardNavigator: 'Focus on Card Navigator (active card)',
+	},
+
+	// UI Messages
+	ui: {
+		emptyMessage: 'No files to display',
+		defaultCardContent: '(No content)',
+	},
+
+	// Error Messages
+	errors: {
+		fileOpenFailed: (filename: string) => `Failed to open file: ${filename}`,
+		fileReadFailed: (filename: string) => `Failed to read file: ${filename}`,
+		presetLoadFailed: (presetName: string) => `Failed to load preset: ${presetName}`,
+		settingsSaveFailed: 'Failed to save settings',
+	},
+
+	// Settings Tab
+	settings: {
+		// Main sections
+		baseSection: {
+			name: 'Basic Settings',
+			description: 'Configure basic plugin behavior',
+		},
+		layoutSection: {
+			name: 'Layout Settings',
+			description: 'Configure card layout and appearance',
+		},
+		renderingSection: {
+			name: 'Rendering Settings',
+			description: 'Configure rendering performance and features',
+		},
+		modeSection: {
+			name: 'Mode Settings',
+			description: 'Configure folder, tag, and search modes',
+		},
+		sortSection: {
+			name: 'Sort Settings',
+			description: 'Configure default sorting options',
+		},
+		presetSection: {
+			name: 'Preset Settings',
+			description: 'Save and manage presets for quick configuration switching',
+		},
+		interactiveCardSection: {
+			name: 'Interactive Card Settings',
+			description: 'Configure card interaction behavior',
+		},
+
+		// Language setting
+		language: {
+			name: 'Language',
+			description: 'Select display language',
+		},
+
+		// Debug settings
+		debugMode: {
+			name: 'Debug Mode',
+			description: 'Enable debug logging in console',
+		},
+		debugCategories: {
+			name: 'Debug Categories',
+			description: 'Select which categories to log',
+		},
+
+		// Layout settings
+		columnWidth: {
+			name: 'Column Width',
+			description: 'Minimum width of each column (px)',
+		},
+		cardGap: {
+			name: 'Card Gap',
+			description: 'Gap between cards (px)',
+		},
+		cardPadding: {
+			name: 'Card Padding',
+			description: 'Inner padding of cards (px)',
+		},
+		cardBorderRadius: {
+			name: 'Card Border Radius',
+			description: 'Border radius of cards (px)',
+		},
+
+		// Rendering settings
+		enableVirtualScroll: {
+			name: 'Enable Virtual Scrolling',
+			description: 'Render only visible cards for better performance with many files',
+		},
+		showFileExtension: {
+			name: 'Show File Extension',
+			description: 'Show file extensions in card titles',
+		},
+		showPath: {
+			name: 'Show Path',
+			description: 'Show file path below title',
+		},
+		showTags: {
+			name: 'Show Tags',
+			description: 'Show tags on cards',
+		},
+		showFileSize: {
+			name: 'Show File Size',
+			description: 'Show file size on cards',
+		},
+		showCreatedDate: {
+			name: 'Show Created Date',
+			description: 'Show file creation date',
+		},
+		showModifiedDate: {
+			name: 'Show Modified Date',
+			description: 'Show file modification date',
+		},
+		showWordCount: {
+			name: 'Show Word Count',
+			description: 'Show word count on cards',
+		},
+		maxContentLength: {
+			name: 'Max Content Length',
+			description: 'Maximum number of characters to display in card content (0 = no limit)',
+		},
+
+		// Mode settings
+		defaultMode: {
+			name: 'Default Mode',
+			description: 'Mode to use when opening Card Navigator',
+		},
+		folderMode: {
+			name: 'Folder Mode',
+			defaultFolder: 'Default Folder',
+			defaultFolderDescription: 'Folder to show by default (/ = root)',
+			showSubfolders: 'Show Subfolders',
+			showSubfoldersDescription: 'Include files from subfolders',
+		},
+		tagMode: {
+			name: 'Tag Mode',
+			defaultTag: 'Default Tag',
+			defaultTagDescription: 'Tag to show by default (empty = all)',
+		},
+		searchMode: {
+			name: 'Search Mode',
+			defaultQuery: 'Default Search Query',
+			defaultQueryDescription: 'Search query to use by default',
+		},
+
+		// Sort settings
+		defaultSortBy: {
+			name: 'Default Sort By',
+			description: 'Default sorting field',
+		},
+		defaultSortOrder: {
+			name: 'Default Sort Order',
+			description: 'Default sorting direction',
+		},
+		sortOptions: {
+			name: 'Name',
+			created: 'Created Date',
+			modified: 'Modified Date',
+			size: 'File Size',
+			wordCount: 'Word Count',
+		},
+		sortOrders: {
+			asc: 'Ascending',
+			desc: 'Descending',
+		},
+
+		// Preset settings
+		currentPreset: {
+			name: 'Current Preset',
+			description: 'Select a preset to load',
+			none: 'None (Current Settings)',
+		},
+		savePreset: {
+			name: 'Save Current Settings as Preset',
+			buttonText: 'Save Preset',
+			promptTitle: 'Save Preset',
+			promptMessage: 'Enter preset name:',
+			promptPlaceholder: 'My Preset',
+			success: (name: string) => `Preset "${name}" saved successfully`,
+			error: 'Please enter a preset name',
+		},
+		managePresets: {
+			name: 'Manage Presets',
+			deleteButton: 'Delete',
+			confirmDelete: (name: string) => `Delete preset "${name}"?`,
+			deleteSuccess: (name: string) => `Preset "${name}" deleted`,
+		},
+
+		// Interactive card settings
+		inlineEditing: {
+			name: 'Enable Inline Editing',
+			description: 'Allow editing card title directly by clicking',
+		},
+		dragAndDrop: {
+			name: 'Enable Drag and Drop',
+			description: 'Allow moving files by dragging cards',
+		},
+	},
+
+	// Toolbar
+	toolbar: {
+		mode: 'Mode:',
+		folder: 'Folder',
+		tag: 'Tag',
+		search: 'Search',
+		selectFolder: 'Select folder',
+		selectTag: 'Select tag',
+		sortBy: 'Sort:',
+		filter: 'Filter',
+		noSettings: 'No settings',
+		all: 'All',
+		root: 'Root',
+		allTags: 'All tags',
+		modeSwitch: 'Switch mode (folder/tag)',
+		sortByLabel: 'Select sort criteria',
+		searchLabel: 'Search',
+		modeToggleFolderToSpecific: 'Switch to specify folder mode',
+		modeToggleFolderToActive: 'Switch to active folder mode',
+		modeToggleTagToSpecific: 'Switch to specify tag mode',
+		modeToggleTagToActive: 'Switch to active file tag mode',
+		clickToSelectFolderTag: 'Click to select folder/tag',
+		sortOptions: {
+			nameAsc: 'Filename (A-Z)',
+			nameDesc: 'Filename (Z-A)',
+			modifiedDesc: 'Modified Date (Newest)',
+			modifiedAsc: 'Modified Date (Oldest)',
+			createdDesc: 'Created Date (Newest)',
+			createdAsc: 'Created Date (Oldest)',
+			sizeDesc: 'File Size (Largest)',
+			sizeAsc: 'File Size (Smallest)',
+		},
+	},
+
+	// Context Menu
+	contextMenu: {
+		open: 'Open',
+		openInNewTab: 'Open in new tab',
+		openInNewWindow: 'Open in new window',
+		openInRightPanel: 'Open in right panel',
+		rename: 'Rename',
+		delete: 'Delete',
+		moveTo: 'Move to...',
+		showInExplorer: 'Show in file explorer',
+		copyPath: 'Copy path',
+		copyLink: 'Copy link',
+		copyMarkdownLink: 'Copy markdown link',
+		copyWikiLink: 'Copy wiki link',
+		copyFilePath: 'Copy file path',
+		copyFullContent: 'Copy full content',
+		copyFirstParagraph: 'Copy first paragraph',
+	},
+
+	// Filter
+	filter: {
+		title: 'Filter',
+		clear: 'Clear',
+		apply: 'Apply',
+		fileType: 'File Type',
+		dateRange: 'Date Range',
+		tags: 'Tags',
+		allFiles: 'All Files',
+		markdownOnly: 'Markdown Only',
+		from: 'From',
+		to: 'To',
+	},
+
+	// Search
+	search: {
+		placeholder: 'Search notes...',
+		noResults: 'No results found',
+	},
+
+	// Modes
+	modes: {
+		folder: 'Folder',
+		tag: 'Tag',
+		search: 'Search',
+	},
+
+	// Settings Tab UI
+	settingsTab: {
+		tabs: {
+			mode: 'Mode & Sort',
+			card: 'Card Settings',
+			layout: 'Layout',
+			presets: 'Presets',
+			other: 'Other',
+		},
+		scrollBehavior: {
+			title: 'Scroll Behavior',
+			name: 'Active Card Scroll',
+			description: 'Choose how to scroll when clicking a card to open a file.\n\n• Minimal scroll: Only scroll if the card is not visible. (Recommended)\n• Always center: Always scroll to center the card.\n• No auto scroll: Do not scroll automatically.',
+			nearest: 'Minimal scroll (only when not visible)',
+			center: 'Always center',
+			none: 'No auto scroll',
+		},
+		tagClickAction: {
+			title: 'Tag Click Action',
+			name: 'Tag Click Behavior',
+			description: 'Choose what happens when clicking a tag in a card.\n\n• Plugin search: Switch to Card Navigator search mode with the tag (Recommended)\n• Obsidian search: Open Obsidian\'s search panel with the tag',
+			pluginSearch: 'Plugin search',
+			obsidianSearch: 'Obsidian search',
+			notice: (action: string) => `Tag click action: ${action}`,
+		},
+		dragDrop: {
+			title: 'Drag and Drop',
+			contentType: 'Content to Insert',
+			contentTypeDescription: 'Choose what to insert when dragging a card to an editor.\n\n• Link: Insert [[filename]] internal link\n• File content: Insert the full file content (with additional options)',
+			link: 'Link',
+			fullContent: 'File content',
+			optionsDescription: 'Configure detailed options for inserting file content.',
+			includeFrontmatter: 'Include Frontmatter',
+			includeFrontmatterDescription: 'Include frontmatter (metadata wrapped in ---) when inserting file content.',
+			enableLengthLimit: 'Enable Length Limit',
+			enableLengthLimitDescription: 'Limit the number of characters inserted. Disable to insert the full content.',
+			maxLength: 'Maximum Characters',
+			maxLengthDescription: 'Enter the maximum number of characters to insert from the beginning of the file.',
+		},
+		debugMode: {
+			title: 'Debug Mode',
+			enable: 'Enable Debug Mode',
+			enableDescription: 'Show debug logs in the developer console. Helpful for troubleshooting.',
+			categoriesDescription: 'Select which log categories to display. Each category is shown with a [CategoryName] prefix in the console.',
+			categories: {
+				plugin: { label: 'Plugin', description: 'Plugin loading, unloading, initialization' },
+				view: { label: 'View Rendering', description: 'View initialization, render state, file change handling' },
+				layout: { label: 'Layout', description: 'Grid layout, card size calculation' },
+				card: { label: 'Card Rendering', description: 'Card creation, content extraction, style application' },
+				search: { label: 'Search', description: 'Search queries, result filtering' },
+				filter: { label: 'Filter', description: 'Tag, date, property filtering' },
+				navigation: { label: 'Navigation', description: 'Keyboard navigation, scroll movement' },
+				preset: { label: 'Preset', description: 'Preset creation, application, mapping' },
+				sort: { label: 'Sort', description: 'Card sorting, sort option application' },
+				selection: { label: 'Selection', description: 'Multi-selection, bulk operations' },
+				dragDrop: { label: 'Drag & Drop', description: 'Drag start/end, drop handling' },
+				mode: { label: 'Mode Switch', description: 'Folder/tag/search mode switching' },
+				settings: { label: 'Settings', description: 'Settings load/save, change application' },
+				event: { label: 'Events', description: 'Click, keyboard, file change events' },
+				ui: { label: 'UI', description: 'Toolbar, context menu, modals' },
+				performance: { label: 'Performance', description: 'Execution time, memory usage measurement' },
+			},
+			allCategories: 'All Categories Control',
+			allCategoriesDescription: 'Enable or disable all debug categories at once',
+			selectAll: 'Select All',
+			deselectAll: 'Deselect All',
+		},
+		settingsManagement: {
+			title: 'Settings Management',
+			reset: 'Reset Settings',
+			resetDescription: 'Reset all settings to default values (all presets and mappings will be deleted)',
+			resetButton: 'Reset',
+			resetConfirm: 'Are you sure you want to reset all settings?\n\n⚠️ All presets and preset mappings will be deleted.',
+			resetSuccess: 'All settings have been reset',
+			export: 'Export Settings',
+			exportDescription: 'Export current settings to a JSON file',
+			exportButton: 'Export',
+			import: 'Import Settings',
+			importDescription: 'Import settings from a JSON file',
+			importButton: 'Import',
+			importSuccess: 'Settings imported successfully.',
+			importError: 'Failed to import settings.',
+			importInvalid: 'Invalid settings file.',
+		},
+		presets: {
+			enablePresets: 'Enable Presets',
+			enablePresetsDescription: 'Enable preset functionality. When disabled, preset creation, application, and auto-mapping will all be disabled.',
+			createPreset: 'Create Preset from Current Settings',
+			createPresetDescription: 'Save current settings as a new preset',
+			createPresetButton: 'Create Preset',
+			presetDescriptionTitle: 'Preset Description (Optional)',
+			descriptionLabel: 'Description',
+			descriptionPlaceholder: 'Enter a brief description for the preset (optional)',
+			cancel: 'Cancel',
+			confirm: 'Confirm',
+			importPreset: 'Import Preset',
+			importPresetButton: 'Import',
+			priorityMode: 'Priority Mode',
+			priorityModeDescription: 'Choose whether to automatically determine priority between folder and tag presets, or set it manually.',
+			manualPriorityType: 'Preferred Preset Type',
+			manualPriorityTypeDescription: 'When both folder and tag presets match, choose which to apply first.',
+			addFolderMapping: 'Add Folder Mapping',
+			addFolderMappingDescription: 'Map a preset to a specific folder',
+			addMappingButton: 'Add Mapping',
+			addTagMapping: 'Add Tag Mapping',
+			addTagMappingDescription: 'Map a preset to a specific tag',
+			folderMappingTitle: 'Add Folder Preset Mapping',
+			selectFolder: 'Select Folder',
+			selectFolderDescription: 'Choose the folder to map the preset to',
+			selectPreset: 'Select Preset',
+			selectPresetDescription: 'Choose the preset to apply automatically',
+			includeSubfolders: 'Include Subfolders',
+			includeSubfoldersDescription: 'Apply this preset to files in subfolders as well',
+			tagMappingTitle: 'Add Tag Preset Mapping',
+			tagLabel: 'Tag',
+			tagDescription: 'Enter the tag to map the preset to (without #)',
+		},
+		presetSettings: {
+			title: 'Presets',
+			description: 'Save and load user settings as presets',
+			enableFeature: 'Enable Presets',
+			enableFeatureDescription: 'Enable preset functionality. When disabled, preset creation, application, and auto-mapping will all be disabled.',
+			featureStatusChanged: (enabled: boolean) => `Presets ${enabled ? 'enabled' : 'disabled'}`,
+			createDivider: 'Create Preset',
+			createName: 'Preset Name',
+			createNamePlaceholder: 'e.g., Work Card Layout',
+			createDescription: 'Preset Description (Optional)',
+			createDescriptionPlaceholder: 'Enter a brief description for the preset (optional)',
+			createButton: 'Create Preset',
+			createModalTitle: 'Preset Name',
+			createSuccess: (name: string) => `Preset "${name}" has been created.`,
+			createdDate: 'Created:',
+			presetLabel: 'Preset:',
+			applyButton: 'Apply',
+			applySuccess: (name: string) => `Applied preset "${name}".`,
+			duplicateButton: 'Duplicate',
+			duplicateModalTitle: 'Name for duplicated preset',
+			duplicateSuccess: (originalName: string, newName: string) => `Duplicated preset "${originalName}" as "${newName}".`,
+			exportButton: 'Export',
+			deleteButton: 'Delete',
+			deleteConfirm: (name: string) => `Delete preset "${name}"?`,
+			deleteSuccess: (name: string) => `Preset "${name}" has been deleted.`,
+			importButton: 'Import Preset',
+			priorityDivider: 'Preset Mapping',
+			priorityMode: 'Priority Mode',
+			priorityModeDescription: 'Choose whether to automatically determine priority between folder and tag presets, or set it manually.',
+			priorityOptions: {
+				auto: 'Auto',
+				manual: 'Manual',
+			},
+			priorityRulesTitle: 'Priority Rules (Auto Mode)',
+			priorityRulesHtml: `
+				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
+					In auto mode, priority is determined by the following rules:
+					<ol style="margin: 8px 0; padding-left: 20px;">
+						<li>When both folder and tag presets match, the <strong>more specific</strong> one is applied</li>
+						<li>Folder presets: Subfolder has priority over parent folder</li>
+						<li>Tag presets: More tags take priority</li>
+						<li>When specificity is equal, folder has priority over tag</li>
+					</ol>
+				</div>
+			`,
+			manualPriorityType: 'Preferred Preset Type',
+			manualPriorityTypeDescription: 'When both folder and tag presets match, choose which to apply first.',
+			manualModeExplanationHtml: `
+				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
+					In manual mode, the selected type is always applied first among matched presets.
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>Folder first:</strong> Always apply folder preset if available</li>
+						<li><strong>Tag first:</strong> Always apply tag preset if available</li>
+					</ul>
+				</div>
+			`,
+			mappingPriorityRulesHtml: `
+				<strong>💡 Mapping Priority Rules</strong><br><br>
+				<strong>1. Folder vs Tag:</strong> Determined by "Priority Mode" setting above<br>
+				<strong>2. Within same type:</strong> Mappings listed higher have priority<br><br>
+				<span style="color: var(--text-muted); font-size: 0.9em;">
+				Example: If "Projects" is above "Projects/Important" in the folder list,<br>
+				"Projects/Important/document.md" will use the "Projects" preset.
+				</span>
+			`,
+			priorityTypeOptions: {
+				folder: 'Folder first',
+				tag: 'Tag first',
+			},
+			folderMappingDivider: 'Folder Presets',
+			addFolderMapping: 'Add Folder Mapping',
+			folderMappingModalTitle: 'Add Folder Preset Mapping',
+			folderLabel: 'Folder',
+			folderDescription: 'Choose the folder to map the preset to',
+			presetSelectLabel: 'Preset',
+			presetSelectDescription: 'Choose the preset to apply automatically',
+			includeSubfolders: 'Include Subfolders',
+			includeSubfoldersDescription: 'Apply this preset to files in subfolders as well',
+			addButton: 'Add',
+			cancelButton: 'Cancel',
+			mappingFolder: 'Folder:',
+			mappingPreset: 'Preset:',
+			mappingIncludesSubfolders: '(includes subfolders)',
+			mappingDelete: 'Delete',
+			tagMappingDivider: 'Tag Presets',
+			addTagMapping: 'Add Tag Mapping',
+			tagMappingModalTitle: 'Add Tag Preset Mapping',
+			tagLabel: 'Tag',
+			tagDescription: 'Enter the tag to map the preset to (without #)',
+			tagPlaceholder: 'e.g., important',
+			mappingTag: 'Tag:',
+			noPresets: '(No presets)',
+			rootFolder: '(Root folder)',
+			root: '(Root)',
+			deletedPreset: '(Deleted preset)',
+		},
+		cardSettings: {
+			cardBaseSettings: 'Card Base Settings',
+			cardBaseSettingsDescription: 'Set styles that apply to all cards. Background colors for each section (header/body/footer) can be changed in their respective section settings.',
+			currentState: (state: string) => `Current: ${state}`,
+			borderColor: 'Border Color',
+			borderColorDescription: 'The color of the outer border for all cards',
+			borderThickness: 'Border Thickness',
+			borderThicknessDescription: 'The thickness of the outer card border (px). Set to 0 to hide the border',
+			borderRadius: 'Border Radius',
+			borderRadiusDescription: 'The roundness of card corners (px). Higher values create rounder corners',
+			resetToDefault: 'Reset to default',
+			clickSectionHint: 'Click a section to change its settings',
+			sectionLabel: {
+				header: 'Header',
+				body: 'Body',
+				footer: 'Footer',
+			},
+			stateLabel: {
+				normal: 'Normal Card',
+				active: 'Active Card',
+				focused: 'Focused Card',
+			},
+			stateName: {
+				normal: 'Normal',
+				active: 'Active',
+				focused: 'Focused',
+			},
+			sectionEnabled: (section: string) => `Show ${section} section`,
+			sectionEnabledDescription: (section: string) => `Determines whether to display the ${section} area on cards`,
+			sectionContentSettings: (section: string) => `${section} Content Settings`,
+			sectionStyleSettings: (section: string) => `${section} Style Settings`,
+			displayContent: 'Display Content',
+			displayContentDescription: 'Select what information to display in this area. The selected content will be extracted from each file',
+			contentType: {
+				filename: 'Filename',
+				filePath: 'File Path',
+				firstHeader: 'First Header',
+				content: 'Body Content',
+				tags: 'Tags',
+				createdDate: 'Created Date',
+				modifiedDate: 'Modified Date',
+				property: 'Frontmatter Property',
+				backlinks: 'Backlinks (Files linking to this file)',
+				outgoingLinks: 'Outgoing Links (Files this file links to)',
+			},
+			propertyName: 'Frontmatter Property Name',
+			propertyNameDescription: 'Enter the name of the frontmatter property to display. You can select from autocomplete or type manually.',
+			propertyNamePlaceholder: 'e.g., author, status, priority',
+			clearPropertyName: 'Clear property name',
+			includeFirstHeader: 'Include First Header',
+			includeFirstHeaderDescription: 'When displaying body content, determines whether to include the first header at the beginning. If disabled, the first header is treated as a title and excluded',
+			includeFirstHeaderReset: 'Reset to default (disabled)',
+			bodyRenderMode: 'Body Render Mode',
+			bodyRenderModeDescription: 'Choose how to display body content. In "Markdown HTML" mode, max length limit is not applied',
+			renderModeOptions: {
+				plain: 'Plain Text (Markdown syntax as-is)',
+				markdownHtml: 'Markdown HTML (Reading view style)',
+			},
+			maxLength: 'Max Length',
+			maxLengthDescription: (isMarkdownHtml: boolean) =>
+				isMarkdownHtml
+					? 'Maximum number of characters to display. ⚠️ This setting is not applied in Markdown HTML rendering mode (to prevent HTML tag truncation)'
+					: 'Maximum number of characters to display. Content longer than this will be truncated with "..."',
+			fontSize: 'Font Size',
+			fontSizeDescription: (section: string) => `Text size for the ${section} area (px). Default is typically 14px`,
+			backgroundColor: 'Background Color',
+			backgroundColorDescription: (section: string) => `Background color for the ${section} area. You can differentiate sections by using a different color from the overall card background`,
+			headerBottomBorderColor: 'Bottom Border Color',
+			headerBottomBorderColorDescription: 'The color of the border separating header and body',
+			headerBottomBorderThickness: 'Bottom Border Thickness',
+			headerBottomBorderThicknessDescription: 'The thickness of the header bottom border (px). Set to 0 to hide the border',
+			footerTopBorderColor: 'Top Border Color',
+			footerTopBorderColorDescription: 'The color of the border separating body and footer',
+			footerTopBorderThickness: 'Top Border Thickness',
+			footerTopBorderThicknessDescription: 'The thickness of the footer top border (px). Set to 0 to hide the border',
+			sampleContent: {
+				filename: 'SampleFile.md',
+				filePath: 'folder/subfolder/SampleFile.md',
+				firstHeader: '# First Header',
+				content: 'Body content will be displayed here. Markdown syntax may be applied.',
+				tags: '#tag1 #tag2 #tag3',
+				createdDate: 'Created: 2024-11-16',
+				modifiedDate: 'Modified: 2024-11-16',
+				property: 'Property: Value',
+				propertyWithName: (name: string, value: string) => `${name}: ${value}`,
+				propertyNotFound: (name: string) => `${name}: (Property not found)`,
+				backlinks: {
+					link1: 'Note1',
+					link2: 'Note2',
+				},
+				outgoingLinks: {
+					link1: 'Reference1',
+					link2: 'Reference2',
+				},
+				default: 'Sample Text',
+			},
+		},
+		sortSettings: {
+			title: 'Sort',
+			description: 'Configure how cards are sorted.',
+			sortBy: 'Sort By',
+			sortByDescription: 'Select the criteria to sort cards by',
+			criteriaOptions: {
+				name: 'Filename',
+				created: 'Created Date',
+				modified: 'Modified Date',
+				size: 'File Size',
+				property: 'Frontmatter Property',
+			},
+			propertyName: 'Property Name',
+			propertyNameDescription: 'Enter the frontmatter property name to use for sorting (e.g., priority, status)',
+			propertyNamePlaceholder: 'Property name',
+			sortOrder: 'Sort Order',
+			sortOrderDescription: 'Choose ascending or descending order',
+			orderOptions: {
+				asc: 'Ascending (A-Z, small→large, old→new)',
+				desc: 'Descending (Z-A, large→small, new→old)',
+			},
+			exampleLabel: 'Example: ',
+			examples: {
+				name: 'Sort by filename: "A.md, B.md, C.md" (ascending) or "C.md, B.md, A.md" (descending)',
+				created: 'Sort by creation date: oldest first (ascending) or newest first (descending)',
+				modified: 'Sort by modification date: oldest modified first (ascending) or most recently modified first (descending)',
+				size: 'Sort by file size: smallest first (ascending) or largest first (descending)',
+				property: 'Sort by frontmatter property: sorted by property values (numbers, strings, dates, etc.)',
+			},
+		},
+		renderingSettings: {
+			renderMode: 'Rendering Mode',
+			renderModeDescription: 'Choose whether to display card content as plain text or render as markdown',
+		},
+		modeSettings: {
+			title: 'Mode',
+			description: 'Select the criteria to display cards.',
+			folderModeSettings: 'Folder Mode Settings',
+			tagModeSettings: 'Tag Mode Settings',
+			mode: 'Mode Selection',
+			modeDescription: 'Choose whether to display based on folders or tags',
+			modeOptions: {
+				folder: 'Folder Mode',
+				tag: 'Tag Mode',
+			},
+			folderSelection: 'Folder Selection',
+			folderSelectionDescription: 'Choose whether to use the active file\'s folder or specify a folder',
+			folderSelectionOptions: {
+				active: 'Active Folder',
+				specific: 'Specify Folder',
+			},
+			specifyFolder: 'Specify Folder',
+			specifyFolderDescription: 'Enter the folder path to display cards from (e.g., Projects/Work)',
+			folderPathPlaceholder: 'Folder path',
+			includeSubfolders: 'Include Subfolders',
+			includeSubfoldersDescription: 'Include files in subfolders of the selected folder',
+			tagSelection: 'Tag Selection',
+			tagSelectionDescription: 'Choose whether to use the active file\'s tags or specify tags',
+			tagSelectionOptions: {
+				active: 'Active File Tags',
+				specific: 'Specify Tags',
+			},
+			specifyTag: 'Specify Tags',
+			specifyTagDescription: 'Enter tags to display cards for, separated by commas (e.g., important,work)',
+			tagPlaceholder: 'tag1,tag2,tag3',
+			tagOperator: 'Tag Operator',
+			tagOperatorDescription: 'Display if any tag matches (OR), or all tags must match (AND)',
+			tagOperatorOptions: {
+				or: 'OR (any tag)',
+				and: 'AND (all tags)',
+			},
+		},
+		layoutSettings: {
+			minWidth: 'Card Minimum Width',
+			minWidthDescription: 'Set the minimum width of cards (100-400px)',
+			minHeight: 'Card Minimum Height',
+			minHeightDescription: 'Set the minimum height of cards (80-300px)',
+			maxWidth: 'Card Maximum Width',
+			maxWidthDescription: 'Set the maximum width of cards (200-600px)',
+			maxHeight: 'Card Maximum Height',
+			maxHeightDescription: 'Set the maximum height of cards (150-500px)',
+			cardGap: 'Card Gap',
+			cardGapDescription: 'Set the gap between cards (5-20px)',
+		},
+	},
+
+	// Modals
+	modals: {
+		textInput: {
+			inputLabel: 'Input',
+			cancel: 'Cancel',
+			confirm: 'Confirm',
+		},
+	},
+
+	// Notices
+	notices: {
+		inlineEditor: {
+			saveFailed: 'Save failed',
+			editCancelled: 'Edit cancelled',
+		},
+		contextMenu: {
+			markdownLinkCopied: 'Markdown link copied',
+			filePathCopied: 'File path copied',
+			fullContentCopied: 'Full content copied',
+			contentCopyFailed: 'Content copy failed',
+			firstParagraphCopied: 'First paragraph copied',
+			firstParagraphCopyFailed: 'First paragraph copy failed',
+			fileDeleteFailed: 'File deletion failed',
+			deleteConfirm: (filename: string) => `Delete "${filename}"?\n\nThis action cannot be undone.`,
+			fileDeleted: (filename: string) => `${filename} deleted`,
+			menuRegistered: 'Context menu registered',
+		},
+		presets: {
+			createFailed: 'Failed to create preset',
+			duplicateFailed: 'Failed to duplicate preset',
+			exportFailed: 'Failed to export preset',
+			deleteFailed: 'Failed to delete preset',
+			exported: 'Preset exported',
+			imported: 'Preset imported',
+			importFailed: 'Failed to import preset',
+			selectPreset: 'Please select a preset',
+			folderMappingAddFailed: 'Failed to add folder mapping',
+			enterTag: 'Please enter a tag',
+			tagMappingAddFailed: 'Failed to add tag mapping',
+			mappingDeleted: 'Mapping deleted',
+			mappingDeleteFailed: 'Failed to delete mapping',
+			priorityChangeFailed: 'Failed to change priority',
+		},
+		interactiveCard: {
+			borderColorReset: 'Border color reset to default',
+			borderThicknessReset: 'Border thickness reset to default',
+			borderRadiusReset: 'Border radius reset to default',
+			displayContentReset: 'Display content reset to default',
+			propertyNameCleared: 'Property name cleared',
+			includeFirstHeaderReset: 'Include first header reset to default',
+			bodyRenderModeReset: 'Body render mode reset to default',
+			maxLengthReset: 'Max length reset to default',
+			fontSizeReset: 'Font size reset to default',
+			backgroundColorReset: 'Background color reset to default',
+			hoverBorderColorReset: 'Hover border color reset to default',
+			hoverBorderThicknessReset: 'Hover border thickness reset to default',
+			activeBorderColorReset: 'Active border color reset to default',
+			activeBorderThicknessReset: 'Active border thickness reset to default',
+		},
+	},
+
+	// Debug/Console Messages
+	debug: {
+		card: {
+			linkChangeDetected: 'Link change detected (after 100ms)',
+			previousLinksInit: 'previousLinks initialization started',
+			previousLinksInitComplete: (fileCount: number, linkCount: number) => `previousLinks initialization complete: ${fileCount} files, ${linkCount} links`,
+			cacheDeleted: 'Cache deleted',
+			customCacheDeleted: 'Custom cache deleted',
+			relatedCacheInvalidation: 'Related file cache invalidation',
+			addedLinkTarget: '  → Added link target',
+			removedLinkTarget: '  → Removed link target',
+			backlinkSource: '  → Backlink source',
+			totalCacheInvalidation: (count: number) => `Total ${count} files cache invalidated`,
+			cacheInvalidationComplete: '    Cache invalidation complete',
+			fileContentExtraction: 'File content extraction',
+			headerExtractionError: 'Header extraction error',
+			contentExtractionError: 'Content extraction error',
+			backlinkExtraction: 'Backlink extraction',
+			resolvedLinks: 'resolvedLinks',
+			backlinkFound: 'Backlink found',
+			totalBacklinkCount: 'Total backlink count',
+			noBacklinks: 'No backlinks',
+			backlinkExtractionComplete: 'Backlink extraction complete',
+			backlinkExtractionError: 'Backlink extraction error',
+			outgoingLinkExtraction: 'Outgoing link extraction',
+			fileCache: 'File cache',
+			contentLinksCount: 'Content links count',
+			frontmatterLinksCount: 'Frontmatter links count',
+			linkProcessing: 'Link processing',
+			targetFile: 'Target file',
+			duplicateLinkSkipped: 'Duplicate link skipped',
+			noOutgoingLinks: 'No outgoing links',
+			outgoingLinkExtractionComplete: 'Outgoing link extraction complete',
+			outgoingLinkExtractionError: 'Outgoing link extraction error',
+			setupLinkHandlers: 'setupLinkHandlers called',
+			internalLinkElementsFound: 'Internal-link elements found',
+			linkFilePath: (index: number) => `Link ${index}: filePath =`,
+			linkNoFilePath: (index: number) => `Link ${index}: no filePath, skipped`,
+			fileNotFound: 'File not found',
+			linkOpenSuccess: 'Link opened successfully',
+			linkOpenError: 'Link open error',
+			tagLinkElementsFound: 'Tag-link elements found',
+			tagName: (index: number) => `Tag ${index}: tagName =`,
+			tagNoName: (index: number) => `Tag ${index}: no tagName, skipped`,
+			tagClicked: 'Tag clicked',
+			obsidianSearchExecuted: 'Obsidian search executed',
+			newSearchViewCreated: 'New search view created and tag search executed',
+			pluginSearchRequested: 'Plugin search mode requested',
+			pluginSearchConfigured: 'Plugin search configured',
+			pluginSearchFailed: 'Plugin search failed: no view or searchInput',
+			renderSectionCalled: 'renderSection called',
+			markdownRenderingStart: 'Markdown rendering started',
+			markdownRenderingComplete: 'Markdown rendering complete',
+			plainTextRendering: 'Plain text rendering',
+			markdownRenderError: 'Markdown rendering error',
+			renderPlainTextCalled: 'renderPlainText called',
+			htmlContentDetected: 'HTML content detected - using DOM API',
+			plainTextContent: 'Plain text - using textContent',
+			renderHtmlContentCalled: 'renderHTMLContent called',
+			partsSeparated: 'Parts separated',
+			partTrimmed: (index: number) => `Part ${index} (after trim)`,
+			linkParsed: 'Link parsed successfully',
+			tagParsed: 'Tag parsed successfully',
+			htmlParsingFailed: 'HTML parsing failed',
+			tagTextExtracted: 'Tag text extracted',
+			domAddComplete: 'DOM addition complete',
+			markdownRendererCalled: 'MarkdownRenderer.render called',
+			markdownRendererComplete: 'MarkdownRenderer.render complete',
+		},
+		presets: {
+			managerInitialized: 'PresetManager initialized',
+			managerReset: 'PresetManager state reset',
+			create: 'Preset creation:',
+			createComplete: 'Preset creation complete',
+			createError: 'Preset creation error:',
+			notFound: 'Preset not found:',
+			deleted: 'Preset deleted:',
+			currentPresetDeleted: 'Current preset deleted - resetting ID',
+			updated: 'Preset updated:',
+			duplicated: 'Preset duplicated:',
+			applied: 'Preset applied:',
+			changed: 'Preset changed:',
+			changedToNone: 'Preset changed: preset cleared',
+			duplicateError: 'Preset duplication error:',
+			exportError: 'Preset export error:',
+			deleteError: 'Preset deletion error:',
+			importError: 'Preset import error:',
+			importSuccess: 'Preset import successful:',
+			importFailed: 'Preset import failed:',
+			mappingAdded: 'Mapping added:',
+			mappingDeleted: 'Mapping deleted:',
+			mappingPriorityUpdated: 'Mapping priority updated:',
+			folderMappingAddError: 'Folder mapping addition error:',
+			tagMappingAddError: 'Tag mapping addition error:',
+			mappingDeleteError: 'Mapping deletion error:',
+			priorityChangeError: 'Priority change error:',
+			searchStart: 'Preset search started:',
+			folderMatched: 'Folder matched:',
+			tagMatched: 'Tag matched:',
+			frontmatterTagsArray: 'Frontmatter tags (array):',
+			frontmatterTagsString: 'Frontmatter tags (string):',
+			inlineTags: 'Inline tags:',
+			allTags: 'All tags:',
+			mappingSearch: (type: string) => `${type} mapping search:`,
+			matchedPreset: '✅ Matched preset:',
+			noMatchedPreset: '❌ No matched preset',
+			manualPriority: '🔧 Manual priority:',
+			autoPriorityFolderMode: '⚙️ Auto priority (folder mode): tag-first',
+			autoPriorityTagMode: '⚙️ Auto priority (tag mode): folder-first',
+		},
+		view: {
+			closing: 'Closing view',
+			refreshing: 'View refresh started',
+			fileOpening: 'Opening file',
+			fileOpenFailed: 'File open failed',
+			debouncedRenderExecuted: 'Debounced forceRender executed',
+			renderingSkipped: 'Rendering skipped as rendering in progress',
+			activeLeafChange: 'active-leaf-change event',
+			rerenderRequired: 'Rerender required',
+			contextChangeRerender: 'Context change → rerender + scroll',
+			sameContextUpdateClass: 'Same context → update active class only',
+			sameFileNoAction: 'Same file → no action',
+			metadataChangeDetected: 'Metadata change detected',
+			debouncedRenderFailed: 'Debounced render failed',
+			fileDeleteDetected: 'File delete detected',
+			fileRenameDetected: 'File rename detected',
+			searchAutoHide: 'Search auto-hide (empty search + outside click)',
+		},
+	},
+
+	// Selection Manager
+	selection: {
+		filesSelected: (count: number) => `${count} files selected`,
+		selectedFiles: (count: number) => `Selected: ${count} files`,
+		addTag: 'Add Tag',
+		move: 'Move',
+		delete: 'Delete',
+		clearSelection: 'Clear Selection',
+		addTagButtonClicked: 'Add tag button clicked',
+		moveButtonClicked: 'Move button clicked',
+		deleteButtonClicked: 'Delete button clicked',
+		clearSelectionButtonClicked: 'Clear selection button clicked',
+		batchAddTagCalled: 'batchAddTag called',
+		addTagModalTitle: 'Add Tag',
+		addTagModalPlaceholder: 'Enter tag to add (without #)',
+		tagInputReceived: 'Tag input received',
+		tagAddFailed: (filepath: string) => `Failed to add tag: ${filepath}`,
+		tagAdded: (count: number, tag: string) => `Added #${tag} tag to ${count} files`,
+		tagAddStart: (filepath: string) => `Starting tag addition: ${filepath}`,
+		tagAddSuccess: (tag: string) => `Tag added successfully: ${tag}`,
+		tagAlreadyExists: (tag: string) => `Tag already exists: ${tag}`,
+		batchMoveCalled: 'batchMove called',
+		folderSelectionCancelled: 'Folder selection cancelled',
+		folderSelected: 'Folder selected',
+		moveFileFailed: (filepath: string) => `Failed to move file: ${filepath}`,
+		root: 'Root',
+		filesMoved: (count: number, path: string) => `Moved ${count} files to ${path}`,
+		deleteConfirm: (count: number) => `Delete ${count} files?\n\nThis action cannot be undone.`,
+		deleteFileFailed: (filepath: string) => `Failed to delete file: ${filepath}`,
+		filesDeleted: (count: number) => `Deleted ${count} files`,
+	},
+
+	// Filter UI
+	filterUI: {
+		filterOptions: 'Filter Options',
+		close: '×',
+		tagFilter: 'Tag Filter',
+		tagInputPlaceholder: 'Enter tags (comma separated)',
+		dateFilter: 'Date Filter',
+		createdLabel: 'Created:',
+		modifiedLabel: 'Modified:',
+		rangeSeparator: '~',
+		propertyFilter: 'Property Filter',
+		propertyDescription: 'Enter frontmatter properties in key:value format (one per line)',
+		propertyPlaceholder: 'Example:\nstatus:done\npriority:high',
+		apply: 'Apply',
+		cancel: 'Cancel',
+		reset: 'Reset',
+	},
+
+	// Search Engine
+	searchEngine: {
+		cacheInvalidationFailed: 'Failed to register cache invalidation event listener',
+		regexError: 'Regex error',
+		invalidRegexFormat: 'Invalid regex format. Use /pattern/ or /pattern/flags format.',
+		regexCreateError: (error: string) => `Regex creation error: ${error}`,
+		regexSearchError: 'Regex search error',
+		lineSearchUnsupported: 'line: search is not supported in searchSync(). Use async search().',
+		unsupportedSearchType: (type: string) => `${type} search is not supported in searchSync(). Use async search().`,
+		lineSearchError: 'Line search error',
+		taskSearchError: 'Task search error',
+		blockSearchError: 'Block search error',
+		contentSearchError: 'Content search error',
+		fileReadError: 'File read error',
+		cacheAccessError: 'Cache access error',
+		contextExtractionError: 'Context extraction error',
+	},
+
+	// Drag Drop Handler
+	dragDrop: {
+		contentCached: 'File content cached',
+		dragStart: 'Drag started',
+		dragContentLink: 'Drag content: link',
+		dragContentFile: 'Drag content: file content',
+		dragEnd: 'Drag ended (delayed 100ms)',
+		cardDropped: 'Card to card drop',
+		bidirectionalLinkCreated: 'Bidirectional link created',
+		bidirectionalLinkFailed: 'Failed to create bidirectional link',
+		editorDropZoneSetup: 'Editor drop zone set up',
+		fileCopyFailed: 'Failed to copy file content',
+		fileContentFetchFailed: 'Failed to fetch file content',
+	},
+
+	// UI Labels (tooltips, etc.)
+	uiLabels: {
+		presets: {
+			priorityUp: 'Increase priority',
+			priorityDown: 'Decrease priority',
+			deleteMapping: 'Delete mapping',
+			copySuffix: ' (copy)',
+		},
+		view: {
+			noTitle: '(No title)',
+			noContent: '(No content)',
+		},
+		ui: {
+			activeTags: 'Active file tags',
+		},
+	},
+
+	// ViewRenderer
+	viewRenderer: {
+		comments: {
+			viewRendering: 'Responsible for view rendering',
+			viewportManager: 'Viewport manager (for viewport rendering)',
+			activeFileTagMode: 'Active file tag mode result',
+			specifiedTagMode: 'Specified tag mode result',
+			activeFolderMode: 'Active folder mode result',
+			specifiedFolderMode: 'Specified folder mode result',
+			selectionRestore: 'Selection state restore',
+			fileInCurrentViewCheck: 'isFileInCurrentView check',
+			searchMode: 'Search mode → true',
+			tagModeCheck: 'Tag mode check',
+			folderModeCheck: 'Folder mode check',
+		},
+	},
+
+	// Search Operators
+	searchOperators: {
+		path: 'Match file path',
+		file: 'Match file name',
+		tag: 'Tag search',
+		line: 'Keywords in same line',
+		section: 'Keywords under same heading',
+		property: 'Match property',
+		created: 'Created date',
+		modified: 'Modified date',
+	},
+
+	// Folder Suggest Modal
+	folderSuggest: {
+		placeholder: 'Select a folder...',
+		rootFolder: '/ (Root)',
+	},
+
+	// Tag Suggest Modal
+	tagSuggest: {
+		placeholder: 'Select a tag...',
+	},
+
+	// Inline Editor
+	inlineEditor: {
+		doubleClickToEdit: 'Double-click to edit',
+		sectionSaved: (section: string) => `${section} saved`,
+	},
+
+	// Settings - Additional
+	settingsAdditional: {
+		settingsResetStart: 'Settings reset started',
+		settingsResetComplete: 'Settings reset complete!',
+		settingsSaveQuietStart: 'saveSettingsQuiet() called',
+		settingsSaveQuietComplete: 'saveSettingsQuiet() complete',
+		settingsSaveQuietFailed: 'Failed to save settings (Quiet)',
+		settingsImportError: 'Settings import error',
+	},
+
+	// Interactive Card Settings
+	interactiveCardSettings: {
+		propertyCollectionComplete: 'Frontmatter property collection complete',
+		currentFilePropertiesLoaded: 'Current file properties loaded',
+	},
+} as const;
+
+export type TranslationKeys = typeof en;

@@ -1,6 +1,7 @@
 import { App, TFile, MarkdownView } from 'obsidian';
 import { DebugLogger } from './DebugLogger';
 import { CardNavigatorSettings, DragDropFullContentOptions } from '../types';
+import { t } from '../i18n';
 
 /**
  * 드래그 상태 인터페이스
@@ -54,9 +55,9 @@ export class DragDropHandler {
                 // 파일 내용을 미리 로드하여 캠싱
                 const content = await this.getFileContentForDrag(file, settings.dragDrop.fullContentOptions);
                 this.cachedDragContent.set(file.path, content);
-                this.logger.debug('DragDrop', '파일 내용 캠싱 완료', { 
+                this.logger.debug('DragDrop', t().dragDrop.contentCached, {
                     file: file.basename,
-                    length: content.length 
+                    length: content.length
                 });
             }
         });
@@ -71,7 +72,7 @@ export class DragDropHandler {
                 dragEndTimeout = null;
             }
 
-            this.logger.debug('DragDrop', '드래그 시작', { file: file.basename });
+            this.logger.debug('DragDrop', t().dragDrop.dragStart, { file: file.basename });
 
             // 설정에 따라 드래그 데이터 결정
             const settings = this.getSettings();
@@ -80,11 +81,11 @@ export class DragDropHandler {
             if (settings.dragDrop.contentType === 'link') {
                 // 링크 형식
                 dragContent = `[[${file.basename}]]`;
-                this.logger.debug('DragDrop', '드래그 내용: 링크', { content: dragContent });
+                this.logger.debug('DragDrop', t().dragDrop.dragContentLink, { content: dragContent });
             } else {
                 // 파일 전체 내용 (캠싱된 내용 사용)
                 dragContent = this.cachedDragContent.get(file.path) || `[[${file.basename}]]`;
-                this.logger.debug('DragDrop', '드래그 내용: 파일 내용', { 
+                this.logger.debug('DragDrop', t().dragDrop.dragContentFile, {
                     length: dragContent.length,
                     cached: this.cachedDragContent.has(file.path)
                 });
@@ -105,7 +106,7 @@ export class DragDropHandler {
             dragEndTimeout = setTimeout(() => {
                 dragging = false;
                 dragEndTimeout = null;
-                this.logger.debug('DragDrop', '드래그 종료 (지연 100ms)');
+                this.logger.debug('DragDrop', t().dragDrop.dragEnd);
             }, 100);
 		});
 
@@ -153,7 +154,7 @@ export class DragDropHandler {
             const draggedFile = this.app.vault.getAbstractFileByPath(draggedFilePath);
             if (!(draggedFile instanceof TFile)) return;
 
-            this.logger.debug('DragDrop', '카드 간 드롭', {
+            this.logger.debug('DragDrop', t().dragDrop.cardDropped, {
                 from: draggedFile.basename,
                 to: targetFile.basename
             });
@@ -186,12 +187,12 @@ export class DragDropHandler {
                 await this.app.vault.modify(targetFile, targetContent + sourceLink);
             }
 
-            this.logger.debug('DragDrop', '양방향 링크 생성', {
+            this.logger.debug('DragDrop', t().dragDrop.bidirectionalLinkCreated, {
                 source: sourceFile.basename,
                 target: targetFile.basename
             });
         } catch (error) {
-            this.logger.error('DragDrop', '양방향 링크 생성 실패', error);
+            this.logger.error('DragDrop', t().dragDrop.bidirectionalLinkFailed, error);
         }
     }
 
@@ -202,7 +203,7 @@ export class DragDropHandler {
      * 현재는 추가 설정이 필요하지 않습니다.
      */
     setupEditorDropZone(): void {
-        this.logger.debug('DragDrop', '편집기 드롭 존 설정됨');
+        this.logger.debug('DragDrop', t().dragDrop.editorDropZoneSetup);
     }
 
     /**
@@ -230,7 +231,7 @@ export class DragDropHandler {
             const content = await this.app.vault.read(file);
             return content;
         } catch (error) {
-            this.logger.error('DragDrop', '파일 내용 복사 실패', error);
+            this.logger.error('DragDrop', t().dragDrop.fileCopyFailed, error);
             return '';
         }
     }
@@ -264,7 +265,7 @@ export class DragDropHandler {
 
             return content;
         } catch (error) {
-            this.logger.error('DragDrop', '파일 내용 가져오기 실패', error);
+            this.logger.error('DragDrop', t().dragDrop.fileContentFetchFailed, error);
             return '';
         }
     }

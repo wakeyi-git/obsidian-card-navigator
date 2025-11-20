@@ -3,6 +3,7 @@ import { SearchQuery, ParsedQuery } from '../types';
 import { SearchParser } from './SearchParser';
 import { LRUCache } from '../utils/memoize';
 import { DebugLogger } from '../utils/DebugLogger';
+import { t } from '../i18n';
 
 /**
  * 검색 엔진
@@ -45,7 +46,7 @@ export class SearchEngine {
         } catch (error) {
             // 테스트 환경이나 특수한 상황에서 이벤트 리스너 등록 실패 시
             // 경고만 출력하고 계속 진행
-            this.logger.warn('Search', '캐시 무효화 이벤트 리스너 등록 실패', error);
+            this.logger.warn('Search', t().searchEngine.cacheInvalidationFailed, error);
         }
     }
     
@@ -124,7 +125,7 @@ export class SearchEngine {
             try {
                 return await this.searchWithRegex(query, files);
             } catch (error) {
-                this.logger.error('Search', '정규식 오류', error);
+                this.logger.error('Search', t().searchEngine.regexError, error);
                 this.searchCache.set(cacheKey, []);
                 return [];
             }
@@ -162,11 +163,11 @@ export class SearchEngine {
     
     private parseRegexQuery(query: string): { pattern: string, flags: string } {
         const match = query.trim().match(/^\/(.+?)\/([gimuy]*)$/);
-        
+
         if (!match) {
-            throw new Error('올바르지 않은 정규식 형식입니다. /pattern/ 또는 /pattern/flags 형식을 사용하세요.');
+            throw new Error(t().searchEngine.invalidRegexFormat);
         }
-        
+
         return {
             pattern: match[1],
             flags: match[2] || ''
@@ -199,7 +200,7 @@ export class SearchEngine {
         try {
             regex = new RegExp(pattern, flags);
         } catch (error) {
-            throw new Error(`정규식 생성 오류: ${error}`);
+            throw new Error(t().searchEngine.regexCreateError(String(error)));
         }
         
         const results: TFile[] = [];
@@ -212,7 +213,7 @@ export class SearchEngine {
                     results.push(file);
                 }
             } catch (error) {
-                this.logger.error('Search', '정규식 검색 오류', { path: file.path, error });
+                this.logger.error('Search', t().searchEngine.regexSearchError, { path: file.path, error });
             }
         }
         
@@ -383,7 +384,7 @@ export class SearchEngine {
                 return this.filterByTag(files, query.value);
 
             case 'line':
-                this.logger.warn('Search', 'line: 검색은 searchSync()에서 지원하지 않습니다. async search()를 사용하세요.');
+                this.logger.warn('Search', t().searchEngine.lineSearchUnsupported);
                 return files;
 
             case 'section':
@@ -403,7 +404,7 @@ export class SearchEngine {
             case 'task-done':
             case 'block':
             case 'content':
-                this.logger.warn('Search', `${query.type} 검색은 searchSync()에서 지원하지 않습니다. async search()를 사용하세요.`);
+                this.logger.warn('Search', t().searchEngine.unsupportedSearchType(query.type));
                 return files;
 
             case 'link':
@@ -555,7 +556,7 @@ export class SearchEngine {
         try {
             cache = this.app.metadataCache.getFileCache(file);
         } catch (error) {
-            this.logger.error('Search', '캐시 접근 오류', { path: file.path, error });
+            this.logger.error('Search', t().searchEngine.cacheAccessError, { path: file.path, error });
             return false;
         }
             if (!cache) return false;
@@ -603,7 +604,7 @@ export class SearchEngine {
                     results.push(file);
                 }
             } catch (error) {
-                this.logger.error('Search', '라인 검색 오류', { path: file.path, error });
+                this.logger.error('Search', t().searchEngine.lineSearchError, { path: file.path, error });
             }
         }
         
@@ -755,7 +756,7 @@ export class SearchEngine {
                     results.push(file);
                 }
             } catch (error) {
-                this.logger.error('Search', '태스크 검색 오류', { path: file.path, error });
+                this.logger.error('Search', t().searchEngine.taskSearchError, { path: file.path, error });
             }
         }
 
@@ -831,7 +832,7 @@ export class SearchEngine {
                     }
                 }
             } catch (error) {
-                this.logger.error('Search', '블록 검색 오류', { path: file.path, error });
+                this.logger.error('Search', t().searchEngine.blockSearchError, { path: file.path, error });
             }
         }
 
@@ -876,7 +877,7 @@ export class SearchEngine {
                     results.push(file);
                 }
             } catch (error) {
-                this.logger.error('Search', '본문 검색 오류', { path: file.path, error });
+                this.logger.error('Search', t().searchEngine.contentSearchError, { path: file.path, error });
             }
         }
 
@@ -1018,12 +1019,12 @@ export class SearchEngine {
         try {
             const content = await this.app.vault.read(file);
             const searchContent = caseSensitive ? content : content.toLowerCase();
-            
+
             if (searchContent.includes(query)) {
                 return true;
             }
         } catch (error) {
-            this.logger.error('Search', '파일 읽기 오류', { path: file.path, error });
+            this.logger.error('Search', t().searchEngine.fileReadError, { path: file.path, error });
         }
         
         const cache = this.app.metadataCache.getFileCache(file);
@@ -1070,23 +1071,23 @@ export class SearchEngine {
         if (!file) {
             return false;
         }
-        
+
         const filename = caseSensitive ? file.basename : file.basename.toLowerCase();
         if (filename.includes(query)) {
             return true;
         }
-        
+
         const filepath = caseSensitive ? file.path : file.path.toLowerCase();
         if (filepath.includes(query)) {
             return true;
         }
-        
+
         // 에러 핸들링
         let cache;
         try {
             cache = this.app.metadataCache.getFileCache(file);
         } catch (error) {
-            this.logger.error('Search', '캐시 접근 오류', { path: file.path, error });
+            this.logger.error('Search', t().searchEngine.cacheAccessError, { path: file.path, error });
             return false;
         }
         
@@ -1176,10 +1177,11 @@ export class SearchEngine {
             if (end < content.length) {
                 context = context + '...';
             }
-            
+
+
             return context;
         } catch (error) {
-            this.logger.error('Search', '컨텍스트 추출 오류', error);
+            this.logger.error('Search', t().searchEngine.contextExtractionError, error);
             return null;
         }
     }

@@ -1,6 +1,7 @@
 import { App, Component, MarkdownRenderer } from 'obsidian';
 import { CardData, CardSection, RenderMode, CardNavigatorSettings } from '../types';
 import { DebugLogger } from '../utils/DebugLogger';
+import { t } from '../i18n';
 
 /**
  * 카드 데이터를 HTML 요소로 렌더링합니다
@@ -134,20 +135,20 @@ export class CardRenderer {
      * - 설정에 따라 플러그인 검색 또는 Obsidian 검색으로 분기
      */
     private setupLinkHandlersInternal(cardEl: HTMLElement): void {
-        this.logger.debug('Card', 'setupLinkHandlers 호출');
+        this.logger.debug('Card', t().debug.card.setupLinkHandlers);
         
         const linkElements = cardEl.querySelectorAll('.internal-link');
         
-        this.logger.debug('Card', '찾은 internal-link 요소 수', { count: linkElements.length });
+        this.logger.debug('Card', t().debug.card.internalLinkElementsFound, { count: linkElements.length });
         
         linkElements.forEach((linkEl, index) => {
             const span = linkEl as HTMLElement;
             const filePath = span.dataset.filePath;
             
-            this.logger.debug('Card', `링크 ${index}: filePath =`, filePath);
+            this.logger.debug('Card', t().debug.card.linkFilePath(index), filePath);
             
             if (!filePath) {
-                this.logger.debug('Card', `링크 ${index}: filePath 없음, 건너뛴`);
+                this.logger.debug('Card', t().debug.card.linkNoFilePath(index));
                 return;
             }
             
@@ -170,7 +171,7 @@ export class CardRenderer {
                 const file = this.app.vault.getAbstractFileByPath(filePath);
                 
                 if (!file) {
-                    this.logger.error('Card', '파일을 찾을 수 없습니다', filePath);
+                    this.logger.error('Card', t().debug.card.fileNotFound, filePath);
                     return;
                 }
                 
@@ -183,28 +184,28 @@ export class CardRenderer {
                         newLeaf
                     );
                     
-                    this.logger.debug('Card', '링크 열기 성공', {
+                    this.logger.debug('Card', t().debug.card.linkOpenSuccess, {
                         filePath,
                         newLeaf
                     });
                 } catch (error) {
-                    this.logger.error('Card', '링크 열기 실패', error);
+                    this.logger.error('Card', t().debug.card.linkOpenError, error);
                 }
             });
         });
         
         const tagElements = cardEl.querySelectorAll('.tag-link');
         
-        this.logger.debug('Card', '찾은 tag-link 요소 수', { count: tagElements.length });
+        this.logger.debug('Card', t().debug.card.tagLinkElementsFound, { count: tagElements.length });
         
         tagElements.forEach((tagEl, index) => {
             const span = tagEl as HTMLElement;
             const tagName = span.dataset.tag;
             
-            this.logger.debug('Card', `태그 ${index}: tagName =`, tagName);
+            this.logger.debug('Card', t().debug.card.tagName(index), tagName);
             
             if (!tagName) {
-                this.logger.debug('Card', `태그 ${index}: tagName 없음, 건너뛴`);
+                this.logger.debug('Card', t().debug.card.tagNoName(index));
                 return;
             }
             
@@ -224,7 +225,7 @@ export class CardRenderer {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                this.logger.debug('Card', '태그 클릭됨', {
+                this.logger.debug('Card', t().debug.card.tagClicked, {
                     tagName,
                     tagClickAction: this.settings?.tagClickAction || 'obsidian-search',
                     timestamp: Date.now()
@@ -260,7 +261,7 @@ export class CardRenderer {
                 searchView.setQuery(`tag:#${tagName}`);
             }
             
-            this.logger.debug('Card', 'Obsidian 검색 실행', {
+            this.logger.debug('Card', t().debug.card.obsidianSearchExecuted, {
                 tagName,
                 searchQuery: `tag:#${tagName}`
             });
@@ -276,7 +277,7 @@ export class CardRenderer {
                 
                 this.app.workspace.revealLeaf(leaf);
                 
-                this.logger.debug('Card', '새 검색 뷰 생성 및 태그 검색', {
+                this.logger.debug('Card', t().debug.card.newSearchViewCreated, {
                     tagName,
                     searchQuery: `tag:#${tagName}`
                 });
@@ -292,7 +293,7 @@ export class CardRenderer {
      * view 인스턴스가 없으면 Obsidian 검색으로 폴백합니다.
      */
     private async handlePluginSearch(tagName: string): Promise<void> {
-        this.logger.debug('Card', '플러그인 검색 모드 요청', {
+        this.logger.debug('Card', t().debug.card.pluginSearchRequested, {
             tagName
         });
         
@@ -309,12 +310,12 @@ export class CardRenderer {
             const searchQuery = `tag:${tagName}`;
             this.view.searchInput.setValueAndSearch(searchQuery);
             
-            this.logger.debug('Card', '플러그인 검색 설정 완료', {
+            this.logger.debug('Card', t().debug.card.pluginSearchConfigured, {
                 tagName,
                 searchQuery
             });
         } else {
-            this.logger.error('Card', '플러그인 검색 실패: view 또는 searchInput 없음');
+            this.logger.error('Card', t().debug.card.pluginSearchFailed);
             
             await this.handleObsidianSearch(tagName);
         }
@@ -369,7 +370,7 @@ export class CardRenderer {
         const sectionEl = document.createElement('div');
         sectionEl.className = className;
 
-        this.logger.debug('Card', 'renderSection 호출', {
+        this.logger.debug('Card', t().debug.card.renderSectionCalled, {
             sectionType: section.type,
             renderMode: renderMode,
             contentLength: section.content?.length || 0,
@@ -379,15 +380,15 @@ export class CardRenderer {
 
         if (!section.content) {
             if (section.type === 'header') {
-                sectionEl.textContent = '(제목 없음)';
+                sectionEl.textContent = t().uiLabels.view.noTitle;
             } else if (section.type === 'body') {
-                sectionEl.textContent = '(내용 없음)';
+                sectionEl.textContent = t().uiLabels.view.noContent;
             }
             return sectionEl;
         }
 
         if (renderMode === 'markdown-html') {
-            this.logger.debug('Card', '마크다운 렌더링 시작', { sectionType: section.type });
+            this.logger.debug('Card', t().debug.card.markdownRenderingStart, { sectionType: section.type });
             
             // Obsidian 읽기 뷰와 동일한 클래스 추가
             sectionEl.addClass('markdown-preview-view');
@@ -398,12 +399,12 @@ export class CardRenderer {
             
             sectionEl.addClass('card-markdown-content');
             
-            this.logger.debug('Card', '마크다운 렌더링 완료', {
+            this.logger.debug('Card', t().debug.card.markdownRenderingComplete, {
                 sectionType: section.type,
                 innerHTML: sectionEl.innerHTML.substring(0, 100)
             });
         } else {
-            this.logger.debug('Card', '일반 텍스트 렌더링', { sectionType: section.type });
+            this.logger.debug('Card', t().debug.card.plainTextRendering, { sectionType: section.type });
             this.renderPlainText(section.content, sectionEl);
         }
 
@@ -418,7 +419,7 @@ export class CardRenderer {
      * internal-link, tag-link를 감지하여 HTML 콘텐츠로 판별합니다.
      */
     private renderPlainText(text: string, container: HTMLElement): void {
-        this.logger.debug('Card', 'renderPlainText 호출', {
+        this.logger.debug('Card', t().debug.card.renderPlainTextCalled, {
             textLength: text.length,
             hasSpan: text.includes('<span'),
             hasInternalLink: text.includes('internal-link'),
@@ -428,10 +429,10 @@ export class CardRenderer {
         
         // HTML 태그가 포함되어 있으면 DOM API로 파싱
         if (text.includes('<span') && (text.includes('internal-link') || text.includes('tag-link'))) {
-            this.logger.debug('Card', 'HTML 콘텐츠 감지 - DOM API 사용');
+            this.logger.debug('Card', t().debug.card.htmlContentDetected);
             this.renderHTMLContent(text, container);
         } else {
-            this.logger.debug('Card', '일반 텍스트 - textContent 사용');
+            this.logger.debug('Card', t().debug.card.plainTextContent);
             container.textContent = text;
         }
     }
@@ -445,25 +446,25 @@ export class CardRenderer {
      * 쉼표로 구분된 여러 링크/태그를 지원합니다.
      */
     private renderHTMLContent(html: string, container: HTMLElement): void {
-        this.logger.debug('Card', 'renderHTMLContent 호출', {
+        this.logger.debug('Card', t().debug.card.renderHtmlContentCalled, {
             htmlLength: html.length,
             htmlPreview: html.substring(0, 200)
         });
-        
+
         const parts = html.split(', ');
-        this.logger.debug('Card', '분리된 부분 수', { count: parts.length });
+        this.logger.debug('Card', t().debug.card.partsSeparated, { count: parts.length });
         
         const fragment = document.createDocumentFragment();
         
         parts.forEach((part, index) => {
             const trimmedPart = part.trim();
-            this.logger.debug('Card', `부분 ${index} (trim 후)`, { content: trimmedPart });
+            this.logger.debug('Card', t().debug.card.partTrimmed(index), { content: trimmedPart });
             
             let match = trimmedPart.match(/<span class="internal-link" data-file-path="([^"]+)">(.+?)<\/span>/);
             
             if (match) {
                 const [_, filePath, displayName] = match;
-                this.logger.debug('Card', '링크 파싱 성공', { filePath, displayName });
+                this.logger.debug('Card', t().debug.card.linkParsed, { filePath, displayName });
                 
                 const span = document.createElement('span');
                 span.className = 'internal-link';
@@ -480,7 +481,7 @@ export class CardRenderer {
                 
                 if (match) {
                     const [_, tagName, displayText] = match;
-                    this.logger.debug('Card', '태그 파싱 성공', { tagName, displayText });
+                    this.logger.debug('Card', t().debug.card.tagParsed, { tagName, displayText });
                     
                     const span = document.createElement('span');
                     span.className = 'tag-link';
@@ -493,7 +494,7 @@ export class CardRenderer {
                         fragment.appendChild(document.createTextNode(', '));
                     }
                 } else {
-                    this.logger.warn('Card', 'HTML 파싱 실패', {
+                    this.logger.warn('Card', t().debug.card.htmlParsingFailed, {
                         part: trimmedPart,
                         reason: 'internal-link도 tag-link도 아님'
                     });
@@ -501,7 +502,7 @@ export class CardRenderer {
                     if (trimmedPart.startsWith('<span') && trimmedPart.includes('tag-link')) {
                         const textMatch = trimmedPart.match(/>(.+?)</);
                         if (textMatch) {
-                            this.logger.debug('Card', '태그 텍스트 추출', { text: textMatch[1] });
+                            this.logger.debug('Card', t().debug.card.tagTextExtracted, { text: textMatch[1] });
                             fragment.appendChild(document.createTextNode(textMatch[1]));
                         } else {
                             fragment.appendChild(document.createTextNode(trimmedPart));
@@ -518,7 +519,7 @@ export class CardRenderer {
         });
         
         container.appendChild(fragment);
-        this.logger.debug('Card', 'DOM 추가 완료', { childrenCount: container.children.length });
+        this.logger.debug('Card', t().debug.card.domAddComplete, { childrenCount: container.children.length });
     }
 
     /**
@@ -539,7 +540,7 @@ export class CardRenderer {
         sourcePath: string
     ): Promise<void> {
         try {
-            this.logger.debug('Card', 'MarkdownRenderer.render 호출 시작', {
+            this.logger.debug('Card', t().debug.card.markdownRendererCalled, {
                 textLength: text.length,
                 sourcePath: sourcePath,
                 containerClass: container.className
@@ -553,37 +554,37 @@ export class CardRenderer {
                 this.component
             );
             
-            this.logger.debug('Card', 'MarkdownRenderer.render 완료', {
+            this.logger.debug('Card', t().debug.card.markdownRendererComplete, {
                 childrenCount: container.children.length,
                 innerHTML: container.innerHTML.substring(0, 200)
             });
         } catch (error) {
-            this.logger.error('Card', '마크다운 렌더링 오류', error);
+            this.logger.error('Card', t().debug.card.markdownRenderError, error);
             this.renderPlainText(text, container);
         }
     }
 
     /**
      * 헤더를 렌더링합니다
-     * 
+     *
      * @deprecated 대신 renderCard 메서드를 사용하세요
      */
     renderHeader(section: CardSection): HTMLElement {
         const headerEl = document.createElement('div');
         headerEl.className = 'card-header';
-        headerEl.textContent = section.content || '(제목 없음)';
+        headerEl.textContent = section.content || t().uiLabels.view.noTitle;
         return headerEl;
     }
 
     /**
      * 바디를 렌더링합니다
-     * 
+     *
      * @deprecated 대신 renderCard 메서드를 사용하세요
      */
     renderBody(section: CardSection): HTMLElement {
         const bodyEl = document.createElement('div');
         bodyEl.className = 'card-body';
-        bodyEl.textContent = section.content || '(내용 없음)';
+        bodyEl.textContent = section.content || t().uiLabels.view.noContent;
         return bodyEl;
     }
 

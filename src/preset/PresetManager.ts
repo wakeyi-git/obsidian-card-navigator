@@ -2,6 +2,7 @@ import { TFile } from 'obsidian';
 import { CardNavigatorSettings, Preset, PresetMapping, CardSettings } from '../types';
 import CardNavigatorPlugin from '../main';
 import { DebugLogger } from '../utils/DebugLogger';
+import { t } from '../i18n';
 
 /**
  * 프리셋 관리 매니저
@@ -23,7 +24,7 @@ export class PresetManager {
      * PresetManager를 초기화합니다
      */
     async initialize(): Promise<void> {
-        this.logger.debug('Preset', 'PresetManager 초기화 완료');
+        this.logger.debug('Preset', t().debug.presets.managerInitialized);
     }
 
     /**
@@ -31,7 +32,7 @@ export class PresetManager {
      */
     reset(): void {
         this.currentPresetId = null;
-        this.logger.debug('Preset', 'PresetManager 상태 리셋 완료');
+        this.logger.debug('Preset', t().debug.presets.managerReset);
     }
 
     /**
@@ -99,7 +100,7 @@ export class PresetManager {
         settings.presets.push(preset);
         this.plugin.saveSettings();
 
-        this.logger.debug('Preset', '프리셋 생성:', {
+        this.logger.debug('Preset', t().debug.presets.create, {
             name,
             headerNormalStyle: clonedSettings.header.normalStyle,
             bodyNormalStyle: clonedSettings.body.normalStyle,
@@ -119,9 +120,9 @@ export class PresetManager {
     async deletePreset(id: string): Promise<void> {
         const settings = this.plugin.settings;
         const index = settings.presets.findIndex(p => p.id === id);
-        
+
         if (index === -1) {
-            this.logger.warn('Preset', '프리셋 없음:', id);
+            this.logger.warn('Preset', t().debug.presets.notFound, id);
             return;
         }
 
@@ -134,11 +135,11 @@ export class PresetManager {
         
         if (this.currentPresetId === id) {
             this.currentPresetId = null;
-            this.logger.debug('Preset', '현재 적용된 프리셋 삭제 - ID 초기화');
+            this.logger.debug('Preset', t().debug.presets.currentPresetDeleted);
         }
-        
+
         await this.plugin.saveSettings();
-        this.logger.debug('Preset', '프리셋 삭제:', deletedPreset.name);
+        this.logger.debug('Preset', t().debug.presets.deleted, deletedPreset.name);
     }
 
     /**
@@ -151,9 +152,9 @@ export class PresetManager {
     async updatePreset(id: string, name: string, description: string): Promise<void> {
         const settings = this.plugin.settings;
         const preset = settings.presets.find(p => p.id === id);
-        
+
         if (!preset) {
-            this.logger.warn('Preset', '프리셋 없음:', id);
+            this.logger.warn('Preset', t().debug.presets.notFound, id);
             return;
         }
 
@@ -163,7 +164,7 @@ export class PresetManager {
         preset.settings = clonedSettings;
 
         await this.plugin.saveSettings();
-        this.logger.debug('Preset', '프리셋 업데이트:', {
+        this.logger.debug('Preset', t().debug.presets.updated, {
             name,
             headerNormalStyle: clonedSettings.header.normalStyle,
             bodyNormalStyle: clonedSettings.body.normalStyle,
@@ -180,15 +181,15 @@ export class PresetManager {
     async duplicatePreset(id: string): Promise<Preset | null> {
         const settings = this.plugin.settings;
         const original = settings.presets.find(p => p.id === id);
-        
+
         if (!original) {
-            this.logger.warn('Preset', '프리셋 없음:', id);
+            this.logger.warn('Preset', t().debug.presets.notFound, id);
             return null;
         }
 
         const duplicated: Preset = {
             id: this.generateId(),
-            name: `${original.name} (복사)`,
+            name: `${original.name}${t().uiLabels.presets.copySuffix}`,
             description: original.description,
             settings: JSON.parse(JSON.stringify(original.settings)),
             createdAt: Date.now()
@@ -197,7 +198,7 @@ export class PresetManager {
         settings.presets.push(duplicated);
         await this.plugin.saveSettings();
 
-        this.logger.debug('Preset', '프리셋 복제:', duplicated.name);
+        this.logger.debug('Preset', t().debug.presets.duplicated, duplicated.name);
         return duplicated;
     }
 
@@ -232,9 +233,9 @@ export class PresetManager {
     async applyPreset(id: string): Promise<void> {
         const settings = this.plugin.settings;
         const preset = settings.presets.find(p => p.id === id);
-        
+
         if (!preset) {
-            this.logger.warn('Preset', '프리셋 없음:', id);
+            this.logger.warn('Preset', t().debug.presets.notFound, id);
             return;
         }
 
@@ -243,9 +244,9 @@ export class PresetManager {
         
 
         Object.assign(settings, this.deepMerge(settings, settingsToApply));
-        
+
         this.currentPresetId = id;
-        this.logger.debug('Preset', '프리셋 적용:', {
+        this.logger.debug('Preset', t().debug.presets.applied, {
             name: preset.name,
             headerStyle: settingsToApply.header.normalStyle,
             bodyStyle: settingsToApply.body.normalStyle,
@@ -279,7 +280,7 @@ export class PresetManager {
             this.currentPresetId = null;
             const changed = previousPresetId !== null;
             if (changed) {
-                this.logger.debug('Preset', '프리셋 변경됨: 프리셋 해제');
+                this.logger.debug('Preset', t().debug.presets.changedToNone);
             }
             return changed;
         }
@@ -290,7 +291,7 @@ export class PresetManager {
             this.currentPresetId = preset.id;
             const changed = previousPresetId !== preset.id;
             if (changed) {
-                this.logger.debug('Preset', '프리셋 변경됨:', {
+                this.logger.debug('Preset', t().debug.presets.changed, {
                     from: previousPresetId || 'none',
                     to: preset.id
                 });
@@ -300,7 +301,7 @@ export class PresetManager {
             this.currentPresetId = null;
             const changed = previousPresetId !== null;
             if (changed) {
-                this.logger.debug('Preset', '프리셋 변경됨: 프리셋 해제');
+                this.logger.debug('Preset', t().debug.presets.changedToNone);
             }
             return changed;
         }
@@ -323,8 +324,8 @@ export class PresetManager {
 
         settings.presetMappings.push(mapping);
         await this.plugin.saveSettings();
-        
-        this.logger.debug('Preset', '매핑 추가:', { type: mapping.type, target: mapping.target });
+
+        this.logger.debug('Preset', t().debug.presets.mappingAdded, { type: mapping.type, target: mapping.target });
     }
 
     /**
@@ -339,9 +340,9 @@ export class PresetManager {
         settings.presetMappings = settings.presetMappings.filter(
             m => !(m.type === type && m.target === target)
         );
-        
+
         await this.plugin.saveSettings();
-        this.logger.debug('Preset', '매핑 삭제:', { type, target });
+        this.logger.debug('Preset', t().debug.presets.mappingDeleted, { type, target });
     }
 
     /**
@@ -369,7 +370,7 @@ export class PresetManager {
         if (mapping) {
             mapping.priority = newPriority;
             await this.plugin.saveSettings();
-            this.logger.debug('Preset', '매핑 우선순위 업데이트:', { type, target, newPriority });
+            this.logger.debug('Preset', t().debug.presets.mappingPriorityUpdated, { type, target, newPriority });
         }
     }
 
@@ -394,11 +395,11 @@ export class PresetManager {
         const priorityType = this.determinePriorityType();
         
         // 2. 우선순위에 따라 폴더/태그 순서 결정
-        const searchOrder = priorityType === 'folder-first' 
+        const searchOrder = priorityType === 'folder-first'
             ? ['folder', 'tag'] as const
             : ['tag', 'folder'] as const;
-        
-        this.logger.debug('Preset', '프리셋 검색 시작:', {
+
+        this.logger.debug('Preset', t().debug.presets.searchStart, {
             file: file.path,
             priorityType,
             searchOrder
@@ -408,8 +409,8 @@ export class PresetManager {
         for (const type of searchOrder) {
             const mappings = this.getMappingsByType(type)
                 .sort((a, b) => a.priority - b.priority);  // 낮은 priority가 우선 (위→아래)
-            
-            this.logger.debug('Preset', `${type} 매핑 검색:`, {
+
+            this.logger.debug('Preset', t().debug.presets.mappingSearch(type), {
                 count: mappings.length,
                 priorities: mappings.map(m => ({ target: m.target, priority: m.priority }))
             });
@@ -419,9 +420,9 @@ export class PresetManager {
                     const preset = settings.presets.find(
                         p => p.id === mapping.presetId
                     );
-                    
+
                     if (preset) {
-                        this.logger.debug('Preset', '✅ 매칭된 프리셋:', {
+                        this.logger.debug('Preset', t().debug.presets.matchedPreset, {
                             type,
                             target: mapping.target,
                             priority: mapping.priority,
@@ -434,7 +435,7 @@ export class PresetManager {
             }
         }
 
-        this.logger.debug('Preset', '❌ 매칭된 프리셋 없음');
+        this.logger.debug('Preset', t().debug.presets.noMatchedPreset);
         return null;
     }
 
@@ -449,7 +450,7 @@ export class PresetManager {
         
         // 수동 모드: 사용자 설정 사용
         if (prioritySettings.mode === 'manual') {
-            this.logger.debug('Preset', '🔧 수동 우선순위:', prioritySettings.manualType);
+            this.logger.debug('Preset', t().debug.presets.manualPriority, prioritySettings.manualType);
             return prioritySettings.manualType;
         }
         
@@ -458,11 +459,11 @@ export class PresetManager {
         
         if (currentMode === 'folder') {
             // 폴더 모드: 태그가 더 구체적이므로 태그 우선
-            this.logger.debug('Preset', '⚙️ 자동 우선순위 (폴더 모드): tag-first');
+            this.logger.debug('Preset', t().debug.presets.autoPriorityFolderMode);
             return 'tag-first';
         } else {
             // 태그 모드: 폴더가 더 구체적이므로 폴더 우선
-            this.logger.debug('Preset', '⚙️ 자동 우선순위 (태그 모드): folder-first');
+            this.logger.debug('Preset', t().debug.presets.autoPriorityTagMode);
             return 'folder-first';
         }
     }
@@ -477,8 +478,8 @@ export class PresetManager {
                 const folderMatch = mapping.includeSubfolders
                     ? (folderPath === mapping.target || folderPath.startsWith(mapping.target + '/'))
                     : (folderPath === mapping.target);
-                
-                this.logger.debug('Preset', '폴더 매칭:', {
+
+                this.logger.debug('Preset', t().debug.presets.folderMatched, {
                     file: file.path,
                     folderPath,
                     mappingTarget: mapping.target,
@@ -495,8 +496,8 @@ export class PresetManager {
                 const normalizedMappingTarget = this.normalizeTag(mapping.target);
                 const normalizedTags = tags.map(tag => this.normalizeTag(tag));
                 const tagMatch = normalizedTags.includes(normalizedMappingTarget);
-                
-                this.logger.debug('Preset', '태그 매칭:', {
+
+                this.logger.debug('Preset', t().debug.presets.tagMatched, {
                     file: file.path,
                     fileTags: tags,
                     normalizedFileTags: normalizedTags,
@@ -527,28 +528,28 @@ export class PresetManager {
         
         if (cache?.frontmatter?.tags) {
             if (Array.isArray(cache.frontmatter.tags)) {
-                const frontmatterTags = cache.frontmatter.tags.map((t: string) => 
+                const frontmatterTags = cache.frontmatter.tags.map((t: string) =>
                     t.startsWith('#') ? t : `#${t}`
                 );
                 tags.push(...frontmatterTags);
-                this.logger.debug('Preset', '프론트매터 태그 (배열):', frontmatterTags);
+                this.logger.debug('Preset', t().debug.presets.frontmatterTagsArray, frontmatterTags);
             } else if (typeof cache.frontmatter.tags === 'string') {
-                const tag = cache.frontmatter.tags.startsWith('#') 
-                    ? cache.frontmatter.tags 
+                const tag = cache.frontmatter.tags.startsWith('#')
+                    ? cache.frontmatter.tags
                     : `#${cache.frontmatter.tags}`;
                 tags.push(tag);
-                this.logger.debug('Preset', '프론트매터 태그 (문자열):', tag);
+                this.logger.debug('Preset', t().debug.presets.frontmatterTagsString, tag);
             }
         }
 
         if (cache?.tags) {
             const inlineTags = cache.tags.map((t: any) => t.tag);
             tags.push(...inlineTags);
-            this.logger.debug('Preset', '인라인 태그:', inlineTags);
+            this.logger.debug('Preset', t().debug.presets.inlineTags, inlineTags);
         }
-        
+
         if (tags.length > 0) {
-            this.logger.debug('Preset', '전체 태그:', tags);
+            this.logger.debug('Preset', t().debug.presets.allTags, tags);
         }
 
         return tags;
@@ -563,10 +564,10 @@ export class PresetManager {
     exportPreset(id: string): string {
         const preset = this.plugin.settings.presets.find(p => p.id === id);
         if (!preset) {
-            this.logger.warn('Preset', '프리셋 없음:', id);
+            this.logger.warn('Preset', t().debug.presets.notFound, id);
             return '';
         }
-        
+
         return JSON.stringify(preset, null, 2);
     }
 
@@ -580,14 +581,14 @@ export class PresetManager {
         try {
             const preset = JSON.parse(json) as Preset;
             preset.id = this.generateId();
-            
+
             this.plugin.settings.presets.push(preset);
             await this.plugin.saveSettings();
-            
-            this.logger.debug('Preset', '프리셋 가져오기 성공:', preset.name);
+
+            this.logger.debug('Preset', t().debug.presets.importSuccess, preset.name);
             return true;
         } catch (error) {
-            this.logger.error('Preset', '프리셋 가져오기 실패:', error);
+            this.logger.error('Preset', t().debug.presets.importFailed, error);
             return false;
         }
     }

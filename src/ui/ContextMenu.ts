@@ -1,6 +1,7 @@
 import { App, Menu, Notice, TFile } from 'obsidian';
 import { DebugLogger } from '../utils/DebugLogger';
 import { CardNavigatorSettings } from '../types';
+import { t } from '../i18n';
 
 /**
  * 카드 컨텍스트 메뉴
@@ -28,7 +29,7 @@ export class CardContextMenu {
         const menu = new Menu();
 
         menu.addItem(item => {
-            item.setTitle('새 탭에서 열기')
+            item.setTitle(t().contextMenu.openInNewTab)
                 .setIcon('file-plus')
                 .onClick(() => {
                     const leaf = this.app.workspace.getLeaf('tab');
@@ -37,7 +38,7 @@ export class CardContextMenu {
         });
 
         menu.addItem(item => {
-            item.setTitle('새 창에서 열기')
+            item.setTitle(t().contextMenu.openInNewWindow)
                 .setIcon('popup-open')
                 .onClick(() => {
                     const leaf = this.app.workspace.getLeaf('window');
@@ -46,7 +47,7 @@ export class CardContextMenu {
         });
 
         menu.addItem(item => {
-            item.setTitle('오른쪽 패널에서 열기')
+            item.setTitle(t().contextMenu.openInRightPanel)
                 .setIcon('separator-vertical')
                 .onClick(() => {
                     // 현재 활성 리프를 수직으로 분할 (오른쪽에 새 패널 생성)
@@ -58,37 +59,37 @@ export class CardContextMenu {
         menu.addSeparator();
 
         menu.addItem(item => {
-            item.setTitle('Wiki 링크 복사')
+            item.setTitle(t().contextMenu.copyWikiLink)
                 .setIcon('link')
                 .onClick(() => {
                     navigator.clipboard.writeText(`[[${file.basename}]]`);
-                    new Notice('Wiki 링크 복사됨');
+                    new Notice(t().notices.contextMenu.markdownLinkCopied);
                 });
         });
 
         menu.addItem(item => {
-            item.setTitle('마크다운 링크 복사')
+            item.setTitle(t().contextMenu.copyMarkdownLink)
                 .setIcon('link')
                 .onClick(() => {
                     const relativePath = file.path;
                     navigator.clipboard.writeText(`[${file.basename}](${relativePath})`);
-                    new Notice('마크다운 링크 복사됨');
+                    new Notice(t().notices.contextMenu.markdownLinkCopied);
                 });
         });
 
         menu.addItem(item => {
-            item.setTitle('파일 경로 복사')
+            item.setTitle(t().contextMenu.copyFilePath)
                 .setIcon('folder')
                 .onClick(() => {
                     navigator.clipboard.writeText(file.path);
-                    new Notice('파일 경로 복사됨');
+                    new Notice(t().notices.contextMenu.filePathCopied);
                 });
         });
 
         menu.addSeparator();
 
         menu.addItem(item => {
-            item.setTitle('전체 내용 복사')
+            item.setTitle(t().contextMenu.copyFullContent)
                 .setIcon('copy')
                 .onClick(async () => {
                     await this.copyFullContent(file);
@@ -96,7 +97,7 @@ export class CardContextMenu {
         });
 
         menu.addItem(item => {
-            item.setTitle('첫 문단 복사')
+            item.setTitle(t().contextMenu.copyFirstParagraph)
                 .setIcon('copy')
                 .onClick(async () => {
                     await this.copyFirstParagraph(file);
@@ -106,7 +107,7 @@ export class CardContextMenu {
         menu.addSeparator();
 
         menu.addItem(item => {
-            item.setTitle('파일 이름 변경')
+            item.setTitle(t().contextMenu.rename)
                 .setIcon('pencil')
                 .onClick(() => {
                     (this.app as any).fileManager.promptForFileRename(file);
@@ -114,7 +115,7 @@ export class CardContextMenu {
         });
 
         menu.addItem(item => {
-            item.setTitle('파일 이동')
+            item.setTitle(t().contextMenu.moveTo)
                 .setIcon('folder-input')
                 .onClick(() => {
                     // Obsidian의 내장 파일 이동 명령어 실행
@@ -128,7 +129,7 @@ export class CardContextMenu {
         });
 
         menu.addItem(item => {
-            item.setTitle('삭제')
+            item.setTitle(t().contextMenu.delete)
                 .setIcon('trash')
                 .onClick(async () => {
                     await this.deleteFile(file);
@@ -147,10 +148,10 @@ export class CardContextMenu {
         try {
             const content = await this.app.vault.read(file);
             await navigator.clipboard.writeText(content);
-            new Notice('전체 내용 복사됨');
+            new Notice(t().notices.contextMenu.fullContentCopied);
         } catch (error) {
-            this.logger.error('UI', '내용 복사 실패', error);
-            new Notice('내용 복사 실패');
+            this.logger.error('UI', t().notices.contextMenu.contentCopyFailed, error);
+            new Notice(t().notices.contextMenu.contentCopyFailed);
         }
     }
 
@@ -177,10 +178,10 @@ export class CardContextMenu {
 
             const text = firstParagraph.join('\n');
             await navigator.clipboard.writeText(text);
-            new Notice('첫 문단 복사됨');
+            new Notice(t().notices.contextMenu.firstParagraphCopied);
         } catch (error) {
-            this.logger.error('UI', '첫 문단 복사 실패', error);
-            new Notice('첫 문단 복사 실패');
+            this.logger.error('UI', t().notices.contextMenu.firstParagraphCopyFailed, error);
+            new Notice(t().notices.contextMenu.firstParagraphCopyFailed);
         }
     }
 
@@ -192,19 +193,16 @@ export class CardContextMenu {
      * @param file - 대상 파일
      */
     private async deleteFile(file: TFile): Promise<void> {
-        const confirmDelete = confirm(
-            `"${file.basename}" 파일을 삭제하시겠습니까?\n\n` +
-            '이 작업은 되돌릴 수 없습니다.'
-        );
+        const confirmDelete = confirm(t().notices.contextMenu.deleteConfirm(file.basename));
 
         if (!confirmDelete) return;
 
         try {
             await this.app.vault.delete(file);
-            new Notice(`${file.basename} 삭제됨`);
+            new Notice(t().notices.contextMenu.fileDeleted(file.basename));
         } catch (error) {
-            this.logger.error('UI', '파일 삭제 실패', error);
-            new Notice('파일 삭제 실패');
+            this.logger.error('UI', t().notices.contextMenu.fileDeleteFailed, error);
+            new Notice(t().notices.contextMenu.fileDeleteFailed);
         }
     }
 
@@ -214,6 +212,6 @@ export class CardContextMenu {
      * Obsidian의 파일 메뉴에 커스텀 항목을 추가할 수 있습니다.
      */
     registerFileMenuItems(): void {
-        this.logger.debug('UI', '컨텍스트 메뉴 등록됨');
+        this.logger.debug('UI', t().notices.contextMenu.menuRegistered);
     }
 }

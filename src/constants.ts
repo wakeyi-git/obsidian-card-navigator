@@ -96,70 +96,14 @@ export const RENDERING = {
     VIRTUAL_SCROLL_BUFFER: 3,
 } as const;
 
-/** 
+/**
  * UI 관련 상수
- * 
+ *
+ * @deprecated Use i18n.t().ui instead
+ *
  * @remarks
- * 사용자 인터페이스에 표시되는 기본 메시지들입니다.
+ * These constants are deprecated. Use the i18n module for localized strings.
  */
-export const UI = {
-    /** 
-     * 빈 상태 메시지
-     * 
-     * @remarks
-     * 표시할 파일이 없을 때 보여지는 메시지입니다.
-     */
-    EMPTY_MESSAGE: 'No files to display',
-    
-    /** 
-     * 기본 카드 내용 (콘텐츠 없을 때)
-     * 
-     * @remarks
-     * 파일 내용이 비어있거나 추출할 수 없을 때 표시되는 텍스트입니다.
-     */
-    DEFAULT_CARD_CONTENT: '(내용 없음)',
-} as const;
-
-/** 
- * 에러 메시지
- * 
- * @remarks
- * 사용자에게 표시될 에러 메시지들입니다.
- * Notice를 통해 사용자에게 피드백을 제공합니다.
- */
-export const ERROR_MESSAGES = {
-    /** 
-     * 파일 열기 실패 메시지
-     * 
-     * @param filename - 열지 못한 파일 이름
-     * @returns 사용자에게 표시할 에러 메시지
-     */
-    FILE_OPEN_FAILED: (filename: string) => 
-        `파일을 열 수 없습니다: ${filename}`,
-    
-    /** 
-     * 파일 읽기 실패 메시지
-     * 
-     * @param filename - 읽지 못한 파일 이름
-     * @returns 사용자에게 표시할 에러 메시지
-     */
-    FILE_READ_FAILED: (filename: string) => 
-        `파일을 읽을 수 없습니다: ${filename}`,
-    
-    /** 
-     * 프리셋 로드 실패 메시지
-     * 
-     * @param presetName - 로드하지 못한 프리셋 이름
-     * @returns 사용자에게 표시할 에러 메시지
-     */
-    PRESET_LOAD_FAILED: (presetName: string) => 
-        `프리셋을 불러올 수 없습니다: ${presetName}`,
-    
-    /** 
-     * 설정 저장 실패 메시지
-     */
-    SETTINGS_SAVE_FAILED: '설정을 저장할 수 없습니다',
-} as const;
 
 /** 
  * Viewport 관련 상수

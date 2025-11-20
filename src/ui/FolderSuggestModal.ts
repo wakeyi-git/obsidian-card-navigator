@@ -1,4 +1,5 @@
 import { App, FuzzySuggestModal, TFolder } from 'obsidian';
+import { t } from '../i18n';
 
 /**
  * 폴더 선택 모달
@@ -23,7 +24,7 @@ export class FolderSuggestModal extends FuzzySuggestModal<TFolder> {
 		this.folders = this.getAllFolders();
 		
 		// 플레이스홀더 설정
-		this.setPlaceholder('폴더를 선택하세요...');
+		this.setPlaceholder(t().folderSuggest.placeholder);
 	}
 
 	/**
@@ -64,7 +65,7 @@ export class FolderSuggestModal extends FuzzySuggestModal<TFolder> {
 	getItemText(folder: TFolder): string {
 		// 루트 폴더는 "/ (루트)" 로 표시
 		if (folder.path === '/') {
-			return '/ (루트)';
+			return t().folderSuggest.rootFolder;
 		}
 		return folder.path;
 	}

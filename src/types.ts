@@ -1,4 +1,5 @@
 import { TFile } from 'obsidian';
+import type { LanguageSetting } from './i18n';
 
 /**
  * 카드 섹션
@@ -259,6 +260,8 @@ export type BaseSettings = Omit<CardNavigatorSettings, 'presets' | 'presetMappin
  * 플러그인 설정
  */
 export interface CardNavigatorSettings {
+    /** 언어 설정 */
+    language: LanguageSetting;
     /** 프리셋 기능 활성화 여부 */
     enablePresets: boolean;
     /** 헤더 설정 */
@@ -503,6 +506,7 @@ export interface PresetMapping {
  * 기본 설정값
  */
 export const DEFAULT_SETTINGS: CardNavigatorSettings = {
+    language: 'auto',
     enablePresets: true,
     header: {
         enabled: true,

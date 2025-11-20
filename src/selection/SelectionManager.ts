@@ -3,6 +3,7 @@ import { DebugLogger } from '../utils/DebugLogger';
 import { CardNavigatorSettings } from '../types';
 import { TextInputModal } from '../ui/modals/TextInputModal';
 import { FolderSuggestModal } from '../ui/FolderSuggestModal';
+import { t } from '../i18n';
 
 /**
  * 다중 선택 및 일괄 작업 관리자
@@ -121,7 +122,7 @@ export class SelectionManager {
         this.selected.clear();
         this.allFiles.forEach(file => this.selected.add(file));
         this.updateUI();
-        new Notice(`${this.selected.size}개 파일 선택됨`);
+        new Notice(t().selection.filesSelected(this.selected.size));
     }
 
     /**
@@ -185,7 +186,7 @@ export class SelectionManager {
                 const selectionBar = container.createDiv('selection-bar');
                 
                 selectionBar.createEl('span', {
-                    text: `선택됨: ${this.selected.size}개 파일`,
+                    text: t().selection.selectedFiles(this.selected.size),
                     cls: 'selection-count'
                 });
 
@@ -204,46 +205,46 @@ export class SelectionManager {
         const buttonContainer = container.createDiv({ cls: 'batch-actions'});
 
         const addTagBtn = buttonContainer.createEl('button', {
-            text: '태그 추가',
+            text: t().selection.addTag,
             cls: 'batch-action-btn'
         });
         addTagBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            this.logger.debug('Selection', '태그 추가 버튼 클릭됨');
+            this.logger.debug('Selection', t().selection.addTagButtonClicked);
             this.batchAddTag();
         });
 
         const moveBtn = buttonContainer.createEl('button', {
-            text: '이동',
+            text: t().selection.move,
             cls: 'batch-action-btn'
         });
         moveBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            this.logger.debug('Selection', '이동 버튼 클릭됨');
+            this.logger.debug('Selection', t().selection.moveButtonClicked);
             this.batchMove();
         });
 
         const deleteBtn = buttonContainer.createEl('button', {
-            text: '삭제',
+            text: t().selection.delete,
             cls: 'batch-action-btn batch-action-danger'
         });
         deleteBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            this.logger.debug('Selection', '삭제 버튼 클릭됨');
+            this.logger.debug('Selection', t().selection.deleteButtonClicked);
             this.batchDelete();
         });
 
         const clearBtn = buttonContainer.createEl('button', {
-            text: '선택 해제',
+            text: t().selection.clearSelection,
             cls: 'batch-action-btn'
         });
         clearBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            this.logger.debug('Selection', '선택 해제 버튼 클릭됨');
+            this.logger.debug('Selection', t().selection.clearSelectionButtonClicked);
             this.clearSelection();
         });
     }
@@ -255,18 +256,18 @@ export class SelectionManager {
      * native prompt 대신 TextInputModal 사용
      */
     private async batchAddTag(): Promise<void> {
-        this.logger.debug('Selection', 'batchAddTag 호출됨', {
+        this.logger.debug('Selection', t().selection.batchAddTagCalled, {
             selectedCount: this.selected.size
         });
 
         const modal = new TextInputModal(
             this.app,
-            '태그 추가',
-            '추가할 태그를 입력하세요 (# 없이)',
+            t().selection.addTagModalTitle,
+            t().selection.addTagModalPlaceholder,
             '',
             async (tag) => {
-                this.logger.debug('Selection', '태그 입력됨', { tag });
-                
+                this.logger.debug('Selection', t().selection.tagInputReceived, { tag });
+
                 const cleanTag = tag.startsWith('#') ? tag.slice(1) : tag;
                 let successCount = 0;
 
@@ -275,15 +276,15 @@ export class SelectionManager {
                         await this.addTagToFile(file, cleanTag);
                         successCount++;
                     } catch (error) {
-                        this.logger.error('Selection', `태그 추가 실패: ${file.path}`, error);
+                        this.logger.error('Selection', t().selection.tagAddFailed(file.path), error);
                     }
                 }
 
-                new Notice(`${successCount}개 파일에 #${cleanTag} 태그 추가됨`);
+                new Notice(t().selection.tagAdded(successCount, cleanTag));
                 this.clearSelection();
             }
         );
-        
+
         modal.open();
     }
 
@@ -298,7 +299,7 @@ export class SelectionManager {
      * @param tag - 추가할 태그 (경로 형태 가능: folder/subfolder/tag)
      */
     private async addTagToFile(file: TFile, tag: string): Promise<void> {
-        this.logger.debug('Selection', `태그 추가 시작: ${file.path}`, { tag });
+        this.logger.debug('Selection', t().selection.tagAddStart(file.path), { tag });
 
         await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
             // 태그 필드가 없으면 생성
@@ -325,7 +326,7 @@ export class SelectionManager {
 
             // 태그 정규화 (앞의 # 제거, 공백 제거)
             const normalizedTag = tag.replace(/^#+/, '').trim();
-            
+
             // 중복 확인 (대소문자 구분 없이)
             const existingTag = frontmatter.tags.find(
                 (t: string) => t.toLowerCase() === normalizedTag.toLowerCase()
@@ -333,9 +334,9 @@ export class SelectionManager {
 
             if (!existingTag) {
                 frontmatter.tags.push(normalizedTag);
-                this.logger.debug('Selection', `태그 추가 성공: ${normalizedTag}`);
+                this.logger.debug('Selection', t().selection.tagAddSuccess(normalizedTag));
             } else {
-                this.logger.debug('Selection', `태그 이미 존재: ${normalizedTag}`);
+                this.logger.debug('Selection', t().selection.tagAlreadyExists(normalizedTag));
             }
         });
     }
@@ -347,7 +348,7 @@ export class SelectionManager {
      * native prompt 대신 FolderSuggestModal 사용
      */
     private async batchMove(): Promise<void> {
-        this.logger.debug('Selection', 'batchMove 호출됨', {
+        this.logger.debug('Selection', t().selection.batchMoveCalled, {
             selectedCount: this.selected.size
         });
 
@@ -355,12 +356,12 @@ export class SelectionManager {
             this.app,
             async (folder) => {
                 if (!folder) {
-                    this.logger.debug('Selection', '폴더 선택 취소됨');
+                    this.logger.debug('Selection', t().selection.folderSelectionCancelled);
                     return;
                 }
 
-                this.logger.debug('Selection', '폴더 선택됨', { folderPath: folder.path });
-                
+                this.logger.debug('Selection', t().selection.folderSelected, { folderPath: folder.path });
+
                 let successCount = 0;
                 const folderPath = folder.path === '/' ? '' : folder.path;
 
@@ -370,16 +371,16 @@ export class SelectionManager {
                         await this.app.fileManager.renameFile(file, newPath);
                         successCount++;
                     } catch (error) {
-                        this.logger.error('Selection', `파일 이동 실패: ${file.path}`, error);
+                        this.logger.error('Selection', t().selection.moveFileFailed(file.path), error);
                     }
                 }
 
-                const displayPath = folder.path === '/' ? '루트' : folder.path;
-                new Notice(`${successCount}개 파일이 ${displayPath}로 이동됨`);
+                const displayPath = folder.path === '/' ? t().selection.root : folder.path;
+                new Notice(t().selection.filesMoved(successCount, displayPath));
                 this.clearSelection();
             }
         );
-        
+
         modal.open();
     }
 
@@ -387,9 +388,7 @@ export class SelectionManager {
      * 선택된 모든 파일을 일괄 삭제합니다
      */
     private async batchDelete(): Promise<void> {
-        const confirmed = confirm(
-            `${this.selected.size}개 파일을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`
-        );
+        const confirmed = confirm(t().selection.deleteConfirm(this.selected.size));
         if (!confirmed) return;
 
         let successCount = 0;
@@ -399,11 +398,11 @@ export class SelectionManager {
                 await this.app.vault.delete(file);
                 successCount++;
             } catch (error) {
-                this.logger.error('Selection', `파일 삭제 실패: ${file.path}`, error);
+                this.logger.error('Selection', t().selection.deleteFileFailed(file.path), error);
             }
         }
 
-        new Notice(`${successCount}개 파일 삭제됨`);
+        new Notice(t().selection.filesDeleted(successCount));
         this.clearSelection();
     }
 

@@ -1,4 +1,5 @@
 import { App, TFolder, AbstractInputSuggest, CachedMetadata } from 'obsidian';
+import { t } from '../i18n';
 
 /**
  * 검색 쿼리 파싱 결과
@@ -20,16 +21,18 @@ interface SearchOperator {
 /**
  * 검색 연산자 목록
  */
-const SEARCH_OPERATORS: SearchOperator[] = [
-    { operator: 'path:', description: '일치하는 파일 경로' },
-    { operator: 'file:', description: '일치하는 파일 이름' },
-    { operator: 'tag:', description: '태그 검색' },
-    { operator: 'line:', description: '동일한 행에서 키워드 검색' },
-    { operator: 'section:', description: '동일한 제목 아래에서 키워드 검색' },
-    { operator: '[property]', description: '일치하는 속성' },
-    { operator: 'created:', description: '생성 날짜' },
-    { operator: 'modified:', description: '수정 날짜' }
-];
+function getSearchOperators(): SearchOperator[] {
+    return [
+        { operator: 'path:', description: t().searchOperators.path },
+        { operator: 'file:', description: t().searchOperators.file },
+        { operator: 'tag:', description: t().searchOperators.tag },
+        { operator: 'line:', description: t().searchOperators.line },
+        { operator: 'section:', description: t().searchOperators.section },
+        { operator: '[property]', description: t().searchOperators.property },
+        { operator: 'created:', description: t().searchOperators.created },
+        { operator: 'modified:', description: t().searchOperators.modified }
+    ];
+}
 
 /**
  * 검색 입력 필드 자동완성
@@ -80,15 +83,15 @@ export class SearchSuggest extends AbstractInputSuggest<SearchOperator | string>
      */
     getSuggestions(query: string): (SearchOperator | string)[] {
         const trimmedQuery = query.trim();
-        
+
         if (trimmedQuery === '') {
-            return SEARCH_OPERATORS;
+            return getSearchOperators();
         }
-        
+
         const { lastToken } = this.parseQuery(query);
-        
+
         if (lastToken.trim() === '') {
-            return SEARCH_OPERATORS;
+            return getSearchOperators();
         }
         
         if (lastToken.startsWith('path:')) {

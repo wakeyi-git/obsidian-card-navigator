@@ -3,10 +3,10 @@ import { CardNavigatorView, VIEW_TYPE_CARD_NAVIGATOR } from './view';
 import { SettingsManager } from './settings';
 import { CardNavigatorSettingTab } from './ui/SettingsTab';
 import { CardNavigatorSettings, DebugCategory } from './types';
-import { ERROR_MESSAGES } from './constants';
 import { CardStyleManager } from './card/CardStyles';
 import { PresetManager } from './preset/PresetManager';
 import { DebugLogger } from './utils/DebugLogger';
+import { setLanguage, t, detectLanguageFromLocale } from './i18n';
 
 /**
  * Card Navigator 플러그인
@@ -38,13 +38,20 @@ export default class CardNavigatorPlugin extends Plugin {
 		this.presetManager = new PresetManager(this);
 
 	await this.loadSettings();
-		
+
+	// Set language based on settings
+	const languageSetting = this.settingsManager.getSettings().language;
+	const actualLanguage = languageSetting === 'auto'
+		? detectLanguageFromLocale((window as any).moment?.locale?.() || 'en')
+		: languageSetting;
+	setLanguage(actualLanguage);
+
 	// ✅ 함수를 전달하여 항상 최신 settings를 참조
 	this.styleManager = new CardStyleManager(() => this.settingsManager.getSettings());
 
 	// ✅ 함수를 전달하여 항상 최신 settings를 참조
 	this.logger = new DebugLogger(() => this.settingsManager.getSettings());
-		this.logger.debug('Plugin', 'Card Navigator 플러그인 로딩 중...');
+		this.logger.debug('Plugin', t().plugin.loadingStart);
 
 		await this.presetManager.initialize();
 		this.styleManager.applyStyles(this.settingsManager.getSettings());
@@ -54,12 +61,12 @@ export default class CardNavigatorPlugin extends Plugin {
 			(leaf) => new CardNavigatorView(leaf, this)
 		);
 
-		this.addRibbonIcon('layout-grid', 'Open Card Navigator', (_evt: MouseEvent) => {
+		this.addRibbonIcon('layout-grid', t().plugin.ribbonTitle, (_evt: MouseEvent) => {
 			this.activateView();
 		});
 		this.addCommand({
 			id: 'select-all-cards',
-			name: 'Select all cards',
+			name: t().commands.selectAll,
 			checkCallback: (checking: boolean) => {
 				// Card Navigator 뷰가 활성화되어 있는지 확인
 				const leaf = this.app.workspace.getActiveViewOfType(CardNavigatorView);
@@ -78,7 +85,7 @@ export default class CardNavigatorPlugin extends Plugin {
 		
 		this.addCommand({
 			id: 'focus-card-navigator',
-			name: 'Focus on Card Navigator (active card)',
+			name: t().commands.focusCardNavigator,
 			callback: async () => {
 				const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR);
 				
@@ -97,7 +104,7 @@ export default class CardNavigatorPlugin extends Plugin {
 		this.settingsTab = new CardNavigatorSettingTab(this.app, this);
 		this.addSettingTab(this.settingsTab);
 
-		this.logger.debug('Plugin', 'Card Navigator 플러그인 로딩 완료!');
+		this.logger.debug('Plugin', t().plugin.loadingComplete);
 	}
 
 	/**
@@ -106,7 +113,7 @@ export default class CardNavigatorPlugin extends Plugin {
 	 * 플러그인이 언로드될 때 호출되며, 모든 정리 작업을 수행합니다.
 	 */
 	onunload(): void {
-		this.logger.debug('Plugin', 'Card Navigator 플러그인 언로딩 중...');
+		this.logger.debug('Plugin', t().plugin.unloading);
 		this.styleManager.resetStyles();
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR);
 	}
@@ -134,21 +141,27 @@ export default class CardNavigatorPlugin extends Plugin {
 	 */
 	async saveSettings(): Promise<void> {
 		try {
-			this.logger.debug('Plugin', 'saveSettings() 호출됨');
-			
+			this.logger.debug('Plugin', 'saveSettings() called');
+
 			const settings = this.settingsManager.getSettings();
-			
+
+			// Update language if changed
+			const actualLanguage = settings.language === 'auto'
+				? detectLanguageFromLocale((window as any).moment?.locale?.() || 'en')
+				: settings.language;
+			setLanguage(actualLanguage);
+
 			await this.saveData(settings);
-			
+
 			this.styleManager.applyStyles(settings);
 
 			await this.refreshView();
-			
-			this.logger.debug('Plugin', 'saveSettings() 완료');
+
+			this.logger.debug('Plugin', 'saveSettings() complete');
 		} catch (error) {
 			// 사용자에게 알림
-			new Notice(ERROR_MESSAGES.SETTINGS_SAVE_FAILED);
-			this.logger.error('Plugin', '설정 저장 실패', {
+			new Notice(t().errors.settingsSaveFailed);
+			this.logger.error('Plugin', 'Failed to save settings', {
 				error: error instanceof Error ? error.message : String(error)
 			});
 			// 에러를 다시 던져서 호출자가 알 수 있도록 함
@@ -163,18 +176,24 @@ export default class CardNavigatorPlugin extends Plugin {
 	 */
 	async saveSettingsQuiet(): Promise<void> {
 		try {
-			this.logger.debug('Plugin', 'saveSettingsQuiet() 호출됨');
-			
+			this.logger.debug('Plugin', t().settingsAdditional.settingsSaveQuietStart);
+
 			const settings = this.settingsManager.getSettings();
-			
+
+			// Update language if changed
+			const actualLanguage = settings.language === 'auto'
+				? detectLanguageFromLocale((window as any).moment?.locale?.() || 'en')
+				: settings.language;
+			setLanguage(actualLanguage);
+
 			await this.saveData(settings);
 			this.styleManager.applyStyles(settings);
-			
-			this.logger.debug('Plugin', 'saveSettingsQuiet() 완료');
+
+			this.logger.debug('Plugin', t().settingsAdditional.settingsSaveQuietComplete);
 		} catch (error) {
 			// 사용자에게 알림
-			new Notice(ERROR_MESSAGES.SETTINGS_SAVE_FAILED);
-			this.logger.error('Plugin', '설정 저장 실패 (Quiet)', {
+			new Notice(t().errors.settingsSaveFailed);
+			this.logger.error('Plugin', t().settingsAdditional.settingsSaveQuietFailed, {
 				error: error instanceof Error ? error.message : String(error)
 			});
 			// 에러를 다시 던져서 호출자가 알 수 있도록 함

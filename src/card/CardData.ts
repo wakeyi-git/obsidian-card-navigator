@@ -3,6 +3,7 @@ import { CardContentType, CardNavigatorSettings } from '../types';
 import { LRUCache } from '../utils/memoize';
 import { DebugLogger } from '../utils/DebugLogger';
 import { TIMING, CACHE } from '../constants';
+import { t } from '../i18n';
 
 /**
  * 파일에서 카드 콘텐츠를 추출합니다
@@ -66,7 +67,7 @@ export class CardDataExtractor {
                     const addedLinks = [...currentLinks].filter(x => !previousLinks.has(x));
                     const removedLinks = [...previousLinks].filter(x => !currentLinks.has(x));
                     
-                    this.logger.debug('Card', '🔄 링크 변경 감지 (100ms 후)', {
+                    this.logger.debug('Card', t().debug.card.linkChangeDetected, {
                         file: file.path,
                         previousCount: previousLinks.size,
                         currentCount: currentLinks.size,
@@ -108,7 +109,7 @@ export class CardDataExtractor {
      * - 파일이 많을 때 (1000+) 효과적
      */
     private initializePreviousLinks(): void {
-        this.logger.debug('Card', '🔄 previousLinks 초기화 시작');
+        this.logger.debug('Card', t().debug.card.previousLinksInit);
         
         const resolvedLinks = this.app.metadataCache.resolvedLinks;
         
@@ -130,7 +131,7 @@ export class CardDataExtractor {
             }
         }
         
-        this.logger.debug('Card', `✅ previousLinks 초기화 완료: ${fileCount}개 파일, ${linkCount}개 링크`);
+        this.logger.debug('Card', t().debug.card.previousLinksInitComplete(fileCount, linkCount));
     }
     
     /**
@@ -173,7 +174,7 @@ export class CardDataExtractor {
         addedLinks: string[],
         removedLinks: string[]
     ): void {
-        this.logger.debug('Card', '🔄 관련 파일 캐시 무효화', { file: file.path });
+        this.logger.debug('Card', t().debug.card.relatedCacheInvalidation, { file: file.path });
         
         const affectedFiles = new Set<TFile>();
         
@@ -181,7 +182,7 @@ export class CardDataExtractor {
             const targetFile = this.app.vault.getAbstractFileByPath(linkPath);
             if (targetFile instanceof TFile) {
                 affectedFiles.add(targetFile);
-                this.logger.debug('Card', '  → 추가된 링크 타겟', { linkPath });
+                this.logger.debug('Card', t().debug.card.addedLinkTarget, { linkPath });
             }
         }
         
@@ -189,7 +190,7 @@ export class CardDataExtractor {
             const targetFile = this.app.vault.getAbstractFileByPath(linkPath);
             if (targetFile instanceof TFile) {
                 affectedFiles.add(targetFile);
-                this.logger.debug('Card', '  → 삭제된 링크 타겟', { linkPath });
+                this.logger.debug('Card', t().debug.card.removedLinkTarget, { linkPath });
             }
         }
         
@@ -200,16 +201,16 @@ export class CardDataExtractor {
                 const sourceFile = this.app.vault.getAbstractFileByPath(sourcePath);
                 if (sourceFile instanceof TFile) {
                     affectedFiles.add(sourceFile);
-                    this.logger.debug('Card', '  → 백링크 소스', { sourcePath });
+                    this.logger.debug('Card', t().debug.card.backlinkSource, { sourcePath });
                 }
             }
         }
         
-        this.logger.debug('Card', `총 ${affectedFiles.size}개 파일의 캐시 무효화`);
+        this.logger.debug('Card', t().debug.card.totalCacheInvalidation(affectedFiles.size));
         
         for (const affectedFile of affectedFiles) {
             this.invalidateCache(affectedFile);
-            this.logger.debug('Card', '    ✅ 캐시 무효화', { path: affectedFile.path });
+            this.logger.debug('Card', t().debug.card.cacheInvalidationComplete, { path: affectedFile.path });
         }
     }
     
@@ -231,7 +232,7 @@ export class CardDataExtractor {
             if (this.contentCache.has(cacheKey)) {
                 this.contentCache.delete(cacheKey);
                 
-                this.logger.debug('Card', '캐시 삭제', {
+                this.logger.debug('Card', t().debug.card.cacheDeleted, {
                     file: file.path,
                     type,
                     cacheKey
@@ -249,7 +250,7 @@ export class CardDataExtractor {
                         if (this.contentCache.has(customCacheKey)) {
                             this.contentCache.delete(customCacheKey);
                             
-                            this.logger.debug('Card', '커스텀 캐시 삭제', {
+                            this.logger.debug('Card', t().debug.card.customCacheDeleted, {
                                 file: file.path,
                                 customCacheKey
                             });
@@ -405,7 +406,7 @@ export class CardDataExtractor {
             return cache.headings[0].heading;
             
         } catch (error) {
-            this.logger.error('Card', '헤더 추출 오류', error);
+            this.logger.error('Card', t().debug.card.headerExtractionError, error);
             return '';
         }
     }
@@ -436,7 +437,7 @@ export class CardDataExtractor {
             const cacheKey = `${file.path}-${file.stat.mtime}-content-${includeFirstHeader ? 'with-header' : 'no-header'}-${renderModeSuffix}`;
             const cached = this.contentCache.get(cacheKey);
             
-            this.logger.debug('Card', '파일 본문 추출', {
+            this.logger.debug('Card', t().debug.card.fileContentExtraction, {
                 file: file.path,
                 includeFirstHeader,
                 contentRenderMode,
@@ -514,7 +515,7 @@ export class CardDataExtractor {
             return result;
             
         } catch (error) {
-            this.logger.error('Card', '본문 추출 오류', error);
+            this.logger.error('Card', t().debug.card.contentExtractionError, error);
             return '';
         }
     }
@@ -660,7 +661,7 @@ export class CardDataExtractor {
             const cacheKey = `${file.path}-${file.stat.mtime}-backlinks`;
             const cached = this.contentCache.get(cacheKey);
             
-            this.logger.debug('Card', '🔗 백링크 추출', {
+            this.logger.debug('Card', t().debug.card.backlinkExtraction, {
                 file: file.path,
                 mtime: file.stat.mtime,
                 cacheKey,
@@ -674,22 +675,22 @@ export class CardDataExtractor {
             const backlinks: string[] = [];
             const resolvedLinks = this.app.metadataCache.resolvedLinks;
             
-            this.logger.debug('Card', 'resolvedLinks', { resolvedLinks });
+            this.logger.debug('Card', t().debug.card.resolvedLinks, { resolvedLinks });
             
             for (const sourcePath in resolvedLinks) {
                 const links = resolvedLinks[sourcePath];
                 
                 if (links[file.path]) {
                     backlinks.push(sourcePath);
-                    this.logger.debug('Card', '백링크 발견', { from: sourcePath, to: file.path });
+                    this.logger.debug('Card', t().debug.card.backlinkFound, { from: sourcePath, to: file.path });
                 }
             }
             
-            this.logger.debug('Card', '총 백링크 수', { count: backlinks.length });
+            this.logger.debug('Card', t().debug.card.totalBacklinkCount, { count: backlinks.length });
             
             if (backlinks.length === 0) {
                 this.contentCache.set(cacheKey, '');
-                this.logger.debug('Card', '백링크 없음');
+                this.logger.debug('Card', t().debug.card.noBacklinks);
                 return '';
             }
             
@@ -712,7 +713,7 @@ export class CardDataExtractor {
             const result = linkElements.join(', ');
             this.contentCache.set(cacheKey, result);
             
-            this.logger.debug('Card', '✅ 백링크 추출 완료', {
+            this.logger.debug('Card', t().debug.card.backlinkExtractionComplete, {
                 file: file.path,
                 backlinkCount: backlinks.length,
                 result
@@ -721,7 +722,7 @@ export class CardDataExtractor {
             return result;
             
         } catch (error) {
-            this.logger.error('Card', '백링크 추출 오류', error);
+            this.logger.error('Card', t().debug.card.backlinkExtractionError, error);
             return '';
         }
     }
@@ -747,7 +748,7 @@ export class CardDataExtractor {
             const cacheKey = `${file.path}-${file.stat.mtime}-outgoing-links`;
             const cached = this.contentCache.get(cacheKey);
             
-            this.logger.debug('Card', '🔗 나가는 링크 추출', {
+            this.logger.debug('Card', t().debug.card.outgoingLinkExtraction, {
                 file: file.path,
                 mtime: file.stat.mtime,
                 cacheKey,
@@ -760,9 +761,9 @@ export class CardDataExtractor {
             
             const cache = this.app.metadataCache.getFileCache(file);
             
-            this.logger.debug('Card', '파일 캐시', { cache });
-            this.logger.debug('Card', '본문 링크 수', { count: cache?.links?.length || 0 });
-            this.logger.debug('Card', '프론트매터 링크 수', { count: cache?.frontmatterLinks?.length || 0 });
+            this.logger.debug('Card', t().debug.card.fileCache, { cache });
+            this.logger.debug('Card', t().debug.card.contentLinksCount, { count: cache?.links?.length || 0 });
+            this.logger.debug('Card', t().debug.card.frontmatterLinksCount, { count: cache?.frontmatterLinks?.length || 0 });
             
             const allLinks = [
                 ...(cache?.links || []),
@@ -771,7 +772,7 @@ export class CardDataExtractor {
             
             if (allLinks.length === 0) {
                 this.contentCache.set(cacheKey, '');
-                this.logger.debug('Card', '나가는 링크 없음');
+                this.logger.debug('Card', t().debug.card.noOutgoingLinks);
                 return '';
             }
             
@@ -779,18 +780,18 @@ export class CardDataExtractor {
             const processedPaths = new Set<string>();
             
             for (const link of allLinks) {
-                this.logger.debug('Card', '링크 처리', { link: link.link });
+                this.logger.debug('Card', t().debug.card.linkProcessing, { link: link.link });
                 
                 const targetFile = this.app.metadataCache.getFirstLinkpathDest(
                     link.link,
                     file.path
                 );
                 
-                this.logger.debug('Card', '타겟 파일', { path: targetFile?.path });
+                this.logger.debug('Card', t().debug.card.targetFile, { path: targetFile?.path });
                 
                 if (targetFile instanceof TFile) {
                     if (processedPaths.has(targetFile.path)) {
-                        this.logger.debug('Card', '중복 링크 건너뛰기', { path: targetFile.path });
+                        this.logger.debug('Card', t().debug.card.duplicateLinkSkipped, { path: targetFile.path });
                         continue;
                     }
                     processedPaths.add(targetFile.path);
@@ -808,7 +809,7 @@ export class CardDataExtractor {
             const result = linkElements.join(', ');
             this.contentCache.set(cacheKey, result);
             
-            this.logger.debug('Card', '✅ 나가는 링크 추출 완료', {
+            this.logger.debug('Card', t().debug.card.outgoingLinkExtractionComplete, {
                 file: file.path,
                 totalLinkCount: allLinks.length,
                 uniqueLinkCount: linkElements.length,
@@ -818,7 +819,7 @@ export class CardDataExtractor {
             return result;
             
         } catch (error) {
-            this.logger.error('Card', '나가는 링크 추출 오류', error);
+            this.logger.error('Card', t().debug.card.outgoingLinkExtractionError, error);
             return '';
         }
     }

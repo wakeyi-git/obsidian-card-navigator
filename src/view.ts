@@ -22,9 +22,10 @@ import { DragDropHandler } from './utils/DragDropHandler';
 import { CardContextMenu } from './ui/ContextMenu';
 import { SelectionManager } from './selection/SelectionManager';
 import { PresetManager } from './preset/PresetManager';
-import { TIMING, ERROR_MESSAGES } from './constants';
+import { TIMING } from './constants';
 import { ICardView } from './interfaces/ICardView';
 import { debounceAsync } from './utils/debounce';
+import { t } from './i18n';
 
 export const VIEW_TYPE_CARD_NAVIGATOR = 'card-navigator-view';
 
@@ -219,7 +220,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		// 500ms 내 여러 파일 이벤트가 발생해도 마지막 한 번만 렌더링
 		this.debouncedForceRender = debounceAsync(async () => {
 			if (isValidElement(this.cardsContainer)) {
-				this.logger.debug('View', '디바운스된 forceRender 실행');
+				this.logger.debug('View', t().debug.view.debouncedRenderExecuted);
 				await this.viewRenderer.forceRender(
 					this.cardsContainer,
 					(f) => this.openFile(f)
@@ -234,13 +235,13 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				}
 				
 				if (this.state.getIsRendering()) {
-					this.logger.debug('View', '렌더링 중이므로 active-leaf-change 무시');
+					this.logger.debug('View', t().debug.view.renderingSkipped);
 					return;
 				}
 				
 				const activeFile = this.app.workspace.getActiveFile();
-				
-				this.logger.debug('View', 'active-leaf-change 이벤트', {
+
+				this.logger.debug('View', t().debug.view.activeLeafChange, {
 					previousFile: this.state.getPreviousFile()?.path || 'none',
 					currentFile: activeFile?.path || 'none'
 				});
@@ -248,16 +249,16 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				await this.plugin.presetManager.autoApplyPreset(activeFile);
 				
 				const hasActiveFileChanged = this.state.hasFileChanged(activeFile);
-				const needsRerender = hasActiveFileChanged && 
+				const needsRerender = hasActiveFileChanged &&
 					this.viewRenderer.needsRerenderForFileChange(activeFile);
-				
-				this.logger.debug('View', '재렌더링 필요 여부', {
+
+				this.logger.debug('View', t().debug.view.rerenderRequired, {
 					hasActiveFileChanged,
 					needsRerender
 				});
 				
 				if (needsRerender) {
-					this.logger.debug('View', '컨텍스트 변경 → 재렌더링 + 스크롤');
+					this.logger.debug('View', t().debug.view.contextChangeRerender);
 					await this.renderCards(this.cardsContainer);
 					
 					if (isValidFile(activeFile)) {
@@ -267,7 +268,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 						}, TIMING.RENDER_COMPLETE_DELAY);
 					}
 				} else if (hasActiveFileChanged) {
-					this.logger.debug('View', '같은 컨텍스트 → active 클래스만 업데이트');
+					this.logger.debug('View', t().debug.view.sameContextUpdateClass);
 					if (isValidElement(this.cardsContainer)) {
 						this.viewRenderer.updateActiveCardClass(this.cardsContainer);
 					}
@@ -277,7 +278,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 						await this.scrollManager.scrollToActiveFile(fileToScroll, 'card-click');
 					}
 				} else {
-					this.logger.debug('View', '같은 파일 → 작업 없음');
+					this.logger.debug('View', t().debug.view.sameFileNoAction);
 				}
 				
 				if (isDefined(this.toolbar)) {
@@ -299,14 +300,14 @@ export class CardNavigatorView extends ItemView implements ICardView {
 			this.app.metadataCache.on('changed', async (file) => {
 				if (!(file instanceof TFile)) return;
 				
-				this.logger.debug('View', '메타데이터 변경 감지', { path: file.path });
+				this.logger.debug('View', t().debug.view.metadataChangeDetected, { path: file.path });
 				
 				// ⭐ resolvedLinks 업데이트 대기 + 디바운싱
 				setTimeout(() => {
 					if (this.debouncedForceRender) {
 						this.debouncedForceRender().catch(err => {
 							if (err.message !== 'Debounced call cancelled') {
-								this.logger.error('View', '디바운스된 렌더링 실패', { error: err });
+								this.logger.error('View', t().debug.view.debouncedRenderFailed, { error: err });
 							}
 						});
 					}
@@ -319,14 +320,14 @@ export class CardNavigatorView extends ItemView implements ICardView {
 			this.app.vault.on('delete', async (file) => {
 				if (!(file instanceof TFile)) return;
 				
-				this.logger.debug('View', '파일 삭제 감지', { path: file.path });
+				this.logger.debug('View', t().debug.view.fileDeleteDetected, { path: file.path });
 				
 				// ⭐ Vault 파일 목록 업데이트 대기 + 디바운싱
 				setTimeout(() => {
 					if (this.debouncedForceRender) {
 						this.debouncedForceRender().catch(err => {
 							if (err.message !== 'Debounced call cancelled') {
-								this.logger.error('View', '디바운스된 렌더링 실패', { error: err });
+								this.logger.error('View', t().debug.view.debouncedRenderFailed, { error: err });
 							}
 						});
 					}
@@ -341,16 +342,16 @@ export class CardNavigatorView extends ItemView implements ICardView {
 			this.app.vault.on('rename', async (file, oldPath) => {
 				if (!(file instanceof TFile)) return;
 				
-				this.logger.debug('View', '파일 이름 변경 감지', { 
-					oldPath, 
-					newPath: file.path 
+				this.logger.debug('View', t().debug.view.fileRenameDetected, {
+					oldPath,
+					newPath: file.path
 				});
 				
 				// ⭐ 디바운싱 적용: metadata 이벤트와 합쳐짐
 				if (this.debouncedForceRender) {
 					this.debouncedForceRender().catch(err => {
 						if (err.message !== 'Debounced call cancelled') {
-							this.logger.error('View', '디바운스된 렌더링 실패', { error: err });
+							this.logger.error('View', t().debug.view.debouncedRenderFailed, { error: err });
 						}
 					});
 				}
@@ -387,13 +388,13 @@ export class CardNavigatorView extends ItemView implements ICardView {
 			const isClickInside = container.contains(event.target as Node);
 			if (!isClickInside) {
 				this.searchInputContainer.style.display = 'none';
-				this.logger.debug('View', '검색창 자동 숨김 (빈 검색창 + 외부 클릭)');
+				this.logger.debug('View', t().debug.view.searchAutoHide);
 			}
 		});
 	}
 
 	async onClose() {
-		this.logger.debug('View', 'Closing view');
+		this.logger.debug('View', t().debug.view.closing);
 		
 		// ⭐ ViewportManager 정리 추가
 		if (isDefined(this.viewRenderer)) {
@@ -424,7 +425,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 	 * 상태 해시 체크를 건너뛰고 강제로 재렌더링합니다.
 	 */
 	async refresh() {
-		this.logger.debug('View', '뷰 새로고침 시작');
+		this.logger.debug('View', t().debug.view.refreshing);
 		
 		this.renderer.setRenderMode(this.settings.renderMode);
 		
@@ -509,12 +510,12 @@ export class CardNavigatorView extends ItemView implements ICardView {
 	 */
 	async openFile(file: TFile): Promise<void> {
 		try {
-			this.logger.debug('View', '파일 열기', { filePath: file.path });
+			this.logger.debug('View', t().debug.view.fileOpening, { filePath: file.path });
 			await this.app.workspace.openLinkText(file.path, '', false);
 		} catch (error) {
-			const message = ERROR_MESSAGES.FILE_OPEN_FAILED(file.basename);
+			const message = t().errors.fileOpenFailed(file.basename);
 			new Notice(message);
-			this.logger.error('View', '파일 열기 실패', { 
+			this.logger.error('View', t().debug.view.fileOpenFailed, {
 				filePath: file.path,
 				error: error instanceof Error ? error.message : String(error)
 			});

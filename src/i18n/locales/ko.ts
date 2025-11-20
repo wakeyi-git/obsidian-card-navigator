@@ -1,0 +1,1043 @@
+/**
+ * Korean translations
+ */
+export const ko = {
+	// Plugin
+	plugin: {
+		name: 'Card Navigator',
+		ribbonTitle: 'Card Navigator 열기',
+		loadingStart: 'Card Navigator 플러그인 로딩 중...',
+		loadingComplete: 'Card Navigator 플러그인 로딩 완료!',
+		unloading: 'Card Navigator 플러그인 언로딩 중...',
+	},
+
+	// Commands
+	commands: {
+		selectAll: '모든 카드 선택',
+		focusCardNavigator: 'Card Navigator에 포커스 (활성 카드)',
+	},
+
+	// UI Messages
+	ui: {
+		emptyMessage: '표시할 파일이 없습니다',
+		defaultCardContent: '(내용 없음)',
+	},
+
+	// Error Messages
+	errors: {
+		fileOpenFailed: (filename: string) => `파일을 열 수 없습니다: ${filename}`,
+		fileReadFailed: (filename: string) => `파일을 읽을 수 없습니다: ${filename}`,
+		presetLoadFailed: (presetName: string) => `프리셋을 불러올 수 없습니다: ${presetName}`,
+		settingsSaveFailed: '설정을 저장할 수 없습니다',
+	},
+
+	// Settings Tab
+	settings: {
+		// Main sections
+		baseSection: {
+			name: '기본 설정',
+			description: '플러그인의 기본 동작을 설정합니다',
+		},
+		layoutSection: {
+			name: '레이아웃 설정',
+			description: '카드 레이아웃과 외형을 설정합니다',
+		},
+		renderingSection: {
+			name: '렌더링 설정',
+			description: '렌더링 성능과 기능을 설정합니다',
+		},
+		modeSection: {
+			name: '모드 설정',
+			description: '폴더, 태그, 검색 모드를 설정합니다',
+		},
+		sortSection: {
+			name: '정렬 설정',
+			description: '기본 정렬 옵션을 설정합니다',
+		},
+		presetSection: {
+			name: '프리셋 설정',
+			description: '빠른 설정 전환을 위한 프리셋을 저장하고 관리합니다',
+		},
+		interactiveCardSection: {
+			name: '인터랙티브 카드 설정',
+			description: '카드 상호작용 동작을 설정합니다',
+		},
+
+		// Language setting
+		language: {
+			name: '언어',
+			description: '표시 언어를 선택합니다',
+		},
+
+		// Debug settings
+		debugMode: {
+			name: '디버그 모드',
+			description: '콘솔에 디버그 로그를 출력합니다',
+		},
+		debugCategories: {
+			name: '디버그 카테고리',
+			description: '로그를 출력할 카테고리를 선택합니다',
+		},
+
+		// Layout settings
+		columnWidth: {
+			name: '컬럼 너비',
+			description: '각 컬럼의 최소 너비 (px)',
+		},
+		cardGap: {
+			name: '카드 간격',
+			description: '카드 사이의 간격 (px)',
+		},
+		cardPadding: {
+			name: '카드 내부 여백',
+			description: '카드의 내부 여백 (px)',
+		},
+		cardBorderRadius: {
+			name: '카드 모서리 반경',
+			description: '카드의 모서리 반경 (px)',
+		},
+
+		// Rendering settings
+		enableVirtualScroll: {
+			name: '가상 스크롤링 활성화',
+			description: '많은 파일이 있을 때 보이는 카드만 렌더링하여 성능 향상',
+		},
+		showFileExtension: {
+			name: '파일 확장자 표시',
+			description: '카드 제목에 파일 확장자를 표시합니다',
+		},
+		showPath: {
+			name: '경로 표시',
+			description: '제목 아래에 파일 경로를 표시합니다',
+		},
+		showTags: {
+			name: '태그 표시',
+			description: '카드에 태그를 표시합니다',
+		},
+		showFileSize: {
+			name: '파일 크기 표시',
+			description: '카드에 파일 크기를 표시합니다',
+		},
+		showCreatedDate: {
+			name: '생성 날짜 표시',
+			description: '파일 생성 날짜를 표시합니다',
+		},
+		showModifiedDate: {
+			name: '수정 날짜 표시',
+			description: '파일 수정 날짜를 표시합니다',
+		},
+		showWordCount: {
+			name: '단어 수 표시',
+			description: '카드에 단어 수를 표시합니다',
+		},
+		maxContentLength: {
+			name: '최대 콘텐츠 길이',
+			description: '카드 콘텐츠에 표시할 최대 문자 수 (0 = 제한 없음)',
+		},
+
+		// Mode settings
+		defaultMode: {
+			name: '기본 모드',
+			description: 'Card Navigator 열 때 사용할 모드',
+		},
+		folderMode: {
+			name: '폴더 모드',
+			defaultFolder: '기본 폴더',
+			defaultFolderDescription: '기본으로 표시할 폴더 (/ = 루트)',
+			showSubfolders: '하위 폴더 표시',
+			showSubfoldersDescription: '하위 폴더의 파일 포함',
+		},
+		tagMode: {
+			name: '태그 모드',
+			defaultTag: '기본 태그',
+			defaultTagDescription: '기본으로 표시할 태그 (비어있음 = 전체)',
+		},
+		searchMode: {
+			name: '검색 모드',
+			defaultQuery: '기본 검색 쿼리',
+			defaultQueryDescription: '기본으로 사용할 검색 쿼리',
+		},
+
+		// Sort settings
+		defaultSortBy: {
+			name: '기본 정렬 기준',
+			description: '기본 정렬 필드',
+		},
+		defaultSortOrder: {
+			name: '기본 정렬 순서',
+			description: '기본 정렬 방향',
+		},
+		sortOptions: {
+			name: '이름',
+			created: '생성 날짜',
+			modified: '수정 날짜',
+			size: '파일 크기',
+			wordCount: '단어 수',
+		},
+		sortOrders: {
+			asc: '오름차순',
+			desc: '내림차순',
+		},
+
+		// Preset settings
+		currentPreset: {
+			name: '현재 프리셋',
+			description: '불러올 프리셋 선택',
+			none: '없음 (현재 설정)',
+		},
+		savePreset: {
+			name: '현재 설정을 프리셋으로 저장',
+			buttonText: '프리셋 저장',
+			promptTitle: '프리셋 저장',
+			promptMessage: '프리셋 이름을 입력하세요:',
+			promptPlaceholder: '내 프리셋',
+			success: (name: string) => `프리셋 "${name}"이(가) 저장되었습니다`,
+			error: '프리셋 이름을 입력해주세요',
+		},
+		managePresets: {
+			name: '프리셋 관리',
+			deleteButton: '삭제',
+			confirmDelete: (name: string) => `프리셋 "${name}"을(를) 삭제하시겠습니까?`,
+			deleteSuccess: (name: string) => `프리셋 "${name}"이(가) 삭제되었습니다`,
+		},
+
+		// Interactive card settings
+		inlineEditing: {
+			name: '인라인 편집 활성화',
+			description: '클릭하여 카드 제목을 직접 편집할 수 있습니다',
+		},
+		dragAndDrop: {
+			name: '드래그 앤 드롭 활성화',
+			description: '카드를 드래그하여 파일을 이동할 수 있습니다',
+		},
+	},
+
+	// Toolbar
+	toolbar: {
+		mode: '모드:',
+		folder: '폴더',
+		tag: '태그',
+		search: '검색',
+		selectFolder: '폴더 선택',
+		selectTag: '태그 선택',
+		sortBy: '정렬:',
+		filter: '필터',
+		noSettings: '설정 없음',
+		all: '전체',
+		root: '루트',
+		allTags: '모든 태그',
+		modeSwitch: '모드 전환 (폴더/태그)',
+		sortByLabel: '정렬 기준 선택',
+		searchLabel: '검색',
+		modeToggleFolderToSpecific: '폴더 지정 모드로 전환',
+		modeToggleFolderToActive: '활성 폴더 모드로 전환',
+		modeToggleTagToSpecific: '태그 지정 모드로 전환',
+		modeToggleTagToActive: '활성 파일 태그 모드로 전환',
+		clickToSelectFolderTag: '클릭하여 폴더/태그 선택',
+		sortOptions: {
+			nameAsc: '파일명 (A-Z)',
+			nameDesc: '파일명 (Z-A)',
+			modifiedDesc: '수정일 (최신순)',
+			modifiedAsc: '수정일 (오래된순)',
+			createdDesc: '생성일 (최신순)',
+			createdAsc: '생성일 (오래된순)',
+			sizeDesc: '파일 크기 (큰 순)',
+			sizeAsc: '파일 크기 (작은 순)',
+		},
+	},
+
+	// Context Menu
+	contextMenu: {
+		open: '열기',
+		openInNewTab: '새 탭에서 열기',
+		openInNewWindow: '새 창에서 열기',
+		openInRightPanel: '오른쪽 패널에서 열기',
+		rename: '이름 바꾸기',
+		delete: '삭제',
+		moveTo: '이동...',
+		showInExplorer: '파일 탐색기에서 보기',
+		copyPath: '경로 복사',
+		copyLink: '링크 복사',
+		copyMarkdownLink: '마크다운 링크 복사',
+		copyWikiLink: 'Wiki 링크 복사',
+		copyFilePath: '파일 경로 복사',
+		copyFullContent: '전체 내용 복사',
+		copyFirstParagraph: '첫 문단 복사',
+	},
+
+	// Filter
+	filter: {
+		title: '필터',
+		clear: '초기화',
+		apply: '적용',
+		fileType: '파일 유형',
+		dateRange: '날짜 범위',
+		tags: '태그',
+		allFiles: '모든 파일',
+		markdownOnly: '마크다운만',
+		from: '시작',
+		to: '끝',
+	},
+
+	// Search
+	search: {
+		placeholder: '노트 검색...',
+		noResults: '검색 결과가 없습니다',
+	},
+
+	// Modes
+	modes: {
+		folder: '폴더',
+		tag: '태그',
+		search: '검색',
+	},
+
+	// Settings Tab UI
+	settingsTab: {
+		tabs: {
+			mode: '모드 & 정렬',
+			card: '카드 설정',
+			layout: '레이아웃',
+			presets: '프리셋',
+			other: '기타',
+		},
+		scrollBehavior: {
+			title: '스크롤 동작',
+			name: '활성 카드 스크롤',
+			description: '카드를 클릭하여 파일을 열 때 활성 카드를 어떻게 스크롤할지 선택합니다.\n\n• 최소 스크롤: 카드가 이미 화면에 보이면 스크롤하지 않습니다. 보이지 않을 때만 최소한의 스크롤로 카드를 표시합니다. (권장)\n• 항상 화면 중앙: 카드를 항상 화면 중앙에 배치합니다. 스크롤 거리가 길 수 있습니다.\n• 자동 스크롤 안 함: 카드를 클릭해도 자동으로 스크롤하지 않습니다.',
+			nearest: '최소 스크롤 (카드가 보이지 않을 때만)',
+			center: '항상 화면 중앙',
+			none: '자동 스크롤 안 함',
+		},
+		tagClickAction: {
+			title: '태그 클릭 동작',
+			name: '태그 클릭 시 동작',
+			description: '카드 내 태그를 클릭했을 때 어떤 동작을 수행할지 선택합니다.\n\n• 플러그인 검색: Card Navigator의 검색 모드로 전환하여 해당 태그로 검색합니다 (권장)\n• Obsidian 검색: Obsidian의 기본 검색 패널을 열고 해당 태그로 검색합니다',
+			pluginSearch: '플러그인 검색',
+			obsidianSearch: 'Obsidian 검색',
+			notice: (action: string) => `태그 클릭 동작: ${action}`,
+		},
+		dragDrop: {
+			title: '드래그 앤 드롭',
+			contentType: '에디터에 삽입할 내용',
+			contentTypeDescription: '카드를 에디터로 드래그 앤 드롭할 때 삽입되는 내용을 선택합니다.\n\n• 링크: [[파일명]] 형식의 내부 링크를 삽입합니다\n• 파일 내용: 파일의 전체 내용을 삽입합니다 (추가 옵션에서 세부 설정 가능)',
+			link: '링크',
+			fullContent: '파일 내용',
+			optionsDescription: '파일 내용을 삽입할 때 세부 옵션을 설정하세요.',
+			includeFrontmatter: '프론트매터 포함',
+			includeFrontmatterDescription: '파일 내용을 삽입할 때 프론트매터(---로 감싼 메타데이터)를 포함할지 선택합니다.',
+			enableLengthLimit: '최대 길이 제한',
+			enableLengthLimitDescription: '파일 내용이 너무 길 경우 지정한 글자 수만큼만 삽입합니다. 비활성화하면 전체 내용을 모두 삽입합니다.',
+			maxLength: '최대 글자 수',
+			maxLengthDescription: '삽입할 최대 글자 수를 입력하세요. 파일 내용의 처음부터 이 글자 수만큼만 삽입됩니다.',
+		},
+		debugMode: {
+			title: '디버그 모드',
+			enable: '디버그 모드 활성화',
+			enableDescription: '개발자 콘솔에 디버그 로그를 표시합니다. 문제 해결에 도움이 됩니다.',
+			categoriesDescription: '표시하고자 하는 로그 카테고리를 선택하세요. 각 카테고리는 [카테고리명] prefix로 콘솔에 표시됩니다.',
+			categories: {
+				plugin: { label: '플러그인', description: '플러그인 로딩, 언로딩, 초기화 등' },
+				view: { label: '뷰 렌더링', description: '뷰 초기화, 렌더링 상태, 파일 변경 처리 등' },
+				layout: { label: '레이아웃', description: '그리드 레이아웃, 카드 크기 계산 등' },
+				card: { label: '카드 렌더링', description: '카드 생성, 내용 추출, 스타일 적용 등' },
+				search: { label: '검색', description: '검색 쿼리, 결과 필터링 등' },
+				filter: { label: '필터', description: '태그, 날짜, 속성 필터링 등' },
+				navigation: { label: '내비게이션', description: '키보드 탐색, 스크롤 이동 등' },
+				preset: { label: '프리셋', description: '프리셋 생성, 적용, 매핑 등' },
+				sort: { label: '정렬', description: '카드 정렬, 정렬 옵션 적용 등' },
+				selection: { label: '선택', description: '다중 선택, 일괄 작업 등' },
+				dragDrop: { label: '드래그앤드롭', description: '드래그 시작/종료, 드롭 처리 등' },
+				mode: { label: '모드 전환', description: '폴더/태그/검색 모드 전환 등' },
+				settings: { label: '설정', description: '설정 로드/저장, 변경 사항 적용 등' },
+				event: { label: '이벤트', description: '클릭, 키보드, 파일 변경 이벤트 등' },
+				ui: { label: 'UI 관련', description: '툴바, 컨텍스트 메뉴, 모달 등' },
+				performance: { label: '성능 측정', description: '실행 시간, 메모리 사용량 측정 등' },
+			},
+			allCategories: '전체 카테고리 제어',
+			allCategoriesDescription: '모든 디버그 카테고리를 한 번에 활성화하거나 비활성화합니다',
+			selectAll: '전체 선택',
+			deselectAll: '전체 해제',
+		},
+		settingsManagement: {
+			title: '설정 관리',
+			reset: '설정 초기화',
+			resetDescription: '모든 설정을 기본값으로 되돌립니다 (프리셋과 매핑도 모두 삭제됩니다)',
+			resetButton: '초기화',
+			resetConfirm: '정말 모든 설정을 초기화하시겠습니까?\n\n⚠️ 프리셋과 프리셋 매핑도 모두 삭제됩니다.',
+			resetSuccess: '모든 설정이 초기화되었습니다',
+			export: '설정 내보내기',
+			exportDescription: '현재 설정을 JSON 파일로 내보냅니다',
+			exportButton: '내보내기',
+			import: '설정 가져오기',
+			importDescription: 'JSON 파일에서 설정을 가져옵니다',
+			importButton: '가져오기',
+			importSuccess: '설정을 성공적으로 가져왔습니다.',
+			importError: '설정 가져오기에 실패했습니다.',
+			importInvalid: '유효하지 않은 설정 파일입니다.',
+		},
+		presets: {
+			enablePresets: '프리셋 기능 활성화',
+			enablePresetsDescription: '프리셋 기능을 사용하려면 활성화하세요. 비활성화하면 프리셋 생성, 적용, 자동 매핑이 모두 비활성화됩니다.',
+			createPreset: '현재 설정으로 프리셋 생성',
+			createPresetDescription: '현재 설정을 새로운 프리셋으로 저장합니다',
+			createPresetButton: '프리셋 생성',
+			presetDescriptionTitle: '프리셋 설명 (선택)',
+			descriptionLabel: '설명',
+			descriptionPlaceholder: '프리셋에 대한 간단한 설명을 입력하세요 (선택사항)',
+			cancel: '취소',
+			confirm: '확인',
+			importPreset: '프리셋 가져오기',
+			importPresetButton: '가져오기',
+			priorityMode: '우선순위 모드',
+			priorityModeDescription: '폴더와 태그 프리셋의 우선순위를 자동으로 결정할지, 수동으로 설정할지 선택합니다.',
+			manualPriorityType: '우선 적용할 프리셋 타입',
+			manualPriorityTypeDescription: '폴더 프리셋과 태그 프리셋이 모두 매칭될 때, 어느 것을 우선 적용할지 선택합니다.',
+			addFolderMapping: '폴더 매핑 추가',
+			addFolderMappingDescription: '특정 폴더에 프리셋을 매핑합니다',
+			addMappingButton: '매핑 추가',
+			addTagMapping: '태그 매핑 추가',
+			addTagMappingDescription: '특정 태그에 프리셋을 매핑합니다',
+			folderMappingTitle: '폴더 프리셋 매핑 추가',
+			selectFolder: '폴더 선택',
+			selectFolderDescription: '프리셋을 매핑할 폴더를 선택하세요',
+			selectPreset: '프리셋 선택',
+			selectPresetDescription: '자동으로 적용할 프리셋을 선택하세요',
+			includeSubfolders: '하위 폴더 포함',
+			includeSubfoldersDescription: '하위 폴더의 파일에도 이 프리셋을 적용합니다',
+			tagMappingTitle: '태그 프리셋 매핑 추가',
+			tagLabel: '태그',
+			tagDescription: '프리셋을 매핑할 태그를 입력하세요 (# 없이)',
+		},
+		presetSettings: {
+			title: '프리셋',
+			description: '사용자 설정을 프리셋으로 저장하고 불러올 수 있습니다',
+			enableFeature: '프리셋 기능 활성화',
+			enableFeatureDescription: '프리셋 기능을 사용하려면 활성화하세요. 비활성화하면 프리셋 생성, 적용, 자동 매핑이 모두 비활성화됩니다.',
+			featureStatusChanged: (enabled: boolean) => `프리셋 기능이 ${enabled ? '활성화' : '비활성화'}되었습니다`,
+			createDivider: '프리셋 생성',
+			createName: '프리셋 이름',
+			createNamePlaceholder: '예: 작업용 카드 레이아웃',
+			createDescription: '프리셋 설명 (선택)',
+			createDescriptionPlaceholder: '프리셋에 대한 간단한 설명을 입력하세요 (선택사항)',
+			createButton: '프리셋 생성',
+			createModalTitle: '프리셋 이름',
+			createSuccess: (name: string) => `프리셋 "${name}"이(가) 생성되었습니다.`,
+			createdDate: '생성일:',
+			presetLabel: '프리셋:',
+			applyButton: '적용',
+			applySuccess: (name: string) => `프리셋 "${name}"을(를) 적용했습니다.`,
+			duplicateButton: '복제',
+			duplicateModalTitle: '복제할 프리셋 이름',
+			duplicateSuccess: (originalName: string, newName: string) => `프리셋 "${originalName}"을(를) "${newName}"(으)로 복제했습니다.`,
+			exportButton: '내보내기',
+			deleteButton: '삭제',
+			deleteConfirm: (name: string) => `프리셋 "${name}"을(를) 삭제하시겠습니까?`,
+			deleteSuccess: (name: string) => `프리셋 "${name}"이(가) 삭제되었습니다.`,
+			importButton: '프리셋 가져오기',
+			priorityDivider: '프리셋 매핑',
+			priorityMode: '우선순위 모드',
+			priorityModeDescription: '폴더와 태그 프리셋의 우선순위를 자동으로 결정할지, 수동으로 설정할지 선택합니다.',
+			priorityOptions: {
+				auto: '자동',
+				manual: '수동',
+			},
+			priorityRulesTitle: '우선순위 규칙 (자동 모드)',
+			priorityRulesHtml: `
+				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
+					자동 모드에서는 다음 규칙에 따라 우선순위가 결정됩니다:
+					<ol style="margin: 8px 0; padding-left: 20px;">
+						<li>폴더와 태그 프리셋이 모두 매칭되면, <strong>더 구체적인 것</strong>이 우선 적용됩니다</li>
+						<li>폴더 프리셋: 하위 폴더가 상위 폴더보다 우선</li>
+						<li>태그 프리셋: 태그가 많을수록 우선</li>
+						<li>구체성이 같으면 폴더가 태그보다 우선</li>
+					</ol>
+				</div>
+			`,
+			manualPriorityType: '우선 적용할 프리셋 타입',
+			manualPriorityTypeDescription: '폴더 프리셋과 태그 프리셋이 모두 매칭될 때, 어느 것을 우선 적용할지 선택합니다.',
+			manualModeExplanationHtml: `
+				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
+					수동 모드에서는 매칭된 프리셋 중 선택한 타입이 항상 우선 적용됩니다.
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>폴더 우선:</strong> 폴더 프리셋이 있으면 항상 폴더 프리셋 적용</li>
+						<li><strong>태그 우선:</strong> 태그 프리셋이 있으면 항상 태그 프리셋 적용</li>
+					</ul>
+				</div>
+			`,
+			mappingPriorityRulesHtml: `
+				<strong>💡 매핑 우선순위 규칙</strong><br><br>
+				<strong>1. 폴더 vs 태그:</strong> 위의 "우선순위 모드" 설정에 따름<br>
+				<strong>2. 같은 종류 내:</strong> 위에 있는 매핑이 우선 적용됨<br><br>
+				<span style="color: var(--text-muted); font-size: 0.9em;">
+				예: 폴더 목록에서 "프로젝트"가 "프로젝트/중요"보다 위에 있으면,<br>
+				"프로젝트/중요/문서.md"에는 "프로젝트" 프리셋이 적용됩니다.
+				</span>
+			`,
+			priorityTypeOptions: {
+				folder: '폴더 우선',
+				tag: '태그 우선',
+			},
+			folderMappingDivider: '폴더 프리셋',
+			addFolderMapping: '폴더 매핑 추가',
+			folderMappingModalTitle: '폴더 프리셋 매핑 추가',
+			folderLabel: '폴더',
+			folderDescription: '프리셋을 매핑할 폴더를 선택하세요',
+			presetSelectLabel: '프리셋',
+			presetSelectDescription: '자동으로 적용할 프리셋을 선택하세요',
+			includeSubfolders: '하위 폴더 포함',
+			includeSubfoldersDescription: '하위 폴더의 파일에도 이 프리셋을 적용합니다',
+			addButton: '추가',
+			cancelButton: '취소',
+			mappingFolder: '폴더:',
+			mappingPreset: '프리셋:',
+			mappingIncludesSubfolders: '(하위 폴더 포함)',
+			mappingDelete: '삭제',
+			tagMappingDivider: '태그 프리셋',
+			addTagMapping: '태그 매핑 추가',
+			tagMappingModalTitle: '태그 프리셋 매핑 추가',
+			tagLabel: '태그',
+			tagDescription: '프리셋을 매핑할 태그를 입력하세요 (# 없이)',
+			tagPlaceholder: '예: important',
+			mappingTag: '태그:',
+			noPresets: '(프리셋 없음)',
+			rootFolder: '(루트 폴더)',
+			root: '(루트)',
+			deletedPreset: '(삭제된 프리셋)',
+		},
+		cardSettings: {
+			cardBaseSettings: '카드 기본 설정',
+			cardBaseSettingsDescription: '모든 카드에 공통으로 적용되는 스타일을 설정합니다. 각 섹션(헤더/바디/풋터)의 배경색은 해당 섹션 설정에서 변경할 수 있습니다.',
+			currentState: (state: string) => `현재: ${state}`,
+			borderColor: '테두리 색',
+			borderColorDescription: '카드 전체의 외곽 테두리 색상입니다',
+			borderThickness: '테두리 두께',
+			borderThicknessDescription: '카드 외곽 테두리의 두께입니다 (px). 0으로 설정하면 테두리가 표시되지 않습니다',
+			borderRadius: '테두리 둥글기',
+			borderRadiusDescription: '카드 모서리의 둥근 정도입니다 (px). 값이 클수록 더 둥글게 표시됩니다',
+			resetToDefault: '기본값으로 복구',
+			clickSectionHint: '섹션을 클릭하여 설정을 변경하세요',
+			sectionLabel: {
+				header: '헤더',
+				body: '바디',
+				footer: '풋터',
+			},
+			stateLabel: {
+				normal: '일반 카드',
+				active: '활성 카드',
+				focused: '포커스 카드',
+			},
+			stateName: {
+				normal: '일반',
+				active: '활성',
+				focused: '포커스',
+			},
+			sectionEnabled: (section: string) => `${section} 영역 표시`,
+			sectionEnabledDescription: (section: string) => `카드에 ${section} 영역을 표시할지 결정합니다`,
+			sectionContentSettings: (section: string) => `${section} 내용 설정`,
+			sectionStyleSettings: (section: string) => `${section} 스타일 설정`,
+			displayContent: '표시 내용',
+			displayContentDescription: '이 영역에 표시할 정보를 선택합니다. 선택한 내용에 따라 각 파일에서 해당 정보를 추출하여 표시합니다',
+			contentType: {
+				filename: '파일명',
+				filePath: '파일 경로',
+				firstHeader: '첫 번째 헤더',
+				content: '본문 내용',
+				tags: '태그',
+				createdDate: '생성일',
+				modifiedDate: '수정일',
+				property: '프론트매터 속성',
+				backlinks: '백링크 (이 파일을 링크하는 파일들)',
+				outgoingLinks: '나가는 링크 (이 파일에서 링크하는 파일들)',
+			},
+			propertyName: '프론트매터 속성명',
+			propertyNameDescription: '표시하고자 하는 프론트매터 속성의 이름을 입력하세요. 자동완성에서 선택하거나 직접 입력할 수 있습니다.',
+			propertyNamePlaceholder: '예: author, status, priority',
+			clearPropertyName: '속성명 지우기',
+			includeFirstHeader: '첫 번째 헤더 포함',
+			includeFirstHeaderDescription: '본문 내용 표시 시 맨 앞에 있는 첫 번째 헤더를 포함할지 결정합니다. 비활성화하면 첫 헤더는 제목으로 간주되어 제외됩니다',
+			includeFirstHeaderReset: '기본값으로 복구 (비활성화)',
+			bodyRenderMode: '본문 렌더링 모드',
+			bodyRenderModeDescription: '본문 내용을 표시하는 방식을 선택합니다. "Markdown HTML" 모드에서는 최대 길이 제한이 적용되지 않습니다',
+			renderModeOptions: {
+				plain: 'Plain Text (마크다운 문법 그대로)',
+				markdownHtml: 'Markdown HTML (읽기 뷰 스타일)',
+			},
+			maxLength: '최대 길이',
+			maxLengthDescription: (isMarkdownHtml: boolean) =>
+				isMarkdownHtml
+					? '표시할 최대 글자 수입니다. ⚠️ 현재 Markdown HTML 렌더링 모드로 설정되어 있어 이 설정이 적용되지 않습니다 (HTML 태그가 잘리는 것을 방지)'
+					: '표시할 최대 글자 수입니다. 내용이 이보다 길면 자동으로 잘리고 "..."이 추가됩니다',
+			fontSize: '폰트 크기',
+			fontSizeDescription: (section: string) => `${section} 영역의 텍스트 크기입니다 (px). 기본값은 일반적으로 14px입니다`,
+			backgroundColor: '배경색',
+			backgroundColorDescription: (section: string) => `${section} 영역의 배경 색상입니다. 카드 전체 배경과 다른 색을 지정하여 영역을 구분할 수 있습니다`,
+			headerBottomBorderColor: '아래 테두리 색',
+			headerBottomBorderColorDescription: '헤더와 바디를 구분하는 테두리의 색상입니다',
+			headerBottomBorderThickness: '아래 테두리 두께',
+			headerBottomBorderThicknessDescription: '헤더 아래 테두리의 두께입니다 (px). 0으로 설정하면 테두리가 표시되지 않습니다',
+			footerTopBorderColor: '위 테두리 색',
+			footerTopBorderColorDescription: '바디와 풋터를 구분하는 테두리의 색상입니다',
+			footerTopBorderThickness: '위 테두리 두께',
+			footerTopBorderThicknessDescription: '풋터 위 테두리의 두께입니다 (px). 0으로 설정하면 테두리가 표시되지 않습니다',
+			sampleContent: {
+				filename: '샘플파일.md',
+				filePath: 'folder/subfolder/샘플파일.md',
+				firstHeader: '# 첫 번째 헤더',
+				content: '본문 내용이 여기에 표시됩니다. 마크다운 문법이 적용될 수 있습니다.',
+				tags: '#태그1 #태그2 #태그3',
+				createdDate: '생성: 2024-11-16',
+				modifiedDate: '수정: 2024-11-16',
+				property: '속성: 값',
+				propertyWithName: (name: string, value: string) => `${name}: ${value}`,
+				propertyNotFound: (name: string) => `${name}: (속성 없음)`,
+				backlinks: {
+					link1: '노트1',
+					link2: '노트2',
+				},
+				outgoingLinks: {
+					link1: '참조문1',
+					link2: '참조문2',
+				},
+				default: '샘플 텍스트',
+			},
+		},
+		sortSettings: {
+			title: '정렬',
+			description: '카드를 정렬하는 기준을 설정합니다.',
+			sortBy: '정렬 기준',
+			sortByDescription: '카드를 정렬할 기준을 선택합니다',
+			criteriaOptions: {
+				name: '파일명',
+				created: '생성일',
+				modified: '수정일',
+				size: '파일 크기',
+				property: '프론트매터 속성',
+			},
+			propertyName: '속성 이름',
+			propertyNameDescription: '정렬에 사용할 프론트매터 속성의 이름을 입력하세요 (예: priority, status)',
+			propertyNamePlaceholder: '속성 이름',
+			sortOrder: '정렬 순서',
+			sortOrderDescription: '오름차순 또는 내림차순을 선택합니다',
+			orderOptions: {
+				asc: '오름차순 (A-Z, 작은것→큰것, 오래됨→최신)',
+				desc: '내림차순 (Z-A, 큰것→작은것, 최신→오래됨)',
+			},
+			exampleLabel: '예시: ',
+			examples: {
+				name: '파일명 기준: "A.md, B.md, C.md" (오름차순) 또는 "C.md, B.md, A.md" (내림차순)',
+				created: '생성일 기준: 오래된 파일부터 (오름차순) 또는 최신 파일부터 (내림차순)',
+				modified: '수정일 기준: 오래전 수정된 파일부터 (오름차순) 또는 최근 수정된 파일부터 (내림차순)',
+				size: '파일 크기 기준: 작은 파일부터 (오름차순) 또는 큰 파일부터 (내림차순)',
+				property: '프론트매터 속성 기준: 속성값에 따라 정렬 (숫자, 문자열, 날짜 등)',
+			},
+		},
+		renderingSettings: {
+			renderMode: '렌더링 모드',
+			renderModeDescription: '카드 내용을 일반 텍스트로 표시할지, 마크다운으로 렌더링할지 선택합니다',
+		},
+		modeSettings: {
+			title: '모드',
+			description: '카드를 표시할 기준을 선택합니다.',
+			folderModeSettings: '폴더 모드 설정',
+			tagModeSettings: '태그 모드 설정',
+			mode: '모드 선택',
+			modeDescription: '폴더 기반으로 표시할지, 태그 기반으로 표시할지 선택합니다',
+			modeOptions: {
+				folder: '폴더 모드',
+				tag: '태그 모드',
+			},
+			folderSelection: '폴더 선택',
+			folderSelectionDescription: '활성 파일의 폴더를 사용할지, 특정 폴더를 지정할지 선택합니다',
+			folderSelectionOptions: {
+				active: '활성 폴더',
+				specific: '폴더 지정',
+			},
+			specifyFolder: '지정 폴더',
+			specifyFolderDescription: '카드를 표시할 폴더 경로를 입력하세요 (예: Projects/Work)',
+			folderPathPlaceholder: '폴더 경로',
+			includeSubfolders: '하위 폴더 포함',
+			includeSubfoldersDescription: '선택한 폴더의 하위 폴더에 있는 파일도 포함합니다',
+			tagSelection: '태그 선택',
+			tagSelectionDescription: '활성 파일의 태그를 사용할지, 특정 태그를 지정할지 선택합니다',
+			tagSelectionOptions: {
+				active: '활성 파일 태그',
+				specific: '태그 지정',
+			},
+			specifyTag: '지정 태그',
+			specifyTagDescription: '카드를 표시할 태그를 쉼표로 구분하여 입력하세요 (예: important,work)',
+			tagPlaceholder: '태그1,태그2,태그3',
+			tagOperator: '태그 연산자',
+			tagOperatorDescription: '여러 태그 중 하나라도 포함하면 표시(OR), 모두 포함해야 표시(AND)',
+			tagOperatorOptions: {
+				or: 'OR (하나라도 포함)',
+				and: 'AND (모두 포함)',
+			},
+		},
+		layoutSettings: {
+			minWidth: '카드 최소 너비',
+			minWidthDescription: '카드의 최소 너비를 설정합니다 (100-400px)',
+			minHeight: '카드 최소 높이',
+			minHeightDescription: '카드의 최소 높이를 설정합니다 (80-300px)',
+			maxWidth: '카드 최대 너비',
+			maxWidthDescription: '카드의 최대 너비를 설정합니다 (200-600px)',
+			maxHeight: '카드 최대 높이',
+			maxHeightDescription: '카드의 최대 높이를 설정합니다 (150-500px)',
+			cardGap: '카드 간격',
+			cardGapDescription: '카드 사이의 간격을 설정합니다 (5-20px)',
+		},
+	},
+
+	// Modals
+	modals: {
+		textInput: {
+			inputLabel: '입력',
+			cancel: '취소',
+			confirm: '확인',
+		},
+	},
+
+	// Notices
+	notices: {
+		inlineEditor: {
+			saveFailed: '저장 실패',
+			editCancelled: '편집 취소됨',
+		},
+		contextMenu: {
+			markdownLinkCopied: '마크다운 링크 복사됨',
+			filePathCopied: '파일 경로 복사됨',
+			fullContentCopied: '전체 내용 복사됨',
+			contentCopyFailed: '내용 복사 실패',
+			firstParagraphCopied: '첫 문단 복사됨',
+			firstParagraphCopyFailed: '첫 문단 복사 실패',
+			fileDeleteFailed: '파일 삭제 실패',
+			deleteConfirm: (filename: string) => `"${filename}" 파일을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`,
+			fileDeleted: (filename: string) => `${filename} 삭제됨`,
+			menuRegistered: '컨텍스트 메뉴 등록됨',
+		},
+		presets: {
+			createFailed: '프리셋 생성에 실패했습니다',
+			duplicateFailed: '프리셋 복제에 실패했습니다',
+			exportFailed: '프리셋 내보내기에 실패했습니다',
+			deleteFailed: '프리셋 삭제에 실패했습니다',
+			exported: '프리셋을 내보냈습니다',
+			imported: '프리셋을 가져왔습니다',
+			importFailed: '프리셋 가져오기에 실패했습니다',
+			selectPreset: '프리셋을 선택하세요',
+			folderMappingAddFailed: '폴더 매핑 추가에 실패했습니다',
+			enterTag: '태그를 입력하세요',
+			tagMappingAddFailed: '태그 매핑 추가에 실패했습니다',
+			mappingDeleted: '매핑이 삭제되었습니다',
+			mappingDeleteFailed: '매핑 삭제에 실패했습니다',
+			priorityChangeFailed: '우선순위 변경에 실패했습니다',
+		},
+		interactiveCard: {
+			borderColorReset: '테두리 색을 기본값으로 복구했습니다',
+			borderThicknessReset: '테두리 두께를 기본값으로 복구했습니다',
+			borderRadiusReset: '테두리 둥글기를 기본값으로 복구했습니다',
+			displayContentReset: '표시 내용을 기본값으로 복구했습니다',
+			propertyNameCleared: '속성명을 지웠습니다',
+			includeFirstHeaderReset: '첫 번째 헤더 포함을 기본값으로 복구했습니다',
+			bodyRenderModeReset: '본문 렌더링 모드를 기본값으로 복구했습니다',
+			maxLengthReset: '최대 길이를 기본값으로 복구했습니다',
+			fontSizeReset: '폰트 크기를 기본값으로 복구했습니다',
+			backgroundColorReset: '배경색을 기본값으로 복구했습니다',
+			hoverBorderColorReset: '테두리 색을 기본값으로 복구했습니다',
+			hoverBorderThicknessReset: '테두리 두께를 기본값으로 복구했습니다',
+			activeBorderColorReset: '테두리 색을 기본값으로 복구했습니다',
+			activeBorderThicknessReset: '테두리 두께를 기본값으로 복구했습니다',
+		},
+	},
+
+	// Debug/Console Messages
+	debug: {
+		card: {
+			linkChangeDetected: '링크 변경 감지 (100ms 후)',
+			previousLinksInit: 'previousLinks 초기화 시작',
+			previousLinksInitComplete: (fileCount: number, linkCount: number) => `previousLinks 초기화 완료: ${fileCount}개 파일, ${linkCount}개 링크`,
+			cacheDeleted: '캐시 삭제',
+			customCacheDeleted: '커스텀 캐시 삭제',
+			relatedCacheInvalidation: '관련 파일 캐시 무효화',
+			addedLinkTarget: '  → 추가된 링크 타겟',
+			removedLinkTarget: '  → 삭제된 링크 타겟',
+			backlinkSource: '  → 백링크 소스',
+			totalCacheInvalidation: (count: number) => `총 ${count}개 파일의 캐시 무효화`,
+			cacheInvalidationComplete: '    ✅ 캐시 무효화',
+			fileContentExtraction: '파일 본문 추출',
+			headerExtractionError: '헤더 추출 오류',
+			contentExtractionError: '본문 추출 오류',
+			backlinkExtraction: '🔗 백링크 추출',
+			resolvedLinks: 'resolvedLinks',
+			backlinkFound: '백링크 발견',
+			totalBacklinkCount: '총 백링크 수',
+			noBacklinks: '백링크 없음',
+			backlinkExtractionComplete: '✅ 백링크 추출 완료',
+			backlinkExtractionError: '백링크 추출 오류',
+			outgoingLinkExtraction: '🔗 나가는 링크 추출',
+			fileCache: '파일 캐시',
+			contentLinksCount: '본문 링크 수',
+			frontmatterLinksCount: '프론트매터 링크 수',
+			linkProcessing: '링크 처리',
+			targetFile: '타겟 파일',
+			duplicateLinkSkipped: '중복 링크 건너뛰기',
+			noOutgoingLinks: '나가는 링크 없음',
+			outgoingLinkExtractionComplete: '✅ 나가는 링크 추출 완료',
+			outgoingLinkExtractionError: '나가는 링크 추출 오류',
+			setupLinkHandlers: 'setupLinkHandlers 호출',
+			internalLinkElementsFound: '찾은 internal-link 요소 수',
+			linkFilePath: (index: number) => `링크 ${index}: filePath =`,
+			linkNoFilePath: (index: number) => `링크 ${index}: filePath 없음, 건너뛴`,
+			fileNotFound: '파일을 찾을 수 없습니다',
+			linkOpenSuccess: '링크 열기 성공',
+			linkOpenError: '링크 열기 실패',
+			tagLinkElementsFound: '찾은 tag-link 요소 수',
+			tagName: (index: number) => `태그 ${index}: tagName =`,
+			tagNoName: (index: number) => `태그 ${index}: tagName 없음, 건너뛴`,
+			tagClicked: '태그 클릭됨',
+			obsidianSearchExecuted: 'Obsidian 검색 실행',
+			newSearchViewCreated: '새 검색 뷰 생성 및 태그 검색',
+			pluginSearchRequested: '플러그인 검색 모드 요청',
+			pluginSearchConfigured: '플러그인 검색 설정 완료',
+			pluginSearchFailed: '플러그인 검색 실패: view 또는 searchInput 없음',
+			renderSectionCalled: 'renderSection 호출',
+			markdownRenderingStart: '마크다운 렌더링 시작',
+			markdownRenderingComplete: '마크다운 렌더링 완료',
+			plainTextRendering: '일반 텍스트 렌더링',
+			markdownRenderError: '마크다운 렌더링 오류',
+			renderPlainTextCalled: 'renderPlainText 호출',
+			htmlContentDetected: 'HTML 콘텐츠 감지 - DOM API 사용',
+			plainTextContent: '일반 텍스트 - textContent 사용',
+			renderHtmlContentCalled: 'renderHTMLContent 호출',
+			partsSeparated: '분리된 부분 수',
+			partTrimmed: (index: number) => `부분 ${index} (trim 후)`,
+			linkParsed: '링크 파싱 성공',
+			tagParsed: '태그 파싱 성공',
+			htmlParsingFailed: 'HTML 파싱 실패',
+			tagTextExtracted: '태그 텍스트 추출',
+			domAddComplete: 'DOM 추가 완료',
+			markdownRendererCalled: 'MarkdownRenderer.render 호출 시작',
+			markdownRendererComplete: 'MarkdownRenderer.render 완료',
+		},
+		presets: {
+			managerInitialized: 'PresetManager 초기화 완료',
+			managerReset: 'PresetManager 상태 리셋 완료',
+			create: '프리셋 생성:',
+			createComplete: '프리셋 생성 완료',
+			createError: '프리셋 생성 오류:',
+			notFound: '프리셋 없음:',
+			deleted: '프리셋 삭제:',
+			currentPresetDeleted: '현재 적용된 프리셋 삭제 - ID 초기화',
+			updated: '프리셋 업데이트:',
+			duplicated: '프리셋 복제:',
+			applied: '프리셋 적용:',
+			changed: '프리셋 변경됨:',
+			changedToNone: '프리셋 변경됨: 프리셋 해제',
+			duplicateError: '프리셋 복제 오류:',
+			exportError: '프리셋 내보내기 오류:',
+			deleteError: '프리셋 삭제 오류:',
+			importError: '프리셋 가져오기 오류:',
+			importSuccess: '프리셋 가져오기 성공:',
+			importFailed: '프리셋 가져오기 실패:',
+			mappingAdded: '매핑 추가:',
+			mappingDeleted: '매핑 삭제:',
+			mappingPriorityUpdated: '매핑 우선순위 업데이트:',
+			folderMappingAddError: '폴더 매핑 추가 오류:',
+			tagMappingAddError: '태그 매핑 추가 오류:',
+			mappingDeleteError: '매핑 삭제 오류:',
+			priorityChangeError: '우선순위 변경 오류:',
+			searchStart: '프리셋 검색 시작:',
+			folderMatched: '폴더 매칭:',
+			tagMatched: '태그 매칭:',
+			frontmatterTagsArray: '프론트매터 태그 (배열):',
+			frontmatterTagsString: '프론트매터 태그 (문자열):',
+			inlineTags: '인라인 태그:',
+			allTags: '전체 태그:',
+			mappingSearch: (type: string) => `${type} 매핑 검색:`,
+			matchedPreset: '✅ 매칭된 프리셋:',
+			noMatchedPreset: '❌ 매칭된 프리셋 없음',
+			manualPriority: '🔧 수동 우선순위:',
+			autoPriorityFolderMode: '⚙️ 자동 우선순위 (폴더 모드): tag-first',
+			autoPriorityTagMode: '⚙️ 자동 우선순위 (태그 모드): folder-first',
+		},
+		view: {
+			closing: 'Closing view',
+			refreshing: '뷰 새로고침 시작',
+			fileOpening: '파일 열기',
+			fileOpenFailed: '파일 열기 실패',
+			debouncedRenderExecuted: '디바운스된 forceRender 실행',
+			renderingSkipped: '렌더링 중이므로 active-leaf-change 무시',
+			activeLeafChange: 'active-leaf-change 이벤트',
+			rerenderRequired: '재렌더링 필요 여부',
+			contextChangeRerender: '컨텍스트 변경 → 재렌더링 + 스크롤',
+			sameContextUpdateClass: '같은 컨텍스트 → active 클래스만 업데이트',
+			sameFileNoAction: '같은 파일 → 작업 없음',
+			metadataChangeDetected: '메타데이터 변경 감지',
+			debouncedRenderFailed: '디바운스된 렌더링 실패',
+			fileDeleteDetected: '파일 삭제 감지',
+			fileRenameDetected: '파일 이름 변경 감지',
+			searchAutoHide: '검색창 자동 숨김 (빈 검색창 + 외부 클릭)',
+		},
+	},
+
+	// Selection Manager
+	selection: {
+		filesSelected: (count: number) => `${count}개 파일 선택됨`,
+		selectedFiles: (count: number) => `선택됨: ${count}개 파일`,
+		addTag: '태그 추가',
+		move: '이동',
+		delete: '삭제',
+		clearSelection: '선택 해제',
+		addTagButtonClicked: '태그 추가 버튼 클릭됨',
+		moveButtonClicked: '이동 버튼 클릭됨',
+		deleteButtonClicked: '삭제 버튼 클릭됨',
+		clearSelectionButtonClicked: '선택 해제 버튼 클릭됨',
+		batchAddTagCalled: 'batchAddTag 호출됨',
+		addTagModalTitle: '태그 추가',
+		addTagModalPlaceholder: '추가할 태그를 입력하세요 (# 없이)',
+		tagInputReceived: '태그 입력됨',
+		tagAddFailed: (filepath: string) => `태그 추가 실패: ${filepath}`,
+		tagAdded: (count: number, tag: string) => `${count}개 파일에 #${tag} 태그 추가됨`,
+		tagAddStart: (filepath: string) => `태그 추가 시작: ${filepath}`,
+		tagAddSuccess: (tag: string) => `태그 추가 성공: ${tag}`,
+		tagAlreadyExists: (tag: string) => `태그 이미 존재: ${tag}`,
+		batchMoveCalled: 'batchMove 호출됨',
+		folderSelectionCancelled: '폴더 선택 취소됨',
+		folderSelected: '폴더 선택됨',
+		moveFileFailed: (filepath: string) => `파일 이동 실패: ${filepath}`,
+		root: '루트',
+		filesMoved: (count: number, path: string) => `${count}개 파일이 ${path}로 이동됨`,
+		deleteConfirm: (count: number) => `${count}개 파일을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`,
+		deleteFileFailed: (filepath: string) => `파일 삭제 실패: ${filepath}`,
+		filesDeleted: (count: number) => `${count}개 파일 삭제됨`,
+	},
+
+	// Filter UI
+	filterUI: {
+		filterOptions: '필터 옵션',
+		close: '×',
+		tagFilter: '태그 필터',
+		tagInputPlaceholder: '태그 입력 (쉼표로 구분)',
+		dateFilter: '날짜 필터',
+		createdLabel: '생성일:',
+		modifiedLabel: '수정일:',
+		rangeSeparator: '~',
+		propertyFilter: '속성 필터',
+		propertyDescription: '프론트매터 속성을 key:value 형태로 입력하세요 (한 줄에 하나씩)',
+		propertyPlaceholder: '예:\nstatus:완료\npriority:high',
+		apply: '적용',
+		cancel: '취소',
+		reset: '초기화',
+	},
+
+	// Search Engine
+	searchEngine: {
+		cacheInvalidationFailed: '캐시 무효화 이벤트 리스너 등록 실패',
+		regexError: '정규식 오류',
+		invalidRegexFormat: '올바르지 않은 정규식 형식입니다. /pattern/ 또는 /pattern/flags 형식을 사용하세요.',
+		regexCreateError: (error: string) => `정규식 생성 오류: ${error}`,
+		regexSearchError: '정규식 검색 오류',
+		lineSearchUnsupported: 'line: 검색은 searchSync()에서 지원하지 않습니다. async search()를 사용하세요.',
+		unsupportedSearchType: (type: string) => `${type} 검색은 searchSync()에서 지원하지 않습니다. async search()를 사용하세요.`,
+		lineSearchError: '라인 검색 오류',
+		taskSearchError: '태스크 검색 오류',
+		blockSearchError: '블록 검색 오류',
+		contentSearchError: '본문 검색 오류',
+		fileReadError: '파일 읽기 오류',
+		cacheAccessError: '캐시 접근 오류',
+		contextExtractionError: '컨텍스트 추출 오류',
+	},
+
+	// Drag Drop Handler
+	dragDrop: {
+		contentCached: '파일 내용 캠싱 완료',
+		dragStart: '드래그 시작',
+		dragContentLink: '드래그 내용: 링크',
+		dragContentFile: '드래그 내용: 파일 내용',
+		dragEnd: '드래그 종료 (지연 100ms)',
+		cardDropped: '카드 간 드롭',
+		bidirectionalLinkCreated: '양방향 링크 생성',
+		bidirectionalLinkFailed: '양방향 링크 생성 실패',
+		editorDropZoneSetup: '편집기 드롭 존 설정됨',
+		fileCopyFailed: '파일 내용 복사 실패',
+		fileContentFetchFailed: '파일 내용 가져오기 실패',
+	},
+
+	// UI Labels (tooltips, etc.)
+	uiLabels: {
+		presets: {
+			priorityUp: '우선순위 올리기',
+			priorityDown: '우선순위 내리기',
+			deleteMapping: '매핑 삭제',
+			copySuffix: ' (복사)',
+		},
+		view: {
+			noTitle: '(제목 없음)',
+			noContent: '(내용 없음)',
+		},
+		ui: {
+			activeTags: '활성 파일 태그',
+		},
+	},
+
+	// ViewRenderer
+	viewRenderer: {
+		comments: {
+			viewRendering: '뷰 렌더링을 담당합니다',
+			viewportManager: 'Viewport 관리자 (viewport 렌더링용)',
+			activeFileTagMode: '활성 파일 태그 모드 결과',
+			specifiedTagMode: '지정된 태그 모드 결과',
+			activeFolderMode: '활성 폴더 모드 결과',
+			specifiedFolderMode: '지정된 폴더 모드 결과',
+			selectionRestore: '선택 상태 복원',
+			fileInCurrentViewCheck: 'isFileInCurrentView 체크',
+			searchMode: '검색 모드 → true',
+			tagModeCheck: '태그 모드 체크',
+			folderModeCheck: '폴더 모드 체크',
+		},
+	},
+
+	// Search Operators
+	searchOperators: {
+		path: '일치하는 파일 경로',
+		file: '일치하는 파일 이름',
+		tag: '태그 검색',
+		line: '동일한 행에서 키워드 검색',
+		section: '동일한 제목 아래에서 키워드 검색',
+		property: '일치하는 속성',
+		created: '생성 날짜',
+		modified: '수정 날짜',
+	},
+
+	// Folder Suggest Modal
+	folderSuggest: {
+		placeholder: '폴더를 선택하세요...',
+		rootFolder: '/ (루트)',
+	},
+
+	// Tag Suggest Modal
+	tagSuggest: {
+		placeholder: '태그를 선택하세요...',
+	},
+
+	// Inline Editor
+	inlineEditor: {
+		doubleClickToEdit: '더블클릭하여 편집',
+		sectionSaved: (section: string) => `${section} 저장됨`,
+	},
+
+	// Settings - Additional
+	settingsAdditional: {
+		settingsResetStart: '설정 초기화 시작',
+		settingsResetComplete: '설정 초기화 완료!',
+		settingsSaveQuietStart: 'saveSettingsQuiet() 호출됨',
+		settingsSaveQuietComplete: 'saveSettingsQuiet() 완료',
+		settingsSaveQuietFailed: '설정 저장 실패 (Quiet)',
+		settingsImportError: '설정 가져오기 오류',
+	},
+
+	// Interactive Card Settings
+	interactiveCardSettings: {
+		propertyCollectionComplete: '프론트매터 속성 수집 완료',
+		currentFilePropertiesLoaded: '현재 파일 속성 로드',
+	},
+} as const;

@@ -14,6 +14,7 @@ import { isValidFile, isDefined } from '../utils/typeGuards';
 import { DebugLogger } from '../utils/DebugLogger';
 import { ViewportManager } from './ViewportManager';
 import { VIEWPORT } from '../constants';
+import { t } from '../i18n';
 
 /**
  * 뷰 렌더링을 담당합니다
@@ -116,7 +117,7 @@ export class ViewRenderer {
 			const fileTags = this.getFileTags(file);
 			const hasCommonTag = fileTags.some(tag => activeTags.includes(tag));
 			
-			this.logger.debug('View', '활성 파일 태그 모드 결과', {
+			this.logger.debug('View', t().viewRenderer.comments.activeFileTagMode, {
 				activeTags,
 				fileTags,
 				hasCommonTag
@@ -133,7 +134,7 @@ export class ViewRenderer {
 			const fileTags = this.getFileTags(file);
 			const hasSpecifiedTag = fileTags.some(tag => specifiedTags.includes(tag));
 			
-			this.logger.debug('View', '지정된 태그 모드 결과', {
+			this.logger.debug('View', t().viewRenderer.comments.specifiedTagMode, {
 				specifiedTags,
 				fileTags,
 				hasSpecifiedTag
@@ -172,7 +173,7 @@ export class ViewRenderer {
 				result = fileFolder?.path === activeFolder?.path;
 			}
 			
-			this.logger.debug('View', '활성 폴더 모드 결과', {
+			this.logger.debug('View', t().viewRenderer.comments.activeFolderMode, {
 				activeFolder: activeFolder?.path || 'root',
 				fileFolder: fileFolder?.path || 'root',
 				result
@@ -201,7 +202,7 @@ export class ViewRenderer {
 				}
 			}
 			
-			this.logger.debug('View', '지정된 폴더 모드 결과', {
+			this.logger.debug('View', t().viewRenderer.comments.specifiedFolderMode, {
 				specifiedFolder,
 				fileFolder: fileFolder?.path || 'root',
 				result
@@ -298,7 +299,7 @@ export class ViewRenderer {
 			
 			// 폴더 변경 후 돌아왔을 때 선택된 카드의 스타일이 유지되도록 함
 			if (this.selectionManager.getSelectionCount() > 0) {
-				this.logger.debug('View', '선택 상태 복원', {
+				this.logger.debug('View', t().viewRenderer.comments.selectionRestore, {
 					selectedCount: this.selectionManager.getSelectionCount()
 				});
 				this.selectionManager.updateUI();
@@ -704,29 +705,29 @@ export class ViewRenderer {
 	 * 파일 변경이 재렌더링을 트리거해야 하는지 판단하는 데 사용됩니다.
 	 */
 	isFileInCurrentView(file: TFile): boolean {
-		this.logger.debug('View', 'isFileInCurrentView 체크', {
+		this.logger.debug('View', t().viewRenderer.comments.fileInCurrentViewCheck, {
 			file: file.path,
 			mode: this.settings.currentMode,
 			hasSearchQuery: this.state.hasSearchQuery()
 		});
-		
+
 		// 검색 모드인 경우 - 단순화를 위해 무조건 true 반환
 		// 실제 검색 결과에 포함되는지 확인하려면 성능 비용이 큼
 		if (this.state.hasSearchQuery()) {
-			this.logger.debug('View', '검색 모드 → true');
+			this.logger.debug('View', t().viewRenderer.comments.searchMode);
 			return true;
 		}
-		
+
 		// 태그 모드
 		if (this.settings.currentMode === 'tag') {
-			this.logger.debug('View', '태그 모드 체크', {
+			this.logger.debug('View', t().viewRenderer.comments.tagModeCheck, {
 				useActiveFileTags: this.settings.tagMode.useActiveFileTags
 			});
 			return this.isFileInTagMode(file);
 		}
-		
+
 		// 폴더 모드
-		this.logger.debug('View', '폴더 모드 체크', {
+		this.logger.debug('View', t().viewRenderer.comments.folderModeCheck, {
 			useActiveFolder: this.settings.folderMode.useActiveFolder,
 			includeSubfolders: this.settings.folderMode.includeSubfolders
 		});

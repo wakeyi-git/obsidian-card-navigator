@@ -1,4 +1,5 @@
 import { App, Modal, Setting } from 'obsidian';
+import { t } from '../../i18n';
 
 /**
  * 사용자 텍스트 입력을 위한 모달
@@ -66,7 +67,7 @@ export class TextInputModal extends Modal {
 
         // 키보드 처리가 포함된 입력 필드
         new Setting(contentEl)
-            .setName('입력')
+            .setName(t().modals.textInput.inputLabel)
             .addText(text => text
                 .setPlaceholder(this.placeholder)
                 .setValue(this.defaultValue)
@@ -97,13 +98,13 @@ export class TextInputModal extends Modal {
         // 동작 버튼
         new Setting(contentEl)
             .addButton(btn => btn
-                .setButtonText('취소')
+                .setButtonText(t().modals.textInput.cancel)
                 .onClick(() => {
                     this.close();
                 })
             )
             .addButton(btn => btn
-                .setButtonText('확인')
+                .setButtonText(t().modals.textInput.confirm)
                 .setCta()
                 .onClick(() => {
                     this.submit();

@@ -1,6 +1,7 @@
 import { App, TFile, Notice } from 'obsidian';
 import { DebugLogger } from '../utils/DebugLogger';
 import { CardNavigatorSettings } from '../types';
+import { t } from '../i18n';
 
 /**
  * 인라인 편집기
@@ -42,7 +43,7 @@ export class InlineEditor {
 
             // 편집 가능 표시 (호버 시)
             el.style.cursor = 'text';
-            el.title = '더블클릭하여 편집';
+            el.title = t().inlineEditor.doubleClickToEdit;
         });
     }
 
@@ -142,11 +143,11 @@ export class InlineEditor {
             // 내용이 변경되었으면 저장
             if (newContent !== content) {
                 await this.app.vault.modify(file, newContent);
-                new Notice(`${section} 저장됨`);
+                new Notice(t().inlineEditor.sectionSaved(section));
             }
         } catch (error) {
-            this.logger.error('Card', '저장 실패', error);
-            new Notice('저장 실패');
+            this.logger.error('Card', 'Save failed', error);
+            new Notice(t().notices.inlineEditor.saveFailed);
         }
     }
 
@@ -243,7 +244,7 @@ export class InlineEditor {
         this.originalElement = null;
 
         if (!saved) {
-            new Notice('편집 취소됨');
+            new Notice(t().notices.inlineEditor.editCancelled);
         }
     }
 

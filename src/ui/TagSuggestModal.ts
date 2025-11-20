@@ -1,4 +1,5 @@
 import { App, FuzzySuggestModal, CachedMetadata } from 'obsidian';
+import { t } from '../i18n';
 
 /**
  * 태그 선택 모달
@@ -13,7 +14,7 @@ export class TagSuggestModal extends FuzzySuggestModal<string> {
 		super(app);
 		this.onChoose = onChoose;
 		this.tags = this.getAllTags();
-		this.setPlaceholder('태그를 선택하세요...');
+		this.setPlaceholder(t().tagSuggest.placeholder);
 	}
 
 	/**
