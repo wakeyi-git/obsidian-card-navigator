@@ -586,8 +586,8 @@ export const ko = {
 				firstHeader: '# 첫 번째 헤더',
 				content: '본문 내용이 여기에 표시됩니다. 마크다운 문법이 적용될 수 있습니다.',
 				tags: '#태그1 #태그2 #태그3',
-				createdDate: '생성: 2024-11-16',
-				modifiedDate: '수정: 2024-11-16',
+				createdDate: '생성: 2025-11-16',
+				modifiedDate: '수정: 2025-11-16',
 				property: '속성: 값',
 				propertyWithName: (name: string, value: string) => `${name}: ${value}`,
 				propertyNotFound: (name: string) => `${name}: (속성 없음)`,
@@ -699,10 +699,6 @@ export const ko = {
 
 	// Notices
 	notices: {
-		inlineEditor: {
-			saveFailed: '저장 실패',
-			editCancelled: '편집 취소됨',
-		},
 		contextMenu: {
 			markdownLinkCopied: '마크다운 링크 복사됨',
 			filePathCopied: '파일 경로 복사됨',
@@ -1017,12 +1013,6 @@ export const ko = {
 	// Tag Suggest Modal
 	tagSuggest: {
 		placeholder: '태그를 선택하세요...',
-	},
-
-	// Inline Editor
-	inlineEditor: {
-		doubleClickToEdit: '더블클릭하여 편집',
-		sectionSaved: (section: string) => `${section} 저장됨`,
 	},
 
 	// Settings - Additional

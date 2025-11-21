@@ -179,8 +179,8 @@ export class KeyboardNavigator {
      * 
      * @param index - 카드 인덱스
      * 
-     * ⭐ 버그 수정 2024-11-16: 섹션별 스타일 적용 및 active 상태 고려
-     * ⭐ Phase 4 추가 2024-11-18: 플레이스홀더 자동 렌더링
+     * ⭐ 버그 수정 2025-11-16: 섹션별 스타일 적용 및 active 상태 고려
+     * ⭐ Phase 4 추가 2025-11-18: 플레이스홀더 자동 렌더링
      */
     private focusCard(index: number): void {
         if (index < 0 || index >= this.cards.length) {
@@ -224,7 +224,7 @@ export class KeyboardNavigator {
     /**
      * 포커스를 해제합니다
      * 
-     * ⭐ 버그 수정 2024-11-16: active 상태를 고려하여 스타일 복원
+     * ⭐ 버그 수정 2025-11-16: active 상태를 고려하여 스타일 복원
      */
     private clearFocus(): void {
         if (this.focusedIndex >= 0 && this.focusedIndex < this.cards.length) {

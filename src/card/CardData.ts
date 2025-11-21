@@ -430,7 +430,7 @@ export class CardDataExtractor {
         includeFirstHeader?: boolean
     ): Promise<string> {
         try {
-            // ⭐ 버그 수정 (2024-11-19): contentRenderMode를 cacheKey에 포함
+            // ⭐ 버그 수정 (2025-11-19): contentRenderMode를 cacheKey에 포함
             // 이전: plain 모드로 캐시된 내용이 markdown-html 모드에서도 재사용되는 문제
             // 해결: renderMode별로 별도 캐시 유지
             const renderModeSuffix = contentRenderMode || 'plain';

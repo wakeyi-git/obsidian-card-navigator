@@ -50,7 +50,7 @@ export class SelectionManager {
      * @param file - 선택/해제할 파일
      * @param event - 마우스 이벤트 (Ctrl, Shift 키 감지용)
      * 
-     * ⭐ 버그 수정 (2024-11-20):
+     * ⭐ 버그 수정 (2025-11-20):
      * Shift 키를 누른 상태에서의 첫 번째 클릭이 범위 선택의 시작점이 되도록 수정
      * 
      * 동작:
@@ -128,7 +128,7 @@ export class SelectionManager {
     /**
      * 모든 선택을 해제합니다
      * 
-     * ⭐ 버그 수정 (2024-11-20):
+     * ⭐ 버그 수정 (2025-11-20):
      * 선택 해제 시 범위 선택 시작점도 함께 초기화
      */
     clearSelection(): void {
@@ -198,7 +198,7 @@ export class SelectionManager {
     /**
      * 일괄 작업 버튼들을 생성합니다
      * 
-     * ⭐ 버그 수정 (2024-11-20):
+     * ⭐ 버그 수정 (2025-11-20):
      * native prompt 대신 Obsidian Modal 사용
      */
     private createBatchActionButtons(container: HTMLElement): void {
@@ -252,7 +252,7 @@ export class SelectionManager {
     /**
      * 선택된 모든 파일에 태그를 일괄 추가합니다
      * 
-     * ⭐ 버그 수정 (2024-11-20):
+     * ⭐ 버그 수정 (2025-11-20):
      * native prompt 대신 TextInputModal 사용
      */
     private async batchAddTag(): Promise<void> {
@@ -291,7 +291,7 @@ export class SelectionManager {
     /**
      * 파일의 프론트매터에 태그를 추가합니다
      * 
-     * ⭐ 버그 수정 (2024-11-20):
+     * ⭐ 버그 수정 (2025-11-20):
      * Obsidian의 processFrontMatter API를 사용하여 안전하게 태그 추가
      * 다양한 YAML 형식을 잘못 처리하던 기존 문제 해결
      * 
@@ -344,7 +344,7 @@ export class SelectionManager {
     /**
      * 선택된 모든 파일을 일괄 이동합니다
      * 
-     * ⭐ 버그 수정 (2024-11-20):
+     * ⭐ 버그 수정 (2025-11-20):
      * native prompt 대신 FolderSuggestModal 사용
      */
     private async batchMove(): Promise<void> {

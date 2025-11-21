@@ -586,8 +586,8 @@ export const en = {
 				firstHeader: '# First Header',
 				content: 'Body content will be displayed here. Markdown syntax may be applied.',
 				tags: '#tag1 #tag2 #tag3',
-				createdDate: 'Created: 2024-11-16',
-				modifiedDate: 'Modified: 2024-11-16',
+				createdDate: 'Created: 2025-11-16',
+				modifiedDate: 'Modified: 2025-11-16',
 				property: 'Property: Value',
 				propertyWithName: (name: string, value: string) => `${name}: ${value}`,
 				propertyNotFound: (name: string) => `${name}: (Property not found)`,
@@ -699,10 +699,6 @@ export const en = {
 
 	// Notices
 	notices: {
-		inlineEditor: {
-			saveFailed: 'Save failed',
-			editCancelled: 'Edit cancelled',
-		},
 		contextMenu: {
 			markdownLinkCopied: 'Markdown link copied',
 			filePathCopied: 'File path copied',
@@ -1017,12 +1013,6 @@ export const en = {
 	// Tag Suggest Modal
 	tagSuggest: {
 		placeholder: 'Select a tag...',
-	},
-
-	// Inline Editor
-	inlineEditor: {
-		doubleClickToEdit: 'Double-click to edit',
-		sectionSaved: (section: string) => `${section} saved`,
 	},
 
 	// Settings - Additional

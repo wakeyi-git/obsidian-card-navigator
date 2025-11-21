@@ -155,7 +155,7 @@ export class SortManager {
      * 
      * @remarks
      * 정규식 패턴 매칭뿐만 아니라 실제 날짜 유효성도 검증합니다.
-     * '2024-13-01'과 같은 잘못된 날짜는 false를 반환합니다.
+     * '2025-13-01'과 같은 잘못된 날짜는 false를 반환합니다.
      */
     private isDateString(str: string): boolean {
         const datePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -169,7 +169,7 @@ export class SortManager {
         }
         
         // 파싱된 날짜를 다시 YYYY-MM-DD 형식으로 변환하여 원본과 비교
-        // '2024-13-01'은 '2025-01-01'로 변환되므로 원본과 다름
+        // '2025-13-01'은 '2025-01-01'로 변환되므로 원본과 다름
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');

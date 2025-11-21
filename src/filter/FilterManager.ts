@@ -15,7 +15,7 @@ import { FilterOptions } from '../types';
  * const filterManager = new FilterManager(app);
  * const filtered = filterManager.applyFilters(files, {
  *   tags: ['important'],
- *   createdAfter: new Date('2024-01-01'),
+ *   createdAfter: new Date('2025-01-01'),
  *   properties: { status: '완료' }
  * });
  * ```

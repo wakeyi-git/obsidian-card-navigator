@@ -68,9 +68,6 @@ export class ViewEventHandler {
 			e.preventDefault();
 			this.contextMenu.show(e, file);
 		});
-		
-		// TODO: InlineEditor 기능 개선 필요 - 임시로 비활성화
-		// this.inlineEditor.enable(card, file);
 	}
 	
 	/**
@@ -79,7 +76,7 @@ export class ViewEventHandler {
 	 * 드래그 중이거나 수정 키가 눌린 경우를 처리하고,
 	 * 일반 클릭인 경우 파일을 엽니다.
 	 * 
-	 * ⭐ 버그 수정 (2024-11-18):
+	 * ⭐ 버그 수정 (2025-11-18):
 	 * 태그나 내부 링크를 클릭한 경우 카드 클릭으로 처리하지 않습니다.
 	 * 이벤트 버블링을 통해 카드까지 전파된 경우를 필터링합니다.
 	 * 

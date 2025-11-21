@@ -978,7 +978,7 @@ export class SearchEngine {
      *
      * @example
      * ```typescript
-     * wildcardToRegex('2024*', false)    // /^2024.*$/i
+     * wildcardToRegex('2025*', false)    // /^2025.*$/i
      * wildcardToRegex('note-??', false)  // /^note-..$/i
      * wildcardToRegex('*.md', true)      // /^.*\.md$/
      * ```

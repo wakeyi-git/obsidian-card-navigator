@@ -170,17 +170,40 @@ export function rafDebounce<T extends any[]>(
  */
 export class PerformanceMonitor {
     private marks: Map<string, number> = new Map();
-    // ⭐ Phase E: DebugLogger 추가 (2024-11-15)
+    private measurements: Map<string, number[]> = new Map();
+    private enabled: boolean = false;
+    // ⭐ Phase E: DebugLogger 추가 (2025-11-15)
     private logger: DebugLogger;
-    
+
     /**
      * PerformanceMonitor 인스턴스를 생성합니다
-     * 
+     *
      * @param settings - 설정 (선택사항, 기본값은 디버그 비활성화)
      */
     constructor(settings?: CardNavigatorSettings) {
         const getSettings = () => settings || { debug: { enabled: false, categories: {} } } as CardNavigatorSettings;
         this.logger = new DebugLogger(getSettings);
+    }
+
+    /**
+     * 성능 모니터링 활성화
+     */
+    enable(): void {
+        this.enabled = true;
+    }
+
+    /**
+     * 성능 모니터링 비활성화
+     */
+    disable(): void {
+        this.enabled = false;
+    }
+
+    /**
+     * 성능 모니터링 활성화 상태 확인
+     */
+    isEnabled(): boolean {
+        return this.enabled;
     }
     
     /**
@@ -194,7 +217,7 @@ export class PerformanceMonitor {
     
     /**
      * 측정 종료 및 결과 출력
-     * 
+     *
      * @param label - 측정 레이블
      * @returns 경과 시간 (밀리초)
      */
@@ -204,11 +227,33 @@ export class PerformanceMonitor {
             this.logger.warn('Performance', `${label} 시작 마크 없음`);
             return 0;
         }
-        
+
         const duration = performance.now() - startTime;
-        this.logger.debug('Performance', `${label}: ${duration.toFixed(2)}ms`);
+
+        // 통계 수집
+        if (this.enabled) {
+            this.recordMeasurement(label, duration);
+        }
+
+        // 느린 작업 경고
+        if (duration > 100) {
+            this.logger.debug('Performance', `${label}: ${duration.toFixed(2)}ms (slow)`);
+        } else {
+            this.logger.debug('Performance', `${label}: ${duration.toFixed(2)}ms`);
+        }
+
         this.marks.delete(label);
         return duration;
+    }
+
+    /**
+     * 측정값 기록 (내부용)
+     */
+    private recordMeasurement(label: string, duration: number): void {
+        if (!this.measurements.has(label)) {
+            this.measurements.set(label, []);
+        }
+        this.measurements.get(label)!.push(duration);
     }
     
     /**
@@ -272,9 +317,56 @@ export class PerformanceMonitor {
     }
     
     /**
+     * 특정 레이블의 통계 조회
+     *
+     * @param label - 측정 레이블
+     * @returns 통계 정보 (count, avg, min, max, total) 또는 null
+     */
+    getStats(label: string): {
+        count: number;
+        avg: number;
+        min: number;
+        max: number;
+        total: number;
+    } | null {
+        const measurements = this.measurements.get(label);
+        if (!measurements || measurements.length === 0) {
+            return null;
+        }
+
+        const count = measurements.length;
+        const total = measurements.reduce((a, b) => a + b, 0);
+        const avg = total / count;
+        const min = Math.min(...measurements);
+        const max = Math.max(...measurements);
+
+        return { count, avg, min, max, total };
+    }
+
+    /**
+     * 모든 레이블의 통계 조회
+     *
+     * @returns 레이블별 통계 맵
+     */
+    getAllStats(): Map<string, ReturnType<typeof this.getStats>> {
+        const stats = new Map();
+        for (const label of this.measurements.keys()) {
+            stats.set(label, this.getStats(label));
+        }
+        return stats;
+    }
+
+    /**
      * 모든 측정 마크 초기화
      */
     clear(): void {
         this.marks.clear();
+    }
+
+    /**
+     * 모든 측정 통계 초기화
+     */
+    clearStats(): void {
+        this.measurements.clear();
     }
 }

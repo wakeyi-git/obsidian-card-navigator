@@ -9,7 +9,7 @@ import { SearchQuery, ParsedQuery } from '../types';
  * @example
  * ```typescript
  * const parser = new SearchParser();
- * const parsed = parser.parse('tag:#project OR path:2024');
+ * const parsed = parser.parse('tag:#project OR path:2025');
  * ```
  */
 export class SearchParser {
@@ -570,7 +570,7 @@ export class SearchParser {
      * @returns Date 객체 또는 null
      * 
      * @remarks
-     * - 유효하지 않은 날짜(예: 2024-13-01, 2024-02-30)는 null 반환
+     * - 유효하지 않은 날짜(예: 2025-13-01, 2025-02-30)는 null 반환
      * - Date 객체 생성 후 유효성 검증 수행
      */
     parseDate(dateStr: string): Date | null {
@@ -607,7 +607,7 @@ export class SearchParser {
             }
 
             // 입력한 날짜와 생성된 Date 객체의 날짜가 일치하는지 확인
-            // (예: 2024-02-30은 2024-03-01로 변환되므로 invalid로 처리)
+            // (예: 2025-02-30은 2025-03-01로 변환되므로 invalid로 처리)
             if (originalYear !== null && originalMonth !== null && originalDay !== null) {
                 if (
                     date.getFullYear() !== originalYear ||

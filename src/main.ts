@@ -6,7 +6,10 @@ import { CardNavigatorSettings, DebugCategory } from './types';
 import { CardStyleManager } from './card/CardStyles';
 import { PresetManager } from './preset/PresetManager';
 import { DebugLogger } from './utils/DebugLogger';
+import { ErrorHandler, ErrorSeverity } from './utils/ErrorHandler';
+import { PerformanceMonitor } from './utils/performance';
 import { setLanguage, t, detectLanguageFromLocale } from './i18n';
+import { getMomentLocale } from './utils/locale';
 
 /**
  * Card Navigator 플러그인
@@ -21,6 +24,8 @@ export default class CardNavigatorPlugin extends Plugin {
 	presetManager: PresetManager;
 	settingsTab!: CardNavigatorSettingTab;
 	public logger!: DebugLogger;
+	public errorHandler!: ErrorHandler;
+	public performanceMonitor!: PerformanceMonitor;
 
 	/**
 	 * 플러그인 활성화
@@ -42,7 +47,7 @@ export default class CardNavigatorPlugin extends Plugin {
 	// Set language based on settings
 	const languageSetting = this.settingsManager.getSettings().language;
 	const actualLanguage = languageSetting === 'auto'
-		? detectLanguageFromLocale((window as any).moment?.locale?.() || 'en')
+		? detectLanguageFromLocale(getMomentLocale())
 		: languageSetting;
 	setLanguage(actualLanguage);
 
@@ -51,6 +56,8 @@ export default class CardNavigatorPlugin extends Plugin {
 
 	// ✅ 함수를 전달하여 항상 최신 settings를 참조
 	this.logger = new DebugLogger(() => this.settingsManager.getSettings());
+	this.errorHandler = new ErrorHandler(this.logger);
+	this.performanceMonitor = new PerformanceMonitor(this.settingsManager.getSettings());
 		this.logger.debug('Plugin', t().plugin.loadingStart);
 
 		await this.presetManager.initialize();
@@ -101,6 +108,65 @@ export default class CardNavigatorPlugin extends Plugin {
 				}
 			}
 		});
+
+		// Performance monitoring commands
+		this.addCommand({
+			id: 'show-performance-stats',
+			name: 'Show Performance Statistics',
+			callback: () => {
+				const stats = this.performanceMonitor.getAllStats();
+				if (stats.size === 0) {
+					new Notice('No performance data collected yet. Enable performance monitoring first.');
+					return;
+				}
+
+				// Format stats for display
+				const statsArray = Array.from(stats.entries())
+					.map(([label, stat]) => {
+						if (!stat) return null;
+						return {
+							Label: label,
+							Count: stat.count,
+							'Avg (ms)': stat.avg.toFixed(2),
+							'Min (ms)': stat.min.toFixed(2),
+							'Max (ms)': stat.max.toFixed(2),
+							'Total (ms)': stat.total.toFixed(2)
+						};
+					})
+					.filter(Boolean);
+
+				console.table(statsArray);
+				new Notice(`Performance stats logged to console (${stats.size} operations)`);
+			}
+		});
+
+		this.addCommand({
+			id: 'enable-performance-monitoring',
+			name: 'Enable Performance Monitoring',
+			callback: () => {
+				this.performanceMonitor.enable();
+				new Notice('Performance monitoring enabled');
+			}
+		});
+
+		this.addCommand({
+			id: 'disable-performance-monitoring',
+			name: 'Disable Performance Monitoring',
+			callback: () => {
+				this.performanceMonitor.disable();
+				new Notice('Performance monitoring disabled');
+			}
+		});
+
+		this.addCommand({
+			id: 'clear-performance-stats',
+			name: 'Clear Performance Statistics',
+			callback: () => {
+				this.performanceMonitor.clearStats();
+				new Notice('Performance statistics cleared');
+			}
+		});
+
 		this.settingsTab = new CardNavigatorSettingTab(this.app, this);
 		this.addSettingTab(this.settingsTab);
 
@@ -147,7 +213,7 @@ export default class CardNavigatorPlugin extends Plugin {
 
 			// Update language if changed
 			const actualLanguage = settings.language === 'auto'
-				? detectLanguageFromLocale((window as any).moment?.locale?.() || 'en')
+				? detectLanguageFromLocale(getMomentLocale())
 				: settings.language;
 			setLanguage(actualLanguage);
 
@@ -159,13 +225,13 @@ export default class CardNavigatorPlugin extends Plugin {
 
 			this.logger.debug('Plugin', 'saveSettings() complete');
 		} catch (error) {
-			// 사용자에게 알림
-			new Notice(t().errors.settingsSaveFailed);
-			this.logger.error('Plugin', 'Failed to save settings', {
-				error: error instanceof Error ? error.message : String(error)
-			});
-			// 에러를 다시 던져서 호출자가 알 수 있도록 함
-			throw error;
+			this.errorHandler.handle(
+				error,
+				ErrorSeverity.ERROR,
+				{ category: 'Plugin', action: 'save settings' },
+				t().errors.settingsSaveFailed,
+				true
+			);
 		}
 	}
 
@@ -182,7 +248,7 @@ export default class CardNavigatorPlugin extends Plugin {
 
 			// Update language if changed
 			const actualLanguage = settings.language === 'auto'
-				? detectLanguageFromLocale((window as any).moment?.locale?.() || 'en')
+				? detectLanguageFromLocale(getMomentLocale())
 				: settings.language;
 			setLanguage(actualLanguage);
 
@@ -191,13 +257,13 @@ export default class CardNavigatorPlugin extends Plugin {
 
 			this.logger.debug('Plugin', t().settingsAdditional.settingsSaveQuietComplete);
 		} catch (error) {
-			// 사용자에게 알림
-			new Notice(t().errors.settingsSaveFailed);
-			this.logger.error('Plugin', t().settingsAdditional.settingsSaveQuietFailed, {
-				error: error instanceof Error ? error.message : String(error)
-			});
-			// 에러를 다시 던져서 호출자가 알 수 있도록 함
-			throw error;
+			this.errorHandler.handle(
+				error,
+				ErrorSeverity.ERROR,
+				{ category: 'Plugin', action: 'save settings quietly' },
+				t().errors.settingsSaveFailed,
+				true
+			);
 		}
 	}
 

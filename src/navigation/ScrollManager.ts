@@ -145,7 +145,7 @@ export class ScrollManager {
      * 
      * @remarks
      * 200ms 내에 같은 파일로의 중복 스크롤을 방지합니다.
-     * ⭐ Phase 4 추가 2024-11-18: 플레이스홀더 강제 렌더링
+     * ⭐ Phase 4 추가 2025-11-18: 플레이스홀더 강제 렌더링
      */
     async scrollToActiveFile(
         file: TFile, 

@@ -11,7 +11,7 @@
 	display: flex;
 	flex-direction: column;
 	padding: 0 10px;
-	/* ⭐ 버그 수정 (2024-11-20): 하단 패딩 추가로 상태 표시줄 영역 확보 */
+	/* ⭐ 버그 수정 (2025-11-20): 하단 패딩 추가로 상태 표시줄 영역 확보 */
 	padding-bottom: 20px;
 }
 
@@ -162,7 +162,7 @@
 /* 카드 컨테이너 (그리드 레이아웃) */
 .card-navigator-cards {
 	display: grid;
-	/* ⭐ Phase 3 개선 (2024-11-14): CSS Grid auto-fit 활용 */
+	/* ⭐ Phase 3 개선 (2025-11-14): CSS Grid auto-fit 활용 */
 	/* grid-template-columns는 LayoutManager가 동적으로 설정 */
 	/* 초기값 제거: LayoutManager의 설정과 충돌 방지 */
 	
@@ -170,7 +170,7 @@
 	/* 최소 높이를 보장하면서 내용에 맞게 자동 조정 */
 	grid-auto-rows: minmax(var(--card-min-height, 100px), auto);
 	
-	/* ⭐ 버그 수정 2024-11-14: 균등배분 대신 시작점 정렬 */
+	/* ⭐ 버그 수정 2025-11-14: 균등배분 대신 시작점 정렬 */
 	/* align-content: stretch (기본값) → start로 변경 */
 	align-content: start;
 	/* justify-content도 명시적으로 설정 (가로 모드 대비) */
@@ -205,7 +205,7 @@
 	display: flex;
 	flex-direction: column;
 	
-	/* ⭐ Phase 3 개선 (2024-11-14): 카드 크기 제약 */
+	/* ⭐ Phase 3 개선 (2025-11-14): 카드 크기 제약 */
 	/* min-height: 0 - 그리드 오버플로우 방지 */
 	min-width: 0;
 	min-height: 0;
@@ -214,7 +214,7 @@
 	max-height: var(--card-max-height, 300px);
 	/* ⭐ height: 100% 제거 - grid-auto-rows가 높이 관리 */
 	
-	/* ⭐ 버그 수정 2024-11-14: 포커스 문제 해결 */
+	/* ⭐ 버그 수정 2025-11-14: 포커스 문제 해결 */
 	user-select: none; /* 텍스트 선택 방지 */
 	-webkit-user-select: none;
 	-moz-user-select: none;
@@ -251,14 +251,14 @@
 	color: var(--text-normal);
 }
 
-/* ⭐ 일반 텍스트 모드 헤더: 1줄 제한 (2024-11-17) */
+/* ⭐ 일반 텍스트 모드 헤더: 1줄 제한 (2025-11-17) */
 .card-navigator-cards .card-header:not(.card-markdown-content) {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-/* ⭐ Markdown 렌더링 모드 헤더: 줄바꿈 허용 (2024-11-17) */
+/* ⭐ Markdown 렌더링 모드 헤더: 줄바꿈 허용 (2025-11-17) */
 .card-navigator-cards .card-header.card-markdown-content {
 	white-space: normal !important;
 	text-overflow: clip !important;
@@ -274,7 +274,7 @@
 	line-height: 1.5;
 }
 
-/* ⭐ 일반 텍스트 모드: 4줄로 제한 (2024-11-17 수정) */
+/* ⭐ 일반 텍스트 모드: 4줄로 제한 (2025-11-17 수정) */
 .card-navigator-cards .card-body:not(.card-markdown-content) {
 	overflow: hidden;
 	display: -webkit-box;
@@ -282,7 +282,7 @@
 	-webkit-box-orient: vertical;
 }
 
-/* ⭐ Markdown 렌더링 모드: 모든 내용 표시 (2024-11-17) */
+/* ⭐ Markdown 렌더링 모드: 모든 내용 표시 (2025-11-17) */
 .card-navigator-cards .card-body.card-markdown-content {
 	/* line-clamp 완전히 제거 */
 	display: block !important;
@@ -339,14 +339,14 @@
     color: var(--text-faint);
 }
 
-/* ⭐ 일반 텍스트 모드 풋터: 1줄 제한 (2024-11-17) */
+/* ⭐ 일반 텍스트 모드 풋터: 1줄 제한 (2025-11-17) */
 .card-navigator-cards .card-footer:not(.card-markdown-content) {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* ⭐ Markdown 렌더링 모드 풋터: 줄바꿈 허용 (2024-11-17) */
+/* ⭐ Markdown 렌더링 모드 풋터: 줄바꿈 허용 (2025-11-17) */
 .card-navigator-cards .card-footer.card-markdown-content {
     white-space: normal !important;
     text-overflow: clip !important;
@@ -1244,7 +1244,7 @@
 /* =============================================================================
    ⭐ Phase 3: Interactive Card Settings - 미리 보기 기반 설정 UI
    실시간 업데이트 및 고급 애니메이션
-   통합 날짜: 2024-11-16
+   통합 날짜: 2025-11-16
    ============================================================================= */
 
 /* ========================================
@@ -1252,7 +1252,7 @@
    ======================================== */
 
 .card-settings-container {
-	/* ⭐ Grid 레이아웃으로 변경 (2024-11-16): 좌측(미리보기) + 우측(기본 설정) + 하단(섹션 설정) */
+	/* ⭐ Grid 레이아웃으로 변경 (2025-11-16): 좌측(미리보기) + 우측(기본 설정) + 하단(섹션 설정) */
 	display: grid;
 	grid-template-columns: 300px 1fr; /* 미리보기 300px, 기본 설정은 나머지 공간 차지 */
 	grid-template-rows: auto 1fr;
@@ -1284,7 +1284,7 @@
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
-/* ⭐ 현재 상태 라벨 (2024-11-16 추가) */
+/* ⭐ 현재 상태 라벨 (2025-11-16 추가) */
 .card-settings-container .current-state-label {
 	margin-bottom: 16px;
 	padding: 0;
@@ -1312,7 +1312,7 @@
 	margin-bottom: 16px;
 }
 
-/* ⭐ 미리보기 힌트 (2024-11-16) */
+/* ⭐ 미리보기 힌트 (2025-11-16) */
 .card-settings-container .preview-hint {
 	display: flex;
 	align-items: center;
@@ -1394,7 +1394,7 @@
 	border-radius: 8px;
 	overflow: hidden;
 	background: var(--background-primary);
-	/* ⭐ min-height 감소 (2024-11-16): 빈 공간 최소화 */
+	/* ⭐ min-height 감소 (2025-11-16): 빈 공간 최소화 */
 	min-height: 150px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 	
@@ -1838,7 +1838,7 @@ button:focus-visible {
 /* =============================================================================
    ⭐ Markdown HTML 렌더링 모드 스타일
    Obsidian 읽기 뷰와 동일한 스타일 적용
-   2024-11-17 업데이트: 줄바꿈 및 여백 개선
+   2025-11-17 업데이트: 줄바꿈 및 여백 개선
    ============================================================================= */
 
 /* 기본 레이아웃 */
@@ -1847,7 +1847,7 @@ button:focus-visible {
 .card-footer.markdown-preview-view {
 	/* padding: 10px 12px; */
 	line-height: 1.6;
-	/* ⭐ 줄바꿈 보존 (2024-11-17) */
+	/* ⭐ 줄바꿈 보존 (2025-11-17) */
 	white-space: normal;
 	word-wrap: break-word;
 	overflow-wrap: break-word;
@@ -2044,7 +2044,7 @@ button:focus-visible {
 	vertical-align: super;
 }
 
-/* ⭐ Markdown 렌더링 모드 풋터: 줄바꿈 허용 (2024-11-17) */
+/* ⭐ Markdown 렌더링 모드 풋터: 줄바꿈 허용 (2025-11-17) */
 .card-navigator-cards .card-footer.card-markdown-content {
 	white-space: normal;
 	text-overflow: clip;
@@ -2052,7 +2052,7 @@ button:focus-visible {
 }
 
 /* =============================================================================
-   ⭐ 검색 제안 UI (Search Suggestions) - 2024-11-17
+   ⭐ 검색 제안 UI (Search Suggestions) - 2025-11-17
    Obsidian 스타일과 동일한 검색 옵션 표시
    ============================================================================= */
 
@@ -2107,7 +2107,7 @@ button:focus-visible {
     background-color: var(--background-modifier-hover);
 }
 
-/* ⭐ Markdown 렌더링 모드 풋터: 줄바꿈 허용 (2024-11-17) */
+/* ⭐ Markdown 렌더링 모드 풋터: 줄바꿈 허용 (2025-11-17) */
 .card-navigator-cards .card-footer.card-markdown-content {
 	white-space: normal;
 	text-overflow: clip;
@@ -2117,7 +2117,7 @@ button:focus-visible {
 /* =============================================================================
    ⭐ 태그 스타일
    카드 내 태그 표시 스타일
-   2024-11-17 추가
+   2025-11-17 추가
    ============================================================================= */
 
 /* 태그 링크 기본 스타일 */
@@ -2158,7 +2158,7 @@ button:focus-visible {
 /* =============================================================================
    ⭐ Viewport 플레이스홀더 스타일
    대량 파일 렌더링 성능 최적화를 위한 플레이스홀더
-   2024-11-18 추가
+   2025-11-18 추가
    ============================================================================= */
 
 /* 플레이스홀더 기본 스타일 - 렌더링되지 않은 카드에만 적용 */
@@ -2256,7 +2256,7 @@ button:focus-visible {
 	border-radius: 6px;
 	padding: 8px 12px;
 	margin: 8px 0;
-	/* ⭐ 버그 수정 (2024-11-20): 하단 여백 추가로 상태 표시줄과 겹침 방지 */
+	/* ⭐ 버그 수정 (2025-11-20): 하단 여백 추가로 상태 표시줄과 겹침 방지 */
 	margin-bottom: 40px;
 	display: flex;
 	align-items: center;
