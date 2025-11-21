@@ -456,16 +456,20 @@ export class CardRenderer {
 
         if (renderMode === 'markdown-html') {
             this.logger.debug('Card', t().debug.card.markdownRenderingStart, { sectionType: section.type });
-            
+
             // Obsidian 읽기 뷰와 동일한 클래스 추가
             sectionEl.addClass('markdown-preview-view');
             sectionEl.addClass('markdown-preview-section');
             sectionEl.addClass('markdown-rendered');
-            
-            await this.renderMarkdown(section.content, sectionEl, sourcePath);
-            
-            sectionEl.addClass('card-markdown-content');
-            
+
+            // ⭐ 마크다운 렌더링을 setTimeout으로 분산 (reflow 방지)
+            const content = section.content;
+            setTimeout(() => {
+                this.renderMarkdown(content, sectionEl, sourcePath).then(() => {
+                    sectionEl.addClass('card-markdown-content');
+                });
+            }, 0);
+
             this.logger.debug('Card', t().debug.card.markdownRenderingComplete, {
                 sectionType: section.type,
                 innerHTML: sectionEl.innerHTML.substring(0, 100)
@@ -613,76 +617,17 @@ export class CardRenderer {
                 containerClass: container.className
             });
 
-            // ⭐ 마크다운 하드 라인 브레이크 처리: 빈 줄은 유지하고, 일반 줄은 <br> 태그로 변환
-            const lines = text.split('\n');
-            const processedLines: string[] = [];
-
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                const trimmed = line.trimEnd();
-
-                // 빈 줄은 문단 구분자로 유지
-                if (trimmed === '') {
-                    processedLines.push('');
-                    continue;
-                }
-
-                // 다음 줄도 확인
-                const nextLine = i + 1 < lines.length ? lines[i + 1].trimEnd() : '';
-
-                // 다음 줄이 빈 줄이면 현재 줄은 그대로 (문단 끝)
-                if (nextLine === '') {
-                    processedLines.push(trimmed);
-                } else {
-                    // 다음 줄이 내용이 있으면 <br> 태그 추가
-                    processedLines.push(trimmed + '  ');
-                }
-            }
-
-            const processedText = processedLines.join('\n');
-
-            this.logger.debug('Card', 'Processed markdown text:', {
-                original: text.substring(0, 200),
-                processed: processedText.substring(0, 200)
-            });
-
             await MarkdownRenderer.render(
                 this.app,
-                processedText,
+                text,
                 container,
                 sourcePath,
                 this.component
             );
 
-            // ⭐ 렌더링 후 <br> 태그 뒤의 줄바꿈 제거
-            // white-space: pre-wrap 때문에 <br>\n이 이중 줄바꿈을 만드는 문제 해결
-            const paragraphs = container.querySelectorAll('p');
-            paragraphs.forEach(p => {
-                // <br> 뒤의 텍스트 노드에 있는 줄바꿈을 제거
-                const walker = document.createTreeWalker(
-                    p,
-                    NodeFilter.SHOW_TEXT,
-                    null
-                );
-
-                const textNodesToProcess: { node: Text; newValue: string }[] = [];
-
-                while (walker.nextNode()) {
-                    const textNode = walker.currentNode as Text;
-                    // <br> 바로 다음 텍스트 노드인지 확인
-                    if (textNode.previousSibling?.nodeName === 'BR') {
-                        const newValue = textNode.textContent?.replace(/^\n/, '') || '';
-                        if (newValue !== textNode.textContent) {
-                            textNodesToProcess.push({ node: textNode, newValue });
-                        }
-                    }
-                }
-
-                // TreeWalker 순회 후에 수정
-                textNodesToProcess.forEach(({ node, newValue }) => {
-                    node.textContent = newValue;
-                });
-            });
+            // ⭐ CSS로 <br> 뒤 줄바꿈 처리 (DOM 조작 대신 클래스 추가)
+            // white-space: pre-wrap 대신 white-space: pre-line 사용으로 해결
+            container.addClass('card-markdown-rendered');
 
             this.logger.debug('Card', t().debug.card.markdownRendererComplete, {
                 childrenCount: container.children.length,

@@ -648,7 +648,7 @@ export class ViewRenderer {
 			if (this.shouldCancelRendering(renderingId, 'before empty message')) {
 				return;
 			}
-			
+
 			container.createEl('div', {
 				cls: 'card-navigator-empty',
 				text: 'No files to display'
@@ -657,19 +657,29 @@ export class ViewRenderer {
 		}
 
 		this.selectionManager.setAllFiles(files);
-		
+
+		// ⭐ DocumentFragment 사용하여 reflow 최소화
+		const fragment = document.createDocumentFragment();
+		const tempContainer = document.createElement('div');
+
 		for (const file of files) {
 			if (this.shouldCancelRendering(renderingId, 'during card creation')) {
 				return;
 			}
-			
+
 			await this.cardFactory.createCard(
 				file,
-				container,
+				tempContainer,
 				currentActiveFile,
 				onFileOpen
 			);
 		}
+
+		// 모든 카드를 한 번에 DOM에 추가
+		while (tempContainer.firstChild) {
+			fragment.appendChild(tempContainer.firstChild);
+		}
+		container.appendChild(fragment);
 
 		if (this.shouldCancelRendering(renderingId, 'before layout update')) {
 			return;
@@ -788,27 +798,35 @@ export class ViewRenderer {
 		}
 		
 		this.selectionManager.setAllFiles(files);
-		
-		// 1. 모든 파일에 대한 플레이스홀더 생성
+
+		// 1. 모든 파일에 대한 플레이스홀더 생성 (DocumentFragment로 reflow 최소화)
 		const placeholders: HTMLElement[] = [];
 		let activeIndex = -1;
-		
+		const fragment = document.createDocumentFragment();
+		const tempContainer = document.createElement('div');
+
 		for (let i = 0; i < files.length; i++) {
 			const file = files[i];
 			const isActive = isValidFile(currentActiveFile) && currentActiveFile.path === file.path;
-			
+
 			if (isActive) {
 				activeIndex = i;
 			}
-			
+
 			const placeholder = this.cardFactory.createPlaceholder(
 				file,
-				container,
+				tempContainer,
 				isActive
 			);
-			
+
 			placeholders.push(placeholder);
 		}
+
+		// 모든 플레이스홀더를 한 번에 DOM에 추가
+		while (tempContainer.firstChild) {
+			fragment.appendChild(tempContainer.firstChild);
+		}
+		container.appendChild(fragment);
 		
 		this.logger.debug('View', 'Placeholders created', {
 			count: placeholders.length,

@@ -2006,10 +2006,20 @@ button:focus-visible {
 .card-body.markdown-preview-view p,
 .card-header.markdown-preview-view p,
 .card-footer.markdown-preview-view p {
-	margin: 0.5em 0; /* 문단 간격 복원 (빈 줄로 구분된 경우) */
-	line-height: 1.5; /* <br>로 연결된 줄 간격 적절하게 조정 */
-	white-space: pre-wrap; /* 공백과 줄바꿈 모두 보존 */
-	word-break: break-word; /* 긴 단어 줄바꿈 */
+	margin: 0; /* 문단 간격 제거 - 연속된 줄 사이 빈줄 방지 */
+	line-height: 1.4;
+	white-space: normal;
+	word-break: break-word;
+}
+
+/* <br> 태그 줄간격 조정 */
+.card-body.markdown-preview-view br,
+.card-header.markdown-preview-view br,
+.card-footer.markdown-preview-view br {
+	display: block;
+	content: "";
+	margin: 0;
+	line-height: 0.2;
 }
 
 .card-body.markdown-preview-view p:first-child,
@@ -2191,44 +2201,34 @@ button:focus-visible {
 	/* background, border, border-radius는 .card-item의 기본 스타일 사용 */
 }
 
-/* 로딩 인디케이터 컨테이너 */
+/* 로딩 인디케이터 컨테이너 - 정적 스타일로 변경 (성능 최적화) */
 .card-navigator-cards .card-loading-indicator {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 12px;
-	color: var(--text-muted);
+	gap: 8px;
+	color: var(--text-faint);
+	opacity: 0.6;
 }
 
-/* 로딩 스피너 */
+/* 로딩 아이콘 - 애니메이션 제거, 정적 표시 */
 .card-navigator-cards .loading-spinner {
-	width: 30px;
-	height: 30px;
-	border: 3px solid var(--background-modifier-border);
-	border-top-color: var(--interactive-accent);
+	width: 24px;
+	height: 24px;
+	border: 2px solid var(--background-modifier-border);
 	border-radius: 50%;
-	animation: card-loading-spin 0.8s linear infinite;
+	background: var(--background-secondary);
 }
 
 /* 로딩 텍스트 */
 .card-navigator-cards .loading-text {
-	font-size: 0.85em;
-	color: var(--text-muted);
+	font-size: 0.8em;
+	color: var(--text-faint);
 	max-width: 80%;
 	text-align: center;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-}
-
-/* 스피너 애니메이션 */
-@keyframes card-loading-spin {
-	0% {
-		transform: rotate(0deg);
-	}
-	100% {
-		transform: rotate(360deg);
-	}
 }
 
 /* 플레이스홀더 호버 효과 - 제거 (card-item의 기본 호버 효과 사용) */
