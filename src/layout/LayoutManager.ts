@@ -161,10 +161,14 @@ export class LayoutManager {
             overflowX: 'hidden',
             overflowY: 'auto'
         };
-        
+
         Object.entries(styles).forEach(([key, value]) => {
             (this.containerEl.style as any)[key] = value;
         });
+
+        // 모드 클래스 적용
+        this.containerEl.classList.remove('horizontal-mode');
+        this.containerEl.classList.add('vertical-mode');
     }
 
     /**
@@ -182,10 +186,14 @@ export class LayoutManager {
             overflowX: 'auto',
             overflowY: 'hidden'
         };
-        
+
         Object.entries(styles).forEach(([key, value]) => {
             (this.containerEl.style as any)[key] = value;
         });
+
+        // 모드 클래스 적용
+        this.containerEl.classList.remove('vertical-mode');
+        this.containerEl.classList.add('horizontal-mode');
     }
 
     /**
