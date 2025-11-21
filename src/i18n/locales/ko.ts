@@ -15,6 +15,11 @@ export const ko = {
 	commands: {
 		selectAll: '모든 카드 선택',
 		focusCardNavigator: 'Card Navigator에 포커스 (활성 카드)',
+		switchMode: '모드 전환 (폴더/태그)',
+		toggleModeOption: '모드 옵션 전환 (활성/지정)',
+		showSearch: '검색 입력창 표시',
+		selectFolder: '폴더 선택',
+		selectTag: '태그 선택',
 	},
 
 	// UI Messages

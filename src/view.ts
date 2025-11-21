@@ -457,11 +457,60 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		if (isDefined(this.searchInput)) {
 			this.searchInput.clear();
 		}
-		
+
 		this.state.setSearchQuery('');
-		
+
 		if (isValidElement(this.cardsContainer)) {
 			this.renderCards(this.cardsContainer);
+		}
+	}
+
+	/**
+	 * 검색 입력창을 표시하고 포커스합니다
+	 */
+	public showSearchInput(): void {
+		if (!this.searchInputContainer) return;
+
+		this.searchInputContainer.style.display = 'block';
+		const input = this.searchInputContainer.querySelector('input');
+		if (input) {
+			input.focus();
+		}
+	}
+
+	/**
+	 * 모드를 전환합니다 (폴더 ↔ 태그)
+	 */
+	public async switchMode(): Promise<void> {
+		if (this.toolbar) {
+			await this.toolbar.onModeSwitch();
+		}
+	}
+
+	/**
+	 * 모드 옵션을 전환합니다 (활성/지정)
+	 */
+	public async toggleModeOption(): Promise<void> {
+		if (this.toolbar) {
+			await this.toolbar.onModeToggleClick();
+		}
+	}
+
+	/**
+	 * 폴더 선택 모달을 엽니다
+	 */
+	public openFolderSelector(): void {
+		if (this.toolbar) {
+			this.toolbar.openFolderSelector();
+		}
+	}
+
+	/**
+	 * 태그 선택 모달을 엽니다
+	 */
+	public openTagSelector(): void {
+		if (this.toolbar) {
+			this.toolbar.openTagSelector();
 		}
 	}
 

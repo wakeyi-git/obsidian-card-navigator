@@ -167,6 +167,66 @@ export default class CardNavigatorPlugin extends Plugin {
 			}
 		});
 
+		// 모드 전환 단축키 (폴더 ↔ 태그)
+		this.addCommand({
+			id: 'switch-mode',
+			name: t().commands.switchMode,
+			callback: async () => {
+				const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR)[0];
+				if (leaf?.view instanceof CardNavigatorView) {
+					await leaf.view.switchMode();
+				}
+			}
+		});
+
+		// 모드 옵션 전환 단축키 (활성/지정)
+		this.addCommand({
+			id: 'toggle-mode-option',
+			name: t().commands.toggleModeOption,
+			callback: async () => {
+				const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR)[0];
+				if (leaf?.view instanceof CardNavigatorView) {
+					await leaf.view.toggleModeOption();
+				}
+			}
+		});
+
+		// 검색 입력창 표시 단축키
+		this.addCommand({
+			id: 'show-search',
+			name: t().commands.showSearch,
+			callback: () => {
+				const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR)[0];
+				if (leaf?.view instanceof CardNavigatorView) {
+					leaf.view.showSearchInput();
+				}
+			}
+		});
+
+		// 폴더 선택 단축키
+		this.addCommand({
+			id: 'select-folder',
+			name: t().commands.selectFolder,
+			callback: () => {
+				const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR)[0];
+				if (leaf?.view instanceof CardNavigatorView) {
+					leaf.view.openFolderSelector();
+				}
+			}
+		});
+
+		// 태그 선택 단축키
+		this.addCommand({
+			id: 'select-tag',
+			name: t().commands.selectTag,
+			callback: () => {
+				const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR)[0];
+				if (leaf?.view instanceof CardNavigatorView) {
+					leaf.view.openTagSelector();
+				}
+			}
+		});
+
 		this.settingsTab = new CardNavigatorSettingTab(this.app, this);
 		this.addSettingTab(this.settingsTab);
 

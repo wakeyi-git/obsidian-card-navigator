@@ -15,6 +15,11 @@ export const en = {
 	commands: {
 		selectAll: 'Select all cards',
 		focusCardNavigator: 'Focus on Card Navigator (active card)',
+		switchMode: 'Switch mode (folder/tag)',
+		toggleModeOption: 'Toggle mode option (active/specific)',
+		showSearch: 'Show search input',
+		selectFolder: 'Select folder',
+		selectTag: 'Select tag',
 	},
 
 	// UI Messages

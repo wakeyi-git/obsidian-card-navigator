@@ -315,7 +315,7 @@ export class Toolbar {
 	 * - 태그 모드 + 활성 파일 태그 → 태그 선택 모달
 	 * - 태그 모드 + 태그 지정 → 활성 파일 태그로 전환
 	 */
-	private async onModeToggleClick(): Promise<void> {
+	public async onModeToggleClick(): Promise<void> {
 		const settings = this.plugin.settingsManager.getSettings();
 		
 		if (settings.currentMode === 'folder') {
@@ -407,7 +407,7 @@ export class Toolbar {
 	/**
 	 * 폴더 선택 모달 열기
 	 */
-	private openFolderSelector(): void {
+	public openFolderSelector(): void {
 		const modal = new FolderSuggestModal(this.app, async (folder) => {
 			if (folder) {
 				const settings = this.plugin.settingsManager.getSettings();
@@ -430,7 +430,7 @@ export class Toolbar {
 	/**
 	 * 태그 선택 모달 열기
 	 */
-	private openTagSelector(): void {
+	public openTagSelector(): void {
 		const modal = new TagSuggestModal(this.app, async (tag) => {
 			if (tag) {
 				const settings = this.plugin.settingsManager.getSettings();
@@ -453,7 +453,7 @@ export class Toolbar {
 	/**
 	 * 모드 전환 (폴더 ↔ 태그)
 	 */
-	private async onModeSwitch(): Promise<void> {
+	public async onModeSwitch(): Promise<void> {
 		const settings = this.plugin.settingsManager.getSettings();
 		settings.currentMode = settings.currentMode === 'folder' ? 'tag' : 'folder';
 		await this.plugin.settingsManager.updateSettings({ currentMode: settings.currentMode });
