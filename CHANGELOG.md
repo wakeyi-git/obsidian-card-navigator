@@ -70,7 +70,16 @@ First public release of Card Navigator!
 
 ## [Unreleased]
 
-Future updates will be listed here.
+### Added
+
+#### Dark Mode Optimization
+- **CSS Custom Properties**: Theme-aware CSS variables for shadows (`--cn-shadow-sm`, `--cn-shadow-md`, `--cn-shadow-lg`, `--cn-modal-backdrop`)
+- **Adaptive Shadows**: Different shadow opacity for light mode (0.05-0.5) and dark mode (0.3-0.7) for better visibility
+- **Comprehensive Testing**: Added 12 new test cases for dark mode functionality in `CardStyles.darkmode.test.ts`
+
+### Changed
+- Replaced all hardcoded `rgba` shadow values with CSS variables throughout `styles.css`
+- Improved theme switching behavior with dedicated `.theme-dark` and `.theme-light` classes
 
 ### Planned Features
 - Custom card templates
