@@ -1,6 +1,7 @@
 import { Setting } from 'obsidian';
 import { BaseSettings } from './BaseSettings';
 import { DEFAULT_SETTINGS } from '../../types';
+import { LAYOUT_LIMITS } from '../../constants';
 import { t } from '../../i18n';
 
 /**
@@ -25,9 +26,9 @@ export class LayoutSettings extends BaseSettings {
         // 카드 최소 너비 슬라이더
         new Setting(containerEl)
             .setName(t().settingsTab.layoutSettings.minWidth)
-            .setDesc(t().settingsTab.layoutSettings.minWidthDescription)
+            .setDesc(t().settingsTab.layoutSettings.minWidthDescription(LAYOUT_LIMITS.cardMinWidth.min, LAYOUT_LIMITS.cardMinWidth.max))
             .addSlider(slider => slider
-                .setLimits(100, 400, 10)
+                .setLimits(LAYOUT_LIMITS.cardMinWidth.min, LAYOUT_LIMITS.cardMinWidth.max, LAYOUT_LIMITS.cardMinWidth.step)
                 .setValue(settings.layout.cardMinWidth)
                 .setDynamicTooltip()
                 .onChange(async (value) => {
@@ -48,9 +49,9 @@ export class LayoutSettings extends BaseSettings {
         // 카드 최소 높이 슬라이더
         new Setting(containerEl)
             .setName(t().settingsTab.layoutSettings.minHeight)
-            .setDesc(t().settingsTab.layoutSettings.minHeightDescription)
+            .setDesc(t().settingsTab.layoutSettings.minHeightDescription(LAYOUT_LIMITS.cardMinHeight.min, LAYOUT_LIMITS.cardMinHeight.max))
             .addSlider(slider => slider
-                .setLimits(80, 300, 10)
+                .setLimits(LAYOUT_LIMITS.cardMinHeight.min, LAYOUT_LIMITS.cardMinHeight.max, LAYOUT_LIMITS.cardMinHeight.step)
                 .setValue(settings.layout.cardMinHeight)
                 .setDynamicTooltip()
                 .onChange(async (value) => {
@@ -71,9 +72,9 @@ export class LayoutSettings extends BaseSettings {
         // 카드 최대 너비 슬라이더
         new Setting(containerEl)
             .setName(t().settingsTab.layoutSettings.maxWidth)
-            .setDesc(t().settingsTab.layoutSettings.maxWidthDescription)
+            .setDesc(t().settingsTab.layoutSettings.maxWidthDescription(LAYOUT_LIMITS.cardMaxWidth.min, LAYOUT_LIMITS.cardMaxWidth.max))
             .addSlider(slider => slider
-                .setLimits(200, 600, 10)
+                .setLimits(LAYOUT_LIMITS.cardMaxWidth.min, LAYOUT_LIMITS.cardMaxWidth.max, LAYOUT_LIMITS.cardMaxWidth.step)
                 .setValue(settings.layout.cardMaxWidth)
                 .setDynamicTooltip()
                 .onChange(async (value) => {
@@ -94,9 +95,9 @@ export class LayoutSettings extends BaseSettings {
         // 카드 최대 높이 슬라이더
         new Setting(containerEl)
             .setName(t().settingsTab.layoutSettings.maxHeight)
-            .setDesc(t().settingsTab.layoutSettings.maxHeightDescription)
+            .setDesc(t().settingsTab.layoutSettings.maxHeightDescription(LAYOUT_LIMITS.cardMaxHeight.min, LAYOUT_LIMITS.cardMaxHeight.max))
             .addSlider(slider => slider
-                .setLimits(150, 500, 10)
+                .setLimits(LAYOUT_LIMITS.cardMaxHeight.min, LAYOUT_LIMITS.cardMaxHeight.max, LAYOUT_LIMITS.cardMaxHeight.step)
                 .setValue(settings.layout.cardMaxHeight)
                 .setDynamicTooltip()
                 .onChange(async (value) => {
@@ -117,9 +118,9 @@ export class LayoutSettings extends BaseSettings {
         // 카드 간격 슬라이더
         new Setting(containerEl)
             .setName(t().settingsTab.layoutSettings.cardGap)
-            .setDesc(t().settingsTab.layoutSettings.cardGapDescription)
+            .setDesc(t().settingsTab.layoutSettings.cardGapDescription(LAYOUT_LIMITS.gap.min, LAYOUT_LIMITS.gap.max))
             .addSlider(slider => slider
-                .setLimits(5, 20, 1)
+                .setLimits(LAYOUT_LIMITS.gap.min, LAYOUT_LIMITS.gap.max, LAYOUT_LIMITS.gap.step)
                 .setValue(settings.layout.gap)
                 .setDynamicTooltip()
                 .onChange(async (value) => {

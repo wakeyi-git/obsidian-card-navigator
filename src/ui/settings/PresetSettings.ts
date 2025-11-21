@@ -233,6 +233,22 @@ export class PresetSettings extends BaseSettings {
                 new Notice(t().settingsTab.presetSettings.applySuccess(preset.name));
             });
             
+            const overwriteBtn = buttonsContainer.createEl('button', {
+                text: t().settingsTab.presetSettings.overwriteButton
+            });
+            overwriteBtn.addEventListener('click', async () => {
+                if (confirm(t().settingsTab.presetSettings.overwriteConfirm(preset.name))) {
+                    try {
+                        await this.plugin.presetManager.updatePreset(preset.id, preset.name, preset.description || '');
+                        this.plugin.settingsTab.display();
+                        new Notice(t().settingsTab.presetSettings.overwriteSuccess(preset.name));
+                    } catch (error) {
+                        console.error('Overwrite preset error:', error);
+                        new Notice('Failed to overwrite preset');
+                    }
+                }
+            });
+
             const duplicateBtn = buttonsContainer.createEl('button', {
                 text: t().settingsTab.presetSettings.duplicateButton
             });

@@ -112,6 +112,25 @@ export const RENDERING = {
  * Intersection Observer 기반 성능 최적화를 위한 설정값들입니다.
  * 대량 파일 렌더링 시 초기 로딩 성능을 크게 개선합니다.
  */
+/**
+ * 레이아웃 설정 슬라이더 제한값
+ *
+ * @remarks
+ * 각 레이아웃 설정 항목의 최소값, 최대값, 단계를 정의합니다.
+ */
+export const LAYOUT_LIMITS = {
+    /** 카드 최소 너비 */
+    cardMinWidth: { min: 100, max: 400, step: 10 },
+    /** 카드 최소 높이 */
+    cardMinHeight: { min: 80, max: 300, step: 10 },
+    /** 카드 최대 너비 */
+    cardMaxWidth: { min: 200, max: 800, step: 10 },
+    /** 카드 최대 높이 */
+    cardMaxHeight: { min: 150, max: 600, step: 10 },
+    /** 카드 간격 */
+    gap: { min: 5, max: 20, step: 1 },
+} as const;
+
 export const VIEWPORT = {
     /** 
      * viewport 밖에서 미리 로드할 거리 (px)
