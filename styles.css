@@ -403,7 +403,7 @@
 	background: var(--background-secondary-alt);
 	border-color: var(--interactive-accent);
 	transform: translateY(-2px);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 2px 8px var(--cn-shadow-md);
 }
 
 /* 빈 상태 메시지 */
@@ -494,7 +494,7 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: rgba(0, 0, 0, 0.5);
+	background: var(--cn-modal-backdrop);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -506,7 +506,7 @@
 	background: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 8px;
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+	box-shadow: 0 8px 24px var(--cn-shadow-lg);
 	max-width: 500px;
 	width: 90%;
 	max-height: 80vh;
@@ -758,7 +758,7 @@
 	background: var(--background-secondary);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 6px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 2px 8px var(--cn-shadow-md);
 	animation: slideDown 0.2s ease;
 }
 
@@ -981,7 +981,7 @@
 .card-navigator-preset-item:hover {
 	background: var(--background-secondary-alt);
 	border-color: var(--interactive-accent);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	box-shadow: 0 2px 8px var(--cn-shadow-sm);
 }
 
 /* 프리셋 정보 영역 */
@@ -1134,7 +1134,7 @@
 .card-navigator-mapping-item:hover {
 	background: var(--background-primary-alt);
 	border-color: var(--interactive-accent);
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+	box-shadow: 0 2px 6px var(--cn-shadow-sm);
 }
 
 .card-navigator-mapping-item:last-child {
@@ -1415,7 +1415,7 @@
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 	border-color: var(--interactive-accent);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 2px 8px var(--cn-shadow-md);
 }
 
 .card-settings-container .preview-state-tabs button.active:hover {
@@ -1434,7 +1434,7 @@
 	background: var(--background-primary);
 	/* ⭐ min-height 감소 (2025-11-16): 빈 공간 최소화 */
 	min-height: 150px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	box-shadow: 0 2px 8px var(--cn-shadow-sm);
 	
 	/* 🎨 Phase 3: 카드 전체에 트랜지션 */
 	transition: all 0.3s ease;
@@ -1711,7 +1711,7 @@
 }
 
 .card-settings-container details[open] {
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	box-shadow: 0 2px 8px var(--cn-shadow-sm);
 }
 
 .card-settings-container summary {
@@ -2210,7 +2210,7 @@ button:focus-visible {
 	border-color: var(--tag-border-hover);
 	color: var(--text-accent);
 	transform: translateY(-1px);
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 2px 4px var(--cn-shadow-md);
 }
 
 /* 태그 클릭 효과 */
@@ -2318,7 +2318,7 @@ button:focus-visible {
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 2px 8px var(--cn-shadow-md);
 }
 
 /* 선택 개수 표시 */
@@ -2382,5 +2382,5 @@ button:focus-visible {
 /* 선택된 카드 호버 */
 .card-navigator-cards .card-item.selected:hover {
 	border-color: var(--interactive-accent);
-	box-shadow: 0 0 0 3px var(--interactive-accent-hover), 0 4px 8px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 0 0 3px var(--interactive-accent-hover), 0 4px 8px var(--cn-shadow-md);
 }
