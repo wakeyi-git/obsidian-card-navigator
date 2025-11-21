@@ -3,6 +3,7 @@ import { BaseSettings } from './BaseSettings';
 import { TextInputModal } from '../modals/TextInputModal';
 import { Preset, PresetMapping } from '../../types';
 import { DebugLogger } from '../../utils/DebugLogger';
+import { ErrorHandler, ErrorSeverity } from '../../utils/ErrorHandler';
 import { t } from '../../i18n';
 import { getMomentLocale } from '../../utils/locale';
 import type CardNavigatorPlugin from '../../main';
@@ -14,10 +15,12 @@ import type CardNavigatorPlugin from '../../main';
  */
 export class PresetSettings extends BaseSettings {
     private logger: DebugLogger;
+    private errorHandler: ErrorHandler;
 
     constructor(plugin: CardNavigatorPlugin) {
         super(plugin);
         this.logger = new DebugLogger(() => plugin.settings);
+        this.errorHandler = new ErrorHandler(this.logger);
     }
     /**
      * 프리셋 설정을 렌더링합니다
@@ -117,8 +120,12 @@ export class PresetSettings extends BaseSettings {
                         this.plugin.settingsTab.display();
                         new Notice(t().settingsTab.presetSettings.editSuccess(newName));
                     } catch (error) {
-                        console.error('Edit preset name error:', error);
-                        new Notice('Failed to update preset name');
+                        this.errorHandler.handle(
+                            error,
+                            ErrorSeverity.ERROR,
+                            { category: 'Preset', action: 'update preset name' },
+                            'Failed to update preset name'
+                        );
                     }
                 }
             }
@@ -200,8 +207,12 @@ export class PresetSettings extends BaseSettings {
             this.plugin.settingsTab.display();
             new Notice(t().settingsTab.presetSettings.editSuccess(preset.name));
         } catch (error) {
-            console.error('Edit preset description error:', error);
-            new Notice('Failed to update preset description');
+            this.errorHandler.handle(
+                error,
+                ErrorSeverity.ERROR,
+                { category: 'Preset', action: 'update preset description' },
+                'Failed to update preset description'
+            );
         }
     }
 
@@ -282,8 +293,12 @@ export class PresetSettings extends BaseSettings {
             this.plugin.settingsTab.display();
             new Notice(t().settingsTab.presetSettings.createSuccess(name));
         } catch (error) {
-            console.error(t().debug.presets.createError, error);
-            new Notice(t().notices.presets.createFailed);
+            this.errorHandler.handle(
+                error,
+                ErrorSeverity.ERROR,
+                { category: 'Preset', action: 'create preset' },
+                t().notices.presets.createFailed
+            );
         }
     }
 
@@ -370,8 +385,12 @@ export class PresetSettings extends BaseSettings {
                         this.plugin.settingsTab.display();
                         new Notice(t().settingsTab.presetSettings.overwriteSuccess(preset.name));
                     } catch (error) {
-                        console.error('Overwrite preset error:', error);
-                        new Notice('Failed to overwrite preset');
+                        this.errorHandler.handle(
+                            error,
+                            ErrorSeverity.ERROR,
+                            { category: 'Preset', action: 'overwrite preset' },
+                            'Failed to overwrite preset'
+                        );
                     }
                 }
             });
@@ -387,8 +406,12 @@ export class PresetSettings extends BaseSettings {
                         new Notice(t().settingsTab.presetSettings.duplicateSuccess(preset.name, newPreset.name));
                     }
                 } catch (error) {
-                    console.error(t().debug.presets.duplicateError, error);
-                    new Notice(t().notices.presets.duplicateFailed);
+                    this.errorHandler.handle(
+                        error,
+                        ErrorSeverity.ERROR,
+                        { category: 'Preset', action: 'duplicate preset' },
+                        t().notices.presets.duplicateFailed
+                    );
                 }
             });
             
@@ -400,8 +423,12 @@ export class PresetSettings extends BaseSettings {
                     const json = await this.plugin.presetManager.exportPreset(preset.id);
                     this.downloadJSON(json, `preset-${preset.name}.json`);
                 } catch (error) {
-                    console.error(t().debug.presets.exportError, error);
-                    new Notice(t().notices.presets.exportFailed);
+                    this.errorHandler.handle(
+                        error,
+                        ErrorSeverity.ERROR,
+                        { category: 'Preset', action: 'export preset' },
+                        t().notices.presets.exportFailed
+                    );
                 }
             });
             
@@ -416,8 +443,12 @@ export class PresetSettings extends BaseSettings {
                         this.plugin.settingsTab.display();
                         new Notice(t().settingsTab.presetSettings.deleteSuccess(preset.name));
                     } catch (error) {
-                        console.error(t().debug.presets.deleteError, error);
-                        new Notice(t().notices.presets.deleteFailed);
+                        this.errorHandler.handle(
+                            error,
+                            ErrorSeverity.ERROR,
+                            { category: 'Preset', action: 'delete preset' },
+                            t().notices.presets.deleteFailed
+                        );
                     }
                 }
             });
@@ -469,8 +500,12 @@ export class PresetSettings extends BaseSettings {
                 this.plugin.settingsTab.display();
                 new Notice(t().notices.presets.imported);
             } catch (error) {
-                console.error(t().debug.presets.importError, error);
-                new Notice(t().notices.presets.importFailed);
+                this.errorHandler.handle(
+                    error,
+                    ErrorSeverity.ERROR,
+                    { category: 'Preset', action: 'import preset' },
+                    t().notices.presets.importFailed
+                );
             }
         });
 
@@ -812,8 +847,12 @@ export class PresetSettings extends BaseSettings {
                         modal.close();
                         this.plugin.settingsTab.display();
                     } catch (error) {
-                        console.error(t().debug.presets.folderMappingAddError, error);
-                        new Notice(t().notices.presets.folderMappingAddFailed);
+                        this.errorHandler.handle(
+                            error,
+                            ErrorSeverity.ERROR,
+                            { category: 'Preset', action: 'add folder mapping' },
+                            t().notices.presets.folderMappingAddFailed
+                        );
                     }
                 })
             );
@@ -894,8 +933,12 @@ export class PresetSettings extends BaseSettings {
                         modal.close();
                         this.plugin.settingsTab.display();
                     } catch (error) {
-                        console.error(t().debug.presets.tagMappingAddError, error);
-                        new Notice(t().notices.presets.tagMappingAddFailed);
+                        this.errorHandler.handle(
+                            error,
+                            ErrorSeverity.ERROR,
+                            { category: 'Preset', action: 'add tag mapping' },
+                            t().notices.presets.tagMappingAddFailed
+                        );
                     }
                 })
             );
@@ -990,8 +1033,12 @@ export class PresetSettings extends BaseSettings {
                 this.plugin.settingsTab.display();
                 new Notice(t().notices.presets.mappingDeleted);
             } catch (error) {
-                console.error(t().debug.presets.mappingDeleteError, error);
-                new Notice(t().notices.presets.mappingDeleteFailed);
+                this.errorHandler.handle(
+                    error,
+                    ErrorSeverity.ERROR,
+                    { category: 'Preset', action: 'delete mapping' },
+                    t().notices.presets.mappingDeleteFailed
+                );
             }
         }
     }
@@ -1024,8 +1071,12 @@ export class PresetSettings extends BaseSettings {
 
             this.plugin.settingsTab.display();
         } catch (error) {
-            console.error(t().debug.presets.priorityChangeError, error);
-            new Notice(t().notices.presets.priorityChangeFailed);
+            this.errorHandler.handle(
+                error,
+                ErrorSeverity.ERROR,
+                { category: 'Preset', action: 'move mapping up' },
+                t().notices.presets.priorityChangeFailed
+            );
         }
     }
 
@@ -1057,8 +1108,12 @@ export class PresetSettings extends BaseSettings {
 
             this.plugin.settingsTab.display();
         } catch (error) {
-            console.error(t().debug.presets.priorityChangeError, error);
-            new Notice(t().notices.presets.priorityChangeFailed);
+            this.errorHandler.handle(
+                error,
+                ErrorSeverity.ERROR,
+                { category: 'Preset', action: 'move mapping down' },
+                t().notices.presets.priorityChangeFailed
+            );
         }
     }
 }

@@ -179,7 +179,7 @@ export class Toolbar {
 
 					if (rawFrontmatterTags) {
 						if (Array.isArray(rawFrontmatterTags)) {
-							frontmatterTags = rawFrontmatterTags.map((tag: any) => {
+							frontmatterTags = rawFrontmatterTags.map((tag: unknown) => {
 								if (typeof tag === 'string') {
 									return normalizeTag(tag.trim());
 								}

@@ -5,6 +5,7 @@ import { CardData, CardSettings, CardSectionStyleSettings } from '../types';
 import { ViewEventHandler } from './ViewEventHandler';
 import { ICardView } from '../interfaces/ICardView';
 import { isValidFile } from '../utils/typeGuards';
+import { DebugLogger } from '../utils/DebugLogger';
 
 /**
  * 카드를 생성하는 팩토리 클래스
@@ -22,7 +23,8 @@ export class CardFactory {
 	private renderer: CardRenderer;
 	private extractor: CardDataExtractor;
 	private eventHandler: ViewEventHandler;
-	
+	private logger: DebugLogger;
+
 	/** 현재 설정 */
 	private get settings() {
 		return this.view.plugin.settingsManager.getSettings();
@@ -47,6 +49,7 @@ export class CardFactory {
 		this.renderer = renderer;
 		this.extractor = extractor;
 		this.eventHandler = eventHandler;
+		this.logger = new DebugLogger(() => view.plugin.settingsManager.getSettings());
 	}
 	
 	/**
@@ -338,16 +341,16 @@ export class CardFactory {
 		onFileOpen: (file: TFile) => void
 	): Promise<void> {
 		const filePath = placeholder.dataset.filePath;
-		
+
 		if (!filePath) {
-			console.error('[CardFactory] Placeholder missing file path');
+			this.logger.error('Card', 'Placeholder missing file path');
 			return;
 		}
-		
+
 		const file = this.app.vault.getAbstractFileByPath(filePath);
-		
+
 		if (!(file instanceof TFile)) {
-			console.error('[CardFactory] File not found:', filePath);
+			this.logger.error('Card', 'File not found', { filePath });
 			return;
 		}
 		

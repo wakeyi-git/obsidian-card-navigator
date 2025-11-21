@@ -33,14 +33,14 @@ export class SettingsManager {
 
     /**
      * 설정을 로드합니다
-     * 
+     *
      * @param data - 로드된 데이터
-     * 
+     *
      * @remarks
      * 기본 설정과 로드된 데이터를 병합하여
      * 새로운 설정 항목이 추가되어도 기본값이 적용되도록 합니다.
      */
-    loadSettings(data: any): void {
+    loadSettings(data: Record<string, unknown> | null): void {
         if (data) {
             const defaultCopy = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
             this.settings = this.deepMerge(defaultCopy, data);

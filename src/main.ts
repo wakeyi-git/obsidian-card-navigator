@@ -358,7 +358,7 @@ export default class CardNavigatorPlugin extends Plugin {
 	 * this.plugin.debugLog('Layout', '카드 크기:', { width: 200, height: 150 });
 	 * ```
 	 */
-	debugLog(category: DebugCategory, message: string, data?: any): void {
+	debugLog(category: DebugCategory, message: string, data?: Record<string, unknown>): void {
 		this.logger.debug(category, message, data);
 	}
 

@@ -2,13 +2,22 @@ import { App, Component, MarkdownRenderer } from 'obsidian';
 import { CardData, CardSection, RenderMode, CardNavigatorSettings } from '../types';
 import { DebugLogger } from '../utils/DebugLogger';
 import { t } from '../i18n';
+import type { SearchInput } from '../search/SearchInput';
+
+/**
+ * View 인터페이스 - 순환 참조 방지
+ */
+interface ViewWithSearch extends Component {
+    searchInput?: SearchInput;
+    searchInputContainer?: HTMLElement;
+}
 
 /**
  * 카드 데이터를 HTML 요소로 렌더링합니다
- * 
+ *
  * 헤더, 바디, 풋터를 독립적으로 렌더링하며
  * 일반 텍스트와 마크다운 두 가지 렌더링 모드를 지원합니다.
- * 
+ *
  * @remarks
  * 렌더링 모드:
  * - plain: 일반 텍스트로 표시
@@ -20,7 +29,7 @@ export class CardRenderer {
     private renderMode: RenderMode;
     private logger: DebugLogger;
     private settings: CardNavigatorSettings;
-    private view: any; // CardNavigatorView 타입 (circular dependency 회피)
+    private view: ViewWithSearch;
 
     /**
      * CardRenderer를 생성합니다

@@ -1,4 +1,4 @@
-import { TFile } from 'obsidian';
+import { TFile, CachedMetadata, TagCache } from 'obsidian';
 import { CardNavigatorSettings, Preset, PresetMapping, CardSettings } from '../types';
 import CardNavigatorPlugin from '../main';
 import { DebugLogger } from '../utils/DebugLogger';
@@ -526,9 +526,9 @@ export class PresetManager {
     /**
      * 파일의 모든 태그를 가져옵니다
      */
-    private getFileTags(cache: any): string[] {
+    private getFileTags(cache: CachedMetadata | null): string[] {
         const tags: string[] = [];
-        
+
         if (cache?.frontmatter?.tags) {
             if (Array.isArray(cache.frontmatter.tags)) {
                 const frontmatterTags = cache.frontmatter.tags.map((t: string) =>
@@ -546,7 +546,7 @@ export class PresetManager {
         }
 
         if (cache?.tags) {
-            const inlineTags = cache.tags.map((t: any) => t.tag);
+            const inlineTags = cache.tags.map((t: TagCache) => t.tag);
             tags.push(...inlineTags);
             this.logger.debug('Preset', t().debug.presets.inlineTags, inlineTags);
         }
