@@ -198,10 +198,9 @@ export class InteractiveCardSettings extends BaseSettings {
      */
     private updateCardBaseSettings(): void {
         if (!this.cardBaseSettingsContent) return;
-        
+
         this.cardBaseSettingsContent.empty();
-        
-        const settings = this.plugin.settings;
+
         const style = this.getCurrentCardStyle();
         
         new Setting(this.cardBaseSettingsContent)
@@ -649,13 +648,12 @@ export class InteractiveCardSettings extends BaseSettings {
      */
     private updatePreviewStyles(): void {
         if (!this.previewCard) return;
-        
+
         requestAnimationFrame(() => {
             if (!this.previewCard) return;
-            
-            const settings = this.plugin.settings;
+
             const style = this.getCurrentStyle();
-            
+
             this.applyCardStyles(this.previewCard, style);
             this.applySectionStyles(style);
         });
@@ -955,7 +953,6 @@ export class InteractiveCardSettings extends BaseSettings {
      * 섹션 스타일 설정을 추가합니다
      */
     private addSectionStyleSettings(container: HTMLElement): void {
-        const sectionSettings = this.plugin.settings[this.selectedSection];
         const style = this.getCurrentSectionStyle();
 
         new Setting(container).setHeading().setName(t().settingsTab.cardSettings.sectionStyleSettings(this.getSectionLabel()));

@@ -1,5 +1,6 @@
 import { Setting } from 'obsidian';
 import { BaseSettings } from './BaseSettings';
+import { SortOptions, SortCriteria } from '../../types';
 import { t } from '../../i18n';
 
 /**
@@ -34,7 +35,7 @@ export class SortSettings extends BaseSettings {
                     .addOption('property', t().settingsTab.sortSettings.criteriaOptions.property)
                     .setValue(sortSettings.criteria)
                     .onChange(async (value) => {
-                        sortSettings.criteria = value as any;
+                        sortSettings.criteria = value as SortCriteria;
                         await this.plugin.saveSettings();
                         this.plugin.settingsTab.display();
                     });
@@ -76,11 +77,11 @@ export class SortSettings extends BaseSettings {
 
     /**
      * 정렬 예시를 추가합니다
-     * 
+     *
      * @param containerEl - 컨테이너 요소
      * @param sortSettings - 정렬 설정 객체
      */
-    private addSortExamples(containerEl: HTMLElement, sortSettings: any): void {
+    private addSortExamples(containerEl: HTMLElement, sortSettings: SortOptions): void {
         const examples = t().settingsTab.sortSettings.examples;
         const examplesMap: Record<string, string> = {
             'name': examples.name,

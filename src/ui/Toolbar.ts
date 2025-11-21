@@ -386,9 +386,9 @@ export class Toolbar {
 		sortOptions.forEach(option => {
 			menu.addItem(item => {
 				item.setTitle(option.label);
-				
-				if (settings.sort.criteria === option.criteria && 
-				    settings.sort.order === option.order) {
+
+				if (settings.sort.criteria === option.criteria &&
+					settings.sort.order === option.order) {
 					item.setIcon('check');
 				}
 				

@@ -414,9 +414,10 @@ export class SearchEngine {
                 return this.filterByOutgoingLink(files, query.value);
 
             case 'text':
-            default:
+            default: {
                 const searchQuery = caseSensitive ? query.value : query.value.toLowerCase();
                 return files.filter(file => this.searchInFile(searchQuery, file, caseSensitive));
+            }
         }
     }
     
@@ -471,7 +472,7 @@ export class SearchEngine {
                 return this.filterByOutgoingLink(files, query.value);
 
             case 'text':
-            default:
+            default: {
                 const searchQuery = caseSensitive ? query.value : query.value.toLowerCase();
                 const results: TFile[] = [];
 
@@ -483,6 +484,7 @@ export class SearchEngine {
                 }
 
                 return results;
+            }
         }
     }
     

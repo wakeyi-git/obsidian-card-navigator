@@ -24,14 +24,15 @@ export function debounce<T extends (...args: any[]) => any>(
     wait: number
 ): (...args: Parameters<T>) => void {
     let timeout: NodeJS.Timeout | null = null;
-    
+
     return function(this: any, ...args: Parameters<T>) {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const context = this;
-        
+
         if (timeout) {
             clearTimeout(timeout);
         }
-        
+
         timeout = setTimeout(() => {
             func.apply(context, args);
             timeout = null;
@@ -64,23 +65,24 @@ export function debounceImmediate<T extends (...args: any[]) => any>(
     immediate: boolean = false
 ): (...args: Parameters<T>) => void {
     let timeout: NodeJS.Timeout | null = null;
-    
+
     return function(this: any, ...args: Parameters<T>) {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const context = this;
-        
+
         const callNow = immediate && !timeout;
-        
+
         if (timeout) {
             clearTimeout(timeout);
         }
-        
+
         timeout = setTimeout(() => {
             timeout = null;
             if (!immediate) {
                 func.apply(context, args);
             }
         }, wait);
-        
+
         if (callNow) {
             func.apply(context, args);
         }
@@ -101,10 +103,11 @@ export function debounceAsync<T extends (...args: any[]) => Promise<any>>(
     let timeout: NodeJS.Timeout | null = null;
     let latestResolve: ((value: any) => void) | null = null;
     let latestReject: ((reason?: any) => void) | null = null;
-    
+
     return function(this: any, ...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const context = this;
-        
+
         // 이전 타임아웃 취소
         if (timeout) {
             clearTimeout(timeout);
@@ -113,12 +116,12 @@ export function debounceAsync<T extends (...args: any[]) => Promise<any>>(
                 latestReject(new Error('Debounced call cancelled'));
             }
         }
-        
+
         // 새 프로미스 생성
         return new Promise((resolve, reject) => {
             latestResolve = resolve;
             latestReject = reject;
-            
+
             timeout = setTimeout(async () => {
                 try {
                     const result = await func.apply(context, args);

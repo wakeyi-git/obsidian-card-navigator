@@ -1,5 +1,6 @@
 import { Setting } from 'obsidian';
 import { BaseSettings } from './BaseSettings';
+import { CardNavigatorSettings } from '../../types';
 import { t } from '../../i18n';
 
 /**
@@ -49,11 +50,11 @@ export class ModeSettings extends BaseSettings {
 
     /**
      * 폴더 모드 설정을 추가합니다
-     * 
+     *
      * @param containerEl - 컨테이너 요소
      * @param settings - 설정 객체
      */
-    private addFolderModeSettings(containerEl: HTMLElement, settings: any): void {
+    private addFolderModeSettings(containerEl: HTMLElement, settings: CardNavigatorSettings): void {
         this.createDivider(containerEl, t().settingsTab.modeSettings.folderModeSettings);
 
         const folderSettings = settings.folderMode;
@@ -104,11 +105,11 @@ export class ModeSettings extends BaseSettings {
 
     /**
      * 태그 모드 설정을 추가합니다
-     * 
+     *
      * @param containerEl - 컨테이너 요소
      * @param settings - 설정 객체
      */
-    private addTagModeSettings(containerEl: HTMLElement, settings: any): void {
+    private addTagModeSettings(containerEl: HTMLElement, settings: CardNavigatorSettings): void {
         this.createDivider(containerEl, t().settingsTab.modeSettings.tagModeSettings);
 
         const tagSettings = settings.tagMode;

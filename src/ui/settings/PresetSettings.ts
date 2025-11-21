@@ -1,19 +1,21 @@
-import { Setting, Notice, Modal, setIcon, TFolder, TAbstractFile } from 'obsidian';
+import { Setting, Notice, Modal, setIcon, TFolder } from 'obsidian';
 import { BaseSettings } from './BaseSettings';
 import { TextInputModal } from '../modals/TextInputModal';
-import { PresetMapping } from '../../types';
+import { Preset, PresetMapping } from '../../types';
 import { DebugLogger } from '../../utils/DebugLogger';
 import { t } from '../../i18n';
+import { getMomentLocale } from '../../utils/locale';
+import type CardNavigatorPlugin from '../../main';
 
 /**
  * 프리셋 관리 UI
- * 
+ *
  * 프리셋 생성, 적용, 삭제 및 폴더/태그별 자동 적용 매핑을 관리합니다.
  */
 export class PresetSettings extends BaseSettings {
     private logger: DebugLogger;
-    
-    constructor(plugin: any) {
+
+    constructor(plugin: CardNavigatorPlugin) {
         super(plugin);
         this.logger = new DebugLogger(() => plugin.settings);
     }
@@ -102,7 +104,7 @@ export class PresetSettings extends BaseSettings {
     /**
      * 프리셋 이름 편집 모달을 표시합니다
      */
-    private editPresetName(preset: any): void {
+    private editPresetName(preset: Preset): void {
         const modal = new TextInputModal(
             this.plugin.app,
             t().settingsTab.presetSettings.editNameModalTitle,
@@ -127,7 +129,7 @@ export class PresetSettings extends BaseSettings {
     /**
      * 프리셋 설명 편집 모달을 표시합니다
      */
-    private editPresetDescription(preset: any): void {
+    private editPresetDescription(preset: Preset): void {
         const modal = new Modal(this.plugin.app);
         modal.titleEl.setText(t().settingsTab.presetSettings.editDescriptionModalTitle);
 
@@ -192,7 +194,7 @@ export class PresetSettings extends BaseSettings {
     /**
      * 프리셋 설명을 저장합니다
      */
-    private async savePresetDescription(preset: any, description: string): Promise<void> {
+    private async savePresetDescription(preset: Preset, description: string): Promise<void> {
         try {
             await this.plugin.presetManager.updatePreset(preset.id, preset.name, description);
             this.plugin.settingsTab.display();
@@ -301,7 +303,7 @@ export class PresetSettings extends BaseSettings {
             return;
         }
 
-        presets.forEach((preset: any) => {
+        presets.forEach((preset: Preset) => {
             const presetContainer = containerEl.createDiv({ cls: 'card-navigator-preset-item'});
 
             const infoContainer = presetContainer.createDiv({ cls: 'preset-info'});
@@ -342,7 +344,7 @@ export class PresetSettings extends BaseSettings {
             
             const date = new Date(preset.createdAt);
             infoContainer.createEl('p', {
-                text: `${t().settingsTab.presetSettings.createdDate} ${date.toLocaleDateString('ko-KR')}`,
+                text: `${t().settingsTab.presetSettings.createdDate} ${date.toLocaleDateString(getMomentLocale())}`,
                 cls: 'preset-date setting-item-description'
             });
             
@@ -762,14 +764,14 @@ export class PresetSettings extends BaseSettings {
                     dropdown.addOption('', t().settingsTab.presetSettings.noPresets);
                     dropdown.setDisabled(true);
                 } else {
-                    presets.forEach((preset: any) => {
+                    presets.forEach((preset: Preset) => {
                         dropdown.addOption(preset.id, preset.name);
                     });
-                    
+
                     dropdown.onChange(value => {
                         selectedPresetId = value;
                     });
-                    
+
                     selectedPresetId = presets[0].id;
                 }
             });
@@ -850,14 +852,14 @@ export class PresetSettings extends BaseSettings {
                     dropdown.addOption('', t().settingsTab.presetSettings.noPresets);
                     dropdown.setDisabled(true);
                 } else {
-                    presets.forEach((preset: any) => {
+                    presets.forEach((preset: Preset) => {
                         dropdown.addOption(preset.id, preset.name);
                     });
-                    
+
                     dropdown.onChange(value => {
                         selectedPresetId = value;
                     });
-                    
+
                     selectedPresetId = presets[0].id;
                 }
             });

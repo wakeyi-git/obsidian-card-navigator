@@ -1,4 +1,4 @@
-import { App, Setting } from 'obsidian';
+import { App } from 'obsidian';
 import { FilterOptions } from '../types';
 import { t } from '../i18n';
 

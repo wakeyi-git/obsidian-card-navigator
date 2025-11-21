@@ -240,6 +240,7 @@ export class PresetManager {
         }
 
         // presets, presetMappings, debug는 제외하고 적용
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { presets, presetMappings, debug, ...settingsToApply } = preset.settings;
         
 
@@ -473,7 +474,7 @@ export class PresetManager {
      */
     private isMatch(file: TFile, mapping: PresetMapping): boolean {
         switch (mapping.type) {
-            case 'folder':
+            case 'folder': {
                 const folderPath = file.parent?.path || '';
                 const folderMatch = mapping.includeSubfolders
                     ? (folderPath === mapping.target || folderPath.startsWith(mapping.target + '/'))
@@ -486,13 +487,14 @@ export class PresetManager {
                     includeSubfolders: mapping.includeSubfolders,
                     match: folderMatch
                 });
-                
-                return folderMatch;
 
-            case 'tag':
+                return folderMatch;
+            }
+
+            case 'tag': {
                 const cache = this.plugin.app.metadataCache.getFileCache(file);
                 const tags = this.getFileTags(cache);
-                
+
                 const normalizedMappingTarget = this.normalizeTag(mapping.target);
                 const normalizedTags = tags.map(tag => this.normalizeTag(tag));
                 const tagMatch = normalizedTags.includes(normalizedMappingTarget);
@@ -505,8 +507,9 @@ export class PresetManager {
                     normalizedMappingTarget,
                     match: tagMatch
                 });
-                
+
                 return tagMatch;
+            }
 
             default:
                 return false;

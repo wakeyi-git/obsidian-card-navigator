@@ -1,5 +1,5 @@
 import { TFile, App } from 'obsidian';
-import { SortOptions, SortCriteria, SortOrder } from '../types';
+import { SortOptions, SortCriteria } from '../types';
 
 /**
  * 파일 정렬 관리자

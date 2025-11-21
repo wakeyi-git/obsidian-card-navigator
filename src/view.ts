@@ -1,7 +1,6 @@
 import { ItemView, WorkspaceLeaf, TFile, Notice } from 'obsidian';
 import { CardRenderer } from './card/CardRenderer';
 import { CardDataExtractor } from './card/CardData';
-import { CardData } from './types';
 import CardNavigatorPlugin from './main';
 import { isValidElement, isValidFile, isDefined } from './utils/typeGuards';
 import { DebugLogger } from './utils/DebugLogger';
@@ -21,7 +20,6 @@ import { Toolbar } from './ui/Toolbar';
 import { DragDropHandler } from './utils/DragDropHandler';
 import { CardContextMenu } from './ui/ContextMenu';
 import { SelectionManager } from './selection/SelectionManager';
-import { PresetManager } from './preset/PresetManager';
 import { TIMING } from './constants';
 import { ICardView } from './interfaces/ICardView';
 import { debounceAsync } from './utils/debounce';
@@ -376,8 +374,8 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		// Card Navigator 외부 클릭 시 빈 검색창을 자동으로 숨깁니다.
 		// 검색어가 입력되어 있으면 검색 결과를 참고할 수 있도록 유지합니다.
 		this.registerDomEvent(document, 'click', (event: MouseEvent) => {
-			if (!this.searchInputContainer || 
-			    this.searchInputContainer.style.display === 'none') {
+			if (!this.searchInputContainer ||
+				this.searchInputContainer.style.display === 'none') {
 				return;
 			}
 			

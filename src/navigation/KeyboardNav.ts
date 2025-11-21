@@ -82,15 +82,16 @@ export class KeyboardNavigator {
                 event.preventDefault();
                 this.openFocusedCard();
                 break;
-            case 'Escape':
+            case 'Escape': {
                 event.preventDefault();
-                const selectionManager = (this.view as any).selectionManager;
+                const selectionManager = this.view.selectionManager;
                 if (selectionManager && selectionManager.getSelectionCount() > 0) {
                     selectionManager.clearSelection();
                 } else {
                     this.clearFocus();
                 }
                 break;
+            }
             case 'Home':
                 event.preventDefault();
                 this.focusCard(0);
