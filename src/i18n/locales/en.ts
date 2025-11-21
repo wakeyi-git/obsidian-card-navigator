@@ -309,10 +309,10 @@ export const en = {
 		scrollBehavior: {
 			title: 'Scroll Behavior',
 			name: 'Active Card Scroll',
-			description: 'Choose how to scroll when clicking a card to open a file.\n\n• Minimal scroll: Only scroll if the card is not visible. (Recommended)\n• Always center: Always scroll to center the card.\n• No auto scroll: Do not scroll automatically.',
+			description: 'Choose how to scroll when clicking a card to open a file.\n\n• Minimal scroll: Only scroll if the card is not visible. (Recommended)\n• Always center: Always scroll to center the card.\n• Instant center: Immediately center without scroll animation.',
 			nearest: 'Minimal scroll (only when not visible)',
-			center: 'Always center',
-			none: 'No auto scroll',
+			center: 'Scroll to center',
+			none: 'Instant center (no animation)',
 		},
 		tagClickAction: {
 			title: 'Tag Click Action',

@@ -156,7 +156,22 @@ export class ScrollManager {
         const settings = this.view.plugin.settings;
         
         if (settings.scrollBehavior === 'none') {
-            this.logger.debug('Navigation', 'scrollToActiveFile: scrollBehavior가 none이므로 스크롤 안 함');
+            this.logger.debug('Navigation', 'scrollToActiveFile: scrollBehavior가 none → 애니메이션 없이 중앙으로 이동');
+            // 애니메이션 없이 즉시 중앙으로 스크롤
+            const container = this.view.containerEl.querySelector('.card-navigator-cards');
+            if (!container) return;
+
+            const cards = Array.from(container.querySelectorAll('.card-item')) as HTMLElement[];
+            for (const card of cards) {
+                if (card.getAttribute('data-file-path') === file.path) {
+                    card.scrollIntoView({
+                        behavior: 'instant',
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                    return;
+                }
+            }
             return;
         }
         
