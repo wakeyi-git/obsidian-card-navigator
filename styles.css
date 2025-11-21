@@ -872,11 +872,12 @@
 	border-bottom-color: var(--background-modifier-border-hover);
 }
 
-.setting-tab-button.is-active {
+.card-navigator-settings .setting-tab-button.is-active,
+.card-navigator-settings .setting-tab-button[data-tab].is-active {
 	color: var(--interactive-accent);
 	background: transparent;
 	font-weight: 600;
-	border-bottom-color: var(--interactive-accent);
+	border-bottom: 2px solid var(--interactive-accent) !important;
 	box-shadow: none;
 }
 

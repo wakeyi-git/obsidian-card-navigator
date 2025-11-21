@@ -72,8 +72,17 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         const contentContainer = containerEl.createDiv({ cls: 'setting-tab-content' });
         this.createTabContents(contentContainer);
 
-        // 첫 번째 탭 활성화
-        this.switchTab(this.activeTab);
+        // 탭 콘텐츠만 초기화 (버튼은 createTabButtons에서 이미 처리됨)
+        this.showTabContent(this.activeTab);
+
+        // DOM 렌더링 완료 후 활성 탭 버튼에 포커스
+        setTimeout(() => {
+            const activeButton = containerEl.querySelector(`.setting-tab-button[data-tab="${this.activeTab}"]`) as HTMLElement;
+            if (activeButton) {
+                activeButton.focus();
+                activeButton.blur();
+            }
+        }, 0);
     }
 
     /**
@@ -92,6 +101,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
             const button = container.createEl('button', {
                 cls: 'setting-tab-button'
             });
+            button.dataset.tab = tab.id;
 
             // Lucide 아이콘 추가
             const iconEl = button.createSpan({ cls: 'setting-tab-icon' });
@@ -148,23 +158,9 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
     }
 
     /**
-     * 탭을 전환합니다
+     * 탭 콘텐츠만 표시합니다 (버튼 상태 변경 없음)
      */
-    private switchTab(tabId: SettingTabType): void {
-        this.activeTab = tabId;
-
-        // 모든 탭 버튼의 active 클래스 제거
-        const buttons = this.containerEl.querySelectorAll('.setting-tab-button');
-        buttons.forEach(button => button.removeClass('is-active'));
-
-        // 클릭한 탭 버튼에 active 클래스 추가
-        const tabButtons = Array.from(buttons);
-        const tabOrder: SettingTabType[] = ['mode', 'card', 'layout', 'presets', 'other'];
-        const index = tabOrder.indexOf(tabId);
-        if (index !== -1 && tabButtons[index]) {
-            tabButtons[index].addClass('is-active');
-        }
-
+    private showTabContent(tabId: SettingTabType): void {
         // 모든 탭 콘텐츠 숨기기
         this.tabContainers.forEach((container) => {
             container.style.display = 'none';
@@ -175,6 +171,24 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         if (selectedContainer) {
             selectedContainer.style.display = 'block';
         }
+    }
+
+    /**
+     * 탭을 전환합니다
+     */
+    private switchTab(tabId: SettingTabType): void {
+        this.activeTab = tabId;
+
+        // 모든 탭 버튼의 active 클래스 제거 및 선택된 탭에 추가
+        const buttons = this.containerEl.querySelectorAll('.setting-tab-button');
+        buttons.forEach(button => {
+            button.removeClass('is-active');
+            if ((button as HTMLElement).dataset.tab === tabId) {
+                button.addClass('is-active');
+            }
+        });
+
+        this.showTabContent(tabId);
     }
 
     /**
