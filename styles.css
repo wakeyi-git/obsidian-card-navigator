@@ -1866,6 +1866,16 @@ button:focus-visible {
 	color: var(--text-normal);
 }
 
+/* ⭐ 첫 번째 헤더 포함 시 상단 여백 제거 (2025-11-21) */
+.card-body.markdown-preview-view > h1:first-child,
+.card-body.markdown-preview-view > h2:first-child,
+.card-body.markdown-preview-view > h3:first-child,
+.card-body.markdown-preview-view > h4:first-child,
+.card-body.markdown-preview-view > h5:first-child,
+.card-body.markdown-preview-view > h6:first-child {
+	margin-top: 0;
+}
+
 .card-body.markdown-preview-view h1 {
 	font-size: 1.8em;
 }
