@@ -2144,7 +2144,6 @@ button:focus-visible {
 	align-items: center;
 	gap: 4px;
 	padding: 3px 10px;
-	margin: 0 4px 4px 0;
 	background: var(--tag-background);
 	border: 1px solid var(--tag-border);
 	border-radius: 12px;
