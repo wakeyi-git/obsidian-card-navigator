@@ -2,7 +2,7 @@ import { App, PluginSettingTab, Setting, setIcon, Notice } from 'obsidian';
 import CardNavigatorPlugin from '../main';
 import { DebugCategory } from '../types';
 import { RenderingSettings } from './settings/RenderingSettings';
-import { InteractiveLayoutSettings } from './settings/InteractiveLayoutSettings';
+import { LayoutSettings } from './settings/LayoutSettings';
 import { ModeSettings } from './settings/ModeSettings';
 import { SortSettings } from './settings/SortSettings';
 import { PresetSettings } from './settings/PresetSettings';
@@ -33,7 +33,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
     private modeSettings: ModeSettings;
     private sortSettings: SortSettings;
     private renderingSettings: RenderingSettings;
-    private layoutSettings: InteractiveLayoutSettings;
+    private layoutSettings: LayoutSettings;
     private presetSettings: PresetSettings;
     private interactiveCardSettings: InteractiveCardSettings;
 
@@ -51,7 +51,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         this.modeSettings = new ModeSettings(plugin);
         this.sortSettings = new SortSettings(plugin);
         this.renderingSettings = new RenderingSettings(plugin);
-        this.layoutSettings = new InteractiveLayoutSettings(plugin);
+        this.layoutSettings = new LayoutSettings(plugin);
         this.presetSettings = new PresetSettings(plugin);
         this.interactiveCardSettings = new InteractiveCardSettings(plugin);
     }
