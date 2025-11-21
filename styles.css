@@ -1,3 +1,32 @@
+/* =============================================================================
+   ⭐ CSS Custom Properties for Dark Mode Optimization
+   Theme-aware variables that adapt to light/dark modes
+   ============================================================================= */
+
+:root {
+	/* Shadow colors - adapt automatically to theme */
+	--cn-shadow-sm: rgba(0, 0, 0, 0.05);
+	--cn-shadow-md: rgba(0, 0, 0, 0.1);
+	--cn-shadow-lg: rgba(0, 0, 0, 0.2);
+	--cn-modal-backdrop: rgba(0, 0, 0, 0.5);
+}
+
+.theme-dark {
+	/* Dark mode: lighter shadows for better visibility */
+	--cn-shadow-sm: rgba(0, 0, 0, 0.3);
+	--cn-shadow-md: rgba(0, 0, 0, 0.4);
+	--cn-shadow-lg: rgba(0, 0, 0, 0.6);
+	--cn-modal-backdrop: rgba(0, 0, 0, 0.7);
+}
+
+.theme-light {
+	/* Light mode: subtle shadows */
+	--cn-shadow-sm: rgba(0, 0, 0, 0.05);
+	--cn-shadow-md: rgba(0, 0, 0, 0.1);
+	--cn-shadow-lg: rgba(0, 0, 0, 0.2);
+	--cn-modal-backdrop: rgba(0, 0, 0, 0.5);
+}
+
 /* Resets Obsidian's default view-content padding for cleaner integration */
 .view-content.card-navigator-container {
     padding: 0;

@@ -3,8 +3,8 @@
 Navigate your Obsidian notes with a beautiful card-based interface. Browse by folder, tag, or search with customizable card layouts.
 
 ![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%23483699&label=downloads&query=%24%5B%22card-navigator%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/wakeyi/obsidian-card-navigator)
-![GitHub](https://img.shields.io/github/license/wakeyi/obsidian-card-navigator)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/wakeyi-git/obsidian-card-navigator)
+![GitHub](https://img.shields.io/github/license/wakeyi-git/obsidian-card-navigator)
 
 ## ✨ Features
 
@@ -205,6 +205,19 @@ This project uses automated quality checks:
 
 The pre-commit hooks are powered by [husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/okonet/lint-staged), ensuring code quality before it reaches the repository.
 
+### Commit Message Convention
+
+This project follows [Conventional Commits](https://www.conventionalcommits.org/) for automated changelog generation:
+
+```bash
+# Examples
+git commit -m "feat(card): add drag and drop reordering"
+git commit -m "fix(search): resolve input focus issue"
+git commit -m "docs: update installation guide"
+```
+
+See [Commit Convention Guide](.github/COMMIT_CONVENTION.md) for detailed guidelines.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
@@ -213,6 +226,7 @@ Before contributing, please read:
 - **[Architecture Guide](docs/ARCHITECTURE.md)** to understand the codebase structure
 - **[Testing Guide](docs/TESTING_GUIDE.md)** to learn how to write tests
 - **[Improvement Plan](docs/IMPROVEMENT_PLAN.md)** to see current priorities
+- **[Commit Convention](.github/COMMIT_CONVENTION.md)** for commit message format
 
 ### Guidelines
 
@@ -220,7 +234,7 @@ Before contributing, please read:
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Write tests for your changes
 4. Ensure all tests pass (`npm test`)
-5. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+5. Commit your changes following [Conventional Commits](.github/COMMIT_CONVENTION.md)
 6. Push to the branch (`git push origin feature/AmazingFeature`)
 7. Open a Pull Request
 

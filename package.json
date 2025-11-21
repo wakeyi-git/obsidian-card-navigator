@@ -11,6 +11,8 @@
 		"test:coverage": "jest --coverage",
 		"lint": "eslint src --ext .ts",
 		"lint:fix": "eslint src --ext .ts --fix",
+		"changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+		"version": "npm run changelog && git add CHANGELOG.md",
 		"prepare": "husky"
 	},
 	"keywords": [
@@ -22,11 +24,14 @@
 	"author": "wakeyi",
 	"license": "MIT",
 	"devDependencies": {
+		"@commitlint/cli": "^20.1.0",
+		"@commitlint/config-conventional": "^20.0.0",
 		"@types/jest": "^30.0.0",
 		"@types/node": "^20.0.0",
 		"@typescript-eslint/eslint-plugin": "^6.0.0",
 		"@typescript-eslint/parser": "^6.0.0",
 		"builtin-modules": "^3.3.0",
+		"conventional-changelog-cli": "^5.0.0",
 		"esbuild": "^0.27.0",
 		"husky": "^9.1.7",
 		"jest": "^29.7.0",
