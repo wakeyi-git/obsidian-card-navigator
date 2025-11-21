@@ -512,6 +512,12 @@ export const ko = {
 			rootFolder: '(루트 폴더)',
 			root: '(루트)',
 			deletedPreset: '(삭제된 프리셋)',
+			noDescription: '클릭하여 설명 추가',
+			editNameModalTitle: '프리셋 이름 변경',
+			editNamePlaceholder: '새 프리셋 이름',
+			editDescriptionModalTitle: '프리셋 설명 변경',
+			editDescriptionPlaceholder: '프리셋 설명',
+			editSuccess: (name: string) => `프리셋 "${name}"이(가) 업데이트되었습니다.`,
 		},
 		cardSettings: {
 			cardBaseSettings: '카드 기본 설정',

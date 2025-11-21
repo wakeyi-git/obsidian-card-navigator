@@ -512,6 +512,12 @@ export const en = {
 			rootFolder: '(Root folder)',
 			root: '(Root)',
 			deletedPreset: '(Deleted preset)',
+			noDescription: 'Click to add description',
+			editNameModalTitle: 'Edit Preset Name',
+			editNamePlaceholder: 'New preset name',
+			editDescriptionModalTitle: 'Edit Preset Description',
+			editDescriptionPlaceholder: 'Preset description',
+			editSuccess: (name: string) => `Preset "${name}" has been updated.`,
 		},
 		cardSettings: {
 			cardBaseSettings: 'Card Base Settings',

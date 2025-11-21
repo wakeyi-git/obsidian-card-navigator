@@ -100,15 +100,119 @@ export class PresetSettings extends BaseSettings {
     }
 
     /**
+     * 프리셋 이름 편집 모달을 표시합니다
+     */
+    private editPresetName(preset: any): void {
+        const modal = new TextInputModal(
+            this.plugin.app,
+            t().settingsTab.presetSettings.editNameModalTitle,
+            t().settingsTab.presetSettings.editNamePlaceholder,
+            preset.name,
+            async (newName) => {
+                if (newName && newName !== preset.name) {
+                    try {
+                        await this.plugin.presetManager.updatePreset(preset.id, newName, preset.description || '');
+                        this.plugin.settingsTab.display();
+                        new Notice(t().settingsTab.presetSettings.editSuccess(newName));
+                    } catch (error) {
+                        console.error('Edit preset name error:', error);
+                        new Notice('Failed to update preset name');
+                    }
+                }
+            }
+        );
+        modal.open();
+    }
+
+    /**
+     * 프리셋 설명 편집 모달을 표시합니다
+     */
+    private editPresetDescription(preset: any): void {
+        const modal = new Modal(this.plugin.app);
+        modal.titleEl.setText(t().settingsTab.presetSettings.editDescriptionModalTitle);
+
+        let description = preset.description || '';
+        let inputEl: HTMLInputElement | null = null;
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presets.descriptionLabel)
+            .setDesc(t().settingsTab.presets.descriptionPlaceholder)
+            .addText(text => {
+                inputEl = text
+                    .setPlaceholder(t().settingsTab.presetSettings.editDescriptionPlaceholder)
+                    .setValue(description)
+                    .onChange(value => {
+                        description = value;
+                    })
+                    .inputEl;
+
+                inputEl.style.width = '100%';
+
+                inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
+                    if (e.isComposing) {
+                        return;
+                    }
+
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.savePresetDescription(preset, description);
+                        modal.close();
+                    }
+
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        modal.close();
+                    }
+                });
+            });
+
+        new Setting(modal.contentEl)
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.cancel)
+                .onClick(() => {
+                    modal.close();
+                })
+            )
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.confirm)
+                .setCta()
+                .onClick(async () => {
+                    await this.savePresetDescription(preset, description);
+                    modal.close();
+                })
+            );
+
+        modal.open();
+
+        setTimeout(() => {
+            inputEl?.focus();
+        }, 100);
+    }
+
+    /**
+     * 프리셋 설명을 저장합니다
+     */
+    private async savePresetDescription(preset: any, description: string): Promise<void> {
+        try {
+            await this.plugin.presetManager.updatePreset(preset.id, preset.name, description);
+            this.plugin.settingsTab.display();
+            new Notice(t().settingsTab.presetSettings.editSuccess(preset.name));
+        } catch (error) {
+            console.error('Edit preset description error:', error);
+            new Notice('Failed to update preset description');
+        }
+    }
+
+    /**
      * 프리셋 설명 입력 모달을 표시합니다
      */
     private showDescriptionModal(presetName: string): void {
         const modal = new Modal(this.plugin.app);
         modal.titleEl.setText(t().settingsTab.presets.presetDescriptionTitle);
-        
+
         let description = '';
         let inputEl: HTMLInputElement | null = null;
-        
+
         new Setting(modal.contentEl)
             .setName(t().settingsTab.presets.descriptionLabel)
             .setDesc(t().settingsTab.presets.descriptionPlaceholder)
@@ -119,6 +223,8 @@ export class PresetSettings extends BaseSettings {
                         description = value;
                     })
                     .inputEl;
+
+                inputEl.style.width = '100%';
                 
                 inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
                     // IME 입력 중에는 엔터 키 무시
@@ -197,22 +303,41 @@ export class PresetSettings extends BaseSettings {
 
         presets.forEach((preset: any) => {
             const presetContainer = containerEl.createDiv({ cls: 'card-navigator-preset-item'});
-            
+
             const infoContainer = presetContainer.createDiv({ cls: 'preset-info'});
-            
+
             const nameEl = infoContainer.createEl('h4', {
                 text: preset.name,
-                cls: 'preset-name'
+                cls: 'preset-name preset-name-editable'
             });
-            
+
             const iconEl = nameEl.createSpan({ cls: 'preset-icon'});
             setIcon(iconEl, 'save');
-            
+
+            nameEl.addEventListener('click', () => {
+                this.editPresetName(preset);
+            });
+            nameEl.style.cursor = 'pointer';
+
             if (preset.description) {
-                infoContainer.createEl('p', {
+                const descEl = infoContainer.createEl('p', {
                     text: preset.description,
-                    cls: 'preset-description setting-item-description'
+                    cls: 'preset-description preset-description-editable setting-item-description'
                 });
+                descEl.addEventListener('click', () => {
+                    this.editPresetDescription(preset);
+                });
+                descEl.style.cursor = 'pointer';
+            } else {
+                const descEl = infoContainer.createEl('p', {
+                    text: t().settingsTab.presetSettings.noDescription,
+                    cls: 'preset-description preset-description-editable setting-item-description'
+                });
+                descEl.style.opacity = '0.5';
+                descEl.addEventListener('click', () => {
+                    this.editPresetDescription(preset);
+                });
+                descEl.style.cursor = 'pointer';
             }
             
             const date = new Date(preset.createdAt);
