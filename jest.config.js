@@ -19,11 +19,12 @@ module.exports = {
     // 현실적인 커버리지 목표 설정
     coverageThreshold: {
         global: {
-            // 전체 프로젝트: 단계적으로 증가시킬 목표
-            branches: 5,
-            functions: 5,
-            lines: 5,
-            statements: 5
+            // 전체 프로젝트: 현재 커버리지 기준 (UI 제외)
+            // UI 테스트 추가 시 단계적으로 상향 조정 예정
+            branches: 55,
+            functions: 45,
+            lines: 55,
+            statements: 55
         },
         // 테스트된 파일들은 높은 기준 유지
         'src/utils/typeGuards.ts': {

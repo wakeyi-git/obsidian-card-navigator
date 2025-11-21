@@ -180,9 +180,30 @@ npm run test:watch
 
 # Generate coverage report
 npm run test:coverage
+
+# Run linting
+npm run lint
+
+# Auto-fix linting issues
+npm run lint:fix
 ```
 
 For detailed testing information, see the [Testing Guide](docs/TESTING_GUIDE.md).
+
+### Quality Assurance
+
+This project uses automated quality checks:
+
+- **Pre-commit Hooks**: Automatically runs linting and tests on staged files before each commit
+- **CI/CD Pipeline**: GitHub Actions runs comprehensive checks on every push:
+  - TypeScript type checking
+  - ESLint code quality checks
+  - Full test suite execution
+  - Test coverage validation (55% minimum)
+  - Bundle size monitoring (5MB limit)
+  - Multi-version Node.js testing (18.x, 20.x)
+
+The pre-commit hooks are powered by [husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/okonet/lint-staged), ensuring code quality before it reaches the repository.
 
 ## 🤝 Contributing
 
