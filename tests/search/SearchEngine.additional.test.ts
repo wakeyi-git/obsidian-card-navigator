@@ -65,7 +65,7 @@ describe('SearchEngine - Additional Coverage', () => {
     let files: TFile[];
     
     beforeEach(() => {
-        searchEngine = new SearchEngine(mockApp, mockLogger);
+        searchEngine = new SearchEngine(mockApp, mockLogger, () => ({ enableFuzzySearch: false, fuzzySearchThreshold: 0.3 } as any));
         jest.clearAllMocks();
         
         files = [

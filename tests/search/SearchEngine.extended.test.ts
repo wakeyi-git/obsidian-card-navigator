@@ -32,7 +32,7 @@ describe('SearchEngine - Extended Tests', () => {
             }
         };
         mockLogger = new DebugLogger(() => mockSettings);
-        searchEngine = new SearchEngine(mockApp, mockLogger);
+        searchEngine = new SearchEngine(mockApp, mockLogger, () => ({ enableFuzzySearch: false, fuzzySearchThreshold: 0.3 } as any));
         
         // 테스트 파일 데이터 정의
         fileData = [

@@ -6,14 +6,27 @@
 
 import { en, type TranslationKeys } from './locales/en';
 import { ko } from './locales/ko';
+import { zhCN } from './locales/zh-cn';
+import { ja } from './locales/ja';
+import { es } from './locales/es';
+import { fr } from './locales/fr';
+import { de } from './locales/de';
 
-export type Language = 'en' | 'ko';
+export type Language = 'en' | 'ko' | 'zh-cn' | 'ja' | 'es' | 'fr' | 'de';
 export type LanguageSetting = Language | 'auto';
+
+// Re-export TranslationKeys type
+export type { TranslationKeys } from './locales/en';
 
 // Use TranslationKeys as the base type for all translations
 const translations: Record<Language, TranslationKeys> = {
 	en,
 	ko: ko as unknown as TranslationKeys,
+	'zh-cn': zhCN as unknown as TranslationKeys,
+	ja: ja as unknown as TranslationKeys,
+	es: es as unknown as TranslationKeys,
+	fr: fr as unknown as TranslationKeys,
+	de: de as unknown as TranslationKeys,
 };
 
 let currentLanguage: Language = 'en';
@@ -61,6 +74,11 @@ export function getLanguageDisplayName(lang: Language): string {
 	const displayNames: Record<Language, string> = {
 		en: 'English',
 		ko: '한국어',
+		'zh-cn': '简体中文',
+		ja: '日本語',
+		es: 'Español',
+		fr: 'Français',
+		de: 'Deutsch',
 	};
 	return displayNames[lang] || lang;
 }
@@ -71,8 +89,16 @@ export function getLanguageDisplayName(lang: Language): string {
  * @returns Supported language code
  */
 export function detectLanguageFromLocale(obsidianLocale: string): Language {
+	// Normalize the locale string
+	const normalizedLocale = obsidianLocale.toLowerCase();
+
+	// Handle special cases for Chinese variants
+	if (normalizedLocale.startsWith('zh-cn') || normalizedLocale === 'zh') {
+		return 'zh-cn';
+	}
+
 	// Extract the base language code (e.g., 'ko' from 'ko-KR')
-	const baseLocale = obsidianLocale.split('-')[0].toLowerCase();
+	const baseLocale = normalizedLocale.split('-')[0];
 
 	// Check if we support this language
 	const availableLanguages = getAvailableLanguages();

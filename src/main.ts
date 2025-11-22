@@ -5,10 +5,12 @@ import { CardNavigatorSettingTab } from './ui/SettingsTab';
 import { CardNavigatorSettings, DebugCategory } from './types';
 import { CardStyleManager } from './card/CardStyles';
 import { PresetManager } from './preset/PresetManager';
+import { SavedSearchManager } from './search/SavedSearchManager';
+import { SaveSearchModal, SavedSearchModal } from './search/SavedSearchModal';
 import { DebugLogger } from './utils/DebugLogger';
 import { ErrorHandler, ErrorSeverity } from './utils/ErrorHandler';
 import { PerformanceMonitor } from './utils/performance';
-import { setLanguage, t, detectLanguageFromLocale } from './i18n';
+import { setLanguage, t, detectLanguageFromLocale, type TranslationKeys } from './i18n';
 import { getMomentLocale } from './utils/locale';
 
 /**
@@ -22,6 +24,7 @@ export default class CardNavigatorPlugin extends Plugin {
 	settingsManager: SettingsManager;
 	styleManager: CardStyleManager;
 	presetManager: PresetManager;
+	savedSearchManager: SavedSearchManager;
 	settingsTab!: CardNavigatorSettingTab;
 	public logger!: DebugLogger;
 	public errorHandler!: ErrorHandler;
@@ -41,6 +44,7 @@ export default class CardNavigatorPlugin extends Plugin {
 		);
 
 		this.presetManager = new PresetManager(this);
+		this.savedSearchManager = new SavedSearchManager(this);
 
 	await this.loadSettings();
 
@@ -61,6 +65,7 @@ export default class CardNavigatorPlugin extends Plugin {
 		this.logger.debug('Plugin', t().plugin.loadingStart);
 
 		await this.presetManager.initialize();
+		await this.savedSearchManager.initialize();
 		this.styleManager.applyStyles(this.settingsManager.getSettings());
 
 		this.registerView(
@@ -245,6 +250,54 @@ export default class CardNavigatorPlugin extends Plugin {
 			}
 		});
 
+		// 현재 검색 저장
+		this.addCommand({
+			id: 'save-current-search',
+			name: t().commands.saveCurrentSearch,
+			checkCallback: (checking: boolean) => {
+				const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR)[0];
+
+				if (leaf?.view instanceof CardNavigatorView) {
+					if (!checking) {
+						const query = leaf.view.getCurrentSearchQuery();
+						if (query) {
+							new SaveSearchModal(this.app, this, query).open();
+						} else {
+							new Notice(t().savedSearches.emptyQueryWarning);
+						}
+					}
+					return true;
+				}
+
+				return false;
+			}
+		});
+
+		// 저장된 검색 관리
+		this.addCommand({
+			id: 'manage-saved-searches',
+			name: t().commands.manageSavedSearches,
+			callback: () => {
+				const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR)[0];
+				if (leaf?.view instanceof CardNavigatorView) {
+					const view = leaf.view;
+					new SavedSearchModal(
+						this.app,
+						this,
+						(query: string) => {
+							view.applySearchQuery(query);
+						}
+					).open();
+				} else {
+					new SavedSearchModal(
+						this.app,
+						this,
+						() => {}
+					).open();
+				}
+			}
+		});
+
 		this.settingsTab = new CardNavigatorSettingTab(this.app, this);
 		this.addSettingTab(this.settingsTab);
 
@@ -267,6 +320,13 @@ export default class CardNavigatorPlugin extends Plugin {
 	 */
 	get settings(): CardNavigatorSettings {
 		return this.settingsManager.getSettings();
+	}
+
+	/**
+	 * 번역 함수 반환
+	 */
+	t(): TranslationKeys {
+		return t();
 	}
 
 	/**

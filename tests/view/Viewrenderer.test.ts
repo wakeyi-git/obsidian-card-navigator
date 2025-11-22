@@ -246,6 +246,9 @@ describe('ViewRenderer', () => {
 				mode: 'auto',
 				manualType: 'tag-first'
 			},
+			savedSearches: [],
+			enableFuzzySearch: false,
+			fuzzySearchThreshold: 0.3,
 			debug: {
 				enabled: false,
 				categories: {}
@@ -295,7 +298,10 @@ describe('ViewRenderer', () => {
 		
 		// Mock View
 		mockView = {
-			plugin: mockPlugin
+			plugin: mockPlugin,
+			getToolbar: jest.fn(() => ({
+				updateFileCount: jest.fn()
+			}))
 		};
 		
 		// Mock CardFactory

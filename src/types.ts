@@ -300,6 +300,12 @@ export interface CardNavigatorSettings {
     presetMappings: PresetMapping[];
     /** 프리셋 우선순위 설정 */
     presetPriority: PresetPrioritySettings;
+    /** 저장된 검색 목록 */
+    savedSearches: SavedSearch[];
+    /** 퍼지 검색 활성화 여부 */
+    enableFuzzySearch: boolean;
+    /** 퍼지 검색 임계값 (0-1) */
+    fuzzySearchThreshold: number;
     /** 디버그 설정 */
     debug: DebugSettings;
 }
@@ -452,9 +458,29 @@ export interface Preset {
 }
 
 /**
+ * 저장된 검색
+ *
+ * 자주 사용하는 검색 쿼리를 저장합니다.
+ */
+export interface SavedSearch {
+    /** 고유 ID */
+    id: string;
+    /** 검색 이름 */
+    name: string;
+    /** 검색 쿼리 */
+    query: string;
+    /** 생성 시간 (타임스탬프) */
+    createdAt: number;
+    /** 마지막 사용 시간 (타임스탬프) */
+    lastUsed: number;
+    /** 즐겨찾기 여부 */
+    favorite: boolean;
+}
+
+/**
  * 프리셋 우선순위 모드
  */
-export type PresetPriorityMode = 
+export type PresetPriorityMode =
     | 'auto'    // 현재 모드에 따라 자동 결정
     | 'manual'; // 수동으로 우선순위 선택
 
@@ -652,6 +678,9 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
         mode: 'auto',
         manualType: 'tag-first'
     },
+    savedSearches: [],
+    enableFuzzySearch: false,
+    fuzzySearchThreshold: 0.3,
     debug: {
         enabled: false,
         categories: {}

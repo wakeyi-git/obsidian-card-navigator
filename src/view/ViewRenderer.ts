@@ -701,6 +701,13 @@ export class ViewRenderer {
 			timestamp: Date.now()
 		});
 
+		// Update file count in toolbar
+		const toolbar = this.view.getToolbar();
+		if (toolbar) {
+			const totalFiles = this.app.vault.getMarkdownFiles().length;
+			toolbar.updateFileCount(files.length, totalFiles);
+		}
+
 		if (!hasActiveFileChanged) {
 			container.scrollTop = scrollTop;
 		}
@@ -882,7 +889,14 @@ export class ViewRenderer {
 			totalCards: files.length,
 			visibleCards: this.viewportManager?.getVisibleCards().length || 0
 		});
-		
+
+		// Update file count in toolbar
+		const toolbar = this.view.getToolbar();
+		if (toolbar) {
+			const totalFiles = this.app.vault.getMarkdownFiles().length;
+			toolbar.updateFileCount(files.length, totalFiles);
+		}
+
 		if (!hasActiveFileChanged) {
 			container.scrollTop = scrollTop;
 		}

@@ -89,9 +89,16 @@ export class CardNavigatorView extends ItemView implements ICardView {
 	private dragDropHandler: DragDropHandler;
 	private contextMenu: CardContextMenu;
 	public selectionManager: SelectionManager;
-	
+
 	// ⭐ 디바운스된 렌더링 함수 (중복 렌더링 방지)
 	private debouncedForceRender: (() => Promise<void>) | null = null;
+
+	/**
+	 * Toolbar에 접근할 수 있는 getter
+	 */
+	public getToolbar(): Toolbar | null {
+		return this.toolbar;
+	}
 
 	constructor(leaf: WorkspaceLeaf, plugin: CardNavigatorPlugin) {
 		super(leaf);
@@ -108,7 +115,8 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		
 		this.keyboardNavigator = new KeyboardNavigator(this);
 		this.scrollManager = new ScrollManager(this);
-		this.searchEngine = new SearchEngine(this.app, this.logger);
+		// ✅ 함수를 전달하여 항상 최신 settings를 참조
+		this.searchEngine = new SearchEngine(this.app, this.logger, () => this.settings);
 		this.folderMode = new FolderMode(this.app, this);
 		this.tagMode = new TagMode(this.app, this);
 		this.sortManager = new SortManager(this.app);
@@ -474,6 +482,27 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		if (input) {
 			input.focus();
 		}
+	}
+
+	/**
+	 * 현재 검색어를 반환합니다
+	 */
+	public getCurrentSearchQuery(): string {
+		if (!this.searchInput) return '';
+		return this.searchInput.getValue();
+	}
+
+	/**
+	 * 검색어를 적용하고 검색을 실행합니다
+	 */
+	public applySearchQuery(query: string): void {
+		if (!this.searchInput || !this.searchInputContainer) return;
+
+		// Show search input if hidden
+		this.searchInputContainer.style.display = 'block';
+
+		// Set value and trigger search
+		this.searchInput.setValueAndSearch(query);
 	}
 
 	/**

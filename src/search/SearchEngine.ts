@@ -1,9 +1,10 @@
 import { TFile, App } from 'obsidian';
-import { SearchQuery, ParsedQuery } from '../types';
+import { SearchQuery, ParsedQuery, CardNavigatorSettings } from '../types';
 import { SearchParser } from './SearchParser';
 import { LRUCache } from '../utils/memoize';
 import { DebugLogger } from '../utils/DebugLogger';
 import { t } from '../i18n';
+import { fuzzyMatch } from '../utils/fuzzyMatch';
 
 /**
  * 검색 엔진
@@ -19,10 +20,12 @@ export class SearchEngine {
     private logger: DebugLogger;
     private parser: SearchParser;
     private searchCache: LRUCache<string, TFile[]>;
-    
-    constructor(app: App, logger: DebugLogger) {
+    private getSettings: () => CardNavigatorSettings;
+
+    constructor(app: App, logger: DebugLogger, getSettings: () => CardNavigatorSettings) {
         this.app = app;
         this.logger = logger;
+        this.getSettings = getSettings;
         this.parser = new SearchParser();
         this.searchCache = new LRUCache<string, TFile[]>(50);
         this.setupCacheInvalidation();
@@ -499,6 +502,7 @@ export class SearchEngine {
      * @remarks
      * - 파일의 폴더 경로만 검색하며 파일명은 제외됩니다
      * - Wildcard: * (0개 이상 문자), ? (정확히 1개 문자)
+     * - 퍼지 검색이 활성화된 경우 유사한 경로도 매칭합니다
      */
     private filterByPath(files: TFile[], path: string, caseSensitive: boolean): TFile[] {
         // Wildcard 포함 여부 확인
@@ -510,12 +514,24 @@ export class SearchEngine {
             });
         }
 
+        const settings = this.getSettings();
+        const useFuzzy = settings.enableFuzzySearch;
+        const fuzzyThreshold = settings.fuzzySearchThreshold;
         const searchPath = caseSensitive ? path : path.toLowerCase();
 
         return files.filter(file => {
             const folderPath = file.parent?.path || '';
             const comparePath = caseSensitive ? folderPath : folderPath.toLowerCase();
-            return comparePath.includes(searchPath);
+
+            if (useFuzzy) {
+                const match = fuzzyMatch(searchPath, comparePath, {
+                    caseSensitive,
+                    threshold: fuzzyThreshold
+                });
+                return match.matched;
+            } else {
+                return comparePath.includes(searchPath);
+            }
         });
     }
     
@@ -528,7 +544,8 @@ export class SearchEngine {
      * @returns 필터링된 파일
      *
      * @remarks
-     * Wildcard: * (0개 이상 문자), ? (정확히 1개 문자)
+     * - Wildcard: * (0개 이상 문자), ? (정확히 1개 문자)
+     * - 퍼지 검색이 활성화된 경우 유사한 파일명도 매칭합니다
      */
     private filterByFile(files: TFile[], filename: string, caseSensitive: boolean): TFile[] {
         // Wildcard 포함 여부 확인
@@ -537,50 +554,104 @@ export class SearchEngine {
             return files.filter(file => regex.test(file.basename));
         }
 
+        const settings = this.getSettings();
+        const useFuzzy = settings.enableFuzzySearch;
+        const fuzzyThreshold = settings.fuzzySearchThreshold;
         const searchFilename = caseSensitive ? filename : filename.toLowerCase();
 
         return files.filter(file => {
             const basename = caseSensitive ? file.basename : file.basename.toLowerCase();
-            return basename.includes(searchFilename);
+
+            if (useFuzzy) {
+                const match = fuzzyMatch(searchFilename, basename, {
+                    caseSensitive,
+                    threshold: fuzzyThreshold
+                });
+                return match.matched;
+            } else {
+                return basename.includes(searchFilename);
+            }
         });
     }
     
     /**
      * 태그로 파일을 필터링합니다
-     * 
+     *
      * @remarks
      * 프론트매터 태그와 인라인 태그를 모두 검색합니다.
+     * 퍼지 검색이 활성화된 경우 유사한 태그도 매칭합니다.
      */
     private filterByTag(files: TFile[], tag: string): TFile[] {
+        const settings = this.getSettings();
+        const useFuzzy = settings.enableFuzzySearch;
+        const fuzzyThreshold = settings.fuzzySearchThreshold;
+
         return files.filter(file => {
             // 에러 핸들링
-        let cache;
-        try {
-            cache = this.app.metadataCache.getFileCache(file);
-        } catch (error) {
-            this.logger.error('Search', t().searchEngine.cacheAccessError, { path: file.path, error });
-            return false;
-        }
+            let cache;
+            try {
+                cache = this.app.metadataCache.getFileCache(file);
+            } catch (error) {
+                this.logger.error('Search', t().searchEngine.cacheAccessError, { path: file.path, error });
+                return false;
+            }
             if (!cache) return false;
-            
+
             const frontmatterTags = cache.frontmatter?.tags ?? [];
             if (Array.isArray(frontmatterTags)) {
                 if (frontmatterTags.some(t => {
                     const tagStr = String(t);
-                    return tagStr === tag || tagStr === tag.substring(1);
+                    if (useFuzzy) {
+                        // Try matching with and without #
+                        const match1 = fuzzyMatch(tag, tagStr, {
+                            caseSensitive: false,
+                            threshold: fuzzyThreshold
+                        });
+                        const match2 = fuzzyMatch(tag.substring(1), tagStr, {
+                            caseSensitive: false,
+                            threshold: fuzzyThreshold
+                        });
+                        return match1.matched || match2.matched;
+                    } else {
+                        return tagStr === tag || tagStr === tag.substring(1);
+                    }
                 })) {
                     return true;
                 }
             } else if (typeof frontmatterTags === 'string') {
-                if (frontmatterTags === tag || frontmatterTags === tag.substring(1)) {
-                    return true;
+                if (useFuzzy) {
+                    const match1 = fuzzyMatch(tag, frontmatterTags, {
+                        caseSensitive: false,
+                        threshold: fuzzyThreshold
+                    });
+                    const match2 = fuzzyMatch(tag.substring(1), frontmatterTags, {
+                        caseSensitive: false,
+                        threshold: fuzzyThreshold
+                    });
+                    if (match1.matched || match2.matched) {
+                        return true;
+                    }
+                } else {
+                    if (frontmatterTags === tag || frontmatterTags === tag.substring(1)) {
+                        return true;
+                    }
                 }
             }
-            
+
             if (cache.tags) {
-                return cache.tags.some(t => t.tag === tag);
+                return cache.tags.some(t => {
+                    if (useFuzzy) {
+                        const match = fuzzyMatch(tag, t.tag, {
+                            caseSensitive: false,
+                            threshold: fuzzyThreshold
+                        });
+                        return match.matched;
+                    } else {
+                        return t.tag === tag;
+                    }
+                });
             }
-            
+
             return false;
         });
     }
@@ -589,19 +660,32 @@ export class SearchEngine {
      * 라인 내용으로 파일을 필터링합니다
      */
     private async filterByLine(files: TFile[], lineContent: string, caseSensitive: boolean): Promise<TFile[]> {
+        const settings = this.getSettings();
+        const useFuzzy = settings.enableFuzzySearch;
+        const fuzzyThreshold = settings.fuzzySearchThreshold;
         const results: TFile[] = [];
         const searchContent = caseSensitive ? lineContent : lineContent.toLowerCase();
-        
+
         for (const file of files) {
             try {
                 const content = await this.app.vault.read(file);
                 const lines = content.split('\n');
-                
+
                 const found = lines.some(line => {
                     const searchLine = caseSensitive ? line : line.toLowerCase();
+
+                    // 퍼지 검색 적용
+                    if (useFuzzy) {
+                        const match = fuzzyMatch(searchContent, searchLine, {
+                            caseSensitive,
+                            threshold: fuzzyThreshold
+                        });
+                        if (match.matched) return true;
+                    }
+
                     return searchLine.includes(searchContent);
                 });
-                
+
                 if (found) {
                     results.push(file);
                 }
@@ -609,23 +693,38 @@ export class SearchEngine {
                 this.logger.error('Search', t().searchEngine.lineSearchError, { path: file.path, error });
             }
         }
-        
+
         return results;
     }
     
     /**
      * 섹션(헤더) 제목으로 파일을 필터링합니다
+     *
+     * @remarks
+     * 퍼지 검색이 활성화된 경우 유사한 헤더도 매칭합니다.
      */
     private filterBySection(files: TFile[], sectionTitle: string, caseSensitive: boolean): TFile[] {
+        const settings = this.getSettings();
+        const useFuzzy = settings.enableFuzzySearch;
+        const fuzzyThreshold = settings.fuzzySearchThreshold;
         const searchTitle = caseSensitive ? sectionTitle : sectionTitle.toLowerCase();
-        
+
         return files.filter(file => {
             const cache = this.app.metadataCache.getFileCache(file);
             if (!cache?.headings) return false;
-            
+
             return cache.headings.some(heading => {
                 const headingText = caseSensitive ? heading.heading : heading.heading.toLowerCase();
-                return headingText.includes(searchTitle);
+
+                if (useFuzzy) {
+                    const match = fuzzyMatch(searchTitle, headingText, {
+                        caseSensitive,
+                        threshold: fuzzyThreshold
+                    });
+                    return match.matched;
+                } else {
+                    return headingText.includes(searchTitle);
+                }
             });
         });
     }
@@ -634,23 +733,46 @@ export class SearchEngine {
      * 프론트매터 속성으로 파일을 필터링합니다
      */
     private filterByProperty(files: TFile[], propertyName: string, propertyValue: string, caseSensitive: boolean): TFile[] {
+        const settings = this.getSettings();
+        const useFuzzy = settings.enableFuzzySearch;
+        const fuzzyThreshold = settings.fuzzySearchThreshold;
         const searchValue = caseSensitive ? propertyValue : propertyValue.toLowerCase();
-        
+
         return files.filter(file => {
             const cache = this.app.metadataCache.getFileCache(file);
             if (!cache?.frontmatter) return false;
-            
+
             const value = cache.frontmatter[propertyName];
             if (value == null) return false;
-            
+
             if (Array.isArray(value)) {
                 return value.some(v => {
                     const strValue = caseSensitive ? String(v) : String(v).toLowerCase();
+
+                    // 퍼지 검색 적용
+                    if (useFuzzy) {
+                        const match = fuzzyMatch(searchValue, strValue, {
+                            caseSensitive,
+                            threshold: fuzzyThreshold
+                        });
+                        if (match.matched) return true;
+                    }
+
                     return strValue === searchValue || strValue.includes(searchValue);
                 });
             }
-            
+
             const strValue = caseSensitive ? String(value) : String(value).toLowerCase();
+
+            // 퍼지 검색 적용
+            if (useFuzzy) {
+                const match = fuzzyMatch(searchValue, strValue, {
+                    caseSensitive,
+                    threshold: fuzzyThreshold
+                });
+                if (match.matched) return true;
+            }
+
             return strValue === searchValue || strValue.includes(searchValue);
         });
     }
@@ -728,6 +850,9 @@ export class SearchEngine {
         status: 'all' | 'todo' | 'done',
         caseSensitive: boolean
     ): Promise<TFile[]> {
+        const settings = this.getSettings();
+        const useFuzzy = settings.enableFuzzySearch;
+        const fuzzyThreshold = settings.fuzzySearchThreshold;
         const results: TFile[] = [];
         const searchContent = caseSensitive ? taskContent : taskContent.toLowerCase();
 
@@ -747,6 +872,19 @@ export class SearchEngine {
 
                         // taskContent가 있으면 내용 검색
                         const lineToSearch = caseSensitive ? line : line.toLowerCase();
+
+                        // 퍼지 검색 적용
+                        if (useFuzzy) {
+                            const match = fuzzyMatch(searchContent, lineToSearch, {
+                                caseSensitive,
+                                threshold: fuzzyThreshold
+                            });
+                            if (match.matched) {
+                                hasMatch = true;
+                                break;
+                            }
+                        }
+
                         if (lineToSearch.includes(searchContent)) {
                             hasMatch = true;
                             break;
@@ -807,6 +945,9 @@ export class SearchEngine {
         blockContent: string,
         caseSensitive: boolean
     ): Promise<TFile[]> {
+        const settings = this.getSettings();
+        const useFuzzy = settings.enableFuzzySearch;
+        const fuzzyThreshold = settings.fuzzySearchThreshold;
         const results: TFile[] = [];
         const searchContent = caseSensitive ? blockContent : blockContent.toLowerCase();
 
@@ -827,7 +968,25 @@ export class SearchEngine {
                         const blockLine = lines[lineIndex];
                         const lineToSearch = caseSensitive ? blockLine : blockLine.toLowerCase();
 
-                        if (!blockContent || blockContent.trim() === '' || lineToSearch.includes(searchContent)) {
+                        // blockContent가 비어있으면 모든 블록 매칭
+                        if (!blockContent || blockContent.trim() === '') {
+                            results.push(file);
+                            break;
+                        }
+
+                        // 퍼지 검색 적용
+                        if (useFuzzy) {
+                            const match = fuzzyMatch(searchContent, lineToSearch, {
+                                caseSensitive,
+                                threshold: fuzzyThreshold
+                            });
+                            if (match.matched) {
+                                results.push(file);
+                                break;
+                            }
+                        }
+
+                        if (lineToSearch.includes(searchContent)) {
                             results.push(file);
                             break;
                         }
@@ -857,6 +1016,9 @@ export class SearchEngine {
         content: string,
         caseSensitive: boolean
     ): Promise<TFile[]> {
+        const settings = this.getSettings();
+        const useFuzzy = settings.enableFuzzySearch;
+        const fuzzyThreshold = settings.fuzzySearchThreshold;
         const results: TFile[] = [];
         const searchContent = caseSensitive ? content : content.toLowerCase();
 
@@ -874,6 +1036,18 @@ export class SearchEngine {
                 }
 
                 const contentToSearch = caseSensitive ? bodyContent : bodyContent.toLowerCase();
+
+                // 퍼지 검색 적용
+                if (useFuzzy) {
+                    const match = fuzzyMatch(searchContent, contentToSearch, {
+                        caseSensitive,
+                        threshold: fuzzyThreshold
+                    });
+                    if (match.matched) {
+                        results.push(file);
+                        continue;
+                    }
+                }
 
                 if (contentToSearch.includes(searchContent)) {
                     results.push(file);
@@ -897,13 +1071,29 @@ export class SearchEngine {
      * 파일이 targetFile로의 링크를 포함하는지 검사합니다
      */
     private filterByLink(files: TFile[], targetFile: string): TFile[] {
+        const settings = this.getSettings();
+        const useFuzzy = settings.enableFuzzySearch;
+        const fuzzyThreshold = settings.fuzzySearchThreshold;
+
         return files.filter(file => {
             const cache = this.app.metadataCache.getFileCache(file);
             if (!cache?.links) return false;
 
             return cache.links.some(link => {
-                // 확장자 없이도 매칭
                 const linkPath = link.link;
+
+                // 퍼지 검색 적용
+                if (useFuzzy) {
+                    // 링크 경로에서 파일명만 추출
+                    const linkFilename = linkPath.split('/').pop() || linkPath;
+                    const match = fuzzyMatch(targetFile, linkFilename, {
+                        caseSensitive: false,
+                        threshold: fuzzyThreshold
+                    });
+                    if (match.matched) return true;
+                }
+
+                // 확장자 없이도 매칭
                 return linkPath === targetFile ||
                        linkPath === targetFile + '.md' ||
                        linkPath.endsWith('/' + targetFile) ||
@@ -1003,70 +1193,136 @@ export class SearchEngine {
     
     /**
      * 파일을 검색합니다 (비동기, 본문 포함)
-     * 
+     *
      * @remarks
      * 파일명, 경로, 본문, 헤더, 태그, 링크를 모두 검색합니다.
+     * 퍼지 검색이 활성화된 경우 유사 문자열도 매칭합니다.
      */
     private async searchInFileAsync(query: string, file: TFile, caseSensitive: boolean): Promise<boolean> {
+        const settings = this.getSettings();
+        const useFuzzy = settings.enableFuzzySearch;
+        const fuzzyThreshold = settings.fuzzySearchThreshold;
+
         const filename = caseSensitive ? file.basename : file.basename.toLowerCase();
-        if (filename.includes(query)) {
-            return true;
+        if (useFuzzy) {
+            const match = fuzzyMatch(query, filename, {
+                caseSensitive,
+                threshold: fuzzyThreshold
+            });
+            if (match.matched) {
+                return true;
+            }
+        } else {
+            if (filename.includes(query)) {
+                return true;
+            }
         }
-        
+
         const filepath = caseSensitive ? file.path : file.path.toLowerCase();
-        if (filepath.includes(query)) {
-            return true;
+        if (useFuzzy) {
+            const match = fuzzyMatch(query, filepath, {
+                caseSensitive,
+                threshold: fuzzyThreshold
+            });
+            if (match.matched) {
+                return true;
+            }
+        } else {
+            if (filepath.includes(query)) {
+                return true;
+            }
         }
-        
+
         try {
             const content = await this.app.vault.read(file);
             const searchContent = caseSensitive ? content : content.toLowerCase();
 
-            if (searchContent.includes(query)) {
-                return true;
+            if (useFuzzy) {
+                const match = fuzzyMatch(query, searchContent, {
+                    caseSensitive,
+                    threshold: fuzzyThreshold
+                });
+                if (match.matched) {
+                    return true;
+                }
+            } else {
+                if (searchContent.includes(query)) {
+                    return true;
+                }
             }
         } catch (error) {
             this.logger.error('Search', t().searchEngine.fileReadError, { path: file.path, error });
         }
-        
+
         const cache = this.app.metadataCache.getFileCache(file);
-        
+
         if (cache?.headings) {
             for (const heading of cache.headings) {
                 const headingText = caseSensitive ? heading.heading : heading.heading.toLowerCase();
-                if (headingText.includes(query)) {
-                    return true;
+                if (useFuzzy) {
+                    const match = fuzzyMatch(query, headingText, {
+                        caseSensitive,
+                        threshold: fuzzyThreshold
+                    });
+                    if (match.matched) {
+                        return true;
+                    }
+                } else {
+                    if (headingText.includes(query)) {
+                        return true;
+                    }
                 }
             }
         }
-        
+
         if (cache?.tags) {
             for (const tag of cache.tags) {
                 const tagText = caseSensitive ? tag.tag : tag.tag.toLowerCase();
-                if (tagText.includes(query)) {
-                    return true;
+                if (useFuzzy) {
+                    const match = fuzzyMatch(query, tagText, {
+                        caseSensitive,
+                        threshold: fuzzyThreshold
+                    });
+                    if (match.matched) {
+                        return true;
+                    }
+                } else {
+                    if (tagText.includes(query)) {
+                        return true;
+                    }
                 }
             }
         }
-        
+
         if (cache?.links) {
             for (const link of cache.links) {
                 const linkText = caseSensitive ? link.displayText || link.link : (link.displayText || link.link).toLowerCase();
-                if (linkText.includes(query)) {
-                    return true;
+                if (useFuzzy) {
+                    const match = fuzzyMatch(query, linkText, {
+                        caseSensitive,
+                        threshold: fuzzyThreshold
+                    });
+                    if (match.matched) {
+                        return true;
+                    }
+                } else {
+                    if (linkText.includes(query)) {
+                        return true;
+                    }
                 }
             }
         }
-        
+
         return false;
     }
     
     /**
      * 파일을 검색합니다 (동기, 캐시만 사용)
-     * 
+     *
      * @remarks
      * 파일 본문은 검색하지 않고 파일명, 경로, 캐시된 메타데이터만 검색합니다.
      * 본문 검색이 필요하면 searchInFileAsync()를 사용하세요.
+     * 퍼지 검색이 활성화된 경우 유사 문자열도 매칭합니다.
      */
     private searchInFile(query: string, file: TFile, caseSensitive: boolean): boolean {
         // null 체크
@@ -1074,14 +1330,38 @@ export class SearchEngine {
             return false;
         }
 
+        const settings = this.getSettings();
+        const useFuzzy = settings.enableFuzzySearch;
+        const fuzzyThreshold = settings.fuzzySearchThreshold;
+
         const filename = caseSensitive ? file.basename : file.basename.toLowerCase();
-        if (filename.includes(query)) {
-            return true;
+        if (useFuzzy) {
+            const match = fuzzyMatch(query, filename, {
+                caseSensitive,
+                threshold: fuzzyThreshold
+            });
+            if (match.matched) {
+                return true;
+            }
+        } else {
+            if (filename.includes(query)) {
+                return true;
+            }
         }
 
         const filepath = caseSensitive ? file.path : file.path.toLowerCase();
-        if (filepath.includes(query)) {
-            return true;
+        if (useFuzzy) {
+            const match = fuzzyMatch(query, filepath, {
+                caseSensitive,
+                threshold: fuzzyThreshold
+            });
+            if (match.matched) {
+                return true;
+            }
+        } else {
+            if (filepath.includes(query)) {
+                return true;
+            }
         }
 
         // 에러 핸들링
@@ -1092,34 +1372,64 @@ export class SearchEngine {
             this.logger.error('Search', t().searchEngine.cacheAccessError, { path: file.path, error });
             return false;
         }
-        
+
         if (cache?.headings) {
             for (const heading of cache.headings) {
                 const headingText = caseSensitive ? heading.heading : heading.heading.toLowerCase();
-                if (headingText.includes(query)) {
-                    return true;
+                if (useFuzzy) {
+                    const match = fuzzyMatch(query, headingText, {
+                        caseSensitive,
+                        threshold: fuzzyThreshold
+                    });
+                    if (match.matched) {
+                        return true;
+                    }
+                } else {
+                    if (headingText.includes(query)) {
+                        return true;
+                    }
                 }
             }
         }
-        
+
         if (cache?.tags) {
             for (const tag of cache.tags) {
                 const tagText = caseSensitive ? tag.tag : tag.tag.toLowerCase();
-                if (tagText.includes(query)) {
-                    return true;
+                if (useFuzzy) {
+                    const match = fuzzyMatch(query, tagText, {
+                        caseSensitive,
+                        threshold: fuzzyThreshold
+                    });
+                    if (match.matched) {
+                        return true;
+                    }
+                } else {
+                    if (tagText.includes(query)) {
+                        return true;
+                    }
                 }
             }
         }
-        
+
         if (cache?.links) {
             for (const link of cache.links) {
                 const linkText = caseSensitive ? link.displayText || link.link : (link.displayText || link.link).toLowerCase();
-                if (linkText.includes(query)) {
-                    return true;
+                if (useFuzzy) {
+                    const match = fuzzyMatch(query, linkText, {
+                        caseSensitive,
+                        threshold: fuzzyThreshold
+                    });
+                    if (match.matched) {
+                        return true;
+                    }
+                } else {
+                    if (linkText.includes(query)) {
+                        return true;
+                    }
                 }
             }
         }
-        
+
         return false;
     }
     

@@ -21,6 +21,8 @@ export const en = {
 		selectFolder: 'Select folder',
 		selectTag: 'Select tag',
 		toggleRenderMode: 'Toggle render mode (Plain ↔ Markdown+HTML)',
+		saveCurrentSearch: 'Save current search',
+		manageSavedSearches: 'Manage saved searches',
 	},
 
 	// UI Messages
@@ -31,6 +33,29 @@ export const en = {
 			plain: 'Render mode switched to: Plain Text',
 			markdownHtml: 'Render mode switched to: Markdown + HTML',
 		},
+	},
+
+	// Saved Searches
+	savedSearches: {
+		saveSearch: 'Save current search',
+		savedSearches: 'Saved Searches',
+		recentSearches: 'Recent Searches',
+		favorites: 'Favorites',
+		noSavedSearches: 'No saved searches',
+		searchName: 'Search name',
+		saveButton: 'Save',
+		cancelButton: 'Cancel',
+		deleteButton: 'Delete',
+		favoriteButton: 'Favorite',
+		unfavoriteButton: 'Unfavorite',
+		editButton: 'Edit',
+		applyButton: 'Apply',
+		confirmDelete: (name: string) => `Delete saved search "${name}"?`,
+		searchSaved: (name: string) => `Search "${name}" saved`,
+		searchDeleted: (name: string) => `Search "${name}" deleted`,
+		searchApplied: (name: string) => `Search "${name}" applied`,
+		enterSearchName: 'Enter search name',
+		emptyQueryWarning: 'Cannot save empty search query',
 	},
 
 	// Error Messages
@@ -71,6 +96,10 @@ export const en = {
 		interactiveCardSection: {
 			name: 'Interactive Card Settings',
 			description: 'Configure card interaction behavior',
+		},
+		searchSection: {
+			name: 'Search Settings',
+			description: 'Configure search behavior and options',
 		},
 
 		// Language setting
@@ -143,6 +172,16 @@ export const en = {
 		maxContentLength: {
 			name: 'Max Content Length',
 			description: 'Maximum number of characters to display in card content (0 = no limit)',
+		},
+
+		// Search settings
+		enableFuzzySearch: {
+			name: 'Enable Fuzzy Search',
+			description: 'Match similar strings even if they don\'t match exactly (e.g., "fb" matches "foobar")',
+		},
+		fuzzySearchThreshold: {
+			name: 'Fuzzy Search Threshold',
+			description: 'Minimum similarity score for fuzzy matching (0-1, lower = more permissive)',
 		},
 
 		// Mode settings
@@ -244,6 +283,7 @@ export const en = {
 		modeToggleTagToSpecific: 'Switch to specify tag mode',
 		modeToggleTagToActive: 'Switch to active file tag mode',
 		clickToSelectFolderTag: 'Click to select folder/tag',
+		fileCount: (displayed: number, total: number) => `${displayed} / ${total}`,
 		sortOptions: {
 			nameAsc: 'Filename (A-Z)',
 			nameDesc: 'Filename (Z-A)',

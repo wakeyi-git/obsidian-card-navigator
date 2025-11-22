@@ -23,6 +23,7 @@ export class Toolbar {
 	private modeDisplayElement: HTMLElement | null = null;
 	private modeToggleIcon: HTMLElement | null = null;
 	private searchInputContainer: HTMLElement | null = null;
+	private fileCountElement: HTMLElement | null = null;
 
 	constructor(app: App, view: CardNavigatorView, plugin: CardNavigatorPlugin) {
 		this.app = app;
@@ -53,6 +54,12 @@ export class Toolbar {
 			cls: 'toolbar-mode-display'
 		});
 		this.updateModeDisplay();
+
+		// File count display
+		this.fileCountElement = this.toolbarElement.createEl('div', {
+			cls: 'toolbar-file-count'
+		});
+		this.updateFileCount(0, 0); // Initialize with 0
 
 		const iconGroup = this.toolbarElement.createEl('div', {
 			cls: 'toolbar-icon-group'
@@ -498,6 +505,18 @@ export class Toolbar {
 	}
 
 	/**
+	 * 파일 개수 업데이트
+	 *
+	 * @param displayed - 현재 표시되는 파일 수
+	 * @param total - 전체 파일 수
+	 */
+	public updateFileCount(displayed: number, total: number): void {
+		if (!this.fileCountElement) return;
+
+		this.fileCountElement.setText(t().toolbar.fileCount(displayed, total));
+	}
+
+	/**
 	 * 툴바 정리
 	 */
 	public destroy(): void {
@@ -505,5 +524,6 @@ export class Toolbar {
 		this.modeDisplayElement = null;
 		this.modeToggleIcon = null;
 		this.searchInputContainer = null;
+		this.fileCountElement = null;
 	}
 }

@@ -21,6 +21,8 @@ export const ko = {
 		selectFolder: '폴더 선택',
 		selectTag: '태그 선택',
 		toggleRenderMode: '렌더링 모드 전환 (Plain ↔ Markdown+HTML)',
+		saveCurrentSearch: '현재 검색 저장',
+		manageSavedSearches: '저장된 검색 관리',
 	},
 
 	// UI Messages
@@ -31,6 +33,29 @@ export const ko = {
 			plain: '렌더 모드 전환: Plain Text',
 			markdownHtml: '렌더 모드 전환: Markdown + HTML',
 		},
+	},
+
+	// Saved Searches
+	savedSearches: {
+		saveSearch: '현재 검색 저장',
+		savedSearches: '저장된 검색',
+		recentSearches: '최근 검색',
+		favorites: '즐겨찾기',
+		noSavedSearches: '저장된 검색이 없습니다',
+		searchName: '검색 이름',
+		saveButton: '저장',
+		cancelButton: '취소',
+		deleteButton: '삭제',
+		favoriteButton: '즐겨찾기',
+		unfavoriteButton: '즐겨찾기 해제',
+		editButton: '편집',
+		applyButton: '적용',
+		confirmDelete: (name: string) => `"${name}" 검색을 삭제하시겠습니까?`,
+		searchSaved: (name: string) => `검색 "${name}"이(가) 저장되었습니다`,
+		searchDeleted: (name: string) => `검색 "${name}"이(가) 삭제되었습니다`,
+		searchApplied: (name: string) => `검색 "${name}"이(가) 적용되었습니다`,
+		enterSearchName: '검색 이름을 입력하세요',
+		emptyQueryWarning: '빈 검색 쿼리는 저장할 수 없습니다',
 	},
 
 	// Error Messages
@@ -71,6 +96,10 @@ export const ko = {
 		interactiveCardSection: {
 			name: '인터랙티브 카드 설정',
 			description: '카드 상호작용 동작을 설정합니다',
+		},
+		searchSection: {
+			name: '검색 설정',
+			description: '검색 동작 및 옵션을 설정합니다',
 		},
 
 		// Language setting
@@ -143,6 +172,16 @@ export const ko = {
 		maxContentLength: {
 			name: '최대 콘텐츠 길이',
 			description: '카드 콘텐츠에 표시할 최대 문자 수 (0 = 제한 없음)',
+		},
+
+		// Search settings
+		enableFuzzySearch: {
+			name: '퍼지 검색 활성화',
+			description: '정확히 일치하지 않아도 유사한 문자열 매칭 (예: "fb"가 "foobar" 매칭)',
+		},
+		fuzzySearchThreshold: {
+			name: '퍼지 검색 임계값',
+			description: '퍼지 매칭을 위한 최소 유사도 점수 (0-1, 낮을수록 관대)',
 		},
 
 		// Mode settings
@@ -244,6 +283,7 @@ export const ko = {
 		modeToggleTagToSpecific: '태그 지정 모드로 전환',
 		modeToggleTagToActive: '활성 파일 태그 모드로 전환',
 		clickToSelectFolderTag: '클릭하여 폴더/태그 선택',
+		fileCount: (displayed: number, total: number) => `${displayed} / ${total}`,
 		sortOptions: {
 			nameAsc: '파일명 (A-Z)',
 			nameDesc: '파일명 (Z-A)',

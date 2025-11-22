@@ -162,7 +162,10 @@ export function createMockSettings(overrides?: Partial<CardNavigatorSettings>): 
         presetPriority: {
             mode: 'auto',
             manualType: 'tag-first'
-        }
+        },
+        savedSearches: [],
+        enableFuzzySearch: false,
+        fuzzySearchThreshold: 0.3
     };
     
     // Deep merge overrides

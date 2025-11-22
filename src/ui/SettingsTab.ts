@@ -146,6 +146,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         // 5. 기타 탭
         const otherTab = container.createDiv({ cls: 'setting-tab-pane' });
         this.addLanguageSettings(otherTab);
+        this.addSearchSettings(otherTab);
         this.addScrollBehaviorSettings(otherTab);
         this.addTagClickActionSettings(otherTab);
         this.addDragDropSettings(otherTab);
@@ -192,17 +193,19 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
      * 언어 설정을 추가합니다
      */
     private addLanguageSettings(containerEl: HTMLElement): void {
+        const t = this.plugin.t();
+
         // 섹션 헤더
-        new Setting(containerEl).setHeading().setName('Language / 언어');
+        new Setting(containerEl).setHeading().setName(t.settings.language.name);
 
         const availableLanguages = getAvailableLanguages();
 
         new Setting(containerEl)
-            .setName('Display Language / 표시 언어')
-            .setDesc('Select the display language for the plugin interface / 플러그인 인터페이스에 사용할 언어를 선택하세요')
+            .setName(t.settings.language.name)
+            .setDesc(t.settings.language.description)
             .addDropdown(dropdown => {
                 // Add auto option
-                dropdown.addOption('auto', 'Auto (Follow Obsidian / 옵시디언 설정 따르기)');
+                dropdown.addOption('auto', 'Auto');
 
                 // Add available languages
                 availableLanguages.forEach(lang => {
@@ -241,6 +244,42 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 })
             );
+    }
+
+    /**
+     * 검색 설정을 추가합니다
+     */
+    private addSearchSettings(containerEl: HTMLElement): void {
+        // 섹션 헤더
+        new Setting(containerEl).setHeading().setName(t().settings.searchSection.name);
+
+        new Setting(containerEl)
+            .setName(t().settings.enableFuzzySearch.name)
+            .setDesc(t().settings.enableFuzzySearch.description)
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableFuzzySearch)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableFuzzySearch = value;
+                    await this.plugin.saveSettings();
+                    // Show/hide threshold setting
+                    this.display();
+                })
+            );
+
+        if (this.plugin.settings.enableFuzzySearch) {
+            new Setting(containerEl)
+                .setName(t().settings.fuzzySearchThreshold.name)
+                .setDesc(t().settings.fuzzySearchThreshold.description)
+                .addSlider(slider => slider
+                    .setLimits(0, 1, 0.05)
+                    .setValue(this.plugin.settings.fuzzySearchThreshold)
+                    .setDynamicTooltip()
+                    .onChange(async (value) => {
+                        this.plugin.settings.fuzzySearchThreshold = value;
+                        await this.plugin.saveSettings();
+                    })
+                );
+        }
     }
 
     /**
