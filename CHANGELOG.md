@@ -110,19 +110,9 @@ First public release of Card Navigator!
 
 ---
 
-## [Unreleased]
-
-### Planned Features
-- Custom card templates
-- Advanced filtering options
-- More sorting criteria
-- Card export functionality
-- Integration with other plugins
-
----
-
 ## Version History
 
+- **1.1.1** (2025-11-22) - Render mode toggle fix, code cleanup
 - **1.1.0** (2025-11-22) - Dark mode optimization, render mode toggle, automated releases
 - **1.0.0** (2025-11-20) - Initial release
 
