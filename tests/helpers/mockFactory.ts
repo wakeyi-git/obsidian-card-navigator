@@ -271,6 +271,49 @@ export function createMockFiles(
 export function createMockContainer(): HTMLElement {
     const container = document.createElement('div');
     container.classList.add('card-navigator-container');
+
+    // Mock setText on container
+    (container as any).setText = jest.fn((text: string) => {
+        container.textContent = text;
+    });
+
+    // Recursive helper to add createEl and setText to elements
+    const addMocksToElement = (element: HTMLElement): void => {
+        // Mock setText
+        (element as any).setText = jest.fn((text: string) => {
+            element.textContent = text;
+        });
+
+        // Mock createEl recursively
+        (element as any).createEl = jest.fn((tag: string, options?: any) => {
+            const el = document.createElement(tag);
+
+            if (options?.cls) {
+                const classes = typeof options.cls === 'string' ? [options.cls] : options.cls;
+                classes.forEach((cls: string) => el.classList.add(cls));
+            }
+
+            if (options?.text) {
+                el.textContent = options.text;
+            }
+
+            if (options?.attr) {
+                Object.entries(options.attr).forEach(([key, value]) => {
+                    el.setAttribute(key, String(value));
+                });
+            }
+
+            // Recursively add mocks to the new element
+            addMocksToElement(el);
+
+            element.appendChild(el);
+            return el;
+        });
+    };
+
+    // Add mocks to container
+    addMocksToElement(container);
+
     document.body.appendChild(container);
     return container;
 }

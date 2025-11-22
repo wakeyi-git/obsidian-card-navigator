@@ -9,7 +9,7 @@
  */
 
 import { Toolbar } from '../../src/ui/Toolbar';
-import { createMockApp, createMockView, createMockPlugin } from '../helpers/mockFactory';
+import { createMockApp, createMockView, createMockPlugin, createMockContainer, cleanupMockContainer } from '../helpers/mockFactory';
 import { App } from 'obsidian';
 import { CardNavigatorView } from '../../src/view';
 import CardNavigatorPlugin from '../../src/main';
@@ -20,12 +20,12 @@ describe('Toolbar - Extended Tests', () => {
     let mockView: any;
     let mockPlugin: any;
     let container: HTMLElement;
-    
+
     beforeEach(() => {
         mockApp = createMockApp();
         mockView = createMockView();
         mockPlugin = createMockPlugin();
-        container = document.createElement('div');
+        container = createMockContainer();
         
         // Mock settings
         mockPlugin.settingsManager.getSettings = jest.fn().mockReturnValue({
@@ -53,12 +53,10 @@ describe('Toolbar - Extended Tests', () => {
             mockView as CardNavigatorView,
             mockPlugin as CardNavigatorPlugin
         );
-        
-        document.body.appendChild(container);
     });
-    
+
     afterEach(() => {
-        document.body.removeChild(container);
+        cleanupMockContainer(container);
     });
     
     describe('툴바 렌더링', () => {

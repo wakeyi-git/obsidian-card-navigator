@@ -161,9 +161,12 @@ const createMockContainer = (): HTMLElement => {
             if (cls.trim()) container.classList.remove(cls.trim());
         }
     });
-    
+
     (container as any).empty = jest.fn();
-    
+    (container as any).setText = jest.fn((text: string) => {
+        container.textContent = text;
+    });
+
     // 재귀적으로 createEl mock 추가하는 헬퍼 함수
     const addCreateElMock = (element: HTMLElement) => {
         // addEventListener/removeEventListener를 요소에도 추가
@@ -248,7 +251,7 @@ const createMockContainer = (): HTMLElement => {
                     }
                 });
             });
-            
+
             (el as any).removeClass = jest.fn((cls: string) => {
                 cls.split(/\s+/).forEach(c => {
                     if (c.trim()) {
@@ -260,8 +263,11 @@ const createMockContainer = (): HTMLElement => {
                     }
                 });
             });
-            
+
             (el as any).empty = jest.fn();
+            (el as any).setText = jest.fn((text: string) => {
+                el.textContent = text;
+            });
             
             // 재귀적으로 createEl mock 추가
             addCreateElMock(el);

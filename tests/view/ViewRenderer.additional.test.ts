@@ -66,7 +66,11 @@ describe('ViewRenderer - Additional Coverage', () => {
         
         // Mock View
         mockView = {
-            containerEl: document.createElement('div')
+            containerEl: document.createElement('div'),
+            plugin: mockPlugin,
+            getToolbar: jest.fn(() => ({
+                updateFileCount: jest.fn()
+            }))
         };
         
         // Settings
