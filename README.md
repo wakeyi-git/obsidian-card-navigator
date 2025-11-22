@@ -96,13 +96,28 @@ Use the mode selector at the top of the Card Navigator view:
 
 ## ⌨️ Keyboard Shortcuts
 
+### Built-in Navigation
+
 | Action | Shortcut |
 |--------|----------|
 | Navigate cards | Arrow Keys |
 | Open selected note | Enter |
 | Close Card Navigator | Escape |
-| Select all cards | Ctrl/Cmd + A (when view is focused) |
-| Focus on active card | Use "Focus on Card Navigator" command |
+
+### Commands (Configure in Settings → Hotkeys)
+
+All commands can be assigned custom keyboard shortcuts in Obsidian's Hotkeys settings.
+
+| Command | Description |
+|---------|-------------|
+| Select all cards | Select all visible cards (works when view is focused) |
+| Focus on Card Navigator | Focus on the currently active card |
+| Switch mode | Switch between folder and tag modes |
+| Toggle mode option | Toggle between active and specific mode options |
+| Show search input | Display the search input field |
+| Select folder | Open folder selection modal |
+| Select tag | Open tag selection modal |
+| Toggle render mode | Switch between Plain Text and Markdown+HTML rendering |
 
 ## ⚙️ Settings
 

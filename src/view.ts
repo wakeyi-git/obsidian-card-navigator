@@ -513,6 +513,24 @@ export class CardNavigatorView extends ItemView implements ICardView {
 	}
 
 	/**
+	 * 렌더링 모드를 전환합니다 (plain ↔ markdown-html)
+	 */
+	public async toggleRenderMode(): Promise<void> {
+		const currentMode = this.plugin.settings.renderMode;
+		const newMode = currentMode === 'plain' ? 'markdown-html' : 'plain';
+
+		this.plugin.settingsManager.updateSettings({
+			renderMode: newMode
+		});
+
+		await this.plugin.saveSettings();
+
+		// 사용자에게 피드백 제공
+		const modeText = newMode === 'plain' ? 'Plain Text' : 'Markdown + HTML';
+		new Notice(`Render mode switched to: ${modeText}`);
+	}
+
+	/**
 	 * 카드를 렌더링합니다
 	 * 
 	 * @param container - 카드를 렌더링할 컨테이너

@@ -20,6 +20,7 @@ export const en = {
 		showSearch: 'Show search input',
 		selectFolder: 'Select folder',
 		selectTag: 'Select tag',
+		toggleRenderMode: 'Toggle render mode (Plain ↔ Markdown+HTML)',
 	},
 
 	// UI Messages

@@ -20,6 +20,7 @@ export const ko = {
 		showSearch: '검색 입력창 표시',
 		selectFolder: '폴더 선택',
 		selectTag: '태그 선택',
+		toggleRenderMode: '렌더링 모드 전환 (Plain ↔ Markdown+HTML)',
 	},
 
 	// UI Messages

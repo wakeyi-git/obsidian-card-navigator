@@ -227,6 +227,18 @@ export default class CardNavigatorPlugin extends Plugin {
 			}
 		});
 
+		// 렌더링 모드 전환 단축키 (plain ↔ markdown-html)
+		this.addCommand({
+			id: 'toggle-render-mode',
+			name: t().commands.toggleRenderMode,
+			callback: async () => {
+				const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR)[0];
+				if (leaf?.view instanceof CardNavigatorView) {
+					await leaf.view.toggleRenderMode();
+				}
+			}
+		});
+
 		this.settingsTab = new CardNavigatorSettingTab(this.app, this);
 		this.addSettingTab(this.settingsTab);
 

@@ -77,9 +77,21 @@ First public release of Card Navigator!
 - **Adaptive Shadows**: Different shadow opacity for light mode (0.05-0.5) and dark mode (0.3-0.7) for better visibility
 - **Comprehensive Testing**: Added 12 new test cases for dark mode functionality in `CardStyles.darkmode.test.ts`
 
+#### Keyboard Shortcuts
+- **Render Mode Toggle**: New keyboard command to quickly switch between Plain Text and Markdown+HTML rendering modes
+  - Command ID: `toggle-render-mode`
+  - Provides instant visual feedback via notice message
+
+#### Developer Experience
+- **Automated Release Workflow**: GitHub Actions workflow for automated releases with changelog extraction
+- **Version Sync Script**: Automatic synchronization of versions across package.json, manifest.json, and versions.json
+- **Release Commands**: Convenient npm scripts for patch, minor, and major releases (`npm run release:patch/minor/major`)
+- **Release Guide**: Comprehensive documentation for the release process at `.github/RELEASE_GUIDE.md`
+
 ### Changed
 - Replaced all hardcoded `rgba` shadow values with CSS variables throughout `styles.css`
 - Improved theme switching behavior with dedicated `.theme-dark` and `.theme-light` classes
+- Removed `.github` from `.gitignore` to enable GitHub Actions workflows
 
 ### Planned Features
 - Custom card templates
