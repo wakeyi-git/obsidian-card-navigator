@@ -36,19 +36,24 @@ jobs:
     - name: Get version from tag
       id: get_version
       run: |
-        echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-        echo "VERSION_NUMBER=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        # Tags are in format "1.1.0" (without v prefix)
+        VERSION="${GITHUB_REF#refs/tags/}"
+        echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+        echo "VERSION_NUMBER=${VERSION}" >> $GITHUB_OUTPUT
 
     - name: Extract changelog for this version
       id: changelog
       run: |
         VERSION="${{ steps.get_version.outputs.VERSION_NUMBER }}"
         # Extract the changelog section for this version
-        CHANGELOG=$(sed -n "/^## \[${VERSION}\]/,/^## \[/p" CHANGELOG.md | sed '$d')
+        # Get content from ## [VERSION] to the next ## heading (but not ##)
+        CHANGELOG=$(awk "/^## \[${VERSION}\]/,/^## [^[]/" CHANGELOG.md | sed '$d')
         if [ -z "$CHANGELOG" ]; then
           # If version-specific changelog not found, use Unreleased section
-          CHANGELOG=$(sed -n "/^## \[Unreleased\]/,/^## \[/p" CHANGELOG.md | sed '$d')
+          CHANGELOG=$(awk "/^## \[Unreleased\]/,/^## [^[]/" CHANGELOG.md | sed '$d')
         fi
+        # Remove the version heading line for cleaner release notes
+        CHANGELOG=$(echo "$CHANGELOG" | tail -n +2)
         # Save to file to preserve formatting
         echo "$CHANGELOG" > /tmp/release_notes.md
         echo "CHANGELOG_FILE=/tmp/release_notes.md" >> $GITHUB_OUTPUT
