@@ -253,22 +253,29 @@ describe('ViewportManager', () => {
     
     describe('Error Handling', () => {
         it('should handle onCardVisible errors', async () => {
+            // Suppress console.error for this error handling test
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
             const errorManager = new ViewportManager(
                 container,
                 jest.fn().mockRejectedValue(new Error('Render failed')),
                 undefined,
                 DEFAULT_SETTINGS
             );
-            
+
             const card = document.createElement('div');
             card.classList.add('card-placeholder');
             card.dataset.filePath = 'test.md';
             container.appendChild(card);
-            
+
             // 에러가 발생해도 crash하지 않음
             await expect(errorManager.renderAllCards()).resolves.not.toThrow();
-            
+
+            // Verify error was logged
+            expect(consoleErrorSpy).toHaveBeenCalled();
+
             errorManager.destroy();
+            consoleErrorSpy.mockRestore();
         });
     });
     

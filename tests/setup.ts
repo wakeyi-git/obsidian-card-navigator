@@ -114,4 +114,18 @@ if (!console.groupCollapsed) {
 // i18n 설정: 모든 테스트를 영어로 기본 설정
 setupTestLocale('en');
 
+// Suppress console.error in tests to reduce noise from intentional error handling tests
+// Tests that specifically need to verify console.error was called should spy on it
+const originalConsoleError = console.error;
+beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
+        // Optionally filter out specific expected errors or suppress all
+        // For now, suppress all console.error in tests
+    });
+});
+
+afterEach(() => {
+    jest.restoreAllMocks();
+});
+
 export {};

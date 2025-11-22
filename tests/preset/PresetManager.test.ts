@@ -636,9 +636,14 @@ describe('PresetManager', () => {
         });
         
         it('should handle invalid JSON on import', async () => {
+            // Suppress console.error for this error handling test
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
             const success = await manager.importPreset('invalid json');
-            
+
             expect(success).toBe(false);
+            expect(consoleErrorSpy).toHaveBeenCalled();
+            consoleErrorSpy.mockRestore();
         });
     });
     

@@ -59,11 +59,16 @@ describe('CardDataExtractor - Error Handling & Edge Cases', () => {
     
     describe('extractFileContent - Error Handling', () => {
         it('should handle vault.read errors gracefully', async () => {
+            // Suppress console.error for this error handling test
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
             (app.vault.read as jest.Mock).mockRejectedValue(new Error('Read error'));
-            
+
             const content = await extractor.extractFileContent(mockFile);
-            
+
             expect(content).toBe('');
+            expect(consoleErrorSpy).toHaveBeenCalled();
+            consoleErrorSpy.mockRestore();
         });
         
         it('should handle very long content correctly', async () => {
