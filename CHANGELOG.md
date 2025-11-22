@@ -1,31 +1,31 @@
-## 1.1.0 (2025-11-22)
+## [1.1.0] - 2025-11-22
 
-* feat: Dark theme improvements ([a41eeb0](https://github.com/wakeyi-git/obsidian-card-navigator/commit/a41eeb0))
-* feat: Dark theme improvements ([a97d52e](https://github.com/wakeyi-git/obsidian-card-navigator/commit/a97d52e))
-* feat(keyboard): add render mode toggle keyboard shortcut ([4535518](https://github.com/wakeyi-git/obsidian-card-navigator/commit/4535518))
-* feat(release): add automated GitHub release workflow ([52f8ba7](https://github.com/wakeyi-git/obsidian-card-navigator/commit/52f8ba7)), closes [softprops/action-#release](https://github.com/softprops/action-/issues/release)
-* chore: remove .github from gitignore and add release automation ([5d9d9e2](https://github.com/wakeyi-git/obsidian-card-navigator/commit/5d9d9e2))
-* docs(changelog): add dark mode optimization to unreleased section ([af900db](https://github.com/wakeyi-git/obsidian-card-navigator/commit/af900db))
-* code improve ([fc957bd](https://github.com/wakeyi-git/obsidian-card-navigator/commit/fc957bd))
-* code improve 2 ([bd2de2f](https://github.com/wakeyi-git/obsidian-card-navigator/commit/bd2de2f))
-* code improve 3 ([3d11e85](https://github.com/wakeyi-git/obsidian-card-navigator/commit/3d11e85))
-* delet interactivelayoutsettings ([f3e6e3c](https://github.com/wakeyi-git/obsidian-card-navigator/commit/f3e6e3c))
-* hotkeys ([9b1978d](https://github.com/wakeyi-git/obsidian-card-navigator/commit/9b1978d))
-* i18n ([740898a](https://github.com/wakeyi-git/obsidian-card-navigator/commit/740898a))
-* import preset and markdown-html ([6df005d](https://github.com/wakeyi-git/obsidian-card-navigator/commit/6df005d))
-* InlineEditor Removal ([d0fa1be](https://github.com/wakeyi-git/obsidian-card-navigator/commit/d0fa1be))
-* layout ([b2ed7cd](https://github.com/wakeyi-git/obsidian-card-navigator/commit/b2ed7cd))
-* layout min max ([914e14d](https://github.com/wakeyi-git/obsidian-card-navigator/commit/914e14d))
-* markdown-html ([3a19738](https://github.com/wakeyi-git/obsidian-card-navigator/commit/3a19738))
-* performance ([fa6b2cd](https://github.com/wakeyi-git/obsidian-card-navigator/commit/fa6b2cd))
-* performance ([2ae4262](https://github.com/wakeyi-git/obsidian-card-navigator/commit/2ae4262))
-* preset edit ([4343c41](https://github.com/wakeyi-git/obsidian-card-navigator/commit/4343c41))
-* preview card style ([c37e367](https://github.com/wakeyi-git/obsidian-card-navigator/commit/c37e367))
-* settings style ([63fba2b](https://github.com/wakeyi-git/obsidian-card-navigator/commit/63fba2b))
-* settingsTab Tab ([c673228](https://github.com/wakeyi-git/obsidian-card-navigator/commit/c673228))
-* tag margin ([969ffc3](https://github.com/wakeyi-git/obsidian-card-navigator/commit/969ffc3))
-* text color ([087d474](https://github.com/wakeyi-git/obsidian-card-navigator/commit/087d474))
-* third commit ([86500d1](https://github.com/wakeyi-git/obsidian-card-navigator/commit/86500d1))
+### Added
+
+#### Dark Mode Optimization
+- **CSS Custom Properties**: Theme-aware CSS variables for shadows (`--cn-shadow-sm`, `--cn-shadow-md`, `--cn-shadow-lg`, `--cn-modal-backdrop`)
+- **Adaptive Shadows**: Different shadow opacity for light mode (0.05-0.5) and dark mode (0.3-0.7) for better visibility
+- **Comprehensive Testing**: Added 12 new test cases for dark mode functionality
+
+#### Keyboard Shortcuts
+- **Render Mode Toggle**: New keyboard command to quickly switch between Plain Text and Markdown+HTML rendering modes
+  - Command ID: `toggle-render-mode`
+  - Provides instant visual feedback via notice message
+
+#### Developer Experience
+- **Automated Release Workflow**: GitHub Actions workflow for automated releases with changelog extraction
+- **Version Sync Script**: Automatic synchronization of versions across package.json, manifest.json, and versions.json
+- **Release Commands**: Convenient npm scripts for patch, minor, and major releases (`npm run release:patch/minor/major`)
+
+### Changed
+- Replaced all hardcoded `rgba` shadow values with CSS variables throughout styles.css
+- Improved theme switching behavior with dedicated `.theme-dark` and `.theme-light` classes
+- Removed `.github` from `.gitignore` to enable GitHub Actions workflows
+
+### Fixed
+- Resolved 40 ESLint errors in source code for CI/CD compliance
+- Fixed flaky timing-based test in SearchEngine cache functionality
+- Added tests directory to repository for proper CI/CD execution
 
 
 
@@ -101,29 +101,6 @@ First public release of Card Navigator!
 
 ## [Unreleased]
 
-### Added
-
-#### Dark Mode Optimization
-- **CSS Custom Properties**: Theme-aware CSS variables for shadows (`--cn-shadow-sm`, `--cn-shadow-md`, `--cn-shadow-lg`, `--cn-modal-backdrop`)
-- **Adaptive Shadows**: Different shadow opacity for light mode (0.05-0.5) and dark mode (0.3-0.7) for better visibility
-- **Comprehensive Testing**: Added 12 new test cases for dark mode functionality in `CardStyles.darkmode.test.ts`
-
-#### Keyboard Shortcuts
-- **Render Mode Toggle**: New keyboard command to quickly switch between Plain Text and Markdown+HTML rendering modes
-  - Command ID: `toggle-render-mode`
-  - Provides instant visual feedback via notice message
-
-#### Developer Experience
-- **Automated Release Workflow**: GitHub Actions workflow for automated releases with changelog extraction
-- **Version Sync Script**: Automatic synchronization of versions across package.json, manifest.json, and versions.json
-- **Release Commands**: Convenient npm scripts for patch, minor, and major releases (`npm run release:patch/minor/major`)
-- **Release Guide**: Comprehensive documentation for the release process at `.github/RELEASE_GUIDE.md`
-
-### Changed
-- Replaced all hardcoded `rgba` shadow values with CSS variables throughout `styles.css`
-- Improved theme switching behavior with dedicated `.theme-dark` and `.theme-light` classes
-- Removed `.github` from `.gitignore` to enable GitHub Actions workflows
-
 ### Planned Features
 - Custom card templates
 - Advanced filtering options
@@ -135,6 +112,7 @@ First public release of Card Navigator!
 
 ## Version History
 
+- **1.1.0** (2025-11-22) - Dark mode optimization, render mode toggle, automated releases
 - **1.0.0** (2025-11-20) - Initial release
 
 ---
