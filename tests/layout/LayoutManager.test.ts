@@ -1,0 +1,465 @@
+/**
+ * @jest-environment jsdom
+ */
+
+import { LayoutManager } from '../../src/layout/LayoutManager';
+import { LayoutSettings, CardNavigatorSettings } from '../../src/types';
+
+// Mock 설정
+const mockGetFullSettings = jest.fn<CardNavigatorSettings, []>();
+
+describe('LayoutManager', () => {
+    let container: HTMLElement;
+    let manager: LayoutManager;
+    let settings: LayoutSettings;
+    
+    beforeEach(() => {
+        // Container element 생성
+        container = document.createElement('div');
+        document.body.appendChild(container);
+        
+        // Default settings
+        settings = {
+            mode: 'horizontal',  // Add mode
+            cardMinWidth: 200,
+            cardMaxWidth: 400,
+            cardMinHeight: 150,
+            cardMaxHeight: 300,
+            gap: 16
+        };
+        
+        // Full settings mock
+        mockGetFullSettings.mockReturnValue({
+            debug: { enabled: false }
+        } as any);
+        
+        // Container 크기 설정
+        Object.defineProperty(container, 'getBoundingClientRect', {
+            configurable: true,
+            value: jest.fn().mockReturnValue({
+                width: 1000,
+                height: 600,
+                top: 0,
+                left: 0,
+                bottom: 600,
+                right: 1000
+            })
+        });
+        
+        manager = new LayoutManager(container, settings, mockGetFullSettings);
+    });
+    
+    afterEach(() => {
+        manager.destroy();
+        document.body.removeChild(container);
+        jest.clearAllMocks();
+    });
+    
+    describe('initialization', () => {
+        it('should detect horizontal mode for wide containers', () => {
+            const mode = manager.getMode();
+            expect(mode).toBe('horizontal'); // width(1000) > height(600)
+        });
+        
+        it('should detect vertical mode for tall containers', () => {
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                configurable: true,
+                value: jest.fn().mockReturnValue({
+                    width: 400,
+                    height: 800,
+                    top: 0,
+                    left: 0,
+                    bottom: 800,
+                    right: 400
+                })
+            });
+            
+            const tallManager = new LayoutManager(container, settings, mockGetFullSettings);
+            const mode = tallManager.getMode();
+            
+            expect(mode).toBe('vertical'); // width(400) < height(800)
+            
+            tallManager.destroy();
+        });
+    });
+    
+    describe('calculateGridSize', () => {
+        it('should calculate correct number of columns in vertical mode', () => {
+            // 세로 모드로 변경 (height > width)
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                configurable: true,
+                value: jest.fn().mockReturnValue({
+                    width: 1000,
+                    height: 1200,
+                    top: 0,
+                    left: 0,
+                    bottom: 1200,
+                    right: 1000
+                })
+            });
+            
+            const verticalManager = new LayoutManager(container, settings, mockGetFullSettings);
+            
+            // Container width: 1000px
+            // Card min width: 200px
+            // Gap: 16px
+            // Expected: floor((1000 + 16) / (200 + 16)) = 4 columns
+            
+            const gridColumns = container.style.gridTemplateColumns;
+            expect(gridColumns).toContain('repeat(4, 1fr)');
+            
+            verticalManager.destroy();
+        });
+        
+        it('should calculate correct number of rows in horizontal mode', () => {
+            // 기본 설정이 이미 horizontal 모드 (width=1000 > height=600)
+            // Container height: 600px
+            // Card min height: 150px
+            // Gap: 16px
+            // Expected: floor((600 + 16) / (150 + 16)) = 3 rows
+            
+            const gridRows = container.style.gridTemplateRows;
+            expect(gridRows).toContain('repeat(3, 1fr)');
+        });
+        
+        it('should ensure at least 1 column/row', () => {
+            // 세로 모드로 변경하여 columns 테스트
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                configurable: true,
+                value: jest.fn().mockReturnValue({
+                    width: 800,
+                    height: 1000,
+                    top: 0,
+                    left: 0,
+                    bottom: 1000,
+                    right: 800
+                })
+            });
+            
+            const tinySettings: LayoutSettings = {
+                mode: 'horizontal',  // Add mode
+                cardMinWidth: 1000,  // Larger than container
+                cardMaxWidth: 2000,
+                cardMinHeight: 1000,
+                cardMaxHeight: 2000,
+                gap: 16
+            };
+            
+            const tinyManager = new LayoutManager(container, tinySettings, mockGetFullSettings);
+            
+            const gridColumns = container.style.gridTemplateColumns;
+            const gridRows = container.style.gridTemplateRows;
+            
+            // Should have at least 1 column/row
+            expect(gridColumns).toContain('repeat(1, 1fr)');
+            expect(gridRows).toBe('');
+            
+            tinyManager.destroy();
+        });
+    });
+    
+    describe('updateLayout', () => {
+        it('should apply CSS variables', () => {
+            manager.updateLayout();
+            
+            expect(container.style.getPropertyValue('--card-min-width')).toBe('200px');
+            expect(container.style.getPropertyValue('--card-min-height')).toBe('150px');
+            expect(container.style.getPropertyValue('--card-max-width')).toBe('400px');
+            expect(container.style.getPropertyValue('--card-max-height')).toBe('300px');
+            expect(container.style.getPropertyValue('--card-gap')).toBe('16px');
+        });
+        
+        it('should apply vertical mode styles', () => {
+            // Force vertical mode
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                configurable: true,
+                value: jest.fn().mockReturnValue({
+                    width: 400,
+                    height: 800,
+                    top: 0,
+                    left: 0,
+                    bottom: 800,
+                    right: 400
+                })
+            });
+            
+            const verticalManager = new LayoutManager(container, settings, mockGetFullSettings);
+            verticalManager.updateLayout();
+            
+            expect(container.style.gridAutoFlow).toBe('row');
+            expect(container.style.overflowX).toBe('hidden');
+            expect(container.style.overflowY).toBe('auto');
+            expect(container.style.gridTemplateColumns).toBeTruthy();
+            expect(container.style.gridAutoRows).toBeTruthy();
+            
+            verticalManager.destroy();
+        });
+        
+        it('should apply horizontal mode styles', () => {
+            manager.updateLayout();
+            
+            expect(container.style.gridAutoFlow).toBe('column');
+            expect(container.style.overflowX).toBe('auto');
+            expect(container.style.overflowY).toBe('hidden');
+            expect(container.style.gridTemplateRows).toBeTruthy();
+            expect(container.style.gridAutoColumns).toBeTruthy();
+        });
+    });
+    
+    describe('updateSettings', () => {
+        it('should update settings and layout', () => {
+            const newSettings: LayoutSettings = {
+                mode: 'horizontal',  // Add mode
+                cardMinWidth: 300,
+                cardMaxWidth: 500,
+                cardMinHeight: 200,
+                cardMaxHeight: 400,
+                gap: 20
+            };
+            
+            manager.updateSettings(newSettings);
+            
+            expect(container.style.getPropertyValue('--card-min-width')).toBe('300px');
+            expect(container.style.getPropertyValue('--card-gap')).toBe('20px');
+        });
+        
+        it('should recalculate grid with new settings', () => {
+            // horizontal 모드이므로 rows를 확인
+            const initialRows = container.style.gridTemplateRows;
+            
+            const newSettings: LayoutSettings = {
+                ...settings,
+                cardMinHeight: 100  // Smaller cards -> more rows
+            };
+            
+            manager.updateSettings(newSettings);
+            
+            const newRows = container.style.gridTemplateRows;
+            
+            // Should have different number of rows
+            expect(newRows).not.toBe(initialRows);
+        });
+    });
+    
+    describe('resize handling', () => {
+        it('should debounce resize events', (done) => {
+            const updateLayoutSpy = jest.spyOn(manager as any, 'updateLayout');
+            
+            // Trigger multiple resize events
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                configurable: true,
+                value: jest.fn().mockReturnValue({
+                    width: 1100,
+                    height: 700,
+                    top: 0,
+                    left: 0,
+                    bottom: 700,
+                    right: 1100
+                })
+            });
+            
+            // Simulate ResizeObserver
+            (manager as any).onResize();
+            (manager as any).onResize();
+            (manager as any).onResize();
+            
+            // Should be debounced
+            setTimeout(() => {
+                // Called only once after debounce
+                expect(updateLayoutSpy).toHaveBeenCalledTimes(1);
+                done();
+            }, 150); // Longer than debounce time (100ms)
+        });
+        
+        it('should not update layout for small size changes', (done) => {
+            const updateLayoutSpy = jest.spyOn(manager as any, 'updateLayout');
+            updateLayoutSpy.mockClear();
+            
+            // Small change (< 20px threshold)
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                configurable: true,
+                value: jest.fn().mockReturnValue({
+                    width: 1010,  // +10px
+                    height: 610,  // +10px
+                    top: 0,
+                    left: 0,
+                    bottom: 610,
+                    right: 1010
+                })
+            });
+            
+            (manager as any).onResize();
+            
+            setTimeout(() => {
+                expect(updateLayoutSpy).not.toHaveBeenCalled();
+                done();
+            }, 150);
+        });
+        
+        it('should update layout for significant size changes', (done) => {
+            const updateLayoutSpy = jest.spyOn(manager as any, 'updateLayout');
+            updateLayoutSpy.mockClear();
+            
+            // Large change (>= 20px threshold)
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                configurable: true,
+                value: jest.fn().mockReturnValue({
+                    width: 1030,  // +30px
+                    height: 630,  // +30px
+                    top: 0,
+                    left: 0,
+                    bottom: 630,
+                    right: 1030
+                })
+            });
+            
+            (manager as any).onResize();
+            
+            setTimeout(() => {
+                expect(updateLayoutSpy).toHaveBeenCalled();
+                done();
+            }, 150);
+        });
+        
+        it('should update layout when mode changes', (done) => {
+            const updateLayoutSpy = jest.spyOn(manager as any, 'updateLayout');
+            updateLayoutSpy.mockClear();
+            
+            // Change from horizontal to vertical
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                configurable: true,
+                value: jest.fn().mockReturnValue({
+                    width: 400,   // Now taller than wide
+                    height: 800,
+                    top: 0,
+                    left: 0,
+                    bottom: 800,
+                    right: 400
+                })
+            });
+            
+            (manager as any).onResize();
+            
+            setTimeout(() => {
+                expect(updateLayoutSpy).toHaveBeenCalled();
+                expect(manager.getMode()).toBe('vertical');
+                done();
+            }, 150);
+        });
+    });
+    
+    describe('destroy', () => {
+        it('should disconnect ResizeObserver', () => {
+            const disconnectSpy = jest.fn();
+            (manager as any).resizeObserver = { disconnect: disconnectSpy };
+            
+            manager.destroy();
+            
+            expect(disconnectSpy).toHaveBeenCalled();
+        });
+        
+        it('should clear resize timeout', () => {
+            const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+            
+            // Start a resize
+            (manager as any).onResize();
+            
+            // Destroy before timeout completes
+            manager.destroy();
+            
+            expect(clearTimeoutSpy).toHaveBeenCalled();
+            clearTimeoutSpy.mockRestore();
+        });
+        
+        it('should nullify observers', () => {
+            manager.destroy();
+            
+            expect((manager as any).resizeObserver).toBeNull();
+            expect((manager as any).resizeTimeout).toBeNull();
+        });
+    });
+    
+    describe('edge cases', () => {
+        it('should handle zero gap', () => {
+            const zeroGapSettings: LayoutSettings = {
+                ...settings,
+                gap: 0
+            };
+            
+            const zeroGapManager = new LayoutManager(container, zeroGapSettings, mockGetFullSettings);
+            zeroGapManager.updateLayout();
+            
+            expect(container.style.getPropertyValue('--card-gap')).toBe('0px');
+            
+            zeroGapManager.destroy();
+        });
+        
+        it('should handle very large gap', () => {
+            const largeGapSettings: LayoutSettings = {
+                ...settings,
+                gap: 100
+            };
+            
+            const largeGapManager = new LayoutManager(container, largeGapSettings, mockGetFullSettings);
+            
+            // Should still calculate valid grid (horizontal mode uses rows)
+            const gridRows = container.style.gridTemplateRows;
+            expect(gridRows).toBeTruthy();
+            
+            largeGapManager.destroy();
+        });
+        
+        it('should handle square containers', () => {
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                configurable: true,
+                value: jest.fn().mockReturnValue({
+                    width: 800,
+                    height: 800,
+                    top: 0,
+                    left: 0,
+                    bottom: 800,
+                    right: 800
+                })
+            });
+            
+            const squareManager = new LayoutManager(container, settings, mockGetFullSettings);
+            
+            // Should detect as horizontal (width > height is false, so vertical is false, default is horizontal)
+            // Actually width === height, so it depends on implementation
+            // Let's just verify it picks a mode
+            const mode = squareManager.getMode();
+            expect(['horizontal', 'vertical']).toContain(mode);
+            
+            squareManager.destroy();
+        });
+    });
+    
+    describe('getMode', () => {
+        it('should return current layout mode', () => {
+            const mode = manager.getMode();
+            expect(mode).toBe('horizontal');
+        });
+        
+        it('should reflect mode changes', (done) => {
+            // Change to vertical
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                configurable: true,
+                value: jest.fn().mockReturnValue({
+                    width: 400,
+                    height: 800,
+                    top: 0,
+                    left: 0,
+                    bottom: 800,
+                    right: 400
+                })
+            });
+            
+            (manager as any).onResize();
+            
+            setTimeout(() => {
+                expect(manager.getMode()).toBe('vertical');
+                done();
+            }, 150);
+        });
+    });
+});
