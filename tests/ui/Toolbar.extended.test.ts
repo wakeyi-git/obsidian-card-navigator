@@ -13,6 +13,7 @@ import { createMockApp, createMockView, createMockPlugin, createMockContainer, c
 import { App } from 'obsidian';
 import { CardNavigatorView } from '../../src/view';
 import CardNavigatorPlugin from '../../src/main';
+import { DEFAULT_SETTINGS } from '../../src/types';
 
 describe('Toolbar - Extended Tests', () => {
     let toolbar: Toolbar;
@@ -40,7 +41,9 @@ describe('Toolbar - Extended Tests', () => {
             },
             sort: {
                 criteria: 'name',
-                order: 'asc'
+                order: 'asc',
+                enableMultiSort: false,
+                levels: []
             },
             debug: {
                 enabled: false
@@ -98,6 +101,12 @@ describe('Toolbar - Extended Tests', () => {
                     useActiveFolder: false,
                     specifiedFolder: 'TestFolder'
                 },
+                sort: {
+                    criteria: 'name',
+                    order: 'asc',
+                    enableMultiSort: false,
+                    levels: []
+                },
                 debug: { enabled: false }
             });
 
@@ -120,14 +129,20 @@ describe('Toolbar - Extended Tests', () => {
                     name: 'CurrentFolder'
                 }
             };
-            
+
             mockApp.workspace.getActiveFile = jest.fn().mockReturnValue(mockFile);
-            
+
             mockPlugin.settingsManager.getSettings = jest.fn().mockReturnValue({
                 currentMode: 'folder',
                 folderMode: {
                     useActiveFolder: true,
                     specifiedFolder: ''
+                },
+                sort: {
+                    criteria: 'name',
+                    order: 'asc',
+                    enableMultiSort: false,
+                    levels: []
                 },
                 debug: { enabled: false }
             });
@@ -146,6 +161,12 @@ describe('Toolbar - Extended Tests', () => {
                 tagMode: {
                     useActiveFileTags: false,
                     specifiedTags: ['#test']
+                },
+                sort: {
+                    criteria: 'name',
+                    order: 'asc',
+                    enableMultiSort: false,
+                    levels: []
                 },
                 debug: { enabled: false }
             });
@@ -174,6 +195,12 @@ describe('Toolbar - Extended Tests', () => {
                     useActiveFileTags: true,
                     specifiedTags: []
                 },
+                sort: {
+                    criteria: 'name',
+                    order: 'asc',
+                    enableMultiSort: false,
+                    levels: []
+                },
                 debug: { enabled: false }
             });
             
@@ -199,9 +226,15 @@ describe('Toolbar - Extended Tests', () => {
                     useActiveFolder: true,
                     specifiedFolder: ''
                 },
+                sort: {
+                    criteria: 'name',
+                    order: 'asc',
+                    enableMultiSort: false,
+                    levels: []
+                },
                 debug: { enabled: false }
             });
-            
+
             toolbar.render(container);
             toolbar.updateModeToggleIcon();
             
@@ -282,8 +315,16 @@ describe('Toolbar - Extended Tests', () => {
     
     describe('에러 처리', () => {
         it('settings가 없어도 렌더링이 실패하지 않아야 함', () => {
-            mockPlugin.settingsManager.getSettings = jest.fn().mockReturnValue(null);
-            
+            mockPlugin.settingsManager.getSettings = jest.fn().mockReturnValue({
+                ...DEFAULT_SETTINGS,
+                sort: {
+                    criteria: 'name',
+                    order: 'asc',
+                    enableMultiSort: false,
+                    levels: []
+                }
+            });
+
             expect(() => {
                 toolbar.render(container);
             }).not.toThrow();
@@ -291,16 +332,23 @@ describe('Toolbar - Extended Tests', () => {
         
         it('활성 파일이 없어도 렌더링이 실패하지 않아야 함', () => {
             mockApp.workspace.getActiveFile = jest.fn().mockReturnValue(null);
-            
+
             mockPlugin.settingsManager.getSettings = jest.fn().mockReturnValue({
+                ...DEFAULT_SETTINGS,
                 currentMode: 'folder',
                 folderMode: {
                     useActiveFolder: true,
                     specifiedFolder: ''
                 },
+                sort: {
+                    criteria: 'name',
+                    order: 'asc',
+                    enableMultiSort: false,
+                    levels: []
+                },
                 debug: { enabled: false }
             });
-            
+
             expect(() => {
                 toolbar.render(container);
             }).not.toThrow();

@@ -381,14 +381,14 @@ describe('SelectionManager', () => {
 		it('should create batch action buttons', () => {
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 
-			const buttons = document.querySelectorAll('.batch-action-btn');
+			const buttons = document.querySelectorAll('.batch-action-icon');
 			expect(buttons.length).toBeGreaterThan(0);
 
-			const buttonTexts = Array.from(buttons).map(btn => btn.textContent);
-			expect(buttonTexts).toContain('Add Tag');
-			expect(buttonTexts).toContain('Move');
-			expect(buttonTexts).toContain('Delete');
-			expect(buttonTexts).toContain('Clear Selection');
+			const buttonLabels = Array.from(buttons).map(btn => btn.getAttribute('aria-label'));
+			expect(buttonLabels).toContain('Add Tag');
+			expect(buttonLabels).toContain('Move');
+			expect(buttonLabels).toContain('Delete');
+			expect(buttonLabels).toContain('Clear Selection');
 		});
 	});
 
@@ -410,8 +410,8 @@ describe('SelectionManager', () => {
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			
 			// Trigger batch add tag
-			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Add Tag') as HTMLButtonElement;
+			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Add Tag') as HTMLButtonElement;
 			
 			addTagBtn?.click();
 
@@ -430,8 +430,8 @@ describe('SelectionManager', () => {
 			
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			
-			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Add Tag') as HTMLButtonElement;
+			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Add Tag') as HTMLButtonElement;
 			
 			addTagBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
@@ -450,8 +450,8 @@ describe('SelectionManager', () => {
 			
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			
-			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Add Tag') as HTMLButtonElement;
+			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Add Tag') as HTMLButtonElement;
 			
 			addTagBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
@@ -467,8 +467,8 @@ describe('SelectionManager', () => {
 			
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			
-			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Add Tag') as HTMLButtonElement;
+			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Add Tag') as HTMLButtonElement;
 			
 			addTagBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
@@ -481,8 +481,8 @@ describe('SelectionManager', () => {
 			
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			
-			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Add Tag') as HTMLButtonElement;
+			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Add Tag') as HTMLButtonElement;
 			
 			addTagBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
@@ -496,8 +496,8 @@ describe('SelectionManager', () => {
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			manager.toggleSelection(mockFiles[1], new MouseEvent('click', { ctrlKey: true }));
 			
-			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Add Tag') as HTMLButtonElement;
+			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Add Tag') as HTMLButtonElement;
 			
 			addTagBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
@@ -512,8 +512,8 @@ describe('SelectionManager', () => {
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			expect(manager.getSelectionCount()).toBe(1);
 			
-			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Add Tag') as HTMLButtonElement;
+			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Add Tag') as HTMLButtonElement;
 			
 			addTagBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
@@ -533,8 +533,8 @@ describe('SelectionManager', () => {
 			
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			
-			const moveBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Move') as HTMLButtonElement;
+			const moveBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Move') as HTMLButtonElement;
 			
 			moveBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 10));
@@ -551,8 +551,8 @@ describe('SelectionManager', () => {
 			
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			
-			const moveBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Move') as HTMLButtonElement;
+			const moveBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Move') as HTMLButtonElement;
 			
 			moveBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 10));
@@ -566,8 +566,8 @@ describe('SelectionManager', () => {
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			manager.toggleSelection(mockFiles[1], new MouseEvent('click', { ctrlKey: true }));
 			
-			const moveBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Move') as HTMLButtonElement;
+			const moveBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Move') as HTMLButtonElement;
 			
 			moveBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 10));
@@ -582,8 +582,8 @@ describe('SelectionManager', () => {
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			expect(manager.getSelectionCount()).toBe(1);
 			
-			const moveBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Move') as HTMLButtonElement;
+			const moveBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Move') as HTMLButtonElement;
 			
 			moveBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 10));
@@ -603,8 +603,8 @@ describe('SelectionManager', () => {
 			
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			
-			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Delete') as HTMLButtonElement;
+			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Delete') as HTMLButtonElement;
 			
 			deleteBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
@@ -618,8 +618,8 @@ describe('SelectionManager', () => {
 			
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			
-			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Delete') as HTMLButtonElement;
+			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Delete') as HTMLButtonElement;
 			
 			deleteBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
@@ -633,8 +633,8 @@ describe('SelectionManager', () => {
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			manager.toggleSelection(mockFiles[1], new MouseEvent('click', { ctrlKey: true }));
 			
-			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Delete') as HTMLButtonElement;
+			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Delete') as HTMLButtonElement;
 			
 			deleteBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
@@ -648,8 +648,8 @@ describe('SelectionManager', () => {
 			
 			manager.selectAll();
 			
-			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Delete') as HTMLButtonElement;
+			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Delete') as HTMLButtonElement;
 			
 			deleteBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
@@ -665,8 +665,8 @@ describe('SelectionManager', () => {
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			expect(manager.getSelectionCount()).toBe(1);
 			
-			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Delete') as HTMLButtonElement;
+			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Delete') as HTMLButtonElement;
 			
 			deleteBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
@@ -688,12 +688,12 @@ describe('SelectionManager', () => {
 		it('should handle read error in batch add tag', async () => {
 			global.prompt = jest.fn().mockReturnValue('tag');
 			(app.vault.read as jest.Mock).mockRejectedValue(new Error('Read failed'));
-			
+
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
-			
-			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Add Tag') as HTMLButtonElement;
-			
+
+			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Add Tag') as HTMLButtonElement;
+
 			addTagBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
 
@@ -704,12 +704,12 @@ describe('SelectionManager', () => {
 			global.prompt = jest.fn().mockReturnValue('tag');
 			(app.vault.read as jest.Mock).mockResolvedValue('# Content');
 			(app.vault.modify as jest.Mock).mockRejectedValue(new Error('Modify failed'));
-			
+
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
-			
-			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Add Tag') as HTMLButtonElement;
-			
+
+			const addTagBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Add Tag') as HTMLButtonElement;
+
 			addTagBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
 
@@ -721,12 +721,12 @@ describe('SelectionManager', () => {
 			(app.fileManager.renameFile as jest.Mock).mockRejectedValue(
 				new Error('Move failed')
 			);
-			
+
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
-			
-			const moveBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Move') as HTMLButtonElement;
-			
+
+			const moveBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Move') as HTMLButtonElement;
+
 			moveBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -736,12 +736,12 @@ describe('SelectionManager', () => {
 		it('should handle delete error', async () => {
 			global.confirm = jest.fn().mockReturnValue(true);
 			(app.vault.delete as jest.Mock).mockRejectedValue(new Error('Delete failed'));
-			
+
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
-			
-			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Delete') as HTMLButtonElement;
-			
+
+			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Delete') as HTMLButtonElement;
+
 			deleteBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
 
@@ -753,13 +753,13 @@ describe('SelectionManager', () => {
 			(app.vault.delete as jest.Mock)
 				.mockRejectedValueOnce(new Error('Delete failed'))
 				.mockResolvedValueOnce(undefined);
-			
+
 			manager.toggleSelection(mockFiles[0], new MouseEvent('click'));
 			manager.toggleSelection(mockFiles[1], new MouseEvent('click', { ctrlKey: true }));
-			
-			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-btn'))
-				.find(btn => btn.textContent === 'Delete') as HTMLButtonElement;
-			
+
+			const deleteBtn = Array.from(document.querySelectorAll('.batch-action-icon'))
+				.find(btn => btn.getAttribute('aria-label') === 'Delete') as HTMLButtonElement;
+
 			deleteBtn?.click();
 			await new Promise(resolve => setTimeout(resolve, 0));
 

@@ -58,7 +58,13 @@ export function setupObsidianDomMocks(): void {
         
         if (options?.cls) {
             const classes = Array.isArray(options.cls) ? options.cls : [options.cls];
-            el.classList.add(...classes);
+            const validClasses = classes
+                .filter(c => c && typeof c === 'string')
+                .flatMap(c => c.split(/\s+/))
+                .filter(c => c.trim().length > 0);
+            if (validClasses.length > 0) {
+                el.classList.add(...validClasses);
+            }
         }
         
         if (options?.text) {
@@ -92,12 +98,24 @@ export function setupObsidianDomMocks(): void {
     
     // addClass 구현
     HTMLElement.prototype.addClass = function(...classes: string[]) {
-        this.classList.add(...classes.filter(c => c && c.trim()));
+        const validClasses = classes
+            .filter(c => c && typeof c === 'string')
+            .flatMap(c => c.split(/\s+/))
+            .filter(c => c.trim().length > 0);
+        if (validClasses.length > 0) {
+            this.classList.add(...validClasses);
+        }
     };
-    
+
     // removeClass 구현
     HTMLElement.prototype.removeClass = function(...classes: string[]) {
-        this.classList.remove(...classes.filter(c => c && c.trim()));
+        const validClasses = classes
+            .filter(c => c && typeof c === 'string')
+            .flatMap(c => c.split(/\s+/))
+            .filter(c => c.trim().length > 0);
+        if (validClasses.length > 0) {
+            this.classList.remove(...validClasses);
+        }
     };
     
     // toggleClass 구현

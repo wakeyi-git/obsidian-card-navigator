@@ -423,14 +423,13 @@ describe('ViewRenderer', () => {
 		it('should apply sorting to files', async () => {
 			mockSettings.currentMode = 'folder';
 			mockState.setSearchQuery('');
-			
+
 			const container = createMockElement();
 			await renderer.renderCards(container, jest.fn());
-			
-			expect(mockSortManager.sort).toHaveBeenCalledWith(
-				[file1, file2],
-				mockSettings.sort
-			);
+
+			expect(mockSortManager.sort).toHaveBeenCalled();
+			expect(mockSortManager.sort.mock.calls[0][0]).toEqual([file1, file2]);
+			expect(mockSortManager.sort.mock.calls[0][1]).toEqual(mockSettings.sort);
 		});
 	});
 	

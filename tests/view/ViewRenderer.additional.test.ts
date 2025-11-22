@@ -303,7 +303,7 @@ describe('ViewRenderer - Additional Coverage', () => {
             
             await renderer.renderCards(container, onFileOpen);
             
-            expect(sortManager.sort).toHaveBeenCalledWith(mockFiles, settings.sort);
+            expect(sortManager.sort).toHaveBeenCalledWith(mockFiles, settings.sort, expect.anything());
         });
     });
     
