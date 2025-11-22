@@ -1,3 +1,14 @@
+## [1.1.1] - 2025-11-22
+
+### Fixed
+- **Render Mode Toggle Command**: Fixed keyboard shortcut to properly toggle body rendering mode
+  - Now correctly toggles `body.contentRenderMode` setting
+  - Works seamlessly with preset-based cards
+  - Provides proper visual feedback via notice messages
+- **Code Cleanup**: Removed unused RenderingSettings component and related code
+
+---
+
 ## [1.1.0] - 2025-11-22
 
 ### Added

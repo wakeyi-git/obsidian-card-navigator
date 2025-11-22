@@ -1,7 +1,6 @@
 import { App, PluginSettingTab, Setting, setIcon, Notice } from 'obsidian';
 import CardNavigatorPlugin from '../main';
 import { DebugCategory } from '../types';
-import { RenderingSettings } from './settings/RenderingSettings';
 import { LayoutSettings } from './settings/LayoutSettings';
 import { ModeSettings } from './settings/ModeSettings';
 import { SortSettings } from './settings/SortSettings';
@@ -32,7 +31,6 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
     // 설정 섹션 인스턴스
     private modeSettings: ModeSettings;
     private sortSettings: SortSettings;
-    private renderingSettings: RenderingSettings;
     private layoutSettings: LayoutSettings;
     private presetSettings: PresetSettings;
     private interactiveCardSettings: InteractiveCardSettings;
@@ -50,7 +48,6 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         // 설정 섹션 초기화
         this.modeSettings = new ModeSettings(plugin);
         this.sortSettings = new SortSettings(plugin);
-        this.renderingSettings = new RenderingSettings(plugin);
         this.layoutSettings = new LayoutSettings(plugin);
         this.presetSettings = new PresetSettings(plugin);
         this.interactiveCardSettings = new InteractiveCardSettings(plugin);

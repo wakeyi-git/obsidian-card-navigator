@@ -27,6 +27,10 @@ export const en = {
 	ui: {
 		emptyMessage: 'No files to display',
 		defaultCardContent: '(No content)',
+		renderModeSwitched: {
+			plain: 'Render mode switched to: Plain Text',
+			markdownHtml: 'Render mode switched to: Markdown + HTML',
+		},
 	},
 
 	// Error Messages

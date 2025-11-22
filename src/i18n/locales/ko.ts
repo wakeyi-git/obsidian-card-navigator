@@ -27,6 +27,10 @@ export const ko = {
 	ui: {
 		emptyMessage: '표시할 파일이 없습니다',
 		defaultCardContent: '(내용 없음)',
+		renderModeSwitched: {
+			plain: '렌더 모드 전환: Plain Text',
+			markdownHtml: '렌더 모드 전환: Markdown + HTML',
+		},
 	},
 
 	// Error Messages

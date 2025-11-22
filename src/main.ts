@@ -231,11 +231,17 @@ export default class CardNavigatorPlugin extends Plugin {
 		this.addCommand({
 			id: 'toggle-render-mode',
 			name: t().commands.toggleRenderMode,
-			callback: async () => {
+			checkCallback: (checking: boolean) => {
 				const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR)[0];
+
 				if (leaf?.view instanceof CardNavigatorView) {
-					await leaf.view.toggleRenderMode();
+					if (!checking) {
+						leaf.view.toggleRenderMode();
+					}
+					return true;
 				}
+
+				return false;
 			}
 		});
 

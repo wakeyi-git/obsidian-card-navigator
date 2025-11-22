@@ -70,10 +70,10 @@ export class CardFactory {
 		// 1. 이 파일에 매핑된 프리셋 설정 가져오기
 		const presetCardSettings = this.view.plugin.presetManager
 			.getCardSettingsForFile(file);
-		
+
 		// 2. 프리셋 설정이 있으면 사용, 없으면 전역 설정 사용
-		const cardSettings = presetCardSettings 
-			? presetCardSettings 
+		const cardSettings = presetCardSettings
+			? presetCardSettings
 			: this.getGlobalCardSettings();
 		
 		// 3. CardData 생성 (카드별 설정 포함)
