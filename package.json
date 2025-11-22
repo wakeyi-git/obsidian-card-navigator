@@ -12,8 +12,11 @@
 		"lint": "eslint src --ext .ts",
 		"lint:fix": "eslint src --ext .ts --fix",
 		"changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
-		"version": "npm run changelog && git add CHANGELOG.md",
-		"prepare": "husky"
+		"version": "npm run changelog && node scripts/update-version.js && git add CHANGELOG.md manifest.json versions.json",
+		"prepare": "husky",
+		"release:patch": "npm version patch -m \"chore(release): %s\" && git push --follow-tags",
+		"release:minor": "npm version minor -m \"chore(release): %s\" && git push --follow-tags",
+		"release:major": "npm version major -m \"chore(release): %s\" && git push --follow-tags"
 	},
 	"keywords": [
 		"obsidian",
