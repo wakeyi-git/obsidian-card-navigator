@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for changelog generation
+
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run tests
+      run: npm test
+
+    - name: Build plugin
+      run: npm run build
+
+    - name: Get version from tag
+      id: get_version
+      run: |
+        echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        echo "VERSION_NUMBER=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Extract changelog for this version
+      id: changelog
+      run: |
+        VERSION="${{ steps.get_version.outputs.VERSION_NUMBER }}"
+        # Extract the changelog section for this version
+        CHANGELOG=$(sed -n "/^## \[${VERSION}\]/,/^## \[/p" CHANGELOG.md | sed '$d')
+        if [ -z "$CHANGELOG" ]; then
+          # If version-specific changelog not found, use Unreleased section
+          CHANGELOG=$(sed -n "/^## \[Unreleased\]/,/^## \[/p" CHANGELOG.md | sed '$d')
+        fi
+        # Save to file to preserve formatting
+        echo "$CHANGELOG" > /tmp/release_notes.md
+        echo "CHANGELOG_FILE=/tmp/release_notes.md" >> $GITHUB_OUTPUT
+
+    - name: Verify required files exist
+      run: |
+        test -f main.js || (echo "main.js not found!" && exit 1)
+        test -f manifest.json || (echo "manifest.json not found!" && exit 1)
+        test -f styles.css || (echo "styles.css not found!" && exit 1)
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: Release ${{ steps.get_version.outputs.VERSION }}
+        body_path: ${{ steps.changelog.outputs.CHANGELOG_FILE }}
+        draft: false
+        prerelease: false
+        files: |
+          main.js
+          manifest.json
+          styles.css
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fail_on_unmatched_files: true
+        generate_release_notes: false

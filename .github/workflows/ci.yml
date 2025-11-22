@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run TypeScript type check
+      run: npx tsc --noEmit
+
+    - name: Run ESLint
+      run: npx eslint src --ext .ts
+
+    - name: Run tests
+      run: npm test
+
+    - name: Build plugin
+      run: npm run build
+
+    - name: Check bundle size
+      if: matrix.node-version == '20.x'
+      run: |
+        SIZE=$(stat -f%z main.js 2>/dev/null || stat -c%s main.js)
+        echo "Bundle size: $(($SIZE / 1024)) KB"
+        if [ $SIZE -gt 5242880 ]; then
+          echo "::error::Bundle size exceeds 5MB limit"
+          exit 1
+        fi
+
+    - name: Upload build artifacts
+      if: matrix.node-version == '20.x'
+      uses: actions/upload-artifact@v4
+      with:
+        name: plugin-build
+        path: |
+          main.js
+          manifest.json
+          styles.css
+
+  test-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run tests with coverage
+      run: npm run test:coverage
+
+    - name: Check coverage thresholds
+      run: |
+        if [ -f coverage/coverage-summary.json ]; then
+          node -e "
+            const coverage = require('./coverage/coverage-summary.json');
+            const total = coverage.total;
+            const thresholds = {
+              lines: 55,
+              statements: 55,
+              functions: 45,
+              branches: 55
+            };
+
+            console.log('Coverage Summary:');
+            console.log('  Lines: ' + total.lines.pct + '% (threshold: ' + thresholds.lines + '%)');
+            console.log('  Statements: ' + total.statements.pct + '% (threshold: ' + thresholds.statements + '%)');
+            console.log('  Functions: ' + total.functions.pct + '% (threshold: ' + thresholds.functions + '%)');
+            console.log('  Branches: ' + total.branches.pct + '% (threshold: ' + thresholds.branches + '%)');
+
+            let failed = false;
+            if (total.lines.pct < thresholds.lines) {
+              console.error('::error::Line coverage (' + total.lines.pct + '%) is below threshold (' + thresholds.lines + '%)');
+              failed = true;
+            }
+            if (total.statements.pct < thresholds.statements) {
+              console.error('::error::Statement coverage (' + total.statements.pct + '%) is below threshold (' + thresholds.statements + '%)');
+              failed = true;
+            }
+            if (total.functions.pct < thresholds.functions) {
+              console.error('::error::Function coverage (' + total.functions.pct + '%) is below threshold (' + thresholds.functions + '%)');
+              failed = true;
+            }
+            if (total.branches.pct < thresholds.branches) {
+              console.error('::error::Branch coverage (' + total.branches.pct + '%) is below threshold (' + thresholds.branches + '%)');
+              failed = true;
+            }
+            if (failed) process.exit(1);
+          "
+        else
+          echo "::warning::Coverage summary not found"
+        fi
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-card-navigator
+        fail_ci_if_error: false
