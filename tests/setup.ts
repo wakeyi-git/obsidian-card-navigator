@@ -114,14 +114,15 @@ if (!console.groupCollapsed) {
 // i18n 설정: 모든 테스트를 영어로 기본 설정
 setupTestLocale('en');
 
-// Suppress console.error in tests to reduce noise from intentional error handling tests
-// Tests that specifically need to verify console.error was called should spy on it
-const originalConsoleError = console.error;
+// Suppress console output in tests to reduce noise from intentional test cases
+// Tests that specifically need to verify console methods were called should spy on them
 beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {
-        // Optionally filter out specific expected errors or suppress all
-        // For now, suppress all console.error in tests
-    });
+    // Suppress console.error for error handling tests
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    // Suppress console.warn for warning tests
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    // Suppress console.log for debug output tests
+    jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
 afterEach(() => {
