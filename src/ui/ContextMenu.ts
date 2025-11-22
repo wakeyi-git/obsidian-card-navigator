@@ -110,6 +110,7 @@ export class CardContextMenu {
             item.setTitle(t().contextMenu.rename)
                 .setIcon('pencil')
                 .onClick(() => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (this.app as any).fileManager.promptForFileRename(file);
                 });
         });

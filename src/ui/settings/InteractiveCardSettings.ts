@@ -119,6 +119,7 @@ export class InteractiveCardSettings extends BaseSettings {
         if (leaves.length > 0) {
             const view = leaves[0].view;
             if (view && 'refresh' in view && typeof view.refresh === 'function') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (view as any).refresh();
             }
         }
@@ -806,6 +807,7 @@ export class InteractiveCardSettings extends BaseSettings {
                 .addOption('outgoing-links', t().settingsTab.cardSettings.contentType.outgoingLinks)
                 .setValue(sectionSettings.contentType)
                 .onChange(async (value) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     sectionSettings.contentType = value as any;
                     await this.plugin.saveSettings();
                     this.updateSectionSettings();

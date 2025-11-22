@@ -19,6 +19,7 @@ import { CardNavigatorSettings } from '../types';
  * const debouncedSearch = debounce((query) => search(query), 300);
  * searchInput.addEventListener('input', (e) => debouncedSearch(e.target.value));
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends any[]>(
     fn: (...args: T) => void,
     delay: number
@@ -49,12 +50,14 @@ export function debounce<T extends any[]>(
  *     await saveToServer(data);
  * }, 1000);
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounceAsync<T extends any[], R>(
     fn: (...args: T) => Promise<R>,
     delay: number
 ): (...args: T) => Promise<R> {
     let timeoutId: NodeJS.Timeout | null = null;
     let resolveQueue: Array<(value: R) => void> = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let rejectQueue: Array<(reason: any) => void> = [];
     
     return (...args: T): Promise<R> => {
@@ -98,6 +101,7 @@ export function debounceAsync<T extends any[], R>(
  * const throttledScroll = throttle(() => handleScroll(), 100);
  * window.addEventListener('scroll', throttledScroll);
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function throttle<T extends any[]>(
     fn: (...args: T) => void,
     interval: number
@@ -137,6 +141,7 @@ export function throttle<T extends any[]>(
  * const rafDebouncedUpdate = rafDebounce(() => updateLayout());
  * window.addEventListener('resize', rafDebouncedUpdate);
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function rafDebounce<T extends any[]>(
     fn: (...args: T) => void
 ): (...args: T) => void {
@@ -279,8 +284,11 @@ export class PerformanceMonitor {
      * ⚠️ 주의: performance.memory는 Chrome에서만 사용 가능
      */
     logMemory(): void {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((performance as any).memory) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const used = (performance as any).memory.usedJSHeapSize / 1048576;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const total = (performance as any).memory.totalJSHeapSize / 1048576;
             this.logger.debug('Performance', `메모리 사용: ${used.toFixed(2)}MB / ${total.toFixed(2)}MB`);
         } else {

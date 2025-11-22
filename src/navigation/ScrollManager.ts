@@ -215,9 +215,11 @@ export class ScrollManager {
                     this.logger.debug('Navigation', '플레이스홀더 감지, 강제 렌더링 실행');
                     
                     // ViewRenderer를 통해 렌더링
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const viewRenderer = (this.view as any).viewRenderer;
                     if (viewRenderer && viewRenderer.viewportManager) {
                         // CardFactory를 통해 플레이스홀더 렌더링
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const cardFactory = (this.view as any).cardFactory;
                         if (cardFactory && cardFactory.renderPlaceholder) {
                             await cardFactory.renderPlaceholder(

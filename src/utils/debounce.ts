@@ -19,12 +19,14 @@
  * debouncedRender();
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends (...args: any[]) => any>(
     func: T,
     wait: number
 ): (...args: Parameters<T>) => void {
     let timeout: NodeJS.Timeout | null = null;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return function(this: any, ...args: Parameters<T>) {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const context = this;
@@ -59,6 +61,7 @@ export function debounce<T extends (...args: any[]) => any>(
  * }, 1000, true);
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounceImmediate<T extends (...args: any[]) => any>(
     func: T,
     wait: number,
@@ -66,6 +69,7 @@ export function debounceImmediate<T extends (...args: any[]) => any>(
 ): (...args: Parameters<T>) => void {
     let timeout: NodeJS.Timeout | null = null;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return function(this: any, ...args: Parameters<T>) {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const context = this;
@@ -96,14 +100,18 @@ export function debounceImmediate<T extends (...args: any[]) => any>(
  * debounce()와 다르게 async 함수에 최적화되어 있으며,
  * 마지막 호출의 결과를 Promise로 반환합니다.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounceAsync<T extends (...args: any[]) => Promise<any>>(
     func: T,
     wait: number
 ): (...args: Parameters<T>) => Promise<Awaited<ReturnType<T>>> {
     let timeout: NodeJS.Timeout | null = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let latestResolve: ((value: any) => void) | null = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let latestReject: ((reason?: any) => void) | null = null;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return function(this: any, ...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const context = this;

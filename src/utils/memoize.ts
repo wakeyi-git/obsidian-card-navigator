@@ -220,6 +220,7 @@ export class LRUCache<K, V> {
  * sumWithKey(1, 2);  // 계산 실행
  * sumWithKey(1, 2);  // 캐시된 값 반환
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function memoizeBy<T extends any[], R>(
     fn: (...args: T) => R,
     keyFn: (...args: T) => string
@@ -281,6 +282,7 @@ export class FileContentCache {
      * @param file - 읽을 파일
      * @returns 파일 내용
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async read(app: any, file: any): Promise<string> {
         // 캐시 키: 파일 경로 + 수정 시간
         const key = `${file.path}-${file.stat.mtime}`;

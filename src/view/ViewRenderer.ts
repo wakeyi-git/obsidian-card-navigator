@@ -321,7 +321,8 @@ export class ViewRenderer {
 	private async generateStateHash(): Promise<string> {
 		const files = await this.getFilesToDisplay();
 		const settings = this.settings;
-		
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const stateObject: any = {
 			fileCount: files.length,
 			mode: settings.currentMode,

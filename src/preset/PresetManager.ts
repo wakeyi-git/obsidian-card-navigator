@@ -633,8 +633,10 @@ export class PresetManager {
                     typeof targetValue === 'object' &&
                     !Array.isArray(targetValue)
                 ) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     result[key] = this.deepMerge(targetValue, sourceValue as any);
                 } else {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     result[key] = sourceValue as any;
                 }
             }

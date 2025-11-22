@@ -218,6 +218,7 @@ export class FilterManager {
      */
     filterByProperties(
         files: TFile[],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         properties: Record<string, any>
     ): TFile[] {
         return files.filter(file => {

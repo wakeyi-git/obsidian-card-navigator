@@ -163,6 +163,7 @@ export class LayoutManager {
         };
 
         Object.entries(styles).forEach(([key, value]) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (this.containerEl.style as any)[key] = value;
         });
 
@@ -188,6 +189,7 @@ export class LayoutManager {
         };
 
         Object.entries(styles).forEach(([key, value]) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (this.containerEl.style as any)[key] = value;
         });
 

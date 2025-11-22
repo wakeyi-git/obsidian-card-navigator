@@ -281,7 +281,7 @@ export class FilterUI {
         
         section.createEl('h4', { text: t().filterUI.propertyFilter });
 
-        const desc = section.createEl('p', {
+        section.createEl('p', {
             cls: 'filter-description',
             text: t().filterUI.propertyDescription
         });
@@ -297,6 +297,7 @@ export class FilterUI {
         propertyInput.addEventListener('input', (e) => {
             const target = e.target as HTMLTextAreaElement;
             const lines = target.value.split('\n');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const properties: Record<string, any> = {};
             
             lines.forEach(line => {

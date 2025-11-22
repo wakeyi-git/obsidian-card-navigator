@@ -261,10 +261,11 @@ export class CardRenderer {
      */
     private async handleObsidianSearch(tagName: string): Promise<void> {
         const searchLeaf = this.app.workspace.getLeavesOfType('search')[0];
-        
+
         if (searchLeaf) {
             this.app.workspace.revealLeaf(searchLeaf);
-            
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const searchView = searchLeaf.view as any;
             if (searchView && searchView.setQuery) {
                 searchView.setQuery(`tag:#${tagName}`);
@@ -541,9 +542,10 @@ export class CardRenderer {
             this.logger.debug('Card', t().debug.card.partTrimmed(index), { content: trimmedPart });
             
             let match = trimmedPart.match(/<span class="internal-link" data-file-path="([^"]+)">(.+?)<\/span>/);
-            
+
             if (match) {
-                const [_, filePath, displayName] = match;
+                const filePath = match[1];
+                const displayName = match[2];
                 this.logger.debug('Card', t().debug.card.linkParsed, { filePath, displayName });
                 
                 const span = document.createElement('span');
@@ -558,9 +560,10 @@ export class CardRenderer {
                 }
             } else {
                 match = trimmedPart.match(/<span class="tag-link" data-tag="([^"]+)">(.+?)<\/span>/);
-                
+
                 if (match) {
-                    const [_, tagName, displayText] = match;
+                    const tagName = match[1];
+                    const displayText = match[2];
                     this.logger.debug('Card', t().debug.card.tagParsed, { tagName, displayText });
                     
                     const span = document.createElement('span');
