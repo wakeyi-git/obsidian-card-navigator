@@ -10,6 +10,9 @@ def extract_version_changelog(changelog_path, version):
     with open(changelog_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
+    # Remove 'v' prefix if present (e.g., v1.3.0 -> 1.3.0)
+    version = version.lstrip('v')
+
     # Pattern to match version section
     version_pattern = rf'## \[{re.escape(version)}\].*?\n(.*?)(?=\n## \[|\Z)'
     match = re.search(version_pattern, content, re.DOTALL)
