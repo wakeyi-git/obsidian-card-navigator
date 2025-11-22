@@ -244,6 +244,10 @@ export const zhCN = {
 		modeToggleTagToSpecific: '切换到指定标签模式',
 		modeToggleTagToActive: '切换到活动文件标签模式',
 		clickToSelectFolderTag: '点击选择文件夹/标签',
+		configureMultiSort: '配置多级排序',
+		multiSortModalDescription: '拖放以重新排列排序级别。文件将首先按级别 1 排序，然后按级别 2 排序，依此类推。',
+		sortLevel: (level: number) => `级别 ${level}`,
+		disableMultiSort: '禁用多级排序',
 		sortOptions: {
 			nameAsc: '文件名（A-Z）',
 			nameDesc: '文件名（Z-A）',
@@ -253,6 +257,14 @@ export const zhCN = {
 			createdAsc: '创建日期（最旧）',
 			sizeDesc: '文件大小（最大）',
 			sizeAsc: '文件大小（最小）',
+			multiSort: '多级排序',
+		},
+		hoverActions: {
+			pin: '固定',
+			star: '收藏',
+			tag: '添加标签',
+			link: '复制链接',
+			delete: '删除',
 		},
 	},
 
@@ -693,6 +705,12 @@ export const zhCN = {
 				and: 'AND（所有标签）',
 			},
 		},
+		pinSettings: {
+			title: 'Pin Settings',
+			alwaysShowPinned: 'Always show pinned files',
+			alwaysShowPinnedDescription: 'Show pinned files even when scrolling or changing modes',
+		},
+
 		layoutSettings: {
 			minWidth: '卡片最小宽度',
 			minWidthDescription: (min: number, max: number) => `设置卡片的最小宽度（${min}-${max}px）`,
@@ -899,6 +917,8 @@ export const zhCN = {
 		filesSelected: (count: number) => `已选择 ${count} 个文件`,
 		selectedFiles: (count: number) => `已选择：${count} 个文件`,
 		addTag: '添加标签',
+		pin: '置顶',
+		star: '收藏',
 		move: '移动',
 		delete: '删除',
 		clearSelection: '清除选择',
@@ -924,6 +944,11 @@ export const zhCN = {
 		deleteConfirm: (count: number) => `删除 ${count} 个文件？\n\n此操作无法撤消。`,
 		deleteFileFailed: (filepath: string) => `删除文件失败：${filepath}`,
 		filesDeleted: (count: number) => `已删除 ${count} 个文件`,
+		filesPinned: (count: number) => `已置顶 ${count} 个文件`,
+		filesUnpinned: (count: number) => `已取消置顶 ${count} 个文件`,
+		filesStarred: (count: number) => `已收藏 ${count} 个文件`,
+		filesUnstarred: (count: number) => `已取消收藏 ${count} 个文件`,
+		bookmarksNotAvailable: '书签插件不可用',
 	},
 
 	// Filter UI

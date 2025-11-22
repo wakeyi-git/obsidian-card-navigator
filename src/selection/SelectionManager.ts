@@ -1,4 +1,4 @@
-import { App, Notice, TFile } from 'obsidian';
+import { App, Notice, TFile, setIcon } from 'obsidian';
 import { DebugLogger } from '../utils/DebugLogger';
 import { CardNavigatorSettings } from '../types';
 import { TextInputModal } from '../ui/modals/TextInputModal';
@@ -25,12 +25,16 @@ export class SelectionManager {
     private allFiles: TFile[];
     private lastSelectedIndex: number;
     private logger: DebugLogger;
+    private getSettings: () => CardNavigatorSettings;
+    private onRefresh?: () => Promise<void>;
 
-    constructor(app: App, getSettings: () => CardNavigatorSettings) {
+    constructor(app: App, getSettings: () => CardNavigatorSettings, onRefresh?: () => Promise<void>) {
         this.app = app;
         this.selected = new Set();
         this.allFiles = [];
         this.lastSelectedIndex = -1;
+        this.getSettings = getSettings;
+        this.onRefresh = onRefresh;
         // ✅ 함수를 전달하여 항상 최신 settings를 참조
         this.logger = new DebugLogger(getSettings);
     }
@@ -196,18 +200,55 @@ export class SelectionManager {
     }
 
     /**
-     * 일괄 작업 버튼들을 생성합니다
-     * 
+     * 일괄 작업 버튼들을 생성합니다 (클리커블 아이콘)
+     *
      * ⭐ 버그 수정 (2025-11-20):
      * native prompt 대신 Obsidian Modal 사용
+     *
+     * ⭐ UI 개선 (2025-11-22):
+     * 버튼을 클리커블 아이콘으로 변경하여 공간 절약
      */
     private createBatchActionButtons(container: HTMLElement): void {
         const buttonContainer = container.createDiv({ cls: 'batch-actions'});
 
-        const addTagBtn = buttonContainer.createEl('button', {
-            text: t().selection.addTag,
-            cls: 'batch-action-btn'
+        // Pin action
+        const pinBtn = buttonContainer.createEl('div', {
+            cls: 'clickable-icon batch-action-icon',
+            attr: {
+                'aria-label': t().selection.pin
+            }
         });
+        setIcon(pinBtn, 'pin');
+        pinBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.logger.debug('Selection', 'Pin button clicked');
+            this.batchPin();
+        });
+
+        // Star action
+        const starBtn = buttonContainer.createEl('div', {
+            cls: 'clickable-icon batch-action-icon',
+            attr: {
+                'aria-label': t().selection.star
+            }
+        });
+        setIcon(starBtn, 'star');
+        starBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.logger.debug('Selection', 'Star button clicked');
+            this.batchStar();
+        });
+
+        // Add tag action
+        const addTagBtn = buttonContainer.createEl('div', {
+            cls: 'clickable-icon batch-action-icon',
+            attr: {
+                'aria-label': t().selection.addTag
+            }
+        });
+        setIcon(addTagBtn, 'tag');
         addTagBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -215,10 +256,14 @@ export class SelectionManager {
             this.batchAddTag();
         });
 
-        const moveBtn = buttonContainer.createEl('button', {
-            text: t().selection.move,
-            cls: 'batch-action-btn'
+        // Move action
+        const moveBtn = buttonContainer.createEl('div', {
+            cls: 'clickable-icon batch-action-icon',
+            attr: {
+                'aria-label': t().selection.move
+            }
         });
+        setIcon(moveBtn, 'folder-input');
         moveBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -226,10 +271,14 @@ export class SelectionManager {
             this.batchMove();
         });
 
-        const deleteBtn = buttonContainer.createEl('button', {
-            text: t().selection.delete,
-            cls: 'batch-action-btn batch-action-danger'
+        // Delete action
+        const deleteBtn = buttonContainer.createEl('div', {
+            cls: 'clickable-icon batch-action-icon batch-action-danger',
+            attr: {
+                'aria-label': t().selection.delete
+            }
         });
+        setIcon(deleteBtn, 'trash');
         deleteBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -237,10 +286,14 @@ export class SelectionManager {
             this.batchDelete();
         });
 
-        const clearBtn = buttonContainer.createEl('button', {
-            text: t().selection.clearSelection,
-            cls: 'batch-action-btn'
+        // Clear selection action
+        const clearBtn = buttonContainer.createEl('div', {
+            cls: 'clickable-icon batch-action-icon',
+            attr: {
+                'aria-label': t().selection.clearSelection
+            }
         });
+        setIcon(clearBtn, 'x');
         clearBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -407,8 +460,111 @@ export class SelectionManager {
     }
 
     /**
+     * 선택된 모든 파일을 일괄 핀 설정/해제합니다
+     */
+    private async batchPin(): Promise<void> {
+        const settings = this.getSettings();
+        const pinnedFiles = settings.pinnedFiles || [];
+
+        // 선택된 파일 중 핀되지 않은 파일이 하나라도 있으면 핀 추가, 모두 핀되어 있으면 핀 제거
+        const allPinned = Array.from(this.selected).every(file => pinnedFiles.includes(file.path));
+
+        let successCount = 0;
+
+        if (allPinned) {
+            // 모두 핀되어 있으면 핀 제거
+            for (const file of this.selected) {
+                const index = pinnedFiles.indexOf(file.path);
+                if (index > -1) {
+                    pinnedFiles.splice(index, 1);
+                    successCount++;
+                }
+            }
+            new Notice(t().selection.filesUnpinned(successCount));
+        } else {
+            // 하나라도 핀되지 않았으면 모두 핀 추가
+            for (const file of this.selected) {
+                if (!pinnedFiles.includes(file.path)) {
+                    pinnedFiles.push(file.path);
+                    successCount++;
+                }
+            }
+            new Notice(t().selection.filesPinned(successCount));
+        }
+
+        settings.pinnedFiles = pinnedFiles;
+
+        // Save settings and refresh view
+        if (this.onRefresh) {
+            await this.onRefresh();
+        }
+
+        this.clearSelection();
+    }
+
+    /**
+     * 선택된 모든 파일을 일괄 즐겨찾기 추가/제거합니다
+     */
+    private async batchStar(): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const bookmarks = (this.app as any).internalPlugins?.plugins?.bookmarks;
+        if (!bookmarks?.instance) {
+            new Notice(t().selection.bookmarksNotAvailable);
+            return;
+        }
+
+        const bookmarkPlugin = bookmarks.instance;
+
+        // 선택된 파일 중 즐겨찾기되지 않은 파일이 하나라도 있으면 추가, 모두 즐겨찾기되어 있으면 제거
+        const selectedFiles = Array.from(this.selected);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const allStarred = selectedFiles.every(file =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            bookmarkPlugin.items?.some((item: any) =>
+                item.type === 'file' && item.path === file.path
+            )
+        );
+
+        let successCount = 0;
+
+        if (allStarred) {
+            // 모두 즐겨찾기되어 있으면 제거
+            for (const file of selectedFiles) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const existingBookmark = bookmarkPlugin.items?.find((item: any) =>
+                    item.type === 'file' && item.path === file.path
+                );
+                if (existingBookmark) {
+                    bookmarkPlugin.removeItem(existingBookmark);
+                    successCount++;
+                }
+            }
+            new Notice(t().selection.filesUnstarred(successCount));
+        } else {
+            // 하나라도 즐겨찾기되지 않았으면 모두 추가
+            for (const file of selectedFiles) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const existingBookmark = bookmarkPlugin.items?.find((item: any) =>
+                    item.type === 'file' && item.path === file.path
+                );
+                if (!existingBookmark) {
+                    bookmarkPlugin.addItem({
+                        type: 'file',
+                        path: file.path,
+                        title: file.basename
+                    });
+                    successCount++;
+                }
+            }
+            new Notice(t().selection.filesStarred(successCount));
+        }
+
+        this.clearSelection();
+    }
+
+    /**
      * 선택된 파일 목록을 반환합니다
-     * 
+     *
      * @returns 선택된 파일들의 배열
      */
     getSelectedFiles(): TFile[] {

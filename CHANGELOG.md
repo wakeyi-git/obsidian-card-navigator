@@ -1,3 +1,81 @@
+## [1.3.0] - 2025-11-23
+
+### Added
+
+#### Pin Feature Enhancement
+- **Batch Pin Operations**: Multi-select files and pin/unpin them all at once
+  - Added pin button to batch action toolbar
+  - Toggle logic: if all selected files are pinned → unpin all, otherwise → pin all
+  - Success notifications with count
+  - Automatic view refresh after operation
+
+#### Batch Star (Bookmark) Operations
+- **Multi-select Bookmarking**: Bulk add/remove bookmarks for selected files
+  - Added star button to batch action toolbar
+  - Integrates with Obsidian's internal bookmark plugin
+  - Toggle logic: if all starred → unstar all, otherwise → star all
+  - Graceful handling when bookmark plugin is unavailable
+
+#### Multi-Sort Functionality
+- **Advanced Multi-level Sorting**: Sort files by multiple criteria in sequence
+  - Configure up to 5 sort levels with drag-and-drop reordering
+  - Each level can use different criteria (name, date, size, property)
+  - Visual modal for easy configuration
+  - Enable/disable multi-sort from toolbar
+  - Persistent sort configuration in settings
+
+#### Always Show Pinned Files
+- **Persistent Pin Display**: Option to always show pinned files regardless of scroll position
+  - New setting: "Always show pinned files"
+  - Pinned files remain visible even when scrolling out of viewport
+  - Works with viewport optimization for better performance
+
+### Changed
+
+#### UI Improvements
+- **Icon-based Batch Actions**: Replaced text buttons with clickable icons
+  - Cleaner, more compact interface
+  - Saves horizontal space in batch action bar
+  - Uses Lucide icons: pin, star, tag, folder-input, trash, x
+  - Maintains full accessibility with aria-labels
+
+- **Selected Card Text Visibility**: Fixed text readability in selected cards
+  - Explicitly set text color to `var(--text-normal)` for all sections
+  - Works correctly in both light and dark themes
+  - Prevents white-on-white or black-on-black text issues
+
+#### Viewport Rendering Fixes
+- **Placeholder-to-Card Rendering**: Fixed hover actions not appearing with many files
+  - Refactored `renderPlaceholder` to render directly into placeholder element
+  - Eliminated nested card-item structure that caused hover action issues
+  - Created dedicated `addHoverActionsToPlaceholder` method
+
+- **Layout Consistency**: Fixed height mismatch between placeholders and cards
+  - Mode-specific height strategies:
+    - Vertical mode: fixed height for layout stability
+    - Horizontal mode: flexible height (100%) to fill container
+  - Prevents overlap and layout shift during rendering
+
+- **Pinned Card Borders**: Fixed double border issue in viewport mode
+  - Border only shows on rendered cards, not placeholders
+  - CSS selectors: `:not(.card-placeholder)` and `.card-rendered`
+
+### Fixed
+- Hover actions now appear correctly in both viewport-active and viewport-inactive scenarios
+- Pinned card visual indicators no longer overlap
+- Multi-select UI no longer breaks with many action buttons
+- Text in selected cards remains readable in all themes
+
+### Internationalization
+- Added translations for batch pin/star operations (Korean, English, Chinese, Japanese)
+- Added pin settings translations (all languages)
+- New translation keys:
+  - `selection.pin`, `selection.star`
+  - `selection.filesPinned()`, `selection.filesUnpinned()`
+  - `selection.filesStarred()`, `selection.filesUnstarred()`
+  - `selection.bookmarksNotAvailable`
+  - `settingsTab.pinSettings.*`
+
 ## [1.2.0] - 2025-11-22
 
 ### Added

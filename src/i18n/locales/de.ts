@@ -244,6 +244,10 @@ export const de = {
 		modeToggleTagToSpecific: 'Zu spezifischem Tag-Modus wechseln',
 		modeToggleTagToActive: 'Zu aktivem Datei-Tag-Modus wechseln',
 		clickToSelectFolderTag: 'Klicken, um Ordner/Tag auszuwählen',
+		configureMultiSort: 'Mehrstufige Sortierung konfigurieren',
+		multiSortModalDescription: 'Ziehen und Ablegen, um die Sortierebenen neu anzuordnen. Dateien werden zuerst nach Ebene 1, dann nach Ebene 2 usw. sortiert.',
+		sortLevel: (level: number) => `Ebene ${level}`,
+		disableMultiSort: 'Mehrstufige Sortierung deaktivieren',
 		sortOptions: {
 			nameAsc: 'Dateiname (A-Z)',
 			nameDesc: 'Dateiname (Z-A)',
@@ -253,6 +257,14 @@ export const de = {
 			createdAsc: 'Erstellungsdatum (Älteste)',
 			sizeDesc: 'Dateigröße (Größte)',
 			sizeAsc: 'Dateigröße (Kleinste)',
+			multiSort: 'Mehrstufige Sortierung',
+		},
+		hoverActions: {
+			pin: 'Anheften',
+			star: 'Favorit',
+			tag: 'Tag hinzufügen',
+			link: 'Link kopieren',
+			delete: 'Löschen',
 		},
 	},
 
@@ -692,6 +704,11 @@ export const de = {
 				or: 'ODER (beliebiges Tag)',
 				and: 'UND (alle Tags)',
 			},
+		},
+		pinSettings: {
+			title: 'Pin Settings',
+			alwaysShowPinned: 'Always show pinned files',
+			alwaysShowPinnedDescription: 'Show pinned files even when scrolling or changing modes',
 		},
 		layoutSettings: {
 			minWidth: 'Karten-Mindestbreite',

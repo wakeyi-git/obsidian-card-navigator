@@ -237,20 +237,18 @@
 	font-size: var(--card-navigator-font-size-normal, 14px);
 	border: var(--card-navigator-border-width-normal, 1px) solid var(--card-navigator-border-color-normal, var(--background-modifier-border));
 	border-radius: var(--card-navigator-border-radius-normal, 5px);
-	
+
 	/* 기본 레이아웃 */
 	cursor: pointer;
 	transition: all 0.2s ease;
-	overflow: hidden;
+	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
-	
+
 	/* ⭐ Phase 3 개선 (2025-11-14): 카드 크기 제약 */
-	/* min-height: 0 - 그리드 오버플로우 방지 */
 	min-width: 0;
-	min-height: 0;
 	/* ⭐ max 값은 모드별로 CSS 클래스에서 적용 */
-	/* ⭐ height: 100% 제거 - grid-auto-rows가 높이 관리 */
+	/* ⭐ height는 모드별로 다르게 적용 */
 	
 	/* ⭐ 버그 수정 2025-11-14: 포커스 문제 해결 */
 	user-select: none; /* 텍스트 선택 방지 */
@@ -261,13 +259,15 @@
 	-webkit-tap-highlight-color: transparent; /* 모바일 터치 하이라이트 제거 */
 }
 
-/* ⭐ 세로 모드: max-height만 적용 (너비는 그리드가 결정) */
+/* ⭐ 세로 모드: 고정 높이 사용 (레이아웃 시프트 방지) */
 .card-navigator-cards.vertical-mode .card-item {
+	height: var(--card-min-height, 200px);
 	max-height: var(--card-max-height, 300px);
 }
 
-/* ⭐ 가로 모드: max-width만 적용 (높이는 그리드가 결정) */
+/* ⭐ 가로 모드: 그리드가 높이 관리, max-width만 적용 */
 .card-navigator-cards.horizontal-mode .card-item {
+	height: 100%;
 	max-width: var(--card-max-width, 400px);
 }
 
@@ -787,37 +787,33 @@
 	gap: 6px;
 }
 
-/* 일괄 작업 버튼 */
-.batch-action-btn {
-	padding: 6px 12px;
-	font-size: 0.85em;
-	background: var(--background-primary-alt);
-	color: var(--text-normal);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 4px;
+/* 일괄 작업 아이콘 */
+.batch-action-icon {
+	padding: 6px;
 	cursor: pointer;
 	transition: all 0.2s ease;
-	white-space: nowrap;
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
-.batch-action-btn:hover {
+.batch-action-icon:hover {
 	background: var(--background-modifier-hover);
-	border-color: var(--interactive-accent);
 	color: var(--interactive-accent);
 }
 
-.batch-action-btn:active {
+.batch-action-icon:active {
 	background: var(--background-modifier-active-hover);
-	transform: scale(0.98);
+	transform: scale(0.95);
 }
 
-/* 위험한 작업 버튼 (삭제 등) */
+/* 위험한 작업 아이콘 (삭제 등) */
 .batch-action-danger {
 	color: var(--text-error);
 }
 
 .batch-action-danger:hover {
-	border-color: var(--text-error);
 	background: var(--background-modifier-error);
 	color: var(--text-error);
 }
@@ -836,7 +832,7 @@
 		flex-wrap: wrap;
 	}
 	
-	.batch-action-btn {
+	.batch-action-icon {
 		flex: 0 0 auto;
 	}
 }
@@ -2339,55 +2335,27 @@ button:focus-visible {
 	font-weight: 500;
 }
 
-/* 일괄 작업 버튼 컨테이너 */
-.batch-actions {
-	display: flex;
-	gap: 6px;
-	align-items: center;
-}
-
-/* 일괄 작업 버튼 */
-.batch-action-btn {
-	padding: 4px 12px;
-	font-size: 0.85em;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 4px;
-	background: var(--interactive-normal);
-	color: var(--text-normal);
-	cursor: pointer;
-	transition: all 0.2s ease;
-}
-
-/* 일괄 작업 버튼 호버 */
-.batch-action-btn:hover {
-	background: var(--interactive-hover);
-	border-color: var(--interactive-accent);
-}
-
-/* 일괄 작업 버튼 활성 */
-.batch-action-btn:active {
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-	transform: translateY(1px);
-}
-
-/* 위험한 작업 버튼 (삭제 등) */
-.batch-action-danger {
-	border-color: var(--background-modifier-error);
-	color: var(--text-error);
-}
-
-/* 위험한 작업 버튼 호버 */
-.batch-action-danger:hover {
-	background: var(--background-modifier-error);
-	color: var(--text-on-accent);
-}
+/* 중복 스타일 제거됨 - 상단의 .batch-action-icon 스타일 참조 */
 
 /* 선택된 카드 스타일 */
 .card-navigator-cards .card-item.selected {
 	border: 2px solid var(--interactive-accent);
 	box-shadow: 0 0 0 3px var(--interactive-accent-hover);
 	background: var(--background-secondary);
+}
+
+/* 선택된 카드의 텍스트 가시성 보장 */
+.card-navigator-cards .card-item.selected .card-header,
+.card-navigator-cards .card-item.selected .card-body,
+.card-navigator-cards .card-item.selected .card-footer {
+	color: var(--text-normal);
+}
+
+/* 선택된 카드 내부의 모든 텍스트 요소 */
+.card-navigator-cards .card-item.selected .card-header *,
+.card-navigator-cards .card-item.selected .card-body *,
+.card-navigator-cards .card-item.selected .card-footer * {
+	color: inherit;
 }
 
 /* 선택된 카드 호버 */
@@ -2638,4 +2606,294 @@ button:focus-visible {
 .save-search-buttons button:not(.mod-cta):hover {
 	background: var(--background-modifier-hover);
 	border-color: var(--text-muted);
+}
+
+/* =============================================================================
+   ⭐ Card Hover Actions - Phase 1 Feature
+   Quick action buttons that appear when hovering over a card
+   ============================================================================= */
+
+/* Hover actions container */
+.card-hover-actions {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	display: none;
+	gap: 4px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 4px;
+	box-shadow: 0 2px 8px var(--cn-shadow-md);
+	z-index: 10;
+}
+
+/* Show hover actions on card hover */
+.card-item:hover .card-hover-actions {
+	display: flex;
+}
+
+/* Individual action button - uses clickable-icon class from Obsidian */
+.card-hover-action-btn {
+	flex-shrink: 0;
+}
+
+/* Pinned state - fill the pin icon */
+.card-hover-action-btn.is-pinned {
+	color: var(--text-accent);
+}
+
+.card-hover-action-btn.is-pinned svg {
+	fill: var(--text-accent);
+	stroke: var(--text-accent);
+}
+
+/* Pinned card visual indicator - only for rendered cards */
+.card-item.is-pinned-card:not(.card-placeholder),
+.card-item.is-pinned-card.card-rendered {
+	border-top: 3px solid var(--text-accent) !important;
+	border-top-style: solid !important;
+}
+
+/* Alternative selector using data attribute for higher specificity - only for rendered cards */
+.card-item[data-pinned="true"]:not(.card-placeholder),
+.card-item[data-pinned="true"].card-rendered {
+	border-top: 3px solid var(--text-accent) !important;
+	border-top-style: solid !important;
+}
+
+/* Starred (bookmarked) state - fill the star icon */
+.card-hover-action-btn.is-starred {
+	color: var(--text-accent);
+}
+
+.card-hover-action-btn.is-starred svg {
+	fill: var(--text-accent);
+	stroke: var(--text-accent);
+}
+
+/* Special styling for delete button */
+.card-hover-action-btn.delete-action:hover {
+	color: var(--text-error);
+}
+
+/* Card item needs relative positioning for absolute hover actions */
+.card-item {
+	position: relative;
+}
+
+/* =============================================================================
+   ⭐ Multi-level Sort Settings UI
+   ============================================================================= */
+
+.card-navigator-multi-sort-levels {
+	margin-top: 16px;
+	padding: 16px;
+	background: var(--background-secondary);
+	border-radius: 8px;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.card-navigator-multi-sort-header {
+	margin: 0 0 12px 0;
+	font-size: 1.1em;
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.card-navigator-sort-level {
+	margin-bottom: 16px;
+	padding: 12px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+}
+
+.card-navigator-sort-level:last-of-type {
+	margin-bottom: 0;
+}
+
+.card-navigator-sort-level-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 8px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.card-navigator-sort-level-title {
+	font-weight: 600;
+	color: var(--text-accent);
+}
+
+.card-navigator-sort-level-delete {
+	padding: 4px 12px;
+	font-size: 0.9em;
+	color: var(--text-error);
+	background: transparent;
+	border: 1px solid var(--text-error);
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.card-navigator-sort-level-delete:hover {
+	background: var(--background-modifier-error);
+	color: var(--text-error);
+}
+
+/* =====================================================
+   Multi-Sort Modal Styles
+   ===================================================== */
+
+.multi-sort-modal-description {
+	margin-bottom: 20px;
+	color: var(--text-muted);
+	line-height: 1.5;
+}
+
+.multi-sort-levels-container {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 20px;
+	min-height: 100px;
+}
+
+.multi-sort-level-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	cursor: move;
+	transition: all 0.15s ease;
+}
+
+.multi-sort-level-item:hover {
+	background: var(--background-secondary-alt);
+	border-color: var(--interactive-accent);
+}
+
+.multi-sort-level-item.dragging {
+	opacity: 0.5;
+	cursor: grabbing;
+}
+
+.multi-sort-level-item.drag-over {
+	border-color: var(--interactive-accent);
+	border-width: 2px;
+	background: var(--background-modifier-hover);
+}
+
+.multi-sort-drag-handle {
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+	color: var(--text-muted);
+	cursor: grab;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.multi-sort-drag-handle:active {
+	cursor: grabbing;
+}
+
+.multi-sort-level-number {
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-radius: 50%;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.multi-sort-level-content {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.multi-sort-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.multi-sort-field select,
+.multi-sort-property-input {
+	padding: 6px 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 14px;
+	min-width: 150px;
+}
+
+.multi-sort-property-input {
+	min-width: 180px;
+}
+
+.multi-sort-field select:focus,
+.multi-sort-property-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+}
+
+.multi-sort-delete-btn {
+	flex-shrink: 0;
+	margin-left: 4px;
+}
+
+.multi-sort-delete-btn:hover {
+	color: var(--text-error);
+}
+
+.multi-sort-modal-buttons {
+	display: flex;
+	gap: 10px;
+	justify-content: flex-end;
+	margin-top: 20px;
+	padding-top: 15px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.multi-sort-modal-buttons button {
+	padding: 8px 20px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	cursor: pointer;
+	font-size: 14px;
+	transition: all 0.15s ease;
+}
+
+.multi-sort-modal-buttons button:hover {
+	background: var(--background-secondary);
+	border-color: var(--interactive-accent);
+}
+
+.multi-sort-modal-buttons button.mod-cta {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.multi-sort-modal-buttons button.mod-cta:hover {
+	background: var(--interactive-accent-hover);
+	border-color: var(--interactive-accent-hover);
 }

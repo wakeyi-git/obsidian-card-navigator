@@ -244,6 +244,10 @@ export const fr = {
 		modeToggleTagToSpecific: 'Basculer vers le mode étiquette spécifique',
 		modeToggleTagToActive: 'Basculer vers le mode étiquette de fichier actif',
 		clickToSelectFolderTag: 'Cliquer pour sélectionner dossier/étiquette',
+		configureMultiSort: 'Configurer le tri multiniveau',
+		multiSortModalDescription: 'Glissez-déposez pour réorganiser les niveaux de tri. Les fichiers seront triés d\'abord par Niveau 1, puis par Niveau 2, et ainsi de suite.',
+		sortLevel: (level: number) => `Niveau ${level}`,
+		disableMultiSort: 'Désactiver le tri multiniveau',
 		sortOptions: {
 			nameAsc: 'Nom de fichier (A-Z)',
 			nameDesc: 'Nom de fichier (Z-A)',
@@ -253,6 +257,14 @@ export const fr = {
 			createdAsc: 'Date de création (Plus ancien)',
 			sizeDesc: 'Taille de fichier (Plus grand)',
 			sizeAsc: 'Taille de fichier (Plus petit)',
+			multiSort: 'Tri multiniveau',
+		},
+		hoverActions: {
+			pin: 'Épingler',
+			star: 'Favori',
+			tag: 'Ajouter une étiquette',
+			link: 'Copier le lien',
+			delete: 'Supprimer',
 		},
 	},
 
@@ -693,6 +705,12 @@ export const fr = {
 				and: 'ET (toutes les étiquettes)',
 			},
 		},
+		pinSettings: {
+			title: 'Pin Settings',
+			alwaysShowPinned: 'Always show pinned files',
+			alwaysShowPinnedDescription: 'Show pinned files even when scrolling or changing modes',
+		},
+
 		layoutSettings: {
 			minWidth: 'Largeur Minimale de Carte',
 			minWidthDescription: (min: number, max: number) => `Définir la largeur minimale des cartes (${min}-${max}px)`,

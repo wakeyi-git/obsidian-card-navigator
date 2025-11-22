@@ -4,6 +4,7 @@ import CardNavigatorPlugin from '../main';
 import { CardNavigatorView } from '../view';
 import { FolderSuggestModal } from './FolderSuggestModal';
 import { TagSuggestModal } from './TagSuggestModal';
+import { MultiSortModal } from './MultiSortModal';
 import { DebugLogger } from '../utils/DebugLogger';
 import { t } from '../i18n';
 
@@ -24,6 +25,7 @@ export class Toolbar {
 	private modeToggleIcon: HTMLElement | null = null;
 	private searchInputContainer: HTMLElement | null = null;
 	private fileCountElement: HTMLElement | null = null;
+	private sortButton: HTMLElement | null = null;
 
 	constructor(app: App, view: CardNavigatorView, plugin: CardNavigatorPlugin) {
 		this.app = app;
@@ -83,17 +85,18 @@ export class Toolbar {
 			await this.onModeSwitch();
 		});
 
-		const sortButton = iconGroup.createEl('div', {
+		this.sortButton = iconGroup.createEl('div', {
 			cls: 'clickable-icon',
 			attr: { 'aria-label': t().toolbar.sortByLabel }
 		});
-		setIcon(sortButton, 'arrow-up-down');
-		
-		sortButton.addEventListener('click', (event) => {
+		setIcon(this.sortButton, 'arrow-up-down');
+
+		this.sortButton.addEventListener('click', (event) => {
 			this.showSortMenu(event);
 		});
 
 		this.updateModeToggleIcon();
+		this.updateSortButton();
 		
 		const searchButton = iconGroup.createEl('div', {
 			cls: 'clickable-icon',
@@ -372,41 +375,109 @@ export class Toolbar {
 	 * 정렬 메뉴 표시
 	 */
 	private showSortMenu(event: MouseEvent): void {
-		const settings = this.plugin.settingsManager.getSettings();
 		const menu = new Menu();
 
-		const sortOptions: Array<{
-			label: string;
-			criteria: SortCriteria;
-			order: SortOrder;
-		}> = [
-			{ label: t().toolbar.sortOptions.nameAsc, criteria: 'name', order: 'asc' },
-			{ label: t().toolbar.sortOptions.nameDesc, criteria: 'name', order: 'desc' },
-			{ label: t().toolbar.sortOptions.modifiedDesc, criteria: 'modified', order: 'desc' },
-			{ label: t().toolbar.sortOptions.modifiedAsc, criteria: 'modified', order: 'asc' },
-			{ label: t().toolbar.sortOptions.createdDesc, criteria: 'created', order: 'desc' },
-			{ label: t().toolbar.sortOptions.createdAsc, criteria: 'created', order: 'asc' },
-			{ label: t().toolbar.sortOptions.sizeDesc, criteria: 'size', order: 'desc' },
-			{ label: t().toolbar.sortOptions.sizeAsc, criteria: 'size', order: 'asc' }
-		];
+		// Get current settings at menu creation time
+		const currentSettings = this.plugin.settingsManager.getSettings();
+		const currentSort = currentSettings.sort;
 
-		sortOptions.forEach(option => {
-			menu.addItem(item => {
-				item.setTitle(option.label);
+		// Multi-sort toggle (unified: toggle + configure)
+		menu.addItem(item => {
+			const isEnabled = currentSort.enableMultiSort || false;
+			item.setTitle(t().toolbar.sortOptions.multiSort);
+			item.setChecked(isEnabled);
 
-				if (settings.sort.criteria === option.criteria &&
-					settings.sort.order === option.order) {
-					item.setIcon('check');
-				}
-				
-				item.onClick(async () => {
-					settings.sort.criteria = option.criteria;
-					settings.sort.order = option.order;
+			item.onClick(async () => {
+				const settings = this.plugin.settingsManager.getSettings();
+				if (!isEnabled) {
+					// Enable and open configuration modal
+					settings.sort.enableMultiSort = true;
+					// Initialize with current sort as first level if no levels exist
+					if (!settings.sort.levels || settings.sort.levels.length === 0) {
+						settings.sort.levels = [{
+							criteria: settings.sort.criteria,
+							order: settings.sort.order,
+							propertyName: settings.sort.propertyName
+						}];
+					}
 					await this.plugin.settingsManager.updateSettings({ sort: settings.sort });
+				}
+				// Always open modal whether enabling or already enabled
+				this.openMultiSortModal();
+			});
+		});
+
+		// Add a separate item to disable multi-sort when it's enabled
+		if (currentSort.enableMultiSort) {
+			menu.addItem(item => {
+				item.setTitle(t().toolbar.disableMultiSort);
+				item.setIcon('x');
+				item.onClick(async () => {
+					const settings = this.plugin.settingsManager.getSettings();
+					settings.sort.enableMultiSort = false;
+					// Keep levels to restore later, don't delete them
+					await this.plugin.settingsManager.updateSettings({ sort: settings.sort });
+					this.updateSortButton();
 					await this.view.refresh();
 				});
 			});
-		});
+		}
+
+		menu.addSeparator();
+
+		// If multi-sort is enabled, show the levels
+		if (currentSort.enableMultiSort && currentSort.levels && currentSort.levels.length > 0) {
+			currentSort.levels.forEach((level, index) => {
+				menu.addItem(item => {
+					const criteriaLabel = this.getCriteriaLabel(level.criteria);
+					const orderLabel = level.order === 'asc' ? '↑' : '↓';
+					const levelLabel = t().toolbar.sortLevel(index + 1);
+					item.setTitle(`${levelLabel}: ${criteriaLabel} ${orderLabel}`);
+					item.setDisabled(true); // Read-only display
+				});
+			});
+		} else {
+			// Show single sort options
+			const sortOptions: Array<{
+				label: string;
+				criteria: SortCriteria;
+				order: SortOrder;
+			}> = [
+				{ label: t().toolbar.sortOptions.nameAsc, criteria: 'name', order: 'asc' },
+				{ label: t().toolbar.sortOptions.nameDesc, criteria: 'name', order: 'desc' },
+				{ label: t().toolbar.sortOptions.modifiedDesc, criteria: 'modified', order: 'desc' },
+				{ label: t().toolbar.sortOptions.modifiedAsc, criteria: 'modified', order: 'asc' },
+				{ label: t().toolbar.sortOptions.createdDesc, criteria: 'created', order: 'desc' },
+				{ label: t().toolbar.sortOptions.createdAsc, criteria: 'created', order: 'asc' },
+				{ label: t().toolbar.sortOptions.sizeDesc, criteria: 'size', order: 'desc' },
+				{ label: t().toolbar.sortOptions.sizeAsc, criteria: 'size', order: 'asc' }
+			];
+
+			sortOptions.forEach(option => {
+				menu.addItem(item => {
+					item.setTitle(option.label);
+
+					// Show check if this option is currently applied (and multi-sort is disabled)
+					const isCurrentOption = !currentSort.enableMultiSort &&
+						currentSort.criteria === option.criteria &&
+						currentSort.order === option.order;
+					item.setChecked(isCurrentOption);
+
+					item.onClick(async () => {
+						// Get fresh settings for update
+						const settings = this.plugin.settingsManager.getSettings();
+						// Disable multi-sort and apply single sort
+						settings.sort.enableMultiSort = false;
+						// Keep levels to restore later, don't delete them
+						settings.sort.criteria = option.criteria;
+						settings.sort.order = option.order;
+						await this.plugin.settingsManager.updateSettings({ sort: settings.sort });
+						this.updateSortButton();
+						await this.view.refresh();
+					});
+				});
+			});
+		}
 
 		menu.showAtMouseEvent(event);
 	}
@@ -514,6 +585,78 @@ export class Toolbar {
 		if (!this.fileCountElement) return;
 
 		this.fileCountElement.setText(t().toolbar.fileCount(displayed, total));
+	}
+
+	/**
+	 * 정렬 버튼 툴팁 업데이트
+	 */
+	public updateSortButton(): void {
+		if (!this.sortButton) return;
+
+		this.sortButton.setAttribute('aria-label', this.getSortDescription());
+	}
+
+	/**
+	 * 현재 정렬 상태를 설명하는 문자열을 반환합니다
+	 */
+	private getSortDescription(): string {
+		const settings = this.plugin.settingsManager.getSettings();
+		const sort = settings.sort;
+
+		if (sort.enableMultiSort && sort.levels && sort.levels.length > 0) {
+			const levelDescriptions = sort.levels.map((level, index) => {
+				const criteriaLabel = this.getCriteriaLabel(level.criteria);
+				const orderLabel = level.order === 'asc' ? '↑' : '↓';
+				return `${index + 1}. ${criteriaLabel} ${orderLabel}`;
+			});
+			return `${t().toolbar.sortByLabel}\n${levelDescriptions.join('\n')}`;
+		} else {
+			const criteriaLabel = this.getCriteriaLabel(sort.criteria);
+			const orderLabel = sort.order === 'asc' ? '↑' : '↓';
+			return `${t().toolbar.sortByLabel}: ${criteriaLabel} ${orderLabel}`;
+		}
+	}
+
+	/**
+	 * 정렬 기준의 라벨을 반환합니다
+	 */
+	private getCriteriaLabel(criteria: SortCriteria): string {
+		const labels: Record<SortCriteria, string> = {
+			'name': t().toolbar.sortOptions.nameAsc.split(' (')[0],
+			'created': t().settingsTab.sortSettings.criteriaOptions.created,
+			'modified': t().settingsTab.sortSettings.criteriaOptions.modified,
+			'size': t().settingsTab.sortSettings.criteriaOptions.size,
+			'property': t().settingsTab.sortSettings.criteriaOptions.property
+		};
+		return labels[criteria] || criteria;
+	}
+
+	/**
+	 * 다단계 정렬 구성 모달을 엽니다
+	 */
+	private openMultiSortModal(): void {
+		const settings = this.plugin.settingsManager.getSettings();
+		const initialLevels = settings.sort.levels || [{
+			criteria: settings.sort.criteria,
+			order: settings.sort.order,
+			propertyName: settings.sort.propertyName
+		}];
+
+		const modal = new MultiSortModal(
+			this.app,
+			this.plugin,
+			initialLevels,
+			async (levels) => {
+				// Get fresh settings for update
+				const currentSettings = this.plugin.settingsManager.getSettings();
+				currentSettings.sort.levels = levels;
+				await this.plugin.settingsManager.updateSettings({ sort: currentSettings.sort });
+				this.updateSortButton();
+				await this.view.refresh();
+			}
+		);
+
+		modal.open();
 	}
 
 	/**

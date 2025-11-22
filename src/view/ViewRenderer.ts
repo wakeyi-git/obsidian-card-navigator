@@ -373,16 +373,17 @@ export class ViewRenderer {
 	
 	/**
 	 * 표시할 파일 목록을 가져옵니다
-	 * 
+	 *
 	 * @returns 파일 배열
-	 * 
+	 *
 	 * @remarks
 	 * 우선순위: 검색 모드 → 태그 모드 → 폴더 모드
 	 * 파일을 가져온 후 정렬을 적용합니다.
+	 * 핀된 파일 항상 표시 옵션이 활성화되어 있으면 핀된 파일을 결과에 추가합니다.
 	 */
 	private async getFilesToDisplay(): Promise<TFile[]> {
 		let files: TFile[];
-		
+
 		if (this.state.hasSearchQuery()) {
 			const allFiles = this.app.vault.getMarkdownFiles();
 			files = await this.searchEngine.search(
@@ -397,8 +398,17 @@ export class ViewRenderer {
 				files = this.folderMode.getFiles();
 			}
 		}
-		
-		return this.sortManager.sort(files, this.settings.sort);
+
+		// 핀된 파일 항상 표시 옵션이 활성화되어 있으면 핀된 파일을 추가
+		if (this.settings.alwaysShowPinnedFiles && this.settings.pinnedFiles && this.settings.pinnedFiles.length > 0) {
+			const allFiles = this.app.vault.getMarkdownFiles();
+			const pinnedFiles = allFiles.filter(file =>
+				this.settings.pinnedFiles?.includes(file.path) && !files.includes(file)
+			);
+			files = [...pinnedFiles, ...files];
+		}
+
+		return this.sortManager.sort(files, this.settings.sort, this.settings.pinnedFiles);
 	}
 	
 	/**
@@ -904,10 +914,11 @@ export class ViewRenderer {
 	
 	/**
 	 * 초기에 활성 카드 주변 카드들을 강제 렌더링
-	 * 
+	 *
 	 * @remarks
 	 * 사용자가 즉시 볼 수 있도록 활성 카드와 그 주변 카드를 먼저 렌더링합니다.
-	 * 
+	 * 핀된 파일 항상 표시 옵션이 활성화되어 있으면 핀된 카드도 함께 렌더링합니다.
+	 *
 	 * @private
 	 */
 	private async renderInitialCards(
@@ -921,19 +932,36 @@ export class ViewRenderer {
 			placeholders.length,
 			activeIndex + halfCount + 1
 		);
-		
+
 		this.logger.debug('View', 'Rendering initial cards', {
 			activeIndex,
 			startIndex,
 			endIndex,
 			count: endIndex - startIndex
 		});
-		
+
+		// 활성 카드 주변 렌더링
 		for (let i = startIndex; i < endIndex; i++) {
 			const placeholder = placeholders[i];
-			
+
 			if (!placeholder.classList.contains('card-rendered')) {
 				await this.cardFactory.renderPlaceholder(placeholder, onFileOpen);
+			}
+		}
+
+		// 핀된 파일 항상 표시 옵션이 활성화되어 있으면 핀된 카드도 모두 렌더링
+		if (this.settings.alwaysShowPinnedFiles && this.settings.pinnedFiles && this.settings.pinnedFiles.length > 0) {
+			this.logger.debug('View', 'Rendering pinned cards', {
+				pinnedCount: this.settings.pinnedFiles.length
+			});
+
+			for (const placeholder of placeholders) {
+				const filePath = placeholder.dataset.filePath;
+				if (filePath && this.settings.pinnedFiles.includes(filePath)) {
+					if (!placeholder.classList.contains('card-rendered')) {
+						await this.cardFactory.renderPlaceholder(placeholder, onFileOpen);
+					}
+				}
 			}
 		}
 	}

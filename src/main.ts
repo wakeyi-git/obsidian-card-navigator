@@ -468,4 +468,15 @@ export default class CardNavigatorPlugin extends Plugin {
 			workspace.revealLeaf(leaf);
 		}
 	}
+
+	/**
+	 * 현재 활성화된 Card Navigator 뷰를 반환합니다
+	 */
+	getView(): CardNavigatorView | null {
+		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR);
+		if (leaves.length > 0 && leaves[0].view instanceof CardNavigatorView) {
+			return leaves[0].view;
+		}
+		return null;
+	}
 }

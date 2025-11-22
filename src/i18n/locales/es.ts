@@ -244,6 +244,10 @@ export const es = {
 		modeToggleTagToSpecific: 'Cambiar a modo especificar etiqueta',
 		modeToggleTagToActive: 'Cambiar a modo etiqueta de archivo activo',
 		clickToSelectFolderTag: 'Clic para seleccionar carpeta/etiqueta',
+		configureMultiSort: 'Configurar ordenamiento multinivel',
+		multiSortModalDescription: 'Arrastre y suelte para reordenar los niveles de ordenamiento. Los archivos se ordenarán primero por Nivel 1, luego por Nivel 2, y así sucesivamente.',
+		sortLevel: (level: number) => `Nivel ${level}`,
+		disableMultiSort: 'Desactivar ordenamiento multinivel',
 		sortOptions: {
 			nameAsc: 'Nombre de archivo (A-Z)',
 			nameDesc: 'Nombre de archivo (Z-A)',
@@ -253,6 +257,14 @@ export const es = {
 			createdAsc: 'Fecha de creación (Más antiguo)',
 			sizeDesc: 'Tamaño de archivo (Mayor)',
 			sizeAsc: 'Tamaño de archivo (Menor)',
+			multiSort: 'Ordenamiento multinivel',
+		},
+		hoverActions: {
+			pin: 'Fijar',
+			star: 'Favorito',
+			tag: 'Añadir etiqueta',
+			link: 'Copiar enlace',
+			delete: 'Eliminar',
 		},
 	},
 
@@ -693,6 +705,12 @@ export const es = {
 				and: 'AND (todas las etiquetas)',
 			},
 		},
+		pinSettings: {
+			title: 'Pin Settings',
+			alwaysShowPinned: 'Always show pinned files',
+			alwaysShowPinnedDescription: 'Show pinned files even when scrolling or changing modes',
+		},
+
 		layoutSettings: {
 			minWidth: 'Ancho Mínimo de Tarjeta',
 			minWidthDescription: (min: number, max: number) => `Establecer el ancho mínimo de las tarjetas (${min}-${max}px)`,

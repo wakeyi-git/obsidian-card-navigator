@@ -1,4 +1,4 @@
-import { TFile, App } from 'obsidian';
+import { TFile, App, setIcon } from 'obsidian';
 import { CardRenderer } from '../card/CardRenderer';
 import { CardDataExtractor } from '../card/CardData';
 import { CardData, CardSettings, CardSectionStyleSettings } from '../types';
@@ -6,6 +6,7 @@ import { ViewEventHandler } from './ViewEventHandler';
 import { ICardView } from '../interfaces/ICardView';
 import { isValidFile } from '../utils/typeGuards';
 import { DebugLogger } from '../utils/DebugLogger';
+import { t } from '../i18n';
 
 /**
  * 카드를 생성하는 팩토리 클래스
@@ -296,20 +297,23 @@ export class CardFactory {
 		const card = container.createEl('div', {
 			cls: 'card-item card-placeholder'
 		});
-		
+
 		// 활성 카드 표시
 		if (isActive) {
 			card.addClass('active');
 		}
-		
+
+		// 핀된 카드 표시
+		const isPinned = this.settings.pinnedFiles?.includes(file.path) || false;
+		if (isPinned) {
+			card.addClass('is-pinned-card');
+			card.setAttribute('data-pinned', 'true');
+		}
+
 		// 파일 정보 저장 (나중에 렌더링할 때 사용)
 		card.dataset.filePath = file.path;
 		card.dataset.fileName = file.basename;
-		
-		// 레이아웃 공간 확보
-		const PLACEHOLDER_MIN_HEIGHT = 200; // VIEWPORT.PLACEHOLDER_MIN_HEIGHT 사용
-		card.style.minHeight = `${PLACEHOLDER_MIN_HEIGHT}px`;
-		
+
 		// tabindex 설정 (키보드 네비게이션용)
 		card.setAttribute('tabindex', '-1');
 		
@@ -375,10 +379,25 @@ export class CardFactory {
 		
 		// 플레이스홀더 내부에 카드 내용 추가
 		placeholder.empty(); // 기존 내용 제거
-		
-		// ⭐ 중요: CardRenderer를 사용하지 않고 직접 생성하므로
-		// 섹션별 스타일을 명시적으로 적용해야 함
-		
+
+		// 플레이스홀더 클래스 제거하고 렌더링 완료 표시
+		placeholder.removeClass('card-placeholder');
+		placeholder.addClass('card-rendered');
+
+		// ⚠️ 중요: 플레이스홀더 관련 인라인 스타일 제거
+		placeholder.style.display = '';
+		placeholder.style.flexDirection = '';
+		placeholder.style.alignItems = '';
+		placeholder.style.justifyContent = '';
+
+		// ⭐ 직접 섹션을 렌더링하여 placeholder 내부에 추가
+		// CardRenderer.renderCard는 새로운 card-item을 생성하므로 사용하지 않음
+
+		// Add hover actions if enabled
+		if (this.settings.enableCardHoverActions !== false) {
+			this.addHoverActionsToPlaceholder(placeholder, file);
+		}
+
 		// 헤더 생성 및 스타일 적용
 		if (cardData.header.visible) {
 			const headerEl = placeholder.createEl('div', { cls: 'card-header' });
@@ -418,10 +437,9 @@ export class CardFactory {
 		// 플레이스홀더 클래스 제거하고 렌더링 완료 표시
 		placeholder.removeClass('card-placeholder');
 		placeholder.addClass('card-rendered');
-		
+
 		// ⚠️ 중요: 플레이스홀더 관련 인라인 스타일 제거
-		// minHeight, background, border 등 플레이스홀더에서 설정한 스타일 제거
-		placeholder.style.minHeight = '';
+		// minHeight는 유지 (레이아웃 시프트 방지)
 		// display, flexDirection, alignItems, justifyContent 등도 초기화
 		placeholder.style.display = '';
 		placeholder.style.flexDirection = '';
@@ -441,12 +459,12 @@ export class CardFactory {
 	
 	/**
 	 * 섹션에 스타일을 적용합니다 (CardRenderer의 applySectionStyle 복제)
-	 * 
+	 *
 	 * @remarks
 	 * 헤더: border-bottom만 적용
 	 * 풋터: border-top만 적용
 	 * 바디: 테두리 없음
-	 * 
+	 *
 	 * @private
 	 */
 	private applySectionStyle(
@@ -456,7 +474,7 @@ export class CardFactory {
 	): void {
 		element.style.fontSize = `${style.fontSize}px`;
 		element.style.backgroundColor = style.backgroundColor;
-		
+
 		if (sectionType === 'header') {
 			element.style.borderBottomColor = style.borderColor;
 			element.style.borderBottomWidth = `${style.borderWidth}px`;
@@ -466,5 +484,125 @@ export class CardFactory {
 			element.style.borderTopWidth = `${style.borderWidth}px`;
 			element.style.borderTopStyle = style.borderWidth > 0 ? 'solid' : 'none';
 		}
+	}
+
+	/**
+	 * 플레이스홀더에 호버 액션 버튼을 추가합니다
+	 *
+	 * @private
+	 */
+	private addHoverActionsToPlaceholder(cardEl: HTMLElement, file: TFile): void {
+		const actionsContainer = cardEl.createEl('div', {
+			cls: 'card-hover-actions'
+		});
+
+		// Pin action
+		const pinBtn = actionsContainer.createEl('div', {
+			cls: 'clickable-icon card-hover-action-btn',
+			attr: {
+				'aria-label': t().toolbar.hoverActions.pin
+			}
+		});
+
+		const isPinned = this.settings.pinnedFiles?.includes(file.path) || false;
+		setIcon(pinBtn, 'pin');
+		if (isPinned) {
+			pinBtn.addClass('is-pinned');
+		}
+
+		pinBtn.addEventListener('click', async (e) => {
+			e.stopPropagation();
+			const pinnedFiles = this.settings.pinnedFiles || [];
+			const index = pinnedFiles.indexOf(file.path);
+
+			if (index > -1) {
+				pinnedFiles.splice(index, 1);
+			} else {
+				pinnedFiles.push(file.path);
+			}
+
+			this.settings.pinnedFiles = pinnedFiles;
+
+			if (this.view.plugin) {
+				await this.view.plugin.saveSettings();
+				const view = this.view.plugin.getView();
+				if (view) {
+					await view.refresh();
+				}
+			}
+		});
+
+		// Copy link action
+		const copyLinkBtn = actionsContainer.createEl('div', {
+			cls: 'clickable-icon card-hover-action-btn',
+			attr: {
+				'aria-label': t().toolbar.hoverActions.link
+			}
+		});
+		setIcon(copyLinkBtn, 'link');
+		copyLinkBtn.addEventListener('click', async (e) => {
+			e.stopPropagation();
+			const link = this.app.fileManager.generateMarkdownLink(file, '');
+			await navigator.clipboard.writeText(link);
+		});
+
+		// Star action
+		const starBtn = actionsContainer.createEl('div', {
+			cls: 'clickable-icon card-hover-action-btn',
+			attr: {
+				'aria-label': t().toolbar.hoverActions.star
+			}
+		});
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const bookmarks = (this.app as any).internalPlugins?.plugins?.bookmarks;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const isBookmarked = bookmarks?.instance?.items?.some((item: any) =>
+			item.type === 'file' && item.path === file.path
+		) || false;
+
+		setIcon(starBtn, 'star');
+		if (isBookmarked) {
+			starBtn.addClass('is-starred');
+		}
+
+		starBtn.addEventListener('click', async (e) => {
+			e.stopPropagation();
+			if (bookmarks?.instance) {
+				const bookmarkPlugin = bookmarks.instance;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const existingBookmark = bookmarkPlugin.items?.find((item: any) =>
+					item.type === 'file' && item.path === file.path
+				);
+
+				if (existingBookmark) {
+					bookmarkPlugin.removeItem(existingBookmark);
+					starBtn.removeClass('is-starred');
+				} else {
+					bookmarkPlugin.addItem({
+						type: 'file',
+						path: file.path,
+						title: file.basename
+					});
+					starBtn.addClass('is-starred');
+				}
+			}
+		});
+
+		// Delete action
+		const deleteBtn = actionsContainer.createEl('div', {
+			cls: 'clickable-icon card-hover-action-btn delete-action',
+			attr: {
+				'aria-label': t().toolbar.hoverActions.delete
+			}
+		});
+		setIcon(deleteBtn, 'trash');
+		deleteBtn.addEventListener('click', async (e) => {
+			e.stopPropagation();
+			const confirmed = confirm(`Delete "${file.basename}"?`);
+			if (confirmed) {
+				await this.app.vault.delete(file);
+			}
+		});
 	}
 }

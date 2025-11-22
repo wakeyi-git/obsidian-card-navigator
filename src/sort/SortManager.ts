@@ -29,20 +29,63 @@ export class SortManager {
 
     /**
      * 파일 목록을 정렬합니다
-     * 
+     *
      * @param files - 정렬할 파일 목록
      * @param options - 정렬 옵션
+     * @param pinnedFiles - 핀된 파일 경로 목록 (선택사항)
      * @returns 정렬된 새 배열
      */
-    sort(files: TFile[], options: SortOptions): TFile[] {
+    sort(files: TFile[], options: SortOptions, pinnedFiles?: string[]): TFile[] {
         const sortedFiles = [...files];
 
         sortedFiles.sort((a, b) => {
+            // 핀 우선순위: 핀된 파일이 항상 위에 오도록
+            if (pinnedFiles && pinnedFiles.length > 0) {
+                const aPinned = pinnedFiles.includes(a.path);
+                const bPinned = pinnedFiles.includes(b.path);
+
+                if (aPinned && !bPinned) return -1;
+                if (!aPinned && bPinned) return 1;
+                // 둘 다 핀되었거나 둘 다 안 핀된 경우, 핀 순서대로 정렬
+                if (aPinned && bPinned) {
+                    return pinnedFiles.indexOf(a.path) - pinnedFiles.indexOf(b.path);
+                }
+            }
+
+            // 다단계 정렬이 활성화되어 있고 levels가 정의되어 있으면 다단계 정렬 수행
+            if (options.enableMultiSort && options.levels && options.levels.length > 0) {
+                return this.compareMultiLevel(a, b, options.levels);
+            }
+
+            // 기본 단일 정렬
             const comparison = this.compare(a, b, options);
             return options.order === 'asc' ? comparison : -comparison;
         });
 
         return sortedFiles;
+    }
+
+    /**
+     * 다단계 정렬을 수행합니다
+     *
+     * @param a - 첫 번째 파일
+     * @param b - 두 번째 파일
+     * @param levels - 정렬 레벨 배열
+     * @returns 비교 결과
+     */
+    private compareMultiLevel(a: TFile, b: TFile, levels: import('../types').SortLevel[]): number {
+        for (const level of levels) {
+            const comparison = this.compare(a, b, level);
+            const result = level.order === 'asc' ? comparison : -comparison;
+
+            // 0이 아니면 (같지 않으면) 해당 레벨의 결과를 반환
+            if (result !== 0) {
+                return result;
+            }
+        }
+
+        // 모든 레벨에서 같으면 0 반환
+        return 0;
     }
 
     /**

@@ -24,7 +24,8 @@ export class ViewportManager {
     private observer: IntersectionObserver | null = null;
     private visibleCards = new Set<HTMLElement>();
     private pendingRenders = new Map<HTMLElement, boolean>();
-    
+    private settings: CardNavigatorSettings;
+
     /**
      * @param container - 관찰할 컨테이너 요소
      * @param onCardVisible - 카드가 viewport에 들어올 때 실행할 콜백
@@ -42,6 +43,7 @@ export class ViewportManager {
             threshold?: number;
         }
     ) {
+        this.settings = settings;
         this.logger = new DebugLogger(() => settings);
         this.initialize(options);
     }
@@ -152,18 +154,29 @@ export class ViewportManager {
     
     /**
      * 카드가 viewport에서 나갔을 때 처리
-     * 
+     *
      * @private
      */
     private handleCardHidden(card: HTMLElement): void {
+        // 핀된 파일 항상 표시 옵션이 활성화되어 있고, 이 카드가 핀된 파일이면 숨기지 않음
+        const filePath = card.dataset.filePath;
+        if (this.settings.alwaysShowPinnedFiles &&
+            filePath &&
+            this.settings.pinnedFiles?.includes(filePath)) {
+            this.logger.debug('View', 'Pinned card - keeping visible', {
+                path: filePath
+            });
+            return;
+        }
+
         this.visibleCards.delete(card);
-        
+
         if (this.onCardHidden) {
             this.onCardHidden(card);
         }
-        
+
         this.logger.debug('View', 'Card hidden', {
-        path: card.dataset.filePath
+            path: card.dataset.filePath
         });
     }
     

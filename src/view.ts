@@ -100,6 +100,13 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		return this.toolbar;
 	}
 
+	/**
+	 * Plugin 인스턴스에 접근할 수 있는 getter
+	 */
+	public getPlugin(): CardNavigatorPlugin {
+		return this.plugin;
+	}
+
 	constructor(leaf: WorkspaceLeaf, plugin: CardNavigatorPlugin) {
 		super(leaf);
 		
@@ -125,7 +132,14 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		// ✅ 함수를 전달하여 항상 최신 settings를 참조
 		this.contextMenu = new CardContextMenu(this.app, () => this.settings);
 		// ✅ 함수를 전달하여 항상 최신 settings를 참조
-		this.selectionManager = new SelectionManager(this.app, () => this.settings);
+		this.selectionManager = new SelectionManager(
+			this.app,
+			() => this.settings,
+			async () => {
+				await this.plugin.saveSettings();
+				await this.refresh();
+			}
+		);
 		
 		this.eventHandler = new ViewEventHandler(
 			this.app,

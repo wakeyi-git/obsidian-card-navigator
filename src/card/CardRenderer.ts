@@ -1,4 +1,4 @@
-import { App, Component, MarkdownRenderer } from 'obsidian';
+import { App, Component, MarkdownRenderer, setIcon } from 'obsidian';
 import { CardData, CardSection, RenderMode, CardNavigatorSettings } from '../types';
 import { DebugLogger } from '../utils/DebugLogger';
 import { t } from '../i18n';
@@ -10,6 +10,8 @@ import type { SearchInput } from '../search/SearchInput';
 interface ViewWithSearch extends Component {
     searchInput?: SearchInput;
     searchInputContainer?: HTMLElement;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getPlugin?: () => any;
 }
 
 /**
@@ -77,9 +79,21 @@ export class CardRenderer {
         const cardEl = container.createEl('div', {
             cls: 'card-item'
         });
-        
+
         cardEl.setAttribute('data-path', data.file.path);
         cardEl.setAttribute('tabindex', '-1');
+
+        // Add pinned card class if file is pinned
+        const isPinned = this.settings.pinnedFiles?.includes(data.file.path) || false;
+        if (isPinned) {
+            cardEl.addClass('is-pinned-card');
+            cardEl.setAttribute('data-pinned', 'true');
+        }
+
+        // Add hover actions if enabled
+        if (this.settings.enableCardHoverActions !== false) {
+            this.addHoverActions(cardEl, data.file);
+        }
 
         const headerRenderMode = data.cardSettings.header.contentRenderMode || data.cardSettings.renderMode;
         const bodyRenderMode = data.cardSettings.body.contentRenderMode || data.cardSettings.renderMode;
@@ -649,6 +663,144 @@ export class CardRenderer {
             this.logger.error('Card', t().debug.card.markdownRenderError, error);
             this.renderPlainText(text, container);
         }
+    }
+
+    /**
+     * 카드에 호버 액션 버튼을 추가합니다
+     *
+     * @param cardEl - 카드 요소
+     * @param file - 파일 객체
+     */
+    private addHoverActions(cardEl: HTMLElement, file: import('obsidian').TFile): void {
+        const actionsContainer = cardEl.createEl('div', {
+            cls: 'card-hover-actions'
+        });
+
+        // Pin action
+        const pinBtn = actionsContainer.createEl('div', {
+            cls: 'clickable-icon card-hover-action-btn',
+            attr: {
+                'aria-label': t().toolbar.hoverActions.pin
+            }
+        });
+
+        // Check if file is already pinned
+        const isPinned = this.settings.pinnedFiles?.includes(file.path) || false;
+
+        setIcon(pinBtn, 'pin');
+        if (isPinned) {
+            pinBtn.addClass('is-pinned');
+        }
+
+        pinBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+
+            const pinnedFiles = this.settings.pinnedFiles || [];
+            const index = pinnedFiles.indexOf(file.path);
+
+            if (index > -1) {
+                // Unpin
+                pinnedFiles.splice(index, 1);
+            } else {
+                // Pin
+                pinnedFiles.push(file.path);
+            }
+
+            this.settings.pinnedFiles = pinnedFiles;
+
+            // Save settings and refresh view
+            if (this.view.getPlugin) {
+                const plugin = this.view.getPlugin();
+                if (plugin) {
+                    // Save settings first to ensure new state is persisted
+                    await plugin.saveSettings();
+
+                    // Then refresh view to update sort order and re-render cards
+                    const view = plugin.getView();
+                    if (view) {
+                        await view.refresh();
+                    }
+                }
+            }
+        });
+
+        // Copy link action
+        const copyLinkBtn = actionsContainer.createEl('div', {
+            cls: 'clickable-icon card-hover-action-btn',
+            attr: {
+                'aria-label': t().toolbar.hoverActions.link
+            }
+        });
+        setIcon(copyLinkBtn, 'link');
+        copyLinkBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const link = this.app.fileManager.generateMarkdownLink(file, '');
+            await navigator.clipboard.writeText(link);
+        });
+
+        // Star action (bookmark)
+        const starBtn = actionsContainer.createEl('div', {
+            cls: 'clickable-icon card-hover-action-btn',
+            attr: {
+                'aria-label': t().toolbar.hoverActions.star
+            }
+        });
+
+        // Check if file is already bookmarked
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const bookmarks = (this.app as any).internalPlugins?.plugins?.bookmarks;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const isBookmarked = bookmarks?.instance?.items?.some((item: any) =>
+            item.type === 'file' && item.path === file.path
+        ) || false;
+
+        setIcon(starBtn, 'star');
+        if (isBookmarked) {
+            starBtn.addClass('is-starred');
+        }
+
+        starBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+
+            if (bookmarks?.instance) {
+                const bookmarkPlugin = bookmarks.instance;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const existingBookmark = bookmarkPlugin.items?.find((item: any) =>
+                    item.type === 'file' && item.path === file.path
+                );
+
+                if (existingBookmark) {
+                    // Remove bookmark
+                    bookmarkPlugin.removeItem(existingBookmark);
+                    starBtn.removeClass('is-starred');
+                } else {
+                    // Add bookmark
+                    bookmarkPlugin.addItem({
+                        type: 'file',
+                        path: file.path,
+                        title: file.basename
+                    });
+                    starBtn.addClass('is-starred');
+                }
+            }
+        });
+
+        // Delete action
+        const deleteBtn = actionsContainer.createEl('div', {
+            cls: 'clickable-icon card-hover-action-btn delete-action',
+            attr: {
+                'aria-label': t().toolbar.hoverActions.delete
+            }
+        });
+        setIcon(deleteBtn, 'trash');
+        deleteBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            // Confirm before delete
+            const confirmed = confirm(`Delete "${file.basename}"?`);
+            if (confirmed) {
+                await this.app.vault.delete(file);
+            }
+        });
     }
 
     /**

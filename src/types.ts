@@ -306,6 +306,12 @@ export interface CardNavigatorSettings {
     enableFuzzySearch: boolean;
     /** 퍼지 검색 임계값 (0-1) */
     fuzzySearchThreshold: number;
+    /** 카드 호버 액션 활성화 여부 */
+    enableCardHoverActions?: boolean;
+    /** 핀된 파일 경로 목록 */
+    pinnedFiles?: string[];
+    /** 핀된 파일 항상 표시 여부 */
+    alwaysShowPinnedFiles?: boolean;
     /** 디버그 설정 */
     debug: DebugSettings;
 }
@@ -428,6 +434,18 @@ export type SortOrder =
     | 'desc'; // 내림차순
 
 /**
+ * 단일 정렬 레벨
+ */
+export interface SortLevel {
+    /** 정렬 기준 */
+    criteria: SortCriteria;
+    /** 정렬 순서 */
+    order: SortOrder;
+    /** 프론트매터 속성 이름 (criteria가 'property'일 때 사용) */
+    propertyName?: string;
+}
+
+/**
  * 정렬 설정
  */
 export interface SortOptions {
@@ -437,6 +455,10 @@ export interface SortOptions {
     order: SortOrder;
     /** 프론트매터 속성 이름 (criteria가 'property'일 때 사용) */
     propertyName?: string;
+    /** 다단계 정렬 활성화 여부 */
+    enableMultiSort?: boolean;
+    /** 다단계 정렬 레벨 (최대 3개) */
+    levels?: SortLevel[];
 }
 
 /**
@@ -681,6 +703,9 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
     savedSearches: [],
     enableFuzzySearch: false,
     fuzzySearchThreshold: 0.3,
+    enableCardHoverActions: true,
+    pinnedFiles: [],
+    alwaysShowPinnedFiles: false,
     debug: {
         enabled: false,
         categories: {}

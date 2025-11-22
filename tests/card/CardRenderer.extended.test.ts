@@ -12,12 +12,13 @@ import { CardRenderer } from '../../src/card/CardRenderer';
 import { CardData, CardSection, RenderMode, DEFAULT_SETTINGS } from '../../src/types';
 import { Component, MarkdownRenderer } from 'obsidian';
 
-// Mock MarkdownRenderer
+// Mock MarkdownRenderer and setIcon
 jest.mock('obsidian', () => ({
     Component: jest.fn(),
     MarkdownRenderer: {
         render: jest.fn().mockResolvedValue(undefined)
-    }
+    },
+    setIcon: jest.fn()
 }));
 
 // Mock 데이터 생성 헬퍼

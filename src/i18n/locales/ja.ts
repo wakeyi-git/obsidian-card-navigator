@@ -244,6 +244,10 @@ export const ja = {
 		modeToggleTagToSpecific: '指定タグモードに切り替え',
 		modeToggleTagToActive: 'アクティブファイルタグモードに切り替え',
 		clickToSelectFolderTag: 'クリックしてフォルダ/タグを選択',
+		configureMultiSort: '多段階ソートを構成',
+		multiSortModalDescription: 'ドラッグアンドドロップでソートレベルを並べ替えます。ファイルは最初にレベル1、次にレベル2などの順にソートされます。',
+		sortLevel: (level: number) => `レベル ${level}`,
+		disableMultiSort: '多段階ソートを無効化',
 		sortOptions: {
 			nameAsc: 'ファイル名（A-Z）',
 			nameDesc: 'ファイル名（Z-A）',
@@ -253,6 +257,14 @@ export const ja = {
 			createdAsc: '作成日（古い順）',
 			sizeDesc: 'ファイルサイズ（大きい順）',
 			sizeAsc: 'ファイルサイズ（小さい順）',
+			multiSort: '多段階ソート',
+		},
+		hoverActions: {
+			pin: 'ピン留め',
+			star: 'お気に入り',
+			tag: 'タグを追加',
+			link: 'リンクをコピー',
+			delete: '削除',
 		},
 	},
 
@@ -693,6 +705,12 @@ export const ja = {
 				and: 'AND（すべてのタグ）',
 			},
 		},
+		pinSettings: {
+			title: 'Pin Settings',
+			alwaysShowPinned: 'Always show pinned files',
+			alwaysShowPinnedDescription: 'Show pinned files even when scrolling or changing modes',
+		},
+
 		layoutSettings: {
 			minWidth: 'カード最小幅',
 			minWidthDescription: (min: number, max: number) => `カードの最小幅を設定（${min}-${max}px）`,
@@ -899,6 +917,8 @@ export const ja = {
 		filesSelected: (count: number) => `${count}個のファイルを選択しました`,
 		selectedFiles: (count: number) => `選択中：${count}個のファイル`,
 		addTag: 'タグを追加',
+		pin: 'ピン',
+		star: 'スター',
 		move: '移動',
 		delete: '削除',
 		clearSelection: '選択をクリア',
@@ -924,6 +944,11 @@ export const ja = {
 		deleteConfirm: (count: number) => `${count}個のファイルを削除しますか？\n\nこの操作は元に戻せません。`,
 		deleteFileFailed: (filepath: string) => `ファイルの削除に失敗しました：${filepath}`,
 		filesDeleted: (count: number) => `${count}個のファイルを削除しました`,
+		filesPinned: (count: number) => `${count}個のファイルをピン留めしました`,
+		filesUnpinned: (count: number) => `${count}個のファイルのピン留めを解除しました`,
+		filesStarred: (count: number) => `${count}個のファイルにスターを付けました`,
+		filesUnstarred: (count: number) => `${count}個のファイルのスターを解除しました`,
+		bookmarksNotAvailable: 'ブックマークプラグインが利用できません',
 	},
 
 	// Filter UI
