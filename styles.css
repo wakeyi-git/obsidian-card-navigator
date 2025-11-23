@@ -181,11 +181,24 @@
 	/* SVG는 이벤트를 받지 않음 */
 }
 
-/* 검색 입력 래퍼 (토글 가능) */
+/* 검색 입력 래퍼 (토글 가능) - 리팩토링 2025-11-23 */
 .search-input-container-wrapper {
 	padding: 0 10px;
 	margin-bottom: 10px;
-	animation: slideDown 0.2s ease;
+	max-height: 200px;
+	opacity: 1;
+	overflow: visible;
+	transition: max-height 0.2s ease, opacity 0.2s ease, margin-bottom 0.2s ease;
+}
+
+/* 숨김 상태: display 대신 max-height + opacity 사용 */
+.search-input-container-wrapper.hidden {
+	max-height: 0;
+	opacity: 0;
+	margin-bottom: 0;
+	padding-top: 0;
+	padding-bottom: 0;
+	overflow: hidden;
 }
 
 @keyframes slideDown {
@@ -202,23 +215,9 @@
 /* 카드 컨테이너 (그리드 레이아웃) */
 .card-navigator-cards {
 	display: grid;
-	/* ⭐ Phase 3 개선 (2025-11-14): CSS Grid auto-fit 활용 */
-	/* grid-template-columns는 LayoutManager가 동적으로 설정 */
-	/* 초기값 제거: LayoutManager의 설정과 충돌 방지 */
-
-	/* ⭐ Phase 3 개선: grid-auto-rows로 카드 높이 유연하게 관리 */
-	/* 최소 높이를 보장하면서 내용에 맞게 자동 조정 */
-	grid-auto-rows: minmax(var(--card-min-height, 100px), auto);
-
-	/* ⭐ 버그 수정 2025-11-14: 균등배분 대신 시작점 정렬 */
-	/* align-content: stretch (기본값) → start로 변경 */
-	align-content: start;
-	/* justify-content도 명시적으로 설정 (가로 모드 대비) */
-	justify-content: start;
-
+	/* ⭐ 리팩토링 2025-11-23: CSS 변수 기반 그리드 레이아웃 */
+	/* JavaScript는 --grid-columns/--grid-rows 변수만 업데이트 */
 	gap: 10px;
-	/* ⭐ Phase 3: overflow는 LayoutManager가 모드별로 동적 설정 */
-	/* overflow-y: auto 제거 - JavaScript가 제어 */
 	flex: 1;
 	/* ⭐ Phase 3: flex 버그 방지 - min-height: 0으로 스크롤 활성화 */
 	min-height: 0;
@@ -228,6 +227,34 @@
 	--card-min-height: 100px;
 	--card-max-width: 400px;
 	--card-max-height: 300px;
+	--grid-columns: 3;
+	--grid-rows: 2;
+}
+
+/* ⭐ 세로 모드: CSS 클래스 기반 레이아웃 (리팩토링 2025-11-23) */
+.card-navigator-cards.vertical-mode {
+	grid-template-columns: repeat(var(--grid-columns, 3), 1fr);
+	grid-auto-rows: minmax(var(--card-min-height, 100px), auto);
+	grid-template-rows: initial;
+	grid-auto-columns: initial;
+	grid-auto-flow: row;
+	overflow-x: hidden;
+	overflow-y: auto;
+	align-content: start;
+	justify-content: start;
+}
+
+/* ⭐ 가로 모드: CSS 클래스 기반 레이아웃 (리팩토링 2025-11-23) */
+.card-navigator-cards.horizontal-mode {
+	grid-template-rows: repeat(var(--grid-rows, 2), 1fr);
+	grid-auto-columns: minmax(var(--card-min-width, 150px), auto);
+	grid-template-columns: initial;
+	grid-auto-rows: initial;
+	grid-auto-flow: column;
+	overflow-x: auto;
+	overflow-y: hidden;
+	align-content: start;
+	justify-content: start;
 }
 
 /* ⭐ 개별 카드 - CSS 변수 기반 스타일 (Modified Strategy A: Hybrid Approach) */
@@ -3397,11 +3424,22 @@ button:focus-visible {
 	opacity: 1;
 }
 
+/* ⭐ 세로 모드: 그룹 컨테이너도 부모와 동일한 그리드 레이아웃 사용 */
+.card-navigator-cards.vertical-mode .card-group-content {
+	grid-template-columns: repeat(var(--grid-columns, 3), 1fr);
+	grid-auto-rows: minmax(var(--card-min-height, 100px), auto);
+	grid-auto-flow: row;
+	overflow-x: hidden;
+	overflow-y: visible;
+}
+
 /* ⭐ 가로 모드: 카드 컨테이너를 가로로 배치 */
 .card-navigator-cards.horizontal-mode .card-group-content {
 	margin-top: 0;
 	margin-left: var(--size-4-2);
-	/* display는 LayoutManager가 grid로 설정 */
+	grid-template-rows: repeat(var(--grid-rows, 2), 1fr);
+	grid-auto-columns: minmax(var(--card-min-width, 150px), auto);
+	grid-auto-flow: column;
 	overflow-x: auto;
 	overflow-y: hidden;
 	/* max-width를 none으로 설정하여 그리드가 자연스럽게 확장되도록 함 */

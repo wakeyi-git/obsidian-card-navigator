@@ -335,8 +335,8 @@ export class CardRenderer {
         
         if (this.view && this.view.searchInput) {
             if (this.view.searchInputContainer) {
-                this.view.searchInputContainer.style.display = 'block';
-                
+                this.view.searchInputContainer.classList.remove('hidden');
+
                 const input = this.view.searchInputContainer.querySelector('input');
                 if (input) {
                     input.focus();

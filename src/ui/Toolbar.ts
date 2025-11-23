@@ -352,21 +352,24 @@ export class Toolbar {
 
 	/**
 	 * 검색 입력창 토글
+	 *
+	 * @remarks
+	 * 리팩토링 2025-11-23: CSS 클래스 기반 표시/숨김
 	 */
 	private onSearchToggle(): void {
 		if (!this.searchInputContainer) return;
 
-		const isHidden = this.searchInputContainer.style.display === 'none';
-		
+		const isHidden = this.searchInputContainer.classList.contains('hidden');
+
 		if (isHidden) {
-			this.searchInputContainer.style.display = 'block';
-			
+			this.searchInputContainer.classList.remove('hidden');
+
 			const input = this.searchInputContainer.querySelector('input');
 			if (input) {
 				input.focus();
 			}
 		} else {
-			this.searchInputContainer.style.display = 'none';
+			this.searchInputContainer.classList.add('hidden');
 			this.view.clearSearch();
 		}
 	}

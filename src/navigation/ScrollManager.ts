@@ -46,7 +46,7 @@ export class ScrollManager {
      * @private
      */
     private scrollToCard(
-        cardElement: HTMLElement, 
+        cardElement: HTMLElement,
         behavior: ScrollBehavior = 'smooth',
         block: ScrollLogicalPosition = 'center',
         source: string = 'unknown'
@@ -55,21 +55,34 @@ export class ScrollManager {
             this.logger.debug('Navigation', 'scrollToCard: 카드 요소 없음');
             return;
         }
-        
+
         const filePath = cardElement.getAttribute('data-file-path') || 'unknown';
-        
+
+        // ⭐ 가로 모드 감지: 컨테이너가 horizontal-mode 클래스를 가지고 있는지 확인
+        const container = this.view.containerEl.querySelector('.card-navigator-cards');
+        const isHorizontalMode = container?.classList.contains('horizontal-mode');
+
+        // ⭐ 가로 모드에서는 inline/block 방향이 바뀜
+        // - 세로 모드: block='center' (상하 스크롤), inline='nearest' (좌우는 최소)
+        // - 가로 모드: block='nearest' (상하는 최소), inline='center' (좌우 스크롤)
+        const finalBlock: ScrollLogicalPosition = isHorizontalMode ? 'nearest' : block;
+        const finalInline: ScrollLogicalPosition = isHorizontalMode ? 'center' : 'nearest';
+
         this.logger.debug('Navigation', 'scrollToCard 호출', {
             source,
             filePath,
             behavior,
-            block,
+            originalBlock: block,
+            finalBlock,
+            finalInline,
+            isHorizontalMode,
             timestamp: Date.now()
         });
-        
+
         cardElement.scrollIntoView({
             behavior: behavior,
-            block: block,
-            inline: 'nearest'
+            block: finalBlock,
+            inline: finalInline
         });
     }
     
@@ -164,10 +177,17 @@ export class ScrollManager {
             const cards = Array.from(container.querySelectorAll('.card-item')) as HTMLElement[];
             for (const card of cards) {
                 if (card.getAttribute('data-file-path') === file.path) {
+                    // ⭐ 가로 모드 감지
+                    const isHorizontalMode = container.classList.contains('horizontal-mode');
+
+                    // 가로 모드에서는 inline/block 방향이 바뀜
+                    const finalBlock: ScrollLogicalPosition = isHorizontalMode ? 'nearest' : 'center';
+                    const finalInline: ScrollLogicalPosition = isHorizontalMode ? 'center' : 'nearest';
+
                     card.scrollIntoView({
                         behavior: 'instant',
-                        block: 'center',
-                        inline: 'nearest'
+                        block: finalBlock,
+                        inline: finalInline
                     });
                     return;
                 }

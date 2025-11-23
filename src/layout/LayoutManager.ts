@@ -30,16 +30,34 @@ export class LayoutManager {
         this.settings = settings;
         // ✅ 함수를 전달하여 항상 최신 settings를 참조
         this.logger = new DebugLogger(getFullSettings);
-        
+
         const rect = this.containerEl.getBoundingClientRect();
         this.previousSize = {
             width: rect.width,
             height: rect.height
         };
-        
-        this.currentMode = this.detectLayoutMode();
+
+        // ⚠️ 초기 모드 감지를 지연시켜 컨테이너가 올바른 크기를 갖도록 함
+        // 컨테이너가 0x0이거나 매우 작은 경우 기본값을 'vertical'로 설정
+        if (rect.width < 10 || rect.height < 10) {
+            this.currentMode = 'vertical'; // 기본값
+            this.logger.debug('Layout', 'LayoutManager 초기화 (컨테이너 크기 미확정, 기본 모드 사용)', {
+                mode: this.currentMode,
+                width: rect.width,
+                height: rect.height,
+                reason: '컨테이너 크기가 너무 작음'
+            });
+        } else {
+            this.currentMode = this.detectLayoutMode();
+            this.logger.debug('Layout', 'LayoutManager 초기화', {
+                mode: this.currentMode,
+                width: rect.width,
+                height: rect.height
+            });
+        }
+
         this.setupResizeObserver();
-        
+
         // 초기 레이아웃 적용
         this.updateLayout();
     }
@@ -66,7 +84,7 @@ export class LayoutManager {
 
     /**
      * 창 크기 변경 시 호출됩니다
-     * 
+     *
      * @remarks
      * 디바운싱을 적용하여 과도한 재계산을 방지합니다.
      * 크기가 임계값(20px) 이상 변경되거나 모드가 바뀔 때만 레이아웃을 업데이트합니다.
@@ -75,58 +93,134 @@ export class LayoutManager {
         if (this.resizeTimeout) {
             clearTimeout(this.resizeTimeout);
         }
-        
+
         this.resizeTimeout = setTimeout(() => {
             const rect = this.containerEl.getBoundingClientRect();
             const newMode = this.detectLayoutMode();
-            
-            const widthChange = this.previousSize 
+
+            const widthChange = this.previousSize
                 ? Math.abs(rect.width - this.previousSize.width)
                 : Infinity;
             const heightChange = this.previousSize
                 ? Math.abs(rect.height - this.previousSize.height)
                 : Infinity;
-            
+
             const modeChanged = newMode !== this.currentMode;
-            const significantSizeChange = 
+            const significantSizeChange =
                 widthChange >= this.SIZE_CHANGE_THRESHOLD ||
                 heightChange >= this.SIZE_CHANGE_THRESHOLD;
-            
+
+            // ⭐ 모드 변경은 크기 변화와 무관하게 항상 우선 처리
             if (modeChanged || significantSizeChange) {
-                this.logger.debug('Layout', '레이아웃 업데이트', {
+                this.logger.debug('Layout', '레이아웃 업데이트 트리거', {
                     modeChanged,
+                    oldMode: this.currentMode,
+                    newMode,
                     widthChange: widthChange.toFixed(1),
                     heightChange: heightChange.toFixed(1),
-                    threshold: this.SIZE_CHANGE_THRESHOLD
+                    threshold: this.SIZE_CHANGE_THRESHOLD,
+                    containerSize: `${rect.width.toFixed(0)}×${rect.height.toFixed(0)}`
                 });
-                
+
                 this.currentMode = newMode;
                 this.previousSize = {
                     width: rect.width,
                     height: rect.height
                 };
                 this.updateLayout();
+            } else {
+                // 디버깅: 업데이트가 건너뛰어진 경우
+                this.logger.debug('Layout', '레이아웃 업데이트 건너뜀', {
+                    widthChange: widthChange.toFixed(1),
+                    heightChange: heightChange.toFixed(1),
+                    threshold: this.SIZE_CHANGE_THRESHOLD,
+                    reason: '변화량이 임계값 미만'
+                });
             }
-            
+
             this.resizeTimeout = null;
         }, this.RESIZE_DEBOUNCE_MS);
     }
 
     /**
      * 레이아웃을 업데이트합니다
-     * 
+     *
      * @remarks
-     * CSS 변수와 Grid 속성을 업데이트하여 카드 배치를 조정합니다.
+     * 리팩토링 2025-11-23: CSS 변수만 업데이트하고 레이아웃은 CSS 클래스에 위임
+     * - JavaScript: CSS 변수 업데이트 (--grid-columns, --grid-rows 등)
+     * - CSS: 클래스 기반 레이아웃 정의 (.vertical-mode, .horizontal-mode)
      * 성능을 위해 모든 읽기 작업을 먼저 수행하고 쓰기 작업을 일괄 적용합니다.
      */
     updateLayout(): void {
         const rect = this.containerEl.getBoundingClientRect();
         const mode = this.currentMode;
-        
+
+        // 그리드 크기 계산 (그룹화 여부와 무관하게 항상 계산)
         const gridSize = mode === 'vertical'
             ? this.calculateGridSize(rect.width, this.settings.cardMinWidth)
             : this.calculateGridSize(rect.height, this.settings.cardMinHeight);
-        
+
+        this.logger.debug('Layout', '레이아웃 업데이트', {
+            mode,
+            gridSize,
+            width: rect.width,
+            height: rect.height,
+            cardMinWidth: this.settings.cardMinWidth,
+            cardMinHeight: this.settings.cardMinHeight
+        });
+
+        // CSS 변수 업데이트
+        this.updateCSSVariables();
+
+        // 그리드 크기 변수 업데이트
+        if (mode === 'vertical') {
+            this.containerEl.style.setProperty('--grid-columns', gridSize.toString());
+        } else {
+            this.containerEl.style.setProperty('--grid-rows', gridSize.toString());
+        }
+
+        // 모드 클래스는 항상 적용 (그룹화 여부와 무관)
+        if (mode === 'vertical') {
+            this.containerEl.classList.remove('horizontal-mode');
+            this.containerEl.classList.add('vertical-mode');
+        } else {
+            this.containerEl.classList.remove('vertical-mode');
+            this.containerEl.classList.add('horizontal-mode');
+        }
+
+        // 그룹화가 활성화된 경우 추가 설정 생략
+        const hasGroups = this.containerEl.querySelector('.card-group-section') !== null;
+
+        // ⭐ 디버깅: 최종 적용된 상태 로깅
+        this.logger.debug('Layout', '레이아웃 적용 완료', {
+            mode,
+            gridSize,
+            hasGroups,
+            appliedClasses: this.containerEl.className,
+            cssVariables: {
+                '--grid-columns': this.containerEl.style.getPropertyValue('--grid-columns'),
+                '--grid-rows': this.containerEl.style.getPropertyValue('--grid-rows'),
+                '--card-min-width': this.containerEl.style.getPropertyValue('--card-min-width'),
+                '--card-min-height': this.containerEl.style.getPropertyValue('--card-min-height')
+            }
+        });
+
+        if (hasGroups) {
+            this.logger.debug('Layout', '그룹화 모드: CSS에 레이아웃 위임');
+            return;
+        }
+
+        // 그룹 컨테이너에 CSS 변수 전파
+        this.applyGridToGroupContents();
+    }
+
+    /**
+     * CSS 변수를 업데이트합니다
+     *
+     * @remarks
+     * 카드 크기 관련 CSS 변수만 업데이트합니다.
+     */
+    private updateCSSVariables(): void {
         const cssVars = {
             '--card-min-width': `${this.settings.cardMinWidth}px`,
             '--card-min-height': `${this.settings.cardMinHeight}px`,
@@ -134,91 +228,22 @@ export class LayoutManager {
             '--card-max-height': `${this.settings.cardMaxHeight}px`,
             '--card-gap': `${this.settings.gap}px`
         };
-        
+
         Object.entries(cssVars).forEach(([key, value]) => {
             this.containerEl.style.setProperty(key, value);
         });
-        
-        if (mode === 'vertical') {
-            this.applyVerticalMode(gridSize);
-        } else {
-            this.applyHorizontalMode(gridSize);
-        }
     }
 
     /**
-     * 세로 모드 레이아웃을 적용합니다
+     * 그룹화된 카드 컨테이너에 CSS 변수를 전파합니다
      *
-     * @param columns - 열 수
+     * @remarks
+     * 리팩토링 2025-11-23: 인라인 스타일 대신 CSS 클래스 상속 사용
+     * 그룹 컨테이너는 부모의 CSS 변수를 상속받으므로 추가 작업 불필요
      */
-    private applyVerticalMode(columns: number): void {
-        const styles = {
-            gridTemplateColumns: `repeat(${columns}, 1fr)`,
-            gridAutoRows: `minmax(${this.settings.cardMinHeight}px, auto)`,
-            gridTemplateRows: '',
-            gridAutoColumns: '',
-            gridAutoFlow: 'row',
-            overflowX: 'hidden',
-            overflowY: 'auto'
-        };
-
-        Object.entries(styles).forEach(([key, value]) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (this.containerEl.style as any)[key] = value;
-        });
-
-        // 모드 클래스 적용
-        this.containerEl.classList.remove('horizontal-mode');
-        this.containerEl.classList.add('vertical-mode');
-
-        // 그룹화된 카드 컨테이너에도 동일한 grid 설정 적용
-        this.applyGridToGroupContents(styles);
-    }
-
-    /**
-     * 가로 모드 레이아웃을 적용합니다
-     *
-     * @param rows - 행 수
-     */
-    private applyHorizontalMode(rows: number): void {
-        const styles = {
-            gridTemplateRows: `repeat(${rows}, 1fr)`,
-            gridAutoColumns: `minmax(${this.settings.cardMinWidth}px, auto)`,
-            gridTemplateColumns: '',
-            gridAutoRows: '',
-            gridAutoFlow: 'column',
-            overflowX: 'auto',
-            overflowY: 'hidden'
-        };
-
-        Object.entries(styles).forEach(([key, value]) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (this.containerEl.style as any)[key] = value;
-        });
-
-        // 모드 클래스 적용
-        this.containerEl.classList.remove('vertical-mode');
-        this.containerEl.classList.add('horizontal-mode');
-
-        // 그룹화된 카드 컨테이너에도 동일한 grid 설정 적용
-        this.applyGridToGroupContents(styles);
-    }
-
-    /**
-     * 그룹화된 카드 컨테이너에 grid 설정을 적용합니다
-     *
-     * @param styles - 적용할 grid 스타일
-     */
-    private applyGridToGroupContents(styles: Record<string, string>): void {
-        const groupContents = this.containerEl.querySelectorAll('.card-group-content');
-        groupContents.forEach((content) => {
-            const element = content as HTMLElement;
-            Object.entries(styles).forEach(([key, value]) => {
-                // ⭐ overflow 속성도 그룹 컨테이너에 적용 (가로 모드 스크롤을 위해)
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (element.style as any)[key] = value;
-            });
-        });
+    private applyGridToGroupContents(): void {
+        // CSS 변수는 자동으로 상속되므로 별도 처리 불필요
+        // 그룹 컨테이너의 레이아웃은 styles.css의 .card-group-content에서 관리
     }
 
     /**

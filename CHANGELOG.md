@@ -1,3 +1,43 @@
+## [1.4.2] - 2025-11-23
+
+### Fixed
+
+#### Layout Stabilization
+- **Grouped Cards Grid Layout**: Fixed grouped cards displaying in only 1 column despite correct gridSize calculation
+  - Added `grid-template-columns` for vertical mode on `.card-group-content`
+  - Added `grid-template-rows` for horizontal mode on `.card-group-content`
+  - Grouped cards now display in correct number of columns/rows based on container size
+  - Auto column/row adjustment now works correctly in both grouped and non-grouped modes
+  - Related files: [styles.css:3428-3434](styles.css#L3428-L3434), [styles.css:3437-3451](styles.css#L3437-L3451)
+
+- **Horizontal Mode Scroll to Center**: Fixed active card scrolling in horizontal mode
+  - Active cards now properly scroll to horizontal center of container
+  - Implemented mode-aware scroll logic: vertical mode uses `block='center'`, horizontal mode uses `inline='center'`
+  - Fixed both animated scroll (smooth behavior) and instant scroll (no animation) modes
+  - Related files: [ScrollManager.ts:48-86](src/navigation/ScrollManager.ts#L48-L86), [ScrollManager.ts:171-196](src/navigation/ScrollManager.ts#L171-L196)
+
+- **Initial Loading Stability**: Improved layout initialization reliability
+  - Added container size validation during LayoutManager initialization
+  - Prevents incorrect mode detection when container size is not yet determined
+  - Uses safe default mode ('vertical') until ResizeObserver confirms actual container size
+  - Related file: [LayoutManager.ts:42-57](src/layout/LayoutManager.ts#L42-L57)
+
+### Changed
+
+- **Debug Logging Enhancement**: Added comprehensive debug logging for layout operations
+  - Layout initialization logging with container size and mode detection reasoning
+  - ResizeObserver trigger logging with size changes and threshold comparison
+  - Layout application completion logging with applied classes and CSS variables
+  - Helps diagnose layout issues when Debug Mode is enabled
+
+### Documentation
+
+- **Layout Fix Documentation**: Created comprehensive documentation of layout fixes
+  - [LAYOUT_FIX_SUMMARY.md](LAYOUT_FIX_SUMMARY.md): Complete summary of all layout-related fixes
+  - Root cause analysis for each issue
+  - Before/after comparison with code examples
+  - Expected behavior and testing results
+
 ## [1.4.1] - 2025-01-23
 
 ### Fixed

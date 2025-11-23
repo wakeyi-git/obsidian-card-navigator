@@ -198,9 +198,8 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		this.toolbar.render(header);
 		
 		this.searchInputContainer = header.createEl('div', {
-			cls: 'search-input-container-wrapper'
+			cls: 'search-input-container-wrapper hidden'
 		});
-		this.searchInputContainer.style.display = 'none';
 		
 		this.searchInput = new SearchInput(this.app, this.searchInputContainer);
 		this.searchInput.render();
@@ -397,17 +396,17 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		// 검색어가 입력되어 있으면 검색 결과를 참고할 수 있도록 유지합니다.
 		this.registerDomEvent(document, 'click', (event: MouseEvent) => {
 			if (!this.searchInputContainer ||
-				this.searchInputContainer.style.display === 'none') {
+				this.searchInputContainer.classList.contains('hidden')) {
 				return;
 			}
-			
+
 			if (this.searchInput && this.searchInput.getValue().trim()) {
 				return;
 			}
-			
+
 			const isClickInside = container.contains(event.target as Node);
 			if (!isClickInside) {
-				this.searchInputContainer.style.display = 'none';
+				this.searchInputContainer.classList.add('hidden');
 				this.logger.debug('View', t().debug.view.searchAutoHide);
 			}
 		});
@@ -487,11 +486,14 @@ export class CardNavigatorView extends ItemView implements ICardView {
 
 	/**
 	 * 검색 입력창을 표시하고 포커스합니다
+	 *
+	 * @remarks
+	 * 리팩토링 2025-11-23: CSS 클래스 기반 표시/숨김
 	 */
 	public showSearchInput(): void {
 		if (!this.searchInputContainer) return;
 
-		this.searchInputContainer.style.display = 'block';
+		this.searchInputContainer.classList.remove('hidden');
 		const input = this.searchInputContainer.querySelector('input');
 		if (input) {
 			input.focus();
@@ -508,12 +510,15 @@ export class CardNavigatorView extends ItemView implements ICardView {
 
 	/**
 	 * 검색어를 적용하고 검색을 실행합니다
+	 *
+	 * @remarks
+	 * 리팩토링 2025-11-23: CSS 클래스 기반 표시/숨김
 	 */
 	public applySearchQuery(query: string): void {
 		if (!this.searchInput || !this.searchInputContainer) return;
 
 		// Show search input if hidden
-		this.searchInputContainer.style.display = 'block';
+		this.searchInputContainer.classList.remove('hidden');
 
 		// Set value and trigger search
 		this.searchInput.setValueAndSearch(query);

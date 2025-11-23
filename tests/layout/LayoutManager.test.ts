@@ -97,29 +97,37 @@ describe('LayoutManager', () => {
                     right: 1000
                 })
             });
-            
+
             const verticalManager = new LayoutManager(container, settings, mockGetFullSettings);
-            
+
             // Container width: 1000px
             // Card min width: 200px
             // Gap: 16px
             // Expected: floor((1000 + 16) / (200 + 16)) = 4 columns
-            
-            const gridColumns = container.style.gridTemplateColumns;
-            expect(gridColumns).toContain('repeat(4, 1fr)');
-            
+
+            // 리팩토링 2025-11-23: CSS 변수로 확인
+            const gridColumns = container.style.getPropertyValue('--grid-columns');
+            expect(gridColumns).toBe('4');
+
+            // CSS 클래스도 확인
+            expect(container.classList.contains('vertical-mode')).toBe(true);
+
             verticalManager.destroy();
         });
-        
+
         it('should calculate correct number of rows in horizontal mode', () => {
             // 기본 설정이 이미 horizontal 모드 (width=1000 > height=600)
             // Container height: 600px
             // Card min height: 150px
             // Gap: 16px
             // Expected: floor((600 + 16) / (150 + 16)) = 3 rows
-            
-            const gridRows = container.style.gridTemplateRows;
-            expect(gridRows).toContain('repeat(3, 1fr)');
+
+            // 리팩토링 2025-11-23: CSS 변수로 확인
+            const gridRows = container.style.getPropertyValue('--grid-rows');
+            expect(gridRows).toBe('3');
+
+            // CSS 클래스도 확인
+            expect(container.classList.contains('horizontal-mode')).toBe(true);
         });
         
         it('should ensure at least 1 column/row', () => {
@@ -135,7 +143,7 @@ describe('LayoutManager', () => {
                     right: 800
                 })
             });
-            
+
             const tinySettings: LayoutSettings = {
                 mode: 'horizontal',  // Add mode
                 cardMinWidth: 1000,  // Larger than container
@@ -144,16 +152,15 @@ describe('LayoutManager', () => {
                 cardMaxHeight: 2000,
                 gap: 16
             };
-            
+
             const tinyManager = new LayoutManager(container, tinySettings, mockGetFullSettings);
-            
-            const gridColumns = container.style.gridTemplateColumns;
-            const gridRows = container.style.gridTemplateRows;
-            
-            // Should have at least 1 column/row
-            expect(gridColumns).toContain('repeat(1, 1fr)');
-            expect(gridRows).toBe('');
-            
+
+            // 리팩토링 2025-11-23: CSS 변수로 확인
+            const gridColumns = container.style.getPropertyValue('--grid-columns');
+
+            // Should have at least 1 column
+            expect(gridColumns).toBe('1');
+
             tinyManager.destroy();
         });
     });
@@ -182,27 +189,25 @@ describe('LayoutManager', () => {
                     right: 400
                 })
             });
-            
+
             const verticalManager = new LayoutManager(container, settings, mockGetFullSettings);
             verticalManager.updateLayout();
-            
-            expect(container.style.gridAutoFlow).toBe('row');
-            expect(container.style.overflowX).toBe('hidden');
-            expect(container.style.overflowY).toBe('auto');
-            expect(container.style.gridTemplateColumns).toBeTruthy();
-            expect(container.style.gridAutoRows).toBeTruthy();
-            
+
+            // 리팩토링 2025-11-23: CSS 클래스와 변수로 확인
+            expect(container.classList.contains('vertical-mode')).toBe(true);
+            expect(container.classList.contains('horizontal-mode')).toBe(false);
+            expect(container.style.getPropertyValue('--grid-columns')).toBeTruthy();
+
             verticalManager.destroy();
         });
-        
+
         it('should apply horizontal mode styles', () => {
             manager.updateLayout();
-            
-            expect(container.style.gridAutoFlow).toBe('column');
-            expect(container.style.overflowX).toBe('auto');
-            expect(container.style.overflowY).toBe('hidden');
-            expect(container.style.gridTemplateRows).toBeTruthy();
-            expect(container.style.gridAutoColumns).toBeTruthy();
+
+            // 리팩토링 2025-11-23: CSS 클래스와 변수로 확인
+            expect(container.classList.contains('horizontal-mode')).toBe(true);
+            expect(container.classList.contains('vertical-mode')).toBe(false);
+            expect(container.style.getPropertyValue('--grid-rows')).toBeTruthy();
         });
     });
     
@@ -225,17 +230,18 @@ describe('LayoutManager', () => {
         
         it('should recalculate grid with new settings', () => {
             // horizontal 모드이므로 rows를 확인
-            const initialRows = container.style.gridTemplateRows;
-            
+            // 리팩토링 2025-11-23: CSS 변수로 확인
+            const initialRows = container.style.getPropertyValue('--grid-rows');
+
             const newSettings: LayoutSettings = {
                 ...settings,
                 cardMinHeight: 100  // Smaller cards -> more rows
             };
-            
+
             manager.updateSettings(newSettings);
-            
-            const newRows = container.style.gridTemplateRows;
-            
+
+            const newRows = container.style.getPropertyValue('--grid-rows');
+
             // Should have different number of rows
             expect(newRows).not.toBe(initialRows);
         });
@@ -399,13 +405,14 @@ describe('LayoutManager', () => {
                 ...settings,
                 gap: 100
             };
-            
+
             const largeGapManager = new LayoutManager(container, largeGapSettings, mockGetFullSettings);
-            
+
             // Should still calculate valid grid (horizontal mode uses rows)
-            const gridRows = container.style.gridTemplateRows;
+            // 리팩토링 2025-11-23: CSS 변수로 확인
+            const gridRows = container.style.getPropertyValue('--grid-rows');
             expect(gridRows).toBeTruthy();
-            
+
             largeGapManager.destroy();
         });
         
