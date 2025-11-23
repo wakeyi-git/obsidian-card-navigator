@@ -13,9 +13,11 @@
 		"lint:fix": "eslint src --ext .ts --fix",
 		"version": "node scripts/update-version.js && git add CHANGELOG.md manifest.json versions.json",
 		"prepare": "husky",
-		"release:patch": "npm version patch -m \"chore(release): %s\" && git push --follow-tags",
-		"release:minor": "npm version minor -m \"chore(release): %s\" && git push --follow-tags",
-		"release:major": "npm version major -m \"chore(release): %s\" && git push --follow-tags"
+		"postversion": "git push && git push --tags",
+		"github:release": "node scripts/create-release.js",
+		"release:patch": "npm version patch -m \"chore(release): v%s\" && npm run github:release $(node -p \"require('./package.json').version\")",
+		"release:minor": "npm version minor -m \"chore(release): v%s\" && npm run github:release $(node -p \"require('./package.json').version\")",
+		"release:major": "npm version major -m \"chore(release): v%s\" && npm run github:release $(node -p \"require('./package.json').version\")"
 	},
 	"keywords": [
 		"obsidian",
