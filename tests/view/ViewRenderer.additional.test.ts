@@ -107,7 +107,8 @@ describe('ViewRenderer - Additional Coverage', () => {
         
         // LayoutManager mock
         layoutManager = {
-            updateLayout: jest.fn()
+            updateLayout: jest.fn(),
+            getMode: jest.fn(() => 'vertical')
         } as any;
         
         // ViewportManager mock

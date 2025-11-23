@@ -7,6 +7,16 @@ import { setIcon } from 'obsidian';
  * 그룹 섹션의 UI 요소를 생성하고 관리합니다.
  */
 export class GroupRenderer {
+    private isHorizontalMode: boolean = false;
+
+    /**
+     * 가로 모드 설정
+     * @param isHorizontal - 가로 모드 여부
+     */
+    setHorizontalMode(isHorizontal: boolean): void {
+        this.isHorizontalMode = isHorizontal;
+    }
+
     /**
      * 그룹 섹션을 생성합니다
      *
@@ -62,11 +72,18 @@ export class GroupRenderer {
         const header = document.createElement('div');
         header.className = 'card-group-header';
 
-        // 토글 아이콘
+        // 토글 아이콘 - 가로 모드에 따라 다른 아이콘 사용
         const toggleIcon = header.createEl('div', {
             cls: 'card-group-toggle-icon'
         });
-        setIcon(toggleIcon, group.collapsed ? 'chevron-right' : 'chevron-down');
+
+        if (this.isHorizontalMode) {
+            // 가로 모드: chevron-down (펼침) / chevron-right (접힘)
+            setIcon(toggleIcon, group.collapsed ? 'chevron-right' : 'chevron-down');
+        } else {
+            // 세로 모드: chevron-down (펼침) / chevron-right (접힘)
+            setIcon(toggleIcon, group.collapsed ? 'chevron-right' : 'chevron-down');
+        }
 
         // 그룹 아이콘 (lucide 아이콘)
         if (group.icon) {
@@ -106,8 +123,13 @@ export class GroupRenderer {
 
         // 헤더 클릭 → 토글
         header.addEventListener('click', () => {
-            const newState = !group.collapsed;
-            group.collapsed = newState; // 그룹 상태 업데이트
+            // ⭐ group.collapsed는 렌더링 시점의 스냅샷이므로 직접 수정하지 않음
+            // localStorage에서 현재 상태를 읽어 반전시킴
+            const key = `card-navigator-group-collapsed-${group.id}`;
+            const stored = localStorage.getItem(key);
+            // localStorage에 저장된 값이 없으면 현재 그룹의 collapsed 상태 사용
+            const currentState = stored !== null ? stored === 'true' : group.collapsed;
+            const newState = !currentState;
             onToggle(group.id, newState);
         });
 
@@ -127,12 +149,14 @@ export class GroupRenderer {
             section.addClass('is-collapsed');
             if (toggleIcon) {
                 toggleIcon.empty();
+                // 가로/세로 모드 모두 chevron-right 사용
                 setIcon(toggleIcon as HTMLElement, 'chevron-right');
             }
         } else {
             section.removeClass('is-collapsed');
             if (toggleIcon) {
                 toggleIcon.empty();
+                // 가로/세로 모드 모두 chevron-down 사용
                 setIcon(toggleIcon as HTMLElement, 'chevron-down');
             }
         }

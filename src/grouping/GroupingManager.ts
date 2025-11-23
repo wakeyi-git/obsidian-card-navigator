@@ -120,9 +120,22 @@ export class GroupingManager {
     private groupByTag(files: TFile[], mode: TagGroupMode): CardGroup[] {
         const tagMap = new Map<string, TFile[]>();
         let untaggedCount = 0;
+        let cacheNotReadyCount = 0;
 
         for (const file of files) {
             const cache = this.app.metadataCache.getFileCache(file);
+
+            // ⭐ 캐시가 준비되지 않은 경우 감지
+            if (!cache) {
+                cacheNotReadyCount++;
+                this.logger.debug('Grouping', `Cache not ready for file: ${file.path}`);
+                // 캐시가 없으면 임시로 untagged로 분류 (나중에 재렌더링됨)
+                if (!tagMap.has('__untagged__')) {
+                    tagMap.set('__untagged__', []);
+                }
+                tagMap.get('__untagged__')!.push(file);
+                continue;
+            }
 
             // 본문 태그 (#tag 형식)
             const inlineTags = cache?.tags?.map(t => t.tag.replace(/^#/, '')) || [];
@@ -166,6 +179,11 @@ export class GroupingManager {
                     tagMap.get(tag)!.push(file);
                 }
             }
+        }
+
+        // ⭐ 캐시가 준비되지 않은 파일이 있으면 경고
+        if (cacheNotReadyCount > 0) {
+            this.logger.debug('Grouping', `Warning: ${cacheNotReadyCount} files have no cache ready. They will be re-grouped when cache is available.`);
         }
 
         this.logger.debug('Grouping', 'Tag grouping summary', {
@@ -328,9 +346,17 @@ export class GroupingManager {
         }
 
         const propertyMap = new Map<string, TFile[]>();
+        let cacheNotReadyCount = 0;
 
         for (const file of files) {
             const cache = this.app.metadataCache.getFileCache(file);
+
+            // ⭐ 캐시가 준비되지 않은 경우 감지
+            if (!cache) {
+                cacheNotReadyCount++;
+                this.logger.debug('Grouping', `Cache not ready for property grouping: ${file.path}`);
+            }
+
             const value = cache?.frontmatter?.[propertyName];
 
             let key: string;
@@ -346,6 +372,11 @@ export class GroupingManager {
                 propertyMap.set(key, []);
             }
             propertyMap.get(key)!.push(file);
+        }
+
+        // ⭐ 캐시가 준비되지 않은 파일이 있으면 경고
+        if (cacheNotReadyCount > 0) {
+            this.logger.debug('Grouping', `Warning: ${cacheNotReadyCount} files have no cache ready for property grouping.`);
         }
 
         const groups: CardGroup[] = [];

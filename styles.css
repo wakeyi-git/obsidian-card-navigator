@@ -3235,12 +3235,32 @@ button:focus-visible {
 	display: block;
 }
 
-/* 그룹 섹션 */
+/* ⭐ 가로 모드: 그룹화가 활성화되면 상위 컨테이너를 flex로 변경하여 그룹을 가로로 배치 */
+.card-navigator-cards.horizontal-mode:has(.card-group-section) {
+	display: flex;
+	flex-direction: row;
+	gap: 0;
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+/* 그룹 섹션 - 기본 세로 모드 */
 .card-group-section {
 	margin-bottom: var(--size-4-4);
 }
 
-/* 그룹 헤더 */
+/* ⭐ 가로 모드: 그룹 섹션을 가로로 배치 */
+.card-navigator-cards.horizontal-mode .card-group-section {
+	display: flex;
+	flex-direction: row;
+	align-items: stretch;
+	margin-bottom: 0;
+	margin-right: var(--size-4-4);
+	flex-shrink: 0;
+	height: 100%;
+}
+
+/* 그룹 헤더 - 기본 세로 모드 */
 .card-group-header {
 	display: flex;
 	align-items: center;
@@ -3251,6 +3271,19 @@ button:focus-visible {
 	cursor: pointer;
 	transition: background-color 0.2s;
 	user-select: none;
+}
+
+/* ⭐ 가로 모드: 그룹 헤더를 세로로 배치 */
+.card-navigator-cards.horizontal-mode .card-group-header {
+	flex-direction: column;
+	padding: var(--size-4-4) var(--size-4-2);
+	height: 100%;
+	justify-content: flex-start;
+	align-items: center;
+	gap: var(--size-4-3);
+	min-width: auto;
+	width: auto;
+	flex-shrink: 0;
 }
 
 .card-group-header:hover {
@@ -3296,11 +3329,26 @@ button:focus-visible {
 	font-size: 0.95em;
 }
 
+/* ⭐ 가로 모드: 그룹명을 세로로 배치 */
+.card-navigator-cards.horizontal-mode .card-group-name {
+	writing-mode: vertical-lr;
+	text-orientation: mixed;
+	flex: 0;
+	white-space: nowrap;
+}
+
 /* 파일 개수 */
 .card-group-count {
 	color: var(--text-muted);
 	font-size: 0.85em;
 	font-weight: 500;
+}
+
+/* ⭐ 가로 모드: 파일 개수를 세로로 배치 */
+.card-navigator-cards.horizontal-mode .card-group-count {
+	writing-mode: vertical-lr;
+	text-orientation: mixed;
+	white-space: nowrap;
 }
 
 /* 액션 버튼 컨테이너 */
@@ -3309,6 +3357,11 @@ button:focus-visible {
 	gap: var(--size-4-1);
 	opacity: 0;
 	transition: opacity 0.2s;
+}
+
+/* ⭐ 가로 모드: 액션 버튼을 세로로 배치 */
+.card-navigator-cards.horizontal-mode .card-group-actions {
+	flex-direction: column;
 }
 
 .card-group-header:hover .card-group-actions {
@@ -3333,7 +3386,7 @@ button:focus-visible {
 	height: 14px;
 }
 
-/* 카드 컨테이너 */
+/* 카드 컨테이너 - 기본 세로 모드 */
 .card-group-content {
 	margin-top: var(--size-4-2);
 	display: grid;
@@ -3344,20 +3397,62 @@ button:focus-visible {
 	opacity: 1;
 }
 
+/* ⭐ 가로 모드: 카드 컨테이너를 가로로 배치 */
+.card-navigator-cards.horizontal-mode .card-group-content {
+	margin-top: 0;
+	margin-left: var(--size-4-2);
+	/* display는 LayoutManager가 grid로 설정 */
+	overflow-x: auto;
+	overflow-y: hidden;
+	/* max-width를 none으로 설정하여 그리드가 자연스럽게 확장되도록 함 */
+	max-width: none;
+	transition: opacity 0.3s ease, margin-left 0.3s ease;
+	flex-shrink: 0;
+	/* 그리드 컨텐츠가 가로로 스크롤되도록 최소 너비 설정 */
+	min-width: min-content;
+}
+
+/* ⭐ 가로 모드 그룹 컨테이너 내의 카드는 일정한 너비 유지 */
+.card-navigator-cards.horizontal-mode .card-group-content .card-item {
+	width: var(--card-min-width);
+	min-width: var(--card-min-width);
+	max-width: var(--card-min-width);
+	flex-shrink: 0;
+}
+
 /* 헤더가 없는 그룹 (그룹화 비활성화) */
 .card-group-section:not(:has(.card-group-header)) .card-group-content {
 	margin-top: 0;
 }
 
-/* 접힌 상태 */
+/* ⭐ 가로 모드: 헤더가 없는 그룹 */
+.card-navigator-cards.horizontal-mode .card-group-section:not(:has(.card-group-header)) .card-group-content {
+	margin-left: 0;
+}
+
+/* 접힌 상태 - 기본 세로 모드 */
 .card-group-section.is-collapsed .card-group-content {
 	max-height: 0;
 	opacity: 0;
 	margin-top: 0;
 }
 
+/* ⭐ 가로 모드: 접힌 상태 */
+.card-navigator-cards.horizontal-mode .card-group-section.is-collapsed .card-group-content {
+	min-width: 0;
+	width: 0;
+	opacity: 0;
+	margin-left: 0;
+	overflow: hidden;
+}
+
 .card-group-section.is-collapsed .card-group-toggle-icon {
 	transform: rotate(-90deg);
+}
+
+/* ⭐ 가로 모드: 접힌 상태 아이콘 회전 (위에서 아래로) */
+.card-navigator-cards.horizontal-mode .card-group-section.is-collapsed .card-group-toggle-icon {
+	transform: rotate(0deg);
 }
 
 /* 다크 모드 최적화 */

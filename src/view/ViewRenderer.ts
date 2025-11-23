@@ -263,20 +263,25 @@ export class ViewRenderer {
 		onFileOpen: (file: TFile) => void
 	): Promise<void> {
 		const currentState = await this.generateStateHash();
-		
+
 		if (currentState === this.lastRenderState) {
 			this.logger.debug('View', 'State unchanged, skipping render');
 			return;
 		}
-		
+
 		const renderingId = this.state.startRendering();
-		
+
 		this.logger.debug('View', 'Render started', {
 			renderingId,
 			isRendering: this.state.getIsRendering(),
 			timestamp: Date.now(),
 			stateHash: currentState.substring(0, 10) + '...'
 		});
+
+		// ⭐ GroupRenderer에 현재 레이아웃 모드 설정
+		// LayoutManager의 실제 모드를 사용 (화면 크기에 따라 자동 결정)
+		const isHorizontalMode = this.layoutManager ? this.layoutManager.getMode() === 'horizontal' : false;
+		this.groupRenderer.setHorizontalMode(isHorizontalMode);
 
 	try {
 			// 파일 개수 확인
@@ -334,16 +339,21 @@ export class ViewRenderer {
 			mode: settings.currentMode,
 			sortBy: settings.sort.criteria,
 			sortOrder: settings.sort.order,
-			query: this.state.getSearchQuery()
+			query: this.state.getSearchQuery(),
+			// ⭐ 그룹화 설정 포함 (설정 변경 시 재렌더링 트리거)
+			groupingEnabled: settings.grouping.enabled,
+			groupingCriteria: settings.grouping.criteria,
+			groupingSort: settings.grouping.groupSort,
+			groupingSortOrder: settings.grouping.groupSortOrder
 		};
-		
+
 		if (settings.currentMode === 'folder') {
 			const activeFile = this.getActiveFile();
 			if (isValidFile(activeFile)) {
 				stateObject.folderPath = activeFile.parent?.path || 'root';
 			}
 		}
-		
+
 		if (settings.currentMode === 'tag') {
 			if (settings.tagMode.useActiveFileTags) {
 				const activeFile = this.getActiveFile();
@@ -356,7 +366,20 @@ export class ViewRenderer {
 				stateObject.specifiedTags = settings.tagMode.specifiedTags.slice().sort().join(',');
 			}
 		}
-		
+
+		// ⭐ 그룹화 기준별 추가 설정
+		if (settings.grouping.enabled) {
+			if (settings.grouping.criteria === 'tag') {
+				stateObject.tagMode = settings.grouping.tagMode;
+			} else if (settings.grouping.criteria === 'property') {
+				stateObject.propertyName = settings.grouping.propertyName;
+			} else if (settings.grouping.criteria === 'folder') {
+				stateObject.folderHierarchical = settings.grouping.folderHierarchical;
+			} else if (settings.grouping.criteria.startsWith('date-')) {
+				stateObject.dateBasis = settings.grouping.dateBasis;
+			}
+		}
+
 		return JSON.stringify(stateObject);
 	}
 	
@@ -1021,7 +1044,7 @@ export class ViewRenderer {
 	 * @param groupId - 그룹 ID
 	 * @param collapsed - 접힌 상태
 	 */
-	private onGroupToggle(groupId: string, collapsed: boolean): void {
+	private async onGroupToggle(groupId: string, collapsed: boolean): Promise<void> {
 		// 상태 저장
 		this.groupingManager.saveCollapsedState(groupId, collapsed);
 
@@ -1034,10 +1057,22 @@ export class ViewRenderer {
 		if (section) {
 			this.groupRenderer.toggleGroup(section, collapsed);
 
-			// 펼쳐질 때만 카드 렌더링 (접힐 때는 이미 숨겨짐)
+			this.logger.debug('View', 'Group toggled', {
+				groupId,
+				collapsed,
+				sectionFound: !!section,
+				hasCollapsedClass: section.hasClass('is-collapsed')
+			});
+
+			// 펼쳐질 때 카드가 렌더링되지 않았으면 렌더링
 			if (!collapsed) {
-				this.renderGroupCards(section, groupId);
+				await this.renderGroupCards(section, groupId);
 			}
+		} else {
+			this.logger.debug('View', 'Group section not found for toggle', {
+				groupId,
+				collapsed
+			});
 		}
 	}
 
@@ -1049,16 +1084,70 @@ export class ViewRenderer {
 	 */
 	private async renderGroupCards(section: HTMLElement, groupId: string): Promise<void> {
 		const cardContainer = this.groupRenderer.findCardContainer(section);
-		if (!cardContainer || cardContainer.children.length > 0) {
-			// 이미 렌더링되어 있으면 스킵
+		if (!cardContainer) {
+			this.logger.debug('View', 'Card container not found for group', { groupId });
 			return;
 		}
 
-		// 그룹의 파일 목록을 찾아서 렌더링
-		// (여기서는 간단하게 스킵 - 초기 렌더링 시 이미 처리됨)
-		this.logger.debug('View', 'Group cards already rendered or will be rendered on next full render', {
-			groupId
+		// 이미 렌더링되어 있으면 스킵
+		if (cardContainer.children.length > 0) {
+			this.logger.debug('View', 'Group cards already rendered', {
+				groupId,
+				cardCount: cardContainer.children.length
+			});
+			return;
+		}
+
+		// 그룹의 파일 목록을 다시 가져와서 렌더링
+		const files = await this.getFilesToDisplay();
+		const groups = this.groupingManager.groupFiles(files, this.settings.grouping);
+		const group = groups.find(g => g.id === groupId);
+
+		if (!group || group.files.length === 0) {
+			this.logger.debug('View', 'Group not found or empty', {
+				groupId,
+				groupFound: !!group,
+				fileCount: group?.files.length || 0
+			});
+			return;
+		}
+
+		this.logger.debug('View', 'Rendering group cards on expand', {
+			groupId,
+			fileCount: group.files.length
 		});
+
+		// 카드 렌더링
+		const currentActiveFile = this.getActiveFile();
+		const onFileOpen = (file: TFile) => {
+			this.view.openFile(file);
+		};
+
+		const tempContainer = document.createElement('div');
+		for (const file of group.files) {
+			await this.cardFactory.createCard(
+				file,
+				tempContainer,
+				currentActiveFile,
+				onFileOpen
+			);
+		}
+
+		// 카드들을 한 번에 DOM에 추가
+		while (tempContainer.firstChild) {
+			cardContainer.appendChild(tempContainer.firstChild);
+		}
+
+		// 레이아웃 업데이트
+		if (isDefined(this.layoutManager)) {
+			this.layoutManager.updateLayout();
+		}
+
+		// 키보드 네비게이션 업데이트
+		const cardElements = Array.from(
+			this.view.containerEl.querySelectorAll('.card-item')
+		) as HTMLElement[];
+		this.keyboardNav.updateCards(cardElements, files);
 	}
 
 	/**

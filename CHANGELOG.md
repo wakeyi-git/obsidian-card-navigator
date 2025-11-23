@@ -1,3 +1,31 @@
+## [1.4.1] - 2025-01-23
+
+### Fixed
+
+#### Grouping Stability Improvements
+- **Group State Synchronization**: Fixed group collapse/expand state inconsistency
+  - Group toggle now properly reads from localStorage instead of stale snapshot
+  - Prevents state desynchronization between renders
+- **Lazy Card Rendering**: Implemented proper card rendering when expanding collapsed groups
+  - Cards are now correctly rendered when a group is expanded for the first time
+  - Fixes issue where cards added to collapsed groups weren't visible after expanding
+  - Optimized performance by only rendering cards when groups are expanded
+- **Horizontal Mode Layout**: Fixed group container rendering in horizontal mode
+  - Corrected CSS `max-width`/`min-width` properties for proper grid expansion
+  - Fixed collapsed state animations in horizontal mode
+  - Group content now scrolls correctly in horizontal layout
+- **Metadata Cache Handling**: Enhanced detection and logging for metadata cache readiness
+  - Added warnings when metadata cache is not ready during grouping
+  - Temporary fallback to "untagged" group until cache is available
+
+### Changed
+
+- **Group Toggle Logic**: Enhanced `onGroupToggle` to be async for proper card rendering
+- **Debug Logging**: Added comprehensive debug logs for group operations
+  - Toggle events
+  - Card rendering status
+  - Group state changes
+
 ## [1.4.0] - 2025-11-23
 
 ### Added

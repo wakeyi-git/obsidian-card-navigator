@@ -214,10 +214,7 @@ export class LayoutManager {
         groupContents.forEach((content) => {
             const element = content as HTMLElement;
             Object.entries(styles).forEach(([key, value]) => {
-                // overflow 속성은 건너뜀 (그룹 컨테이너는 스크롤하지 않음)
-                if (key === 'overflowX' || key === 'overflowY') {
-                    return;
-                }
+                // ⭐ overflow 속성도 그룹 컨테이너에 적용 (가로 모드 스크롤을 위해)
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (element.style as any)[key] = value;
             });
