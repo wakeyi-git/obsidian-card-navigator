@@ -3493,6 +3493,27 @@ button:focus-visible {
 	transform: rotate(0deg);
 }
 
+/* ⭐ 접힌 그룹에 활성 카드가 있을 때 시각적 표시 */
+.card-group-section.is-collapsed.has-active-card .card-group-header {
+	border-left: 3px solid var(--interactive-accent);
+	background-color: var(--background-modifier-hover);
+}
+
+.card-group-section.is-collapsed.has-active-card .card-group-name {
+	color: var(--interactive-accent);
+	font-weight: 600;
+}
+
+.card-group-section.is-collapsed.has-active-card .card-group-toggle-icon {
+	color: var(--interactive-accent);
+}
+
+/* 가로 모드: 접힌 그룹에 활성 카드가 있을 때 */
+.card-navigator-cards.horizontal-mode .card-group-section.is-collapsed.has-active-card .card-group-header {
+	border-left: none;
+	border-top: 3px solid var(--interactive-accent);
+}
+
 /* 다크 모드 최적화 */
 .theme-dark .card-group-header {
 	background-color: var(--background-secondary);

@@ -1,5 +1,5 @@
 import { App, Component, MarkdownRenderer, setIcon, TFile } from 'obsidian';
-import { CardData, CardSection, RenderMode, CardNavigatorSettings, CardSettings, ImageThumbnailSettings } from '../types';
+import { CardData, CardSection, RenderMode, CardNavigatorSettings, ImageThumbnailSettings } from '../types';
 import { DebugLogger } from '../utils/DebugLogger';
 import { StyleUtils } from '../utils/StyleUtils';
 import { t } from '../i18n';
@@ -136,7 +136,7 @@ export class CardRenderer {
         }
 
         // Modified Strategy A: Apply section-specific CSS custom properties
-        this.applySectionCustomProperties(cardEl, data.cardSettings);
+        StyleUtils.applySectionCustomProperties(cardEl, data.cardSettings);
 
         this.setupLinkHandlersInternal(cardEl);
 
@@ -438,13 +438,14 @@ export class CardRenderer {
             sectionEl.addClass('markdown-preview-section');
             sectionEl.addClass('markdown-rendered');
 
-            // ⭐ 마크다운 렌더링을 setTimeout으로 분산 (reflow 방지)
+            // ⭐ 마크다운 렌더링을 requestAnimationFrame으로 분산 (reflow 방지)
+            // setTimeout보다 브라우저 렌더링 사이클에 최적화됨
             const content = section.content;
-            setTimeout(() => {
+            requestAnimationFrame(() => {
                 this.renderMarkdown(content, sectionEl, sourcePath).then(() => {
                     sectionEl.addClass('card-markdown-content');
                 });
-            }, 0);
+            });
 
             this.logger.debug('Card', t().debug.card.markdownRenderingComplete, {
                 sectionType: section.type,
@@ -753,88 +754,6 @@ export class CardRenderer {
                 await this.app.vault.delete(file);
             }
         });
-    }
-
-    /**
-     * 섹션별 CSS 커스텀 속성 적용 (Modified Strategy A)
-     *
-     * @param card - 카드 요소
-     * @param cardSettings - 카드 설정
-     *
-     * @remarks
-     * 헤더, 바디, 풋터의 normal/active/focused 상태별 스타일을 CSS 변수로 설정합니다.
-     * inheritFromNormal이 true인 경우, active/focused 변수를 설정하지 않아
-     * 자동으로 normal 값으로 폴백되도록 합니다.
-     */
-    private applySectionCustomProperties(
-        card: HTMLElement,
-        cardSettings: CardSettings
-    ): void {
-        // Header styles
-        if (cardSettings.header) {
-            // Normal 스타일은 항상 설정
-            card.style.setProperty('--card-header-bg-normal', cardSettings.header.normalStyle.backgroundColor);
-            card.style.setProperty('--card-header-font-size-normal', `${cardSettings.header.normalStyle.fontSize}px`);
-            card.style.setProperty('--card-header-text-color-normal', StyleUtils.getContrastColor(cardSettings.header.normalStyle.backgroundColor));
-
-            // Active 스타일: 상속 모드가 아닐 때만 설정
-            if (!cardSettings.header.activeStyle.inheritFromNormal) {
-                card.style.setProperty('--card-header-bg-active', cardSettings.header.activeStyle.backgroundColor);
-                card.style.setProperty('--card-header-font-size-active', `${cardSettings.header.activeStyle.fontSize}px`);
-                card.style.setProperty('--card-header-text-color-active', StyleUtils.getContrastColor(cardSettings.header.activeStyle.backgroundColor));
-            }
-
-            // Focused 스타일: 상속 모드가 아닐 때만 설정
-            if (!cardSettings.header.focusedStyle.inheritFromNormal) {
-                card.style.setProperty('--card-header-bg-focused', cardSettings.header.focusedStyle.backgroundColor);
-                card.style.setProperty('--card-header-font-size-focused', `${cardSettings.header.focusedStyle.fontSize}px`);
-                card.style.setProperty('--card-header-text-color-focused', StyleUtils.getContrastColor(cardSettings.header.focusedStyle.backgroundColor));
-            }
-        }
-
-        // Body styles
-        if (cardSettings.body) {
-            // Normal 스타일은 항상 설정
-            card.style.setProperty('--card-body-bg-normal', cardSettings.body.normalStyle.backgroundColor);
-            card.style.setProperty('--card-body-font-size-normal', `${cardSettings.body.normalStyle.fontSize}px`);
-            card.style.setProperty('--card-body-text-color-normal', StyleUtils.getContrastColor(cardSettings.body.normalStyle.backgroundColor));
-
-            // Active 스타일: 상속 모드가 아닐 때만 설정
-            if (!cardSettings.body.activeStyle.inheritFromNormal) {
-                card.style.setProperty('--card-body-bg-active', cardSettings.body.activeStyle.backgroundColor);
-                card.style.setProperty('--card-body-font-size-active', `${cardSettings.body.activeStyle.fontSize}px`);
-                card.style.setProperty('--card-body-text-color-active', StyleUtils.getContrastColor(cardSettings.body.activeStyle.backgroundColor));
-            }
-
-            // Focused 스타일: 상속 모드가 아닐 때만 설정
-            if (!cardSettings.body.focusedStyle.inheritFromNormal) {
-                card.style.setProperty('--card-body-bg-focused', cardSettings.body.focusedStyle.backgroundColor);
-                card.style.setProperty('--card-body-font-size-focused', `${cardSettings.body.focusedStyle.fontSize}px`);
-                card.style.setProperty('--card-body-text-color-focused', StyleUtils.getContrastColor(cardSettings.body.focusedStyle.backgroundColor));
-            }
-        }
-
-        // Footer styles
-        if (cardSettings.footer) {
-            // Normal 스타일은 항상 설정
-            card.style.setProperty('--card-footer-bg-normal', cardSettings.footer.normalStyle.backgroundColor);
-            card.style.setProperty('--card-footer-font-size-normal', `${cardSettings.footer.normalStyle.fontSize}px`);
-            card.style.setProperty('--card-footer-text-color-normal', StyleUtils.getContrastColor(cardSettings.footer.normalStyle.backgroundColor));
-
-            // Active 스타일: 상속 모드가 아닐 때만 설정
-            if (!cardSettings.footer.activeStyle.inheritFromNormal) {
-                card.style.setProperty('--card-footer-bg-active', cardSettings.footer.activeStyle.backgroundColor);
-                card.style.setProperty('--card-footer-font-size-active', `${cardSettings.footer.activeStyle.fontSize}px`);
-                card.style.setProperty('--card-footer-text-color-active', StyleUtils.getContrastColor(cardSettings.footer.activeStyle.backgroundColor));
-            }
-
-            // Focused 스타일: 상속 모드가 아닐 때만 설정
-            if (!cardSettings.footer.focusedStyle.inheritFromNormal) {
-                card.style.setProperty('--card-footer-bg-focused', cardSettings.footer.focusedStyle.backgroundColor);
-                card.style.setProperty('--card-footer-font-size-focused', `${cardSettings.footer.focusedStyle.fontSize}px`);
-                card.style.setProperty('--card-footer-text-color-focused', StyleUtils.getContrastColor(cardSettings.footer.focusedStyle.backgroundColor));
-            }
-        }
     }
 
     /**

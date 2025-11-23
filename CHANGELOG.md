@@ -1,3 +1,46 @@
+## [1.4.3] - 2025-11-23
+
+### Changed
+
+#### Settings UI Reorganization
+- **Settings Tab Structure**: Reorganized settings tabs for better usability and logical grouping
+  - Reduced from 8 tabs to 7 tabs by merging related settings
+  - Tab structure:
+    1. **카드 목록 작성** (Card List Creation): Folder/Tag/Search mode and search settings
+    2. **그룹화 및 정렬** (Grouping & Sorting): Card grouping and sorting settings
+    3. **카드 설정** (Card Settings): Unified card content (data) and styling settings with interactive preview
+    4. **레이아웃** (Layout): Grid/Masonry layout settings
+    5. **상호작용** (Interaction): Navigation, tag click, and drag & drop settings
+    6. **프리셋** (Presets): Preset management
+    7. **기타** (Other): Language, debug mode, and settings management (reduced from 9 items to 3)
+  - Related file: [SettingsTab.ts](src/ui/SettingsTab.ts)
+
+#### Code Refactoring & Optimization
+- **StyleUtils Enhancement**: Added centralized contrast color calculation and card style application
+  - New `getContrastColor()` method for automatic text color calculation based on background
+  - New `applyCardCustomProperties()` method for consistent CSS custom property management
+  - Removed duplicate color calculation logic from CardRenderer and InteractiveCardSettings
+  - Related files: [StyleUtils.ts](src/utils/StyleUtils.ts), [CardRenderer.ts](src/card/CardRenderer.ts)
+
+- **ViewRenderer Optimization**: Improved card rendering performance and reliability
+  - Separated navigation state preservation into dedicated method `preserveNavigationState()`
+  - Optimized card initialization flow with better state management
+  - Enhanced error handling with try-catch blocks and detailed logging
+  - Related file: [ViewRenderer.ts](src/view/ViewRenderer.ts)
+
+### Improved
+
+#### User Experience
+- **Settings Organization**: Much cleaner settings UI with logical grouping
+  - "Other" tab now contains only 3 essential items (down from 9)
+  - Card content and styling unified in one tab with interactive preview
+  - Better navigation flow: List Creation → Grouping/Sorting → Card Settings → Layout → Interaction → Presets → Other
+
+#### Code Quality
+- **Maintainability**: Centralized common utility functions to reduce code duplication
+- **Consistency**: Unified CSS custom property application across components
+- **Reliability**: Better error handling and state management in view rendering
+
 ## [1.4.2] - 2025-11-23
 
 ### Fixed

@@ -11,23 +11,25 @@ import { getAvailableLanguages, getLanguageDisplayName, type LanguageSetting, t 
 /**
  * 설정 탭 타입
  */
-type SettingTabType = 'mode' | 'card' | 'layout' | 'presets' | 'other';
+type SettingTabType = 'source' | 'grouping' | 'card' | 'layout' | 'interaction' | 'presets' | 'other';
 
 /**
  * CardNavigatorSettingTab
- * 
+ *
  * 플러그인 설정 UI를 탭 기반으로 제공합니다.
- * 
+ *
  * 탭 구성:
- * 1. 모드 & 정렬 - 폴더/태그 모드, 정렬 설정
- * 2. 카드 설정 - 내용, 렌더링, 스타일
- * 3. 레이아웃 - 그리드/메이슨리 레이아웃 설정
- * 4. 프리셋 - 프리셋 관리
- * 5. 기타 - 설정 초기화 등
+ * 1. 카드 목록 작성 - 폴더/태그/검색 모드 설정
+ * 2. 그룹화 및 정렬 - 카드 그룹화 및 정렬 설정
+ * 3. 카드 설정 - 카드 내용(데이터) 및 스타일링 (통합)
+ * 4. 레이아웃 - 그리드/메이슨리 레이아웃 설정
+ * 5. 상호작용 - 네비게이션, 클릭, 드래그 앤 드롭 설정
+ * 6. 프리셋 - 프리셋 관리
+ * 7. 기타 - 언어, 디버그 모드, 설정 관리
  */
 export class CardNavigatorSettingTab extends PluginSettingTab {
     plugin: CardNavigatorPlugin;
-    
+
     // 설정 섹션 인스턴스
     private modeSettings: ModeSettings;
     private sortSettings: SortSettings;
@@ -36,7 +38,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
     private interactiveCardSettings: InteractiveCardSettings;
 
     // 현재 활성 탭
-    private activeTab: SettingTabType = 'mode';
+    private activeTab: SettingTabType = 'source';
 
     // 탭 컨테이너들
     private tabContainers: Map<SettingTabType, HTMLElement> = new Map();
@@ -87,11 +89,13 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
      */
     private createTabButtons(container: HTMLElement): void {
         const tabs: { id: SettingTabType; label: string; icon: string }[] = [
-            { id: 'mode', label: t().settingsTab.tabs.mode, icon: 'settings' },
-            { id: 'card', label: t().settingsTab.tabs.card, icon: 'credit-card' },
-            { id: 'layout', label: t().settingsTab.tabs.layout, icon: 'layout-grid' },
-            { id: 'presets', label: t().settingsTab.tabs.presets, icon: 'save' },
-            { id: 'other', label: t().settingsTab.tabs.other, icon: 'more-horizontal' }
+            { id: 'source', label: '카드 목록 작성', icon: 'folder-open' },
+            { id: 'grouping', label: '그룹화 및 정렬', icon: 'layers' },
+            { id: 'card', label: '카드 설정', icon: 'credit-card' },
+            { id: 'layout', label: '레이아웃', icon: 'layout-grid' },
+            { id: 'interaction', label: '상호작용', icon: 'mouse-pointer' },
+            { id: 'presets', label: '프리셋', icon: 'save' },
+            { id: 'other', label: '기타', icon: 'more-horizontal' }
         ];
 
         tabs.forEach(tab => {
@@ -122,35 +126,43 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
      * 탭 콘텐츠들을 생성합니다
      */
     private createTabContents(container: HTMLElement): void {
-        // 1. 모드 & 정렬 탭
-        const modeTab = container.createDiv({ cls: 'setting-tab-pane' });
-        this.modeSettings.render(modeTab);
-        this.sortSettings.render(modeTab);
-        this.tabContainers.set('mode', modeTab);
+        // 1. 카드 목록 작성 탭 (폴더/태그/검색 모드)
+        const sourceTab = container.createDiv({ cls: 'setting-tab-pane' });
+        this.modeSettings.render(sourceTab);
+        this.addSearchSettings(sourceTab);
+        this.tabContainers.set('source', sourceTab);
 
-        // 2. 카드 설정 탭
+        // 2. 그룹화 및 정렬 탭
+        const groupingTab = container.createDiv({ cls: 'setting-tab-pane' });
+        this.addGroupingSettings(groupingTab);
+        this.sortSettings.render(groupingTab);
+        this.tabContainers.set('grouping', groupingTab);
+
+        // 3. 카드 설정 탭 (내용 + 스타일링 통합)
         const cardTab = container.createDiv({ cls: 'setting-tab-pane' });
         this.interactiveCardSettings.render(cardTab);
         this.tabContainers.set('card', cardTab);
 
-        // 3. 레이아웃 탭
+        // 4. 레이아웃 탭
         const layoutTab = container.createDiv({ cls: 'setting-tab-pane' });
         this.layoutSettings.render(layoutTab);
         this.tabContainers.set('layout', layoutTab);
 
-        // 4. 프리셋 탭
+        // 5. 상호작용 탭 (네비게이션, 클릭, 드래그 앤 드롭)
+        const interactionTab = container.createDiv({ cls: 'setting-tab-pane' });
+        this.addScrollBehaviorSettings(interactionTab);
+        this.addTagClickActionSettings(interactionTab);
+        this.addDragDropSettings(interactionTab);
+        this.tabContainers.set('interaction', interactionTab);
+
+        // 6. 프리셋 탭
         const presetsTab = container.createDiv({ cls: 'setting-tab-pane' });
         this.presetSettings.render(presetsTab);
         this.tabContainers.set('presets', presetsTab);
 
-        // 5. 기타 탭
+        // 7. 기타 탭 (언어, 디버그, 설정 관리만)
         const otherTab = container.createDiv({ cls: 'setting-tab-pane' });
         this.addLanguageSettings(otherTab);
-        this.addGroupingSettings(otherTab);
-        this.addSearchSettings(otherTab);
-        this.addScrollBehaviorSettings(otherTab);
-        this.addTagClickActionSettings(otherTab);
-        this.addDragDropSettings(otherTab);
         this.addDebugSettings(otherTab);
         this.addResetButton(otherTab);
         this.tabContainers.set('other', otherTab);
@@ -758,4 +770,5 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
 
         input.click();
     }
+
 }

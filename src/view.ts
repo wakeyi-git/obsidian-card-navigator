@@ -288,10 +288,16 @@ export class CardNavigatorView extends ItemView implements ICardView {
 					}
 				} else if (hasActiveFileChanged) {
 					this.logger.debug('View', t().debug.view.sameContextUpdateClass);
+
+					// 그룹화 활성화 시, 접힌 그룹에 활성 파일이 있으면 자동 펼치기
+					if (this.settings.grouping.enabled && isValidFile(activeFile)) {
+						this.viewRenderer.expandGroupContainingFile(this.cardsContainer, activeFile);
+					}
+
 					if (isValidElement(this.cardsContainer)) {
 						this.viewRenderer.updateActiveCardClass(this.cardsContainer);
 					}
-					
+
 					if (isValidFile(activeFile)) {
 						const fileToScroll: TFile = activeFile;
 						await this.scrollManager.scrollToActiveFile(fileToScroll, 'card-click');

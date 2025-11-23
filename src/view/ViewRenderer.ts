@@ -475,17 +475,61 @@ export class ViewRenderer {
 	// Modified Strategy A: CSS 클래스만으로 모든 상태 관리
 	// CSS 커스텀 속성과 CSS 클래스가 자동으로 스타일 처리
 
-	/** 전역 설정에서 CardSettings 추출 */
-	private getGlobalCardSettings() {
-		return {
-			header: this.settings.header,
-			body: this.settings.body,
-			footer: this.settings.footer,
-			renderMode: this.settings.renderMode,
-			normalCardStyle: this.settings.normalCardStyle,
-			activeCardStyle: this.settings.activeCardStyle,
-			focusedCardStyle: this.settings.focusedCardStyle
-		};
+	/**
+	 * 그룹을 준비하고 활성 파일이 포함된 그룹을 자동으로 펼칩니다
+	 *
+	 * @param files - 파일 목록
+	 * @param currentActiveFile - 현재 활성 파일
+	 * @param context - 로깅용 컨텍스트 (Standard/Viewport)
+	 * @returns 준비된 그룹 배열
+	 *
+	 * @private
+	 */
+	private prepareGroups(
+		files: TFile[],
+		currentActiveFile: TFile | null,
+		context: string
+	): import('../types').CardGroup[] {
+		// 그룹화
+		const groups = this.groupingManager.groupFiles(files, this.settings.grouping);
+
+		this.logger.debug('View', `${context}: Groups created`, {
+			groupCount: groups.length,
+			groups: groups.map(g => ({
+				id: g.id,
+				name: g.name,
+				fileCount: g.files.length,
+				collapsed: g.collapsed,
+				icon: g.icon
+			}))
+		});
+
+		// 활성 파일이 포함된 그룹 자동 펼치기
+		// 렌더링 시점에 활성 파일이 접힌 그룹에 있으면 자동으로 펼쳐서 사용자에게 보여줌
+		if (currentActiveFile) {
+			groups.forEach((group) => {
+				const hasActiveFile = group.files.some((file) => file.path === currentActiveFile.path);
+				if (hasActiveFile && group.collapsed) {
+					group.collapsed = false;
+					this.groupingManager.saveCollapsedState(group.id, false);
+					this.logger.debug('View', 'Auto-expanded group containing active file', {
+						groupId: group.id,
+						groupName: group.name,
+						activeFile: currentActiveFile.basename
+					});
+				}
+			});
+		}
+
+		// 접힌 그룹 개수 확인
+		const collapsedCount = groups.filter(g => g.collapsed).length;
+		this.logger.debug('View', `${context}: Group collapsed status`, {
+			totalGroups: groups.length,
+			collapsedGroups: collapsedCount,
+			expandedGroups: groups.length - collapsedCount
+		});
+
+		return groups;
 	}
 	
 	/**
@@ -629,27 +673,8 @@ export class ViewRenderer {
 
 		this.selectionManager.setAllFiles(files);
 
-		// ⭐ 그룹화
-		const groups = this.groupingManager.groupFiles(files, this.settings.grouping);
-
-		this.logger.debug('View', 'Standard: Groups created', {
-			groupCount: groups.length,
-			groups: groups.map(g => ({
-				id: g.id,
-				name: g.name,
-				fileCount: g.files.length,
-				collapsed: g.collapsed,
-				icon: g.icon
-			}))
-		});
-
-		// 접힌 그룹 개수 확인
-		const collapsedCount = groups.filter(g => g.collapsed).length;
-		this.logger.debug('View', 'Standard: Group collapsed status', {
-			totalGroups: groups.length,
-			collapsedGroups: collapsedCount,
-			expandedGroups: groups.length - collapsedCount
-		});
+		// ⭐ 그룹화 및 활성 파일 자동 펼치기
+		const groups = this.prepareGroups(files, currentActiveFile, 'Standard');
 
 		// ⭐ 그룹별로 렌더링
 		for (const group of groups) {
@@ -671,7 +696,8 @@ export class ViewRenderer {
 				group,
 				container,
 				(groupId, collapsed) => this.onGroupToggle(groupId, collapsed),
-				(groupId) => this.onGroupSelectAll(groupId)
+				(groupId) => this.onGroupSelectAll(groupId),
+				currentActiveFile
 			);
 
 			// 그룹이 접혀있으면 카드 렌더링 스킵
@@ -831,27 +857,8 @@ export class ViewRenderer {
 
 		this.selectionManager.setAllFiles(files);
 
-		// ⭐ 그룹화
-		const groups = this.groupingManager.groupFiles(files, this.settings.grouping);
-
-		this.logger.debug('View', 'Viewport: Groups created', {
-			groupCount: groups.length,
-			groups: groups.map(g => ({
-				id: g.id,
-				name: g.name,
-				fileCount: g.files.length,
-				collapsed: g.collapsed,
-				icon: g.icon
-			}))
-		});
-
-		// 접힌 그룹 개수 확인
-		const collapsedCount = groups.filter(g => g.collapsed).length;
-		this.logger.debug('View', 'Viewport: Group collapsed status', {
-			totalGroups: groups.length,
-			collapsedGroups: collapsedCount,
-			expandedGroups: groups.length - collapsedCount
-		});
+		// ⭐ 그룹화 및 활성 파일 자동 펼치기
+		const groups = this.prepareGroups(files, currentActiveFile, 'Viewport');
 
 		// 1. 모든 파일에 대한 플레이스홀더 생성 (그룹별로)
 		const placeholders: HTMLElement[] = [];
@@ -878,7 +885,8 @@ export class ViewRenderer {
 				group,
 				container,
 				(groupId, collapsed) => this.onGroupToggle(groupId, collapsed),
-				(groupId) => this.onGroupSelectAll(groupId)
+				(groupId) => this.onGroupSelectAll(groupId),
+				currentActiveFile
 			);
 
 			// 그룹이 접혀있으면 플레이스홀더 생성 스킵
@@ -1038,6 +1046,75 @@ export class ViewRenderer {
 		}
 	}
 	
+	/**
+	 * 특정 파일을 포함하는 접힌 그룹을 찾아서 펼칩니다
+	 *
+	 * @param container - 컨테이너 요소
+	 * @param file - 찾을 파일
+	 * @returns 펼쳐진 그룹 이름, 없으면 null
+	 */
+	expandGroupContainingFile(container: HTMLElement, file: TFile): string | null {
+		const allGroupSections = this.groupRenderer.findAllGroupSections(container);
+
+		// 접힌 그룹만 필터링
+		const collapsedSections = allGroupSections.filter(s => s.hasClass('is-collapsed'));
+		if (collapsedSections.length === 0) {
+			return null;
+		}
+
+		// 파일 목록 가져오기
+		const files = this.getFilesToDisplaySync();
+		if (!files) {
+			return null;
+		}
+
+		// 그룹 생성
+		const groups = this.groupingManager.groupFiles(files, this.settings.grouping);
+
+		// 접힌 그룹 중 활성 파일을 포함하는 그룹 찾기
+		for (const section of collapsedSections) {
+			const groupId = section.dataset.groupId;
+			if (!groupId) continue;
+
+			const group = groups.find(g => g.id === groupId);
+			if (!group) continue;
+
+			const hasActiveFile = group.files.some(f => f.path === file.path);
+			if (hasActiveFile) {
+				// 그룹 펼치기
+				this.onGroupToggle(groupId, false);
+				this.logger.debug('View', 'Expanded collapsed group via file click', {
+					groupId,
+					groupName: group.name,
+					activeFile: file.basename
+				});
+				return group.name;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * 파일 목록을 동기적으로 가져옵니다 (캐시된 데이터 사용)
+	 */
+	private getFilesToDisplaySync(): TFile[] | null {
+		try {
+			if (this.state.hasSearchQuery()) {
+				return null; // 검색 모드는 비동기 필요
+			}
+
+			if (this.settings.currentMode === 'tag') {
+				return this.tagMode.getFiles();
+			} else {
+				return this.folderMode.getFiles();
+			}
+		} catch (error) {
+			this.logger.debug('View', 'Failed to get files synchronously', { error });
+			return null;
+		}
+	}
+
 	/**
 	 * 그룹 토글 핸들러
 	 *

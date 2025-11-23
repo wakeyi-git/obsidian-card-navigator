@@ -24,21 +24,29 @@ export class GroupRenderer {
      * @param container - 그룹을 추가할 컨테이너
      * @param onToggle - 접기/펼치기 콜백
      * @param onSelectAll - 전체 선택 콜백
+     * @param activeFile - 현재 활성 파일 (선택사항)
      * @returns 생성된 섹션 요소
      */
     createGroupSection(
         group: CardGroup,
         container: HTMLElement,
         onToggle: (groupId: string, collapsed: boolean) => void,
-        onSelectAll: (groupId: string) => void
+        onSelectAll: (groupId: string) => void,
+        activeFile?: { path: string } | null
     ): HTMLElement {
         const section = container.createEl('div', {
             cls: 'card-group-section'
         });
         section.dataset.groupId = group.id;
 
+        // 접힌 그룹에 활성 파일이 포함되어 있으면 시각적 표시 추가
+        const hasActiveFile = activeFile && group.files.some((file) => file.path === activeFile.path);
+
         if (group.collapsed) {
             section.addClass('is-collapsed');
+            if (hasActiveFile) {
+                section.addClass('has-active-card');
+            }
         }
 
         // 섹션 헤더 (이름이 비어있으면 헤더 숨김)
