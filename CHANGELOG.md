@@ -1,3 +1,22 @@
+## [1.4.6] - 2025-11-23
+
+### Fixed
+
+#### Keyboard Navigation with Grouping
+- **Focus and File Opening Mismatch**: Fixed issue where focused card and opened file were different when grouping was enabled
+  - Problem: Card order in DOM and keyboard navigation system were out of sync when groups were collapsed
+  - Solution: Keyboard navigation now uses actual DOM order instead of full file list
+  - Collapsed groups are properly excluded from keyboard navigation
+  - Related files: [ViewRenderer.ts](src/view/ViewRenderer.ts), [KeyboardNav.ts](src/navigation/KeyboardNav.ts)
+
+#### Focus Card Command
+- **Focus Command Not Working**: Fixed "Focus on Card Navigator (active card)" hotkey not focusing properly
+  - Problem: When active file was missing, direct DOM manipulation bypassed KeyboardNavigator
+  - Solution: Now uses `KeyboardNavigator.focusCardElement()` method consistently
+  - Proper focused styles are now applied
+  - Keyboard navigation state is correctly maintained
+  - Related file: [view.ts](src/view.ts)
+
 ## [1.4.5] - 2025-11-23
 
 ### Fixed

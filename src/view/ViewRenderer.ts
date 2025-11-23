@@ -740,10 +740,21 @@ export class ViewRenderer {
 			this.layoutManager.updateLayout();
 		}
 
+		// ⭐ DOM에 실제로 렌더링된 카드만 수집 (접힌 그룹의 카드 제외)
 		const cardElements = Array.from(
 			container.querySelectorAll('.card-item')
 		) as HTMLElement[];
-		this.keyboardNav.updateCards(cardElements, files);
+
+		// DOM 순서대로 파일 배열 재구성
+		const visibleFiles = cardElements
+			.map(card => {
+				const path = card.dataset.filePath;
+				if (!path) return null;
+				return files.find(f => f.path === path);
+			})
+			.filter(f => f !== null) as TFile[];
+
+		this.keyboardNav.updateCards(cardElements, visibleFiles);
 		
 		this.logger.debug('View', 'Standard render completed', {
 			renderingId,
@@ -967,12 +978,23 @@ export class ViewRenderer {
 		if (isDefined(this.layoutManager)) {
 			this.layoutManager.updateLayout();
 		}
-		
+
 		// 6. 키보드 네비게이션 설정
+		// ⭐ DOM에 실제로 렌더링된 카드만 수집 (접힌 그룹의 카드 제외)
 		const cardElements = Array.from(
 			container.querySelectorAll('.card-item')
 		) as HTMLElement[];
-		this.keyboardNav.updateCards(cardElements, files);
+
+		// DOM 순서대로 파일 배열 재구성
+		const visibleFiles = cardElements
+			.map(card => {
+				const path = card.dataset.filePath;
+				if (!path) return null;
+				return files.find(f => f.path === path);
+			})
+			.filter(f => f !== null) as TFile[];
+
+		this.keyboardNav.updateCards(cardElements, visibleFiles);
 		
 		this.logger.debug('View', 'Viewport rendering complete', {
 			renderingId,
@@ -1221,10 +1243,21 @@ export class ViewRenderer {
 		}
 
 		// 키보드 네비게이션 업데이트
+		// ⭐ DOM에 실제로 렌더링된 카드만 수집 (접힌 그룹의 카드 제외)
 		const cardElements = Array.from(
 			this.view.containerEl.querySelectorAll('.card-item')
 		) as HTMLElement[];
-		this.keyboardNav.updateCards(cardElements, files);
+
+		// DOM 순서대로 파일 배열 재구성
+		const visibleFiles = cardElements
+			.map(card => {
+				const path = card.dataset.filePath;
+				if (!path) return null;
+				return files.find(f => f.path === path);
+			})
+			.filter(f => f !== null) as TFile[];
+
+		this.keyboardNav.updateCards(cardElements, visibleFiles);
 	}
 
 	/**

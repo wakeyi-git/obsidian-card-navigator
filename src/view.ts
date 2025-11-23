@@ -669,27 +669,25 @@ export class CardNavigatorView extends ItemView implements ICardView {
 	
 	/**
 	 * Card Navigator에 포커스를 설정하고 활성 카드로 이동합니다
-	 * 
+	 *
 	 * @remarks
 	 * Obsidian 명령어로 등록되어 단축키로 호출할 수 있습니다.
 	 * 활성 파일이 없으면 첫 번째 카드로 이동합니다.
 	 */
 	public focusOnActiveCard(): void {
 		this.containerEl.focus();
-		
+
 		const activeFile = this.app.workspace.getActiveFile();
 		if (!isValidFile(activeFile)) {
+			// 첫 번째 카드 요소 찾기
 			const firstCard = this.cardsContainer?.querySelector('.card-item') as HTMLElement;
 			if (firstCard) {
-				firstCard.addClass('focused');
-				firstCard.scrollIntoView({
-					behavior: 'smooth',
-					block: 'center'
-				});
+				// KeyboardNavigator를 통해 포커스 설정
+				this.keyboardNavigator.focusCardElement(firstCard);
 			}
 			return;
 		}
-		
+
 		this.keyboardNavigator.focusFileCard(activeFile);
 	}
 

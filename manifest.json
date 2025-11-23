@@ -1,7 +1,7 @@
 {
 	"id": "card-navigator",
 	"name": "Card Navigator",
-	"version": "1.4.5",
+	"version": "1.4.6",
 	"minAppVersion": "0.15.0",
 	"description": "Navigate your notes with a beautiful card-based interface. Browse by folder, tag, or search with customizable card layouts.",
 	"author": "wakeyi",
