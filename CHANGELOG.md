@@ -1,3 +1,20 @@
+## [1.3.1] - 2025-11-23
+
+### Added
+- **StyleUtils utility class**: Centralized card styling operations with WCAG-compliant contrast color calculation
+- **Enhanced preset management**: Advanced preset configuration with improved UI/UX
+- **Improved drag-and-drop handling**: Enhanced DnD functionality for better user experience
+
+### Changed
+- **Type safety improvements**: Replaced `any` types with proper TypeScript interfaces
+- **Code organization**: Extracted reusable styling logic into utility class
+- **Settings UI refinements**: Improved preset and interactive card settings interfaces
+
+### Fixed
+- **TypeScript compilation**: Fixed type errors in settings components
+- **ESLint compliance**: Resolved linting issues (no-explicit-any, no-case-declarations, no-unused-vars)
+- **Import organization**: Added missing type imports for better code maintainability
+
 ## [1.3.0] - 2025-11-23
 
 ### Added
