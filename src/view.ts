@@ -366,12 +366,12 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		this.registerEvent(
 			this.app.vault.on('rename', async (file, oldPath) => {
 				if (!(file instanceof TFile)) return;
-				
+
 				this.logger.debug('View', t().debug.view.fileRenameDetected, {
 					oldPath,
 					newPath: file.path
 				});
-				
+
 				// ⭐ 디바운싱 적용: metadata 이벤트와 합쳐짐
 				if (this.debouncedForceRender) {
 					this.debouncedForceRender().catch(err => {
@@ -382,7 +382,23 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				}
 			})
 		);
-		
+
+		// ⭐ 테마 변경 감지 및 카드 리프레시
+		// Obsidian 테마가 변경되면 카드의 색상을 즉시 업데이트합니다
+		this.registerEvent(
+			this.app.workspace.on('css-change', async () => {
+				this.logger.debug('View', 'Theme change detected - refreshing cards');
+
+				// 카드 리프레시 (스타일 재적용)
+				if (isValidElement(this.cardsContainer)) {
+					await this.viewRenderer.forceRender(
+						this.cardsContainer,
+						(f) => this.openFile(f)
+					);
+				}
+			})
+		);
+
 		container.setAttribute('tabindex', '-1');
 		
 		this.registerDomEvent(container, 'keydown', (e: KeyboardEvent) => {

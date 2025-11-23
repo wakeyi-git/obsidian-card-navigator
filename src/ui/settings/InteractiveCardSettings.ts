@@ -111,7 +111,7 @@ export class InteractiveCardSettings extends BaseSettings {
     
     /**
      * Card Navigator 뷰를 강제로 다시 렌더링합니다
-     * 
+     *
      * @remarks
      * 설정 변경 시 실제 카드에 즉시 반영하기 위해 사용합니다.
      */
@@ -123,6 +123,54 @@ export class InteractiveCardSettings extends BaseSettings {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (view as any).refresh();
             }
+        }
+    }
+
+    /**
+     * 일반 상태 카드 스타일 변경 시 상속 중인 활성/포커스 스타일을 자동 업데이트합니다
+     *
+     * @param property - 변경된 속성 이름
+     * @param value - 새로운 값
+     */
+    private updateInheritingCardStyles(property: keyof CardStyleSettings, value: string | number): void {
+        const activeStyle = this.plugin.settings.activeCardStyle;
+        const focusedStyle = this.plugin.settings.focusedCardStyle;
+
+        // 활성 상태가 상속 중이면 업데이트
+        if (activeStyle.inheritFromNormal) {
+            activeStyle[property] = value as never;
+        }
+
+        // 포커스 상태가 상속 중이면 업데이트
+        if (focusedStyle.inheritFromNormal) {
+            focusedStyle[property] = value as never;
+        }
+    }
+
+    /**
+     * 일반 상태 섹션 스타일 변경 시 상속 중인 활성/포커스 스타일을 자동 업데이트합니다
+     *
+     * @param section - 섹션 타입 ('header' | 'body' | 'footer')
+     * @param property - 변경된 속성 이름
+     * @param value - 새로운 값
+     */
+    private updateInheritingSectionStyles(
+        section: 'header' | 'body' | 'footer',
+        property: keyof CardSectionStyleSettings,
+        value: string | number
+    ): void {
+        const sectionSettings = this.plugin.settings[section];
+        const activeStyle = sectionSettings.activeStyle;
+        const focusedStyle = sectionSettings.focusedStyle;
+
+        // 활성 상태가 상속 중이면 업데이트
+        if (activeStyle.inheritFromNormal) {
+            activeStyle[property] = value as never;
+        }
+
+        // 포커스 상태가 상속 중이면 업데이트
+        if (focusedStyle.inheritFromNormal) {
+            focusedStyle[property] = value as never;
         }
     }
     
@@ -168,10 +216,11 @@ export class InteractiveCardSettings extends BaseSettings {
                 this.refreshPreviewCard();
             }
         });
-        
-        this.renderPreviewSection(container);
-        this.renderCardBaseSettings(container);
-        this.renderSectionSettings(container);
+
+        // ⭐ DOM 순서를 Grid 레이아웃 순서와 일치시킴 (왼쪽 -> 오른쪽 -> 아래)
+        this.renderPreviewSection(container);      // grid-row: 1, grid-column: 1
+        this.renderCardBaseSettings(container);    // grid-row: 1, grid-column: 2
+        this.renderSectionSettings(container);     // grid-row: 2, grid-column: 1 / -1
     }
 
     /**
@@ -251,6 +300,10 @@ export class InteractiveCardSettings extends BaseSettings {
                 .setValue(this.extractColorValue(style.borderColor))
                 .onChange(async (value) => {
                     style.borderColor = value;
+                    // 일반 상태일 때만 상속 중인 스타일 업데이트
+                    if (this.selectedState === 'normal') {
+                        this.updateInheritingCardStyles('borderColor', value);
+                    }
                     await this.plugin.saveSettings();
                     this.updatePreviewStyles();
                     this.forceViewRender();
@@ -262,6 +315,10 @@ export class InteractiveCardSettings extends BaseSettings {
                 .onClick(async () => {
                     const defaultStyle = this.getDefaultCardStyle();
                     style.borderColor = defaultStyle.borderColor;
+                    // 일반 상태일 때만 상속 중인 스타일 업데이트
+                    if (this.selectedState === 'normal') {
+                        this.updateInheritingCardStyles('borderColor', defaultStyle.borderColor);
+                    }
                     await this.plugin.saveSettings();
                     this.updateCardBaseSettings();
                     this.updatePreviewStyles();
@@ -279,6 +336,10 @@ export class InteractiveCardSettings extends BaseSettings {
                     const num = parseInt(value);
                     if (!isNaN(num) && num >= 0) {
                         style.borderWidth = num;
+                        // 일반 상태일 때만 상속 중인 스타일 업데이트
+                        if (this.selectedState === 'normal') {
+                            this.updateInheritingCardStyles('borderWidth', num);
+                        }
                         this.debouncedUpdatePreview();
                         this.debouncedSave();
                         this.debouncedForceViewRender();
@@ -291,6 +352,10 @@ export class InteractiveCardSettings extends BaseSettings {
                 .onClick(async () => {
                     const defaultStyle = this.getDefaultCardStyle();
                     style.borderWidth = defaultStyle.borderWidth;
+                    // 일반 상태일 때만 상속 중인 스타일 업데이트
+                    if (this.selectedState === 'normal') {
+                        this.updateInheritingCardStyles('borderWidth', defaultStyle.borderWidth);
+                    }
                     await this.plugin.saveSettings();
                     this.updateCardBaseSettings();
                     this.updatePreviewStyles();
@@ -308,6 +373,10 @@ export class InteractiveCardSettings extends BaseSettings {
                     const num = parseInt(value);
                     if (!isNaN(num) && num >= 0) {
                         style.borderRadius = num;
+                        // 일반 상태일 때만 상속 중인 스타일 업데이트
+                        if (this.selectedState === 'normal') {
+                            this.updateInheritingCardStyles('borderRadius', num);
+                        }
                         this.debouncedUpdatePreview();
                         this.debouncedSave();
                         this.debouncedForceViewRender();
@@ -320,6 +389,10 @@ export class InteractiveCardSettings extends BaseSettings {
                 .onClick(async () => {
                     const defaultStyle = this.getDefaultCardStyle();
                     style.borderRadius = defaultStyle.borderRadius;
+                    // 일반 상태일 때만 상속 중인 스타일 업데이트
+                    if (this.selectedState === 'normal') {
+                        this.updateInheritingCardStyles('borderRadius', defaultStyle.borderRadius);
+                    }
                     await this.plugin.saveSettings();
                     this.updateCardBaseSettings();
                     this.updatePreviewStyles();
@@ -1076,6 +1149,10 @@ export class InteractiveCardSettings extends BaseSettings {
                     const num = parseInt(value);
                     if (!isNaN(num) && num > 0) {
                         style.fontSize = num;
+                        // 일반 상태일 때만 상속 중인 스타일 업데이트
+                        if (this.selectedState === 'normal') {
+                            this.updateInheritingSectionStyles(this.selectedSection, 'fontSize', num);
+                        }
                         this.debouncedUpdatePreview();
                         this.debouncedSave();
                         this.debouncedForceViewRender();
@@ -1088,6 +1165,10 @@ export class InteractiveCardSettings extends BaseSettings {
                 .onClick(async () => {
                     const defaultStyle = this.getDefaultSectionStyle();
                     style.fontSize = defaultStyle.fontSize;
+                    // 일반 상태일 때만 상속 중인 스타일 업데이트
+                    if (this.selectedState === 'normal') {
+                        this.updateInheritingSectionStyles(this.selectedSection, 'fontSize', defaultStyle.fontSize);
+                    }
                     await this.plugin.saveSettings();
                     this.updateSectionSettings();
                     this.updatePreviewStyles();
@@ -1103,6 +1184,10 @@ export class InteractiveCardSettings extends BaseSettings {
                 .setValue(this.extractColorValue(style.backgroundColor))
                 .onChange(async (value) => {
                     style.backgroundColor = value;
+                    // 일반 상태일 때만 상속 중인 스타일 업데이트
+                    if (this.selectedState === 'normal') {
+                        this.updateInheritingSectionStyles(this.selectedSection, 'backgroundColor', value);
+                    }
                     await this.plugin.saveSettings();
                     this.updatePreviewStyles();
                     this.forceViewRender();
@@ -1114,6 +1199,10 @@ export class InteractiveCardSettings extends BaseSettings {
                 .onClick(async () => {
                     const defaultStyle = this.getDefaultSectionStyle();
                     style.backgroundColor = defaultStyle.backgroundColor;
+                    // 일반 상태일 때만 상속 중인 스타일 업데이트
+                    if (this.selectedState === 'normal') {
+                        this.updateInheritingSectionStyles(this.selectedSection, 'backgroundColor', defaultStyle.backgroundColor);
+                    }
                     await this.plugin.saveSettings();
                     this.updateSectionSettings();
                     this.updatePreviewStyles();

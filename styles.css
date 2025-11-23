@@ -4,15 +4,23 @@
    ============================================================================= */
 
 :root {
+	/* ⭐ 브라우저가 자동으로 테마를 감지하도록 설정 */
+	color-scheme: light dark;
+
 	/* Shadow colors - adapt automatically to theme */
 	--cn-shadow-sm: rgba(0, 0, 0, 0.05);
 	--cn-shadow-md: rgba(0, 0, 0, 0.1);
 	--cn-shadow-lg: rgba(0, 0, 0, 0.2);
 	--cn-modal-backdrop: rgba(0, 0, 0, 0.5);
+
+	/* ⭐ 텍스트 가독성을 위한 대비 색상 */
+	--cn-text-on-bg: var(--text-normal);
+	--cn-text-muted-on-bg: var(--text-muted);
 }
 
 .theme-dark {
 	/* Dark mode: lighter shadows for better visibility */
+	color-scheme: dark;
 	--cn-shadow-sm: rgba(0, 0, 0, 0.3);
 	--cn-shadow-md: rgba(0, 0, 0, 0.4);
 	--cn-shadow-lg: rgba(0, 0, 0, 0.6);
@@ -21,6 +29,7 @@
 
 .theme-light {
 	/* Light mode: subtle shadows */
+	color-scheme: light;
 	--cn-shadow-sm: rgba(0, 0, 0, 0.05);
 	--cn-shadow-md: rgba(0, 0, 0, 0.1);
 	--cn-shadow-lg: rgba(0, 0, 0, 0.2);
@@ -42,6 +51,8 @@
 	padding: 0 10px;
 	/* ⭐ 버그 수정 (2025-11-20): 하단 패딩 추가로 상태 표시줄 영역 확보 */
 	padding-bottom: 20px;
+	/* ⭐ 테마 변경 시 배경색 전환 효과 */
+	transition: background-color 0.2s ease;
 }
 
 /* 헤더 섹션 */
@@ -264,13 +275,14 @@
 	background: var(--card-bg-normal, var(--card-navigator-bg-normal, var(--background-secondary)));
 	font-size: var(--card-font-size-normal, var(--card-navigator-font-size-normal, 14px));
 	font-weight: var(--card-font-weight-normal, var(--card-navigator-font-weight-normal, normal));
-	color: var(--card-text-color-normal, var(--card-navigator-text-color-normal, var(--text-normal)));
+	color: var(--card-text-color-normal, var(--card-navigator-text-color-normal, var(--cn-text-on-bg)));
 	border: var(--card-navigator-border-width-normal, 1px) solid var(--card-navigator-border-color-normal, var(--background-modifier-border));
 	border-radius: var(--card-navigator-border-radius-normal, 5px);
 
 	/* 기본 레이아웃 */
 	cursor: pointer;
-	transition: all 0.2s ease;
+	/* ⭐ 테마 변경 시 색상 전환 효과 */
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 	overflow: hidden; /* ⭐ border-radius가 깔끔하게 보이도록 */
 	display: flex;
 	flex-direction: column;
@@ -327,28 +339,34 @@
 .card-navigator-cards .card-header {
 	padding: 10px 12px;
 	background: var(--card-header-bg-normal, var(--background-primary-alt));
-	border-bottom: 1px solid var(--background-modifier-border);
+	border-bottom: var(--card-header-border-width-normal, 1px) solid var(--card-header-border-color-normal, var(--background-modifier-border));
 	font-weight: var(--card-header-font-weight-normal, 600);
 	font-size: var(--card-header-font-size-normal, 0.95em);
-	color: var(--card-header-text-color-normal, var(--text-normal));
+	color: var(--card-header-text-color-normal, var(--cn-text-on-bg));
+	/* ⭐ 테마 변경 시 색상 전환 효과 */
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 	/* border-top-left-radius: var(--card-navigator-border-radius-normal, 5px);
 	border-top-right-radius: var(--card-navigator-border-radius-normal, 5px); */
 }
 
 /* 활성 카드 헤더 */
 .card-navigator-cards .card-item.active .card-header {
-	background: var(--card-header-bg-active, var(--background-primary-alt));
-	font-size: var(--card-header-font-size-active, 0.95em);
-	font-weight: var(--card-header-font-weight-active, 600);
-	color: var(--card-header-text-color-active, var(--text-normal));
+	background: var(--card-header-bg-active, var(--card-header-bg-normal, var(--background-primary-alt)));
+	border-bottom: var(--card-header-border-width-active, var(--card-header-border-width-normal, 1px)) solid var(--card-header-border-color-active, var(--card-header-border-color-normal, var(--background-modifier-border)));
+	border-radius: var(--card-header-border-radius-active, var(--card-header-border-radius-normal, 0px));
+	font-size: var(--card-header-font-size-active, var(--card-header-font-size-normal, 0.95em));
+	font-weight: var(--card-header-font-weight-active, var(--card-header-font-weight-normal, 600));
+	color: var(--card-header-text-color-active, var(--card-header-text-color-normal, var(--cn-text-on-bg)));
 }
 
 /* 포커스 카드 헤더 */
 .card-navigator-cards .card-item.focused .card-header {
-	background: var(--card-header-bg-focused, var(--background-primary-alt));
-	font-size: var(--card-header-font-size-focused, 0.95em);
-	font-weight: var(--card-header-font-weight-focused, 600);
-	color: var(--card-header-text-color-focused, var(--text-normal));
+	background: var(--card-header-bg-focused, var(--card-header-bg-normal, var(--background-primary-alt)));
+	border-bottom: var(--card-header-border-width-focused, var(--card-header-border-width-normal, 1px)) solid var(--card-header-border-color-focused, var(--card-header-border-color-normal, var(--background-modifier-border)));
+	border-radius: var(--card-header-border-radius-focused, var(--card-header-border-radius-normal, 0px));
+	font-size: var(--card-header-font-size-focused, var(--card-header-font-size-normal, 0.95em));
+	font-weight: var(--card-header-font-weight-focused, var(--card-header-font-weight-normal, 600));
+	color: var(--card-header-text-color-focused, var(--card-header-text-color-normal, var(--cn-text-on-bg)));
 }
 
 /* ⭐ 일반 텍스트 모드 헤더: 1줄 제한 (2025-11-17) */
@@ -370,27 +388,35 @@
 	padding: 12px;
 	flex: 1;
 	background: var(--card-body-bg-normal, transparent);
+	border: var(--card-body-border-width-normal, 0px) solid var(--card-body-border-color-normal, transparent);
+	border-radius: var(--card-body-border-radius-normal, 0px);
 	font-size: var(--card-body-font-size-normal, 0.85em);
 	font-weight: var(--card-body-font-weight-normal, normal);
-	color: var(--card-body-text-color-normal, var(--text-muted));
+	color: var(--card-body-text-color-normal, var(--cn-text-muted-on-bg));
 	line-height: 1.5;
 	overflow-y: auto; /* ⭐ 바디 내용이 넘칠 때 스크롤 */
+	/* ⭐ 테마 변경 시 색상 전환 효과 */
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, border-width 0.2s ease, border-radius 0.2s ease;
 }
 
 /* 활성 카드 바디 */
 .card-navigator-cards .card-item.active .card-body {
-	background: var(--card-body-bg-active, transparent);
-	font-size: var(--card-body-font-size-active, 0.85em);
-	font-weight: var(--card-body-font-weight-active, normal);
-	color: var(--card-body-text-color-active, var(--text-muted));
+	background: var(--card-body-bg-active, var(--card-body-bg-normal, transparent));
+	border: var(--card-body-border-width-active, var(--card-body-border-width-normal, 0px)) solid var(--card-body-border-color-active, var(--card-body-border-color-normal, transparent));
+	border-radius: var(--card-body-border-radius-active, var(--card-body-border-radius-normal, 0px));
+	font-size: var(--card-body-font-size-active, var(--card-body-font-size-normal, 0.85em));
+	font-weight: var(--card-body-font-weight-active, var(--card-body-font-weight-normal, normal));
+	color: var(--card-body-text-color-active, var(--card-body-text-color-normal, var(--cn-text-muted-on-bg)));
 }
 
 /* 포커스 카드 바디 */
 .card-navigator-cards .card-item.focused .card-body {
-	background: var(--card-body-bg-focused, transparent);
-	font-size: var(--card-body-font-size-focused, 0.85em);
-	font-weight: var(--card-body-font-weight-focused, normal);
-	color: var(--card-body-text-color-focused, var(--text-muted));
+	background: var(--card-body-bg-focused, var(--card-body-bg-normal, transparent));
+	border: var(--card-body-border-width-focused, var(--card-body-border-width-normal, 0px)) solid var(--card-body-border-color-focused, var(--card-body-border-color-normal, transparent));
+	border-radius: var(--card-body-border-radius-focused, var(--card-body-border-radius-normal, 0px));
+	font-size: var(--card-body-font-size-focused, var(--card-body-font-size-normal, 0.85em));
+	font-weight: var(--card-body-font-weight-focused, var(--card-body-font-weight-normal, normal));
+	color: var(--card-body-text-color-focused, var(--card-body-text-color-normal, var(--cn-text-muted-on-bg)));
 }
 
 /* ⭐ 일반 텍스트 모드: 4줄로 제한 (2025-11-17 수정) */
@@ -453,28 +479,35 @@
 .card-navigator-cards .card-footer {
     padding: 8px 12px;
     background: var(--card-footer-bg-normal, var(--background-primary-alt));
-    border-top: 1px solid var(--background-modifier-border);
+    border-top: var(--card-footer-border-width-normal, 1px) solid var(--card-footer-border-color-normal, var(--background-modifier-border));
+    border-radius: var(--card-footer-border-radius-normal, 0px);
     font-size: var(--card-footer-font-size-normal, 0.75em);
     font-weight: var(--card-footer-font-weight-normal, normal);
     color: var(--card-footer-text-color-normal, var(--text-faint));
+    /* ⭐ 테마 변경 시 색상 전환 효과 */
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, border-width 0.2s ease, border-radius 0.2s ease;
     /* border-bottom-left-radius: var(--card-navigator-border-radius-normal, 5px);
     border-bottom-right-radius: var(--card-navigator-border-radius-normal, 5px); */
 }
 
 /* 활성 카드 풋터 */
 .card-navigator-cards .card-item.active .card-footer {
-    background: var(--card-footer-bg-active, var(--background-primary-alt));
-    font-size: var(--card-footer-font-size-active, 0.75em);
-    font-weight: var(--card-footer-font-weight-active, normal);
-    color: var(--card-footer-text-color-active, var(--text-faint));
+    background: var(--card-footer-bg-active, var(--card-footer-bg-normal, var(--background-primary-alt)));
+    border-top: var(--card-footer-border-width-active, var(--card-footer-border-width-normal, 1px)) solid var(--card-footer-border-color-active, var(--card-footer-border-color-normal, var(--background-modifier-border)));
+    border-radius: var(--card-footer-border-radius-active, var(--card-footer-border-radius-normal, 0px));
+    font-size: var(--card-footer-font-size-active, var(--card-footer-font-size-normal, 0.75em));
+    font-weight: var(--card-footer-font-weight-active, var(--card-footer-font-weight-normal, normal));
+    color: var(--card-footer-text-color-active, var(--card-footer-text-color-normal, var(--text-faint)));
 }
 
 /* 포커스 카드 풋터 */
 .card-navigator-cards .card-item.focused .card-footer {
-    background: var(--card-footer-bg-focused, var(--background-primary-alt));
-    font-size: var(--card-footer-font-size-focused, 0.75em);
-    font-weight: var(--card-footer-font-weight-focused, normal);
-    color: var(--card-footer-text-color-focused, var(--text-faint));
+    background: var(--card-footer-bg-focused, var(--card-footer-bg-normal, var(--background-primary-alt)));
+    border-top: var(--card-footer-border-width-focused, var(--card-footer-border-width-normal, 1px)) solid var(--card-footer-border-color-focused, var(--card-footer-border-color-normal, var(--background-modifier-border)));
+    border-radius: var(--card-footer-border-radius-focused, var(--card-footer-border-radius-normal, 0px));
+    font-size: var(--card-footer-font-size-focused, var(--card-footer-font-size-normal, 0.75em));
+    font-weight: var(--card-footer-font-weight-focused, var(--card-footer-font-weight-normal, normal));
+    color: var(--card-footer-text-color-focused, var(--card-footer-text-color-normal, var(--text-faint)));
 }
 
 /* ⭐ 일반 텍스트 모드 풋터: 1줄 제한 (2025-11-17) */
@@ -1379,6 +1412,7 @@
 	display: grid;
 	grid-template-columns: 300px 1fr; /* 미리보기 300px, 기본 설정은 나머지 공간 차지 */
 	grid-template-rows: auto 1fr;
+	grid-auto-flow: row; /* ⭐ 명시적 행 배치 */
 	gap: 20px;
 	padding: 0;
 	max-width: 100%;
@@ -1425,6 +1459,9 @@
 	/* Grid 위치: 좌측 상단 - 변경 */
 	grid-row: 1;
 	grid-column: 1; /* 2에서 1로 변경 */
+	/* ⭐ 내부 요소의 순서 고정 */
+	display: flex;
+	flex-direction: column;
 }
 
 /* 미리 보기 헤더 */
@@ -1433,6 +1470,7 @@
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 16px;
+	order: 1; /* ⭐ 첫 번째: 탭 */
 }
 
 /* ⭐ 미리보기 힌트 (2025-11-16) */
@@ -1445,6 +1483,7 @@
 	font-size: 12px;
 	color: var(--text-muted);
 	line-height: 1.4;
+	order: 3; /* ⭐ 세 번째: 힌트 (카드 아래에 고정) */
 }
 
 .card-settings-container .preview-hint-icon {
@@ -1521,6 +1560,7 @@
 	min-height: 150px;
 	box-shadow: 0 2px 8px var(--cn-shadow-sm);
 	transition: all 0.3s ease;
+	order: 2; /* ⭐ 두 번째: 카드 (탭과 힌트 사이) */
 }
 
 /* Modified Strategy A: 실제 카드와 동일한 CSS 변수 기반 스타일 적용 */
@@ -1546,58 +1586,76 @@
 /* 헤더 섹션 스타일 */
 .card-settings-container .preview-card.card-item .card-header {
 	background: var(--card-header-bg-normal, var(--background-primary-alt));
+	border-bottom: var(--card-header-border-width-normal, 1px) solid var(--card-header-border-color-normal, var(--background-modifier-border));
+	border-radius: var(--card-header-border-radius-normal, 0px);
 	font-size: var(--card-header-font-size-normal, 0.95em);
 	color: var(--card-header-text-color-normal, var(--text-normal));
 }
 
 .card-settings-container .preview-card.card-item.active .card-header {
-	background: var(--card-header-bg-active, var(--background-primary-alt));
-	font-size: var(--card-header-font-size-active, 0.95em);
-	color: var(--card-header-text-color-active, var(--text-normal));
+	background: var(--card-header-bg-active, var(--card-header-bg-normal, var(--background-primary-alt)));
+	border-bottom: var(--card-header-border-width-active, var(--card-header-border-width-normal, 1px)) solid var(--card-header-border-color-active, var(--card-header-border-color-normal, var(--background-modifier-border)));
+	border-radius: var(--card-header-border-radius-active, var(--card-header-border-radius-normal, 0px));
+	font-size: var(--card-header-font-size-active, var(--card-header-font-size-normal, 0.95em));
+	color: var(--card-header-text-color-active, var(--card-header-text-color-normal, var(--text-normal)));
 }
 
 .card-settings-container .preview-card.card-item.focused .card-header {
-	background: var(--card-header-bg-focused, var(--background-primary-alt));
-	font-size: var(--card-header-font-size-focused, 0.95em);
-	color: var(--card-header-text-color-focused, var(--text-normal));
+	background: var(--card-header-bg-focused, var(--card-header-bg-normal, var(--background-primary-alt)));
+	border-bottom: var(--card-header-border-width-focused, var(--card-header-border-width-normal, 1px)) solid var(--card-header-border-color-focused, var(--card-header-border-color-normal, var(--background-modifier-border)));
+	border-radius: var(--card-header-border-radius-focused, var(--card-header-border-radius-normal, 0px));
+	font-size: var(--card-header-font-size-focused, var(--card-header-font-size-normal, 0.95em));
+	color: var(--card-header-text-color-focused, var(--card-header-text-color-normal, var(--text-normal)));
 }
 
 /* 바디 섹션 스타일 */
 .card-settings-container .preview-card.card-item .card-body {
 	background: var(--card-body-bg-normal, transparent);
+	border: var(--card-body-border-width-normal, 0px) solid var(--card-body-border-color-normal, transparent);
+	border-radius: var(--card-body-border-radius-normal, 0px);
 	font-size: var(--card-body-font-size-normal, 0.85em);
 	color: var(--card-body-text-color-normal, var(--text-muted));
 }
 
 .card-settings-container .preview-card.card-item.active .card-body {
-	background: var(--card-body-bg-active, transparent);
-	font-size: var(--card-body-font-size-active, 0.85em);
-	color: var(--card-body-text-color-active, var(--text-muted));
+	background: var(--card-body-bg-active, var(--card-body-bg-normal, transparent));
+	border: var(--card-body-border-width-active, var(--card-body-border-width-normal, 0px)) solid var(--card-body-border-color-active, var(--card-body-border-color-normal, transparent));
+	border-radius: var(--card-body-border-radius-active, var(--card-body-border-radius-normal, 0px));
+	font-size: var(--card-body-font-size-active, var(--card-body-font-size-normal, 0.85em));
+	color: var(--card-body-text-color-active, var(--card-body-text-color-normal, var(--text-muted)));
 }
 
 .card-settings-container .preview-card.card-item.focused .card-body {
-	background: var(--card-body-bg-focused, transparent);
-	font-size: var(--card-body-font-size-focused, 0.85em);
-	color: var(--card-body-text-color-focused, var(--text-muted));
+	background: var(--card-body-bg-focused, var(--card-body-bg-normal, transparent));
+	border: var(--card-body-border-width-focused, var(--card-body-border-width-normal, 0px)) solid var(--card-body-border-color-focused, var(--card-body-border-color-normal, transparent));
+	border-radius: var(--card-body-border-radius-focused, var(--card-body-border-radius-normal, 0px));
+	font-size: var(--card-body-font-size-focused, var(--card-body-font-size-normal, 0.85em));
+	color: var(--card-body-text-color-focused, var(--card-body-text-color-normal, var(--text-muted)));
 }
 
 /* 풋터 섹션 스타일 */
 .card-settings-container .preview-card.card-item .card-footer {
 	background: var(--card-footer-bg-normal, var(--background-primary-alt));
+	border-top: var(--card-footer-border-width-normal, 1px) solid var(--card-footer-border-color-normal, var(--background-modifier-border));
+	border-radius: var(--card-footer-border-radius-normal, 0px);
 	font-size: var(--card-footer-font-size-normal, 0.75em);
 	color: var(--card-footer-text-color-normal, var(--text-faint));
 }
 
 .card-settings-container .preview-card.card-item.active .card-footer {
-	background: var(--card-footer-bg-active, var(--background-primary-alt));
-	font-size: var(--card-footer-font-size-active, 0.75em);
-	color: var(--card-footer-text-color-active, var(--text-faint));
+	background: var(--card-footer-bg-active, var(--card-footer-bg-normal, var(--background-primary-alt)));
+	border-top: var(--card-footer-border-width-active, var(--card-footer-border-width-normal, 1px)) solid var(--card-footer-border-color-active, var(--card-footer-border-color-normal, var(--background-modifier-border)));
+	border-radius: var(--card-footer-border-radius-active, var(--card-footer-border-radius-normal, 0px));
+	font-size: var(--card-footer-font-size-active, var(--card-footer-font-size-normal, 0.75em));
+	color: var(--card-footer-text-color-active, var(--card-footer-text-color-normal, var(--text-faint)));
 }
 
 .card-settings-container .preview-card.card-item.focused .card-footer {
-	background: var(--card-footer-bg-focused, var(--background-primary-alt));
-	font-size: var(--card-footer-font-size-focused, 0.75em);
-	color: var(--card-footer-text-color-focused, var(--text-faint));
+	background: var(--card-footer-bg-focused, var(--card-footer-bg-normal, var(--background-primary-alt)));
+	border-top: var(--card-footer-border-width-focused, var(--card-footer-border-width-normal, 1px)) solid var(--card-footer-border-color-focused, var(--card-footer-border-color-normal, var(--background-modifier-border)));
+	border-radius: var(--card-footer-border-radius-focused, var(--card-footer-border-radius-normal, 0px));
+	font-size: var(--card-footer-font-size-focused, var(--card-footer-font-size-normal, 0.75em));
+	color: var(--card-footer-text-color-focused, var(--card-footer-text-color-normal, var(--text-faint)));
 }
 
 /* 카드 섹션 - 기본 레이아웃 스타일 */

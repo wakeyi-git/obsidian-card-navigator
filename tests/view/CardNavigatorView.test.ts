@@ -383,9 +383,9 @@ describe('CardNavigatorView', () => {
         
         it('onOpen - 이벤트 리스너가 등록되어야 함', async () => {
             await view.onOpen();
-            
-            // registerEvent가 호출되었는지 확인 (4번: workspace, metadataCache, vault delete, vault rename)
-            expect(view.registerEvent).toHaveBeenCalledTimes(4);
+
+            // registerEvent가 호출되었는지 확인 (5번: workspace active-leaf-change, workspace css-change, metadataCache, vault delete, vault rename)
+            expect(view.registerEvent).toHaveBeenCalledTimes(5);
             
             // workspace 이벤트 리스너 확인
             expect(mockApp.workspace.on).toHaveBeenCalledWith(

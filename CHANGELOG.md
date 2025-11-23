@@ -1,3 +1,41 @@
+## [1.4.5] - 2025-11-23
+
+### Fixed
+
+#### Theme Responsiveness
+- **Automatic Theme Adaptation**: Cards now automatically adapt to Obsidian theme changes
+  - Text color automatically adjusts for readability based on background color
+  - Smooth color transitions when switching between light and dark themes
+  - Theme change detection via `css-change` event listener
+  - Related files: [styles.css](styles.css), [view.ts](src/view.ts)
+
+#### Style Inheritance System
+- **Complete Property Inheritance**: Fixed inheritance feature for Active/Focused card states
+  - All style properties (background, font, borders) now properly inherit from Normal state
+  - Border properties (color, width, radius) were missing from inheritance - now fixed
+  - Real-time updates when Normal state changes propagate to inherited states
+  - Related files: [StyleUtils.ts](src/utils/StyleUtils.ts), [InteractiveCardSettings.ts](src/ui/settings/InteractiveCardSettings.ts)
+
+#### CSS/TypeScript Consistency
+- **Border Variable Integration**: Resolved conflicts between CSS and TypeScript styling
+  - CSS now uses border variables set by TypeScript (previously used hardcoded values)
+  - Header, body, and footer sections now support customizable borders
+  - Proper fallback chains for Active/Focused states
+  - Related file: [styles.css](styles.css)
+
+#### Settings UI Stability
+- **Layout Stabilization**: Fixed card preview and hint message position shifting
+  - Card preview section uses explicit flexbox ordering
+  - Elements maintain consistent order regardless of browser or content changes
+  - Grid layout with explicit row/column positioning
+  - Related files: [styles.css](styles.css), [InteractiveCardSettings.ts](src/ui/settings/InteractiveCardSettings.ts)
+
+### Improved
+
+#### Visual Polish
+- **Smooth Transitions**: Added 0.2s transitions to all card style changes
+- **Theme Integration**: Better integration with Obsidian's native theme system using `color-scheme` property
+
 ## [1.4.4] - 2025-11-23
 
 ### Added
