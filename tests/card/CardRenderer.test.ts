@@ -173,7 +173,7 @@ describe('CardRenderer - Core Logic', () => {
         });
         
         it('should apply active styles when isActive is true', async () => {
-            const cardEl = await renderer.renderCard(cardData, container, true);
+            const cardEl = await renderer.renderCard(cardData, container);
             
             const header = cardEl.querySelector('.card-header') as HTMLElement;
             expect(header).toBeDefined();

@@ -428,15 +428,13 @@ export class ViewRenderer {
 			const cardEl = card as HTMLElement;
 			const isNowActive = isValidFile(activeFile) && cardEl.dataset.filePath === activeFile.path;
 			
-			// 모든 카드의 active 클래스 및 스타일 업데이트
+			// Modified Strategy A: CSS 클래스만으로 상태 관리
 			if (isNowActive) {
 				cardEl.addClass('active');
 			} else {
 				cardEl.removeClass('active');
 			}
-			
-			// 이미 active였던 카드도 스타일 재적용 (설정 변경 대응)
-			this.applyCardStylesFromData(cardEl, isNowActive);
+			// CSS가 자동으로 스타일 적용
 		});
 		
 		if (isValidFile(activeFile)) {
@@ -444,77 +442,10 @@ export class ViewRenderer {
 		}
 	}
 	
-	/**
-	 * 카드의 data attributes를 사용하여 스타일을 적용합니다
-	 * 
-	 * @param card - 카드 DOM 요소
-	 * @param isActive - active 상태 여부
-	 */
-	private applyCardStylesFromData(card: HTMLElement, isActive: boolean): void {
-		// CardFactory에서 저장한 data attributes 사용
-		const prefix = isActive ? 'active' : 'normal';
-		
-		// 카드 전체 스타일 적용
-		const bg = card.dataset[`${prefix}Bg`];
-		const fontSize = card.dataset[`${prefix}FontSize`];
-		const borderColor = card.dataset[`${prefix}BorderColor`];
-		const borderWidth = card.dataset[`${prefix}BorderWidth`];
-		const borderRadius = card.dataset[`${prefix}BorderRadius`];
-		
-		if (bg) card.style.backgroundColor = bg;
-		if (fontSize) card.style.fontSize = fontSize;
-		if (borderColor) card.style.borderColor = borderColor;
-		if (borderWidth) card.style.borderWidth = borderWidth;
-		if (borderRadius) card.style.borderRadius = borderRadius;
-		
-		// 섹션별 스타일 적용 (올바른 data 속성명 사용)
-		const statePrefix = isActive ? 'Active' : 'Normal';
-		
-		// 헤더
-		const header = card.querySelector('.card-header') as HTMLElement;
-		if (header) {
-			const headerBg = card.dataset[`header${statePrefix}Bg`];
-			const headerFontSize = card.dataset[`header${statePrefix}FontSize`];
-			const headerBorderColor = card.dataset[`header${statePrefix}BorderColor`];
-			const headerBorderWidth = card.dataset[`header${statePrefix}BorderWidth`];
-			
-			if (headerBg) header.style.backgroundColor = headerBg;
-			if (headerFontSize) header.style.fontSize = headerFontSize;
-			if (headerBorderColor) header.style.borderBottomColor = headerBorderColor;
-			if (headerBorderWidth) {
-				header.style.borderBottomWidth = headerBorderWidth;
-				header.style.borderBottomStyle = parseInt(headerBorderWidth) > 0 ? 'solid' : 'none';
-			}
-		}
-		
-		// 바디
-		const body = card.querySelector('.card-body') as HTMLElement;
-		if (body) {
-			const bodyBg = card.dataset[`body${statePrefix}Bg`];
-			const bodyFontSize = card.dataset[`body${statePrefix}FontSize`];
-			
-			if (bodyBg) body.style.backgroundColor = bodyBg;
-			if (bodyFontSize) body.style.fontSize = bodyFontSize;
-		}
-		
-		// 풋터
-		const footer = card.querySelector('.card-footer') as HTMLElement;
-		if (footer) {
-			const footerBg = card.dataset[`footer${statePrefix}Bg`];
-			const footerFontSize = card.dataset[`footer${statePrefix}FontSize`];
-			const footerBorderColor = card.dataset[`footer${statePrefix}BorderColor`];
-			const footerBorderWidth = card.dataset[`footer${statePrefix}BorderWidth`];
-			
-			if (footerBg) footer.style.backgroundColor = footerBg;
-			if (footerFontSize) footer.style.fontSize = footerFontSize;
-			if (footerBorderColor) footer.style.borderTopColor = footerBorderColor;
-			if (footerBorderWidth) {
-				footer.style.borderTopWidth = footerBorderWidth;
-				footer.style.borderTopStyle = parseInt(footerBorderWidth) > 0 ? 'solid' : 'none';
-			}
-		}
-	}
-	
+	// ⭐ applyCardStylesFromData, getContrastColor, parseColor 메서드 제거됨
+	// Modified Strategy A: CSS 클래스만으로 모든 상태 관리
+	// CSS 커스텀 속성과 CSS 클래스가 자동으로 스타일 처리
+
 	/** 전역 설정에서 CardSettings 추출 */
 	private getGlobalCardSettings() {
 		return {

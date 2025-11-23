@@ -197,7 +197,7 @@ describe('DragDropHandler', () => {
                 );
                 expect(mockDataTransfer.setData).toHaveBeenCalledWith(
                     'file-path',
-                    'test.md'
+                    JSON.stringify(['test.md'])
                 );
                 expect(mockDataTransfer.effectAllowed).toBe('copyLink');
             });

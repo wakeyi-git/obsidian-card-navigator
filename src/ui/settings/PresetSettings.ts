@@ -521,21 +521,8 @@ export class PresetSettings extends BaseSettings {
         // 우선순위 설정을 가장 먼저 표시
         this.addPriorityModeSettings(containerEl);
 
-        containerEl.createEl('p', {
-            cls: 'setting-item-description',
-            text: t().settingsTab.presets.addFolderMappingDescription
-        });
-
-        this.addFolderMapping(containerEl);
-        this.addTagMapping(containerEl);
-
-        // 설명
-        const infoEl = containerEl.createDiv({ cls: 'setting-item-description'});
-        infoEl.style.marginTop = '20px';
-        infoEl.style.padding = '12px';
-        infoEl.style.background = 'var(--background-primary-alt)';
-        infoEl.style.borderRadius = '6px';
-        infoEl.innerHTML = t().settingsTab.presetSettings.mappingPriorityRulesHtml;
+        // 통합된 매핑 목록 표시
+        this.addUnifiedMappingList(containerEl);
     }
 
     /**
@@ -550,9 +537,10 @@ export class PresetSettings extends BaseSettings {
             .setDesc(t().settingsTab.presets.priorityModeDescription)
             .addDropdown(dropdown => dropdown
                 .addOption('auto', t().settingsTab.presetSettings.priorityOptions.auto)
+                .addOption('semi-auto', t().settingsTab.presetSettings.priorityOptions.semiAuto)
                 .addOption('manual', t().settingsTab.presetSettings.priorityOptions.manual)
                 .setValue(settings.mode)
-                .onChange(async (value: 'auto' | 'manual') => {
+                .onChange(async (value: 'auto' | 'semi-auto' | 'manual') => {
                     this.plugin.settings.presetPriority.mode = value;
                     await this.plugin.saveSettings();
                     this.plugin.settingsTab.display();
@@ -566,34 +554,38 @@ export class PresetSettings extends BaseSettings {
             descEl.style.padding = '12px';
             descEl.style.background = 'var(--background-secondary)';
             descEl.style.borderRadius = '6px';
-            descEl.innerHTML = t().settingsTab.presetSettings.priorityRulesHtml;
+            descEl.innerHTML = t().settingsTab.presetSettings.autoModeExplanationHtml;
         }
 
-        // 수동 모드 선택
-        if (settings.mode === 'manual') {
+        // 반자동 모드 설명 및 타입 우선순위 설정
+        if (settings.mode === 'semi-auto') {
+            const descEl = containerEl.createDiv({ cls: 'setting-item-description'});
+            descEl.style.marginTop = '10px';
+            descEl.style.padding = '12px';
+            descEl.style.background = 'var(--background-secondary)';
+            descEl.style.borderRadius = '6px';
+            descEl.innerHTML = t().settingsTab.presetSettings.semiAutoModeExplanationHtml;
+
+            // 반자동 모드에서 타입 우선순위 설정 표시
             new Setting(containerEl)
-                .setName(t().settingsTab.presets.manualPriorityType)
-                .setDesc(t().settingsTab.presets.manualPriorityTypeDescription)
-                .addToggle(toggle => toggle
-                    .setValue(settings.manualType === 'tag-first')
-                    .onChange(async (value) => {
-                        this.plugin.settings.presetPriority.manualType = 
-                            value ? 'tag-first' : 'folder-first';
+                .setName(t().settingsTab.presets.preferredPriorityType)
+                .setDesc(t().settingsTab.presets.preferredPriorityTypeDescription)
+                .addDropdown(dropdown => dropdown
+                    .addOption('folder', t().settingsTab.presetSettings.priorityTypeOptions.folder)
+                    .addOption('tag', t().settingsTab.presetSettings.priorityTypeOptions.tag)
+                    .addOption('property', t().settingsTab.presetSettings.priorityTypeOptions.property)
+                    .addOption('date', t().settingsTab.presetSettings.priorityTypeOptions.date)
+                    .setValue(settings.preferredType)
+                    .onChange(async (value: 'folder' | 'tag' | 'property' | 'date') => {
+                        this.plugin.settings.presetPriority.preferredType = value;
                         await this.plugin.saveSettings();
                         this.plugin.settingsTab.display();
                     })
-                )
-                .addExtraButton(button => {
-                    const currentType = settings.manualType;
-                    setIcon(button.extraSettingsEl, currentType === 'folder-first' ? 'folder' : 'tag');
-                    button.setTooltip(
-                        currentType === 'folder-first'
-                            ? t().settingsTab.presetSettings.priorityTypeOptions.folder
-                            : t().settingsTab.presetSettings.priorityTypeOptions.tag
-                    );
-                });
+                );
+        }
 
-            // 현재 설정 표시
+        // 수동 모드 설명
+        if (settings.mode === 'manual') {
             const statusEl = containerEl.createDiv({ cls: 'setting-item-description'});
             statusEl.style.marginTop = '10px';
             statusEl.style.padding = '12px';
@@ -601,6 +593,479 @@ export class PresetSettings extends BaseSettings {
             statusEl.style.borderRadius = '6px';
             statusEl.innerHTML = t().settingsTab.presetSettings.manualModeExplanationHtml;
         }
+    }
+
+    /**
+     * 통합된 프리셋 매핑 목록을 추가합니다
+     */
+    private addUnifiedMappingList(containerEl: HTMLElement): void {
+        const mappingContainer = containerEl.createEl('div', {
+            cls: 'card-navigator-preset-mapping unified-mapping-list'
+        });
+
+        mappingContainer.createEl('h4', { text: t().settingsTab.presetSettings.presetMappingsTitle });
+
+        mappingContainer.createEl('p', {
+            cls: 'setting-item-description',
+            text: t().settingsTab.presetSettings.presetMappingsDescription
+        });
+
+        // 모든 매핑을 가져와서 ID 기준으로 정렬 (settings.presetMappings 배열 순서대로)
+        const allMappings = this.plugin.presetManager.getAllMappings();
+
+        if (allMappings.length > 0) {
+            const levelsContainerEl = mappingContainer.createEl('div', {
+                cls: 'multi-sort-levels-container preset-mappings-container',
+                attr: { style: 'margin-bottom: 12px;' }
+            });
+
+            this.renderUnifiedMappings(levelsContainerEl, allMappings);
+        } else {
+            mappingContainer.createEl('p', {
+                cls: 'setting-item-description',
+                text: t().settingsTab.presetSettings.noMappingsYet
+            });
+        }
+
+        // 매핑 추가 버튼들
+        const addButtonsContainer = mappingContainer.createEl('div', {
+            cls: 'preset-mapping-add-buttons',
+            attr: { style: 'display: flex; gap: 8px; margin-top: 12px;' }
+        });
+
+        new Setting(addButtonsContainer)
+            .addButton(button => button
+                .setButtonText(t().settingsTab.presetSettings.addFolderButton)
+                .onClick(() => {
+                    this.showFolderMappingModal();
+                })
+            )
+            .addButton(button => button
+                .setButtonText(t().settingsTab.presetSettings.addTagButton)
+                .onClick(() => {
+                    this.showTagMappingModal();
+                })
+            )
+            .addButton(button => button
+                .setButtonText(t().settingsTab.presetSettings.addPropertyButton)
+                .onClick(() => {
+                    this.showPropertyMappingModal();
+                })
+            )
+            .addButton(button => button
+                .setButtonText(t().settingsTab.presetSettings.addDateButton)
+                .onClick(() => {
+                    this.showDateMappingModal();
+                })
+            );
+    }
+
+    /**
+     * 통합 매핑 목록을 렌더링합니다
+     */
+    private renderUnifiedMappings(containerEl: HTMLElement, mappings: PresetMapping[]): void {
+        containerEl.empty();
+
+        let draggedIndex: number | null = null;
+
+        mappings.forEach((mapping, index) => {
+            const mappingEl = this.createUnifiedMappingElement(mapping, index, mappings.length, draggedIndex);
+
+            // Drag events
+            mappingEl.addEventListener('dragstart', (e) => {
+                draggedIndex = index;
+                mappingEl.addClass('dragging');
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                }
+            });
+
+            mappingEl.addEventListener('dragend', () => {
+                mappingEl.removeClass('dragging');
+                draggedIndex = null;
+            });
+
+            mappingEl.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (draggedIndex !== null && draggedIndex !== index) {
+                    mappingEl.addClass('drag-over');
+                }
+                if (e.dataTransfer) {
+                    e.dataTransfer.dropEffect = 'move';
+                }
+            });
+
+            mappingEl.addEventListener('dragleave', () => {
+                mappingEl.removeClass('drag-over');
+            });
+
+            mappingEl.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                mappingEl.removeClass('drag-over');
+
+                if (draggedIndex !== null && draggedIndex !== index && mapping.id) {
+                    const draggedMapping = mappings[draggedIndex];
+                    if (draggedMapping.id) {
+                        await this.plugin.presetManager.reorderMapping(draggedMapping.id, index);
+                        this.plugin.settingsTab.display();
+                    }
+                }
+            });
+
+            containerEl.appendChild(mappingEl);
+        });
+    }
+
+    /**
+     * 통합 매핑 항목 요소를 생성합니다
+     */
+    private createUnifiedMappingElement(
+        mapping: PresetMapping,
+        index: number,
+        totalCount: number,
+        draggedIndex: number | null
+    ): HTMLElement {
+        const mappingEl = document.createElement('div');
+        mappingEl.className = 'multi-sort-level-item preset-mapping-item';
+        mappingEl.draggable = true;
+
+        // Drag handle
+        const dragHandle = mappingEl.createEl('div', {
+            cls: 'multi-sort-drag-handle',
+            attr: { 'aria-label': 'Drag to reorder' }
+        });
+        setIcon(dragHandle, 'grip-vertical');
+
+        // Type icon
+        const typeIcon = mappingEl.createEl('div', {
+            cls: 'preset-mapping-type-icon'
+        });
+        const iconName = mapping.type === 'folder' ? 'folder' :
+                         mapping.type === 'tag' ? 'tag' :
+                         mapping.type === 'property' ? 'file-text' :
+                         'calendar';
+        setIcon(typeIcon, iconName);
+
+        // Content container
+        const contentContainer = mappingEl.createEl('div', {
+            cls: 'multi-sort-level-content preset-mapping-content'
+        });
+
+        // Target display
+        const targetText = this.getMappingTargetDisplay(mapping);
+        contentContainer.createEl('div', {
+            cls: 'preset-mapping-target',
+            text: targetText
+        });
+
+        // Preset name
+        const preset = this.plugin.presetManager.getPreset(mapping.presetId);
+        const presetName = preset ? preset.name : 'Deleted Preset';
+        contentContainer.createEl('div', {
+            cls: 'preset-mapping-preset-name setting-item-description',
+            text: `→ ${presetName}`
+        });
+
+        // Delete button
+        const deleteBtn = mappingEl.createEl('div', {
+            cls: 'clickable-icon multi-sort-delete-btn',
+            attr: { 'aria-label': 'Remove mapping' }
+        });
+        setIcon(deleteBtn, 'trash-2');
+        deleteBtn.addEventListener('click', async () => {
+            if (mapping.id) {
+                const targetDisplay = this.getMappingTargetDisplay(mapping);
+                if (confirm(t().settingsTab.presetSettings.deleteMappingConfirm(targetDisplay))) {
+                    await this.plugin.presetManager.removeMapping(mapping.id);
+                    this.plugin.settingsTab.display();
+                }
+            }
+        });
+
+        return mappingEl;
+    }
+
+    /**
+     * 매핑의 타겟 표시 텍스트를 생성합니다
+     */
+    private getMappingTargetDisplay(mapping: PresetMapping): string {
+        switch (mapping.type) {
+            case 'folder': {
+                const folderText = mapping.target || 'Root';
+                return mapping.includeSubfolders ? `${folderText} (+ subfolders)` : folderText;
+            }
+            case 'tag':
+                return `#${mapping.target}`;
+            case 'property':
+                return `${mapping.target} = ${mapping.propertyValue}`;
+            case 'date': {
+                const criteria = mapping.dateCriteria === 'created-date' ? 'Created' :
+                               mapping.dateCriteria === 'modified-date' ? 'Modified' :
+                               mapping.datePropertyName || 'Date';
+                if (mapping.useRelativeDate) {
+                    return `${criteria}: Last ${mapping.relativeDays} days`;
+                } else {
+                    const from = mapping.dateFrom || 'any';
+                    const to = mapping.dateTo || 'any';
+                    return `${criteria}: ${from} ~ ${to}`;
+                }
+            }
+            default:
+                return mapping.target;
+        }
+    }
+
+    /**
+     * Property 매핑 추가 모달을 표시합니다
+     */
+    private showPropertyMappingModal(): void {
+        const modal = new Modal(this.plugin.app);
+        modal.titleEl.setText(t().settingsTab.presetSettings.propertyMappingTitle);
+
+        let propertyName = '';
+        let propertyValue = '';
+        let selectedPresetId = '';
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presetSettings.propertyName)
+            .setDesc(t().settingsTab.presetSettings.propertyNameDescription)
+            .addText(text => text
+                .setPlaceholder(t().settingsTab.presetSettings.propertyNamePlaceholder)
+                .onChange(value => {
+                    propertyName = value;
+                })
+            );
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presetSettings.propertyValue)
+            .setDesc(t().settingsTab.presetSettings.propertyValueDescription)
+            .addText(text => text
+                .setPlaceholder(t().settingsTab.presetSettings.propertyValuePlaceholder)
+                .onChange(value => {
+                    propertyValue = value;
+                })
+            );
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presets.selectPreset)
+            .setDesc(t().settingsTab.presets.selectPresetDescription)
+            .addDropdown(dropdown => {
+                const presets = this.plugin.presetManager.getAllPresets();
+
+                if (presets.length === 0) {
+                    dropdown.addOption('', t().settingsTab.presetSettings.noPresets);
+                    dropdown.setDisabled(true);
+                } else {
+                    presets.forEach((preset: Preset) => {
+                        dropdown.addOption(preset.id, preset.name);
+                    });
+
+                    dropdown.onChange(value => {
+                        selectedPresetId = value;
+                    });
+
+                    selectedPresetId = presets[0].id;
+                }
+            });
+
+        new Setting(modal.contentEl)
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.cancel)
+                .onClick(() => {
+                    modal.close();
+                })
+            )
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.confirm)
+                .setCta()
+                .onClick(async () => {
+                    if (!propertyName || !propertyValue) {
+                        new Notice(t().settingsTab.presetSettings.enterPropertyNameAndValue);
+                        return;
+                    }
+
+                    if (!selectedPresetId) {
+                        new Notice(t().notices.presets.selectPreset);
+                        return;
+                    }
+
+                    const mapping: PresetMapping = {
+                        type: 'property',
+                        target: propertyName,
+                        propertyValue: propertyValue,
+                        presetId: selectedPresetId,
+                        priority: 0
+                    };
+
+                    await this.plugin.presetManager.addMapping(mapping);
+                    modal.close();
+                    this.plugin.settingsTab.display();
+                    new Notice(t().settingsTab.presetSettings.propertyMappingAdded);
+                })
+            );
+
+        modal.open();
+    }
+
+    /**
+     * Date 매핑 추가 모달을 표시합니다
+     */
+    private showDateMappingModal(): void {
+        const modal = new Modal(this.plugin.app);
+        modal.titleEl.setText(t().settingsTab.presetSettings.dateMappingTitle);
+
+        let dateCriteria: 'created-date' | 'modified-date' | 'property' = 'created-date';
+        let datePropertyName = '';
+        let useRelativeDate = true;
+        let relativeDays = 7;
+        let dateFrom = '';
+        let dateTo = '';
+        let selectedPresetId = '';
+
+        const renderDateInputs = (container: HTMLElement) => {
+            container.empty();
+
+            if (useRelativeDate) {
+                new Setting(container)
+                    .setName(t().settingsTab.presetSettings.relativeDays)
+                    .setDesc(t().settingsTab.presetSettings.relativeDaysDescription)
+                    .addText(text => text
+                        .setPlaceholder(t().settingsTab.presetSettings.relativeDaysPlaceholder)
+                        .setValue(String(relativeDays))
+                        .onChange(value => {
+                            relativeDays = parseInt(value) || 7;
+                        })
+                    );
+            } else {
+                new Setting(container)
+                    .setName(t().settingsTab.presetSettings.dateFrom)
+                    .setDesc(t().settingsTab.presetSettings.dateFromDescription)
+                    .addText(text => text
+                        .setPlaceholder(t().settingsTab.presetSettings.dateFromPlaceholder)
+                        .onChange(value => {
+                            dateFrom = value;
+                        })
+                    );
+
+                new Setting(container)
+                    .setName(t().settingsTab.presetSettings.dateTo)
+                    .setDesc(t().settingsTab.presetSettings.dateToDescription)
+                    .addText(text => text
+                        .setPlaceholder(t().settingsTab.presetSettings.dateToPlaceholder)
+                        .onChange(value => {
+                            dateTo = value;
+                        })
+                    );
+            }
+        };
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presetSettings.dateCriteria)
+            .setDesc(t().settingsTab.presetSettings.dateCriteriaDescription)
+            .addDropdown(dropdown => dropdown
+                .addOption('created-date', t().settingsTab.presetSettings.dateCriteriaCreated)
+                .addOption('modified-date', t().settingsTab.presetSettings.dateCriteriaModified)
+                .addOption('property', t().settingsTab.presetSettings.dateCriteriaProperty)
+                .setValue(dateCriteria)
+                .onChange((value: 'created-date' | 'modified-date' | 'property') => {
+                    dateCriteria = value;
+                    propertyContainer.style.display = value === 'property' ? 'block' : 'none';
+                })
+            );
+
+        const propertyContainer = modal.contentEl.createDiv();
+        propertyContainer.style.display = 'none';
+
+        new Setting(propertyContainer)
+            .setName(t().settingsTab.presetSettings.datePropertyName)
+            .setDesc(t().settingsTab.presetSettings.datePropertyNameDescription)
+            .addText(text => text
+                .setPlaceholder(t().settingsTab.presetSettings.datePropertyNamePlaceholder)
+                .onChange(value => {
+                    datePropertyName = value;
+                })
+            );
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presetSettings.dateType)
+            .setDesc(t().settingsTab.presetSettings.dateTypeDescription)
+            .addDropdown(dropdown => dropdown
+                .addOption('relative', t().settingsTab.presetSettings.dateTypeRelative)
+                .addOption('absolute', t().settingsTab.presetSettings.dateTypeAbsolute)
+                .setValue('relative')
+                .onChange(value => {
+                    useRelativeDate = value === 'relative';
+                    renderDateInputs(dateInputContainer);
+                })
+            );
+
+        const dateInputContainer = modal.contentEl.createDiv();
+        renderDateInputs(dateInputContainer);
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presets.selectPreset)
+            .setDesc(t().settingsTab.presets.selectPresetDescription)
+            .addDropdown(dropdown => {
+                const presets = this.plugin.presetManager.getAllPresets();
+
+                if (presets.length === 0) {
+                    dropdown.addOption('', t().settingsTab.presetSettings.noPresets);
+                    dropdown.setDisabled(true);
+                } else {
+                    presets.forEach((preset: Preset) => {
+                        dropdown.addOption(preset.id, preset.name);
+                    });
+
+                    dropdown.onChange(value => {
+                        selectedPresetId = value;
+                    });
+
+                    selectedPresetId = presets[0].id;
+                }
+            });
+
+        new Setting(modal.contentEl)
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.cancel)
+                .onClick(() => {
+                    modal.close();
+                })
+            )
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.confirm)
+                .setCta()
+                .onClick(async () => {
+                    if (!selectedPresetId) {
+                        new Notice(t().notices.presets.selectPreset);
+                        return;
+                    }
+
+                    if (dateCriteria === 'property' && !datePropertyName) {
+                        new Notice(t().settingsTab.presetSettings.enterDatePropertyName);
+                        return;
+                    }
+
+                    const mapping: PresetMapping = {
+                        type: 'date',
+                        target: dateCriteria === 'property' ? datePropertyName : dateCriteria,
+                        dateCriteria,
+                        datePropertyName: dateCriteria === 'property' ? datePropertyName : undefined,
+                        useRelativeDate,
+                        relativeDays: useRelativeDate ? relativeDays : undefined,
+                        dateFrom: !useRelativeDate ? dateFrom : undefined,
+                        dateTo: !useRelativeDate ? dateTo : undefined,
+                        presetId: selectedPresetId,
+                        priority: 0
+                    };
+
+                    await this.plugin.presetManager.addMapping(mapping);
+                    modal.close();
+                    this.plugin.settingsTab.display();
+                    new Notice(t().settingsTab.presetSettings.dateMappingAdded);
+                })
+            );
+
+        modal.open();
     }
 
     /**

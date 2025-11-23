@@ -111,12 +111,12 @@ describe('CardFactory - Additional Coverage', () => {
             await factory.createCard(file, container, null, onFileOpen);
             
             expect(mockRenderer.renderCard).toHaveBeenCalled();
+            // Modified Strategy A: renderCard no longer takes isActive parameter
             expect(mockRenderer.renderCard).toHaveBeenCalledWith(
                 expect.objectContaining({
                     file: file
                 }),
-                container,
-                false // isActive
+                container
             );
         });
         
@@ -133,10 +133,10 @@ describe('CardFactory - Additional Coverage', () => {
             const card = await factory.createCard(file, container, file, onFileOpen);
             
             expect(card.classList.contains('active')).toBe(true);
+            // Modified Strategy A: renderCard no longer takes isActive parameter
             expect(mockRenderer.renderCard).toHaveBeenCalledWith(
                 expect.any(Object),
-                container,
-                true // isActive
+                container
             );
         });
         
@@ -159,10 +159,10 @@ describe('CardFactory - Additional Coverage', () => {
             const card = await factory.createCard(file, container, activeFile, onFileOpen);
             
             expect(card.classList.contains('active')).toBe(false);
+            // Modified Strategy A: renderCard no longer takes isActive parameter
             expect(mockRenderer.renderCard).toHaveBeenCalledWith(
                 expect.any(Object),
-                container,
-                false // isActive
+                container
             );
         });
         
@@ -528,10 +528,10 @@ describe('CardFactory - Additional Coverage', () => {
             const onFileOpen = jest.fn();
             
             const card = await factory.createCard(file, container, null, onFileOpen);
-            
-            // Data attributes for focused state should be set
-            expect(card.dataset.focusedBg).toBeDefined();
-            expect(card.dataset.focusedBorderColor).toBeDefined();
+
+            // Modified Strategy A: CSS custom properties should be set
+            expect(card.style.getPropertyValue('--card-bg-focused')).toBeTruthy();
+            expect(card.style.getPropertyValue('--card-text-color-focused')).toBeTruthy();
         });
         
         test('applies different styles for active cards', async () => {
@@ -545,8 +545,9 @@ describe('CardFactory - Additional Coverage', () => {
             const onFileOpen = jest.fn();
             
             const activeCard = await factory.createCard(file, container, file, onFileOpen);
-            
-            expect(activeCard.dataset.activeBg).toBeDefined();
+
+            // Modified Strategy A: CSS custom properties and active class should be set
+            expect(activeCard.style.getPropertyValue('--card-bg-active')).toBeTruthy();
             expect(activeCard.classList.contains('active')).toBe(true);
         });
     });

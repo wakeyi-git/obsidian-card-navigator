@@ -37,9 +37,13 @@ export class CardStyleManager {
 
     /**
      * 특정 카드 타입의 스타일을 CSS 변수로 적용합니다
-     * 
+     *
      * @param type - 카드 타입 (normal, active, focused)
      * @param style - 스타일 설정
+     *
+     * @remarks
+     * inheritFromNormal이 true인 경우, CSS 변수를 설정하지 않아
+     * 자동으로 normal 값으로 폴백되도록 합니다.
      */
     private applyCardStyle(
         type: 'normal' | 'active' | 'focused',
@@ -47,6 +51,18 @@ export class CardStyleManager {
     ): void {
         const root = document.body;
 
+        // 상속 모드인 경우, CSS 변수를 설정하지 않음 (폴백으로 normal 사용)
+        if (type !== 'normal' && style.inheritFromNormal) {
+            // 상속 모드: 기존 CSS 변수 제거하여 폴백 활성화
+            root.style.removeProperty(`--card-navigator-bg-${type}`);
+            root.style.removeProperty(`--card-navigator-font-size-${type}`);
+            root.style.removeProperty(`--card-navigator-border-color-${type}`);
+            root.style.removeProperty(`--card-navigator-border-width-${type}`);
+            root.style.removeProperty(`--card-navigator-border-radius-${type}`);
+            return;
+        }
+
+        // 일반 모드: CSS 변수 설정
         root.style.setProperty(
             `--card-navigator-bg-${type}`,
             style.backgroundColor

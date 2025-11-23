@@ -80,7 +80,7 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, false);
+            const card = await renderer.renderCard(cardData, container);
             
             expect(card).toBeInstanceOf(HTMLElement);
             expect(card.classList.contains('card-item')).toBe(true);
@@ -123,7 +123,7 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, false);
+            const card = await renderer.renderCard(cardData, container);
             
             const header = card.querySelector('.card-header');
             const body = card.querySelector('.card-body');
@@ -170,7 +170,7 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, true);
+            const card = await renderer.renderCard(cardData, container);
             
             // Should apply active styles
             expect(card).toBeInstanceOf(HTMLElement);
@@ -214,7 +214,7 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, false);
+            const card = await renderer.renderCard(cardData, container);
             
             expect(card).toBeInstanceOf(HTMLElement);
         });
@@ -255,7 +255,7 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, false);
+            const card = await renderer.renderCard(cardData, container);
             
             expect(card).toBeInstanceOf(HTMLElement);
         });
@@ -304,7 +304,7 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, false);
+            const card = await renderer.renderCard(cardData, container);
             
             const header = card.querySelector('.card-header');
             expect(header?.textContent).toBe('(No title)');
@@ -346,7 +346,7 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, false);
+            const card = await renderer.renderCard(cardData, container);
             
             const body = card.querySelector('.card-body');
             expect(body?.textContent).toBe('(No content)');
@@ -388,7 +388,7 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, false);
+            const card = await renderer.renderCard(cardData, container);
             
             const footer = card.querySelector('.card-footer');
             expect(footer?.textContent).toBe('');
@@ -432,7 +432,7 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, false);
+            const card = await renderer.renderCard(cardData, container);
             
             // setupLinkHandlers should be called internally
             expect(card).toBeInstanceOf(HTMLElement);
@@ -484,7 +484,7 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, false);
+            const card = await renderer.renderCard(cardData, container);
             
             expect(card.getAttribute('data-path')).toBe('folder/test.md');
         });
@@ -525,7 +525,7 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, false);
+            const card = await renderer.renderCard(cardData, container);
             
             expect(card.getAttribute('tabindex')).toBe('-1');
         });
@@ -568,16 +568,16 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, false);
+            const card = await renderer.renderCard(cardData, container);
             
             const header = card.querySelector('.card-header') as HTMLElement;
             const body = card.querySelector('.card-body') as HTMLElement;
             const footer = card.querySelector('.card-footer') as HTMLElement;
-            
-            // Styles should be applied
-            expect(header.style.fontSize).toBeTruthy();
-            expect(body.style.fontSize).toBeTruthy();
-            expect(footer.style.fontSize).toBeTruthy();
+
+            // Modified Strategy A: CSS custom properties should be applied to card element
+            expect(card.style.getPropertyValue('--card-header-font-size-normal')).toBeTruthy();
+            expect(card.style.getPropertyValue('--card-body-font-size-normal')).toBeTruthy();
+            expect(card.style.getPropertyValue('--card-footer-font-size-normal')).toBeTruthy();
         });
     });
     
@@ -623,7 +623,7 @@ describe('CardRenderer - Additional Coverage', () => {
             
             // Should not throw with long content
             await expect(
-                renderer.renderCard(cardData, container, false)
+                renderer.renderCard(cardData, container)
             ).resolves.toBeInstanceOf(HTMLElement);
         });
         
@@ -663,7 +663,7 @@ describe('CardRenderer - Additional Coverage', () => {
             };
             
             const container = document.createElement('div');
-            const card = await renderer.renderCard(cardData, container, false);
+            const card = await renderer.renderCard(cardData, container);
             
             expect(card).toBeInstanceOf(HTMLElement);
         });

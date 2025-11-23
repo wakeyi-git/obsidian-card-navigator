@@ -1,9 +1,10 @@
 import { Setting, Notice, setIcon } from 'obsidian';
 import CardNavigatorPlugin from '../../main';
 import { BaseSettings } from './BaseSettings';
-import { CardSectionSettings, CardStyleSettings, CardSectionStyleSettings, DEFAULT_SETTINGS } from '../../types';
+import { CardSettings, CardSectionSettings, CardStyleSettings, CardSectionStyleSettings, DEFAULT_SETTINGS } from '../../types';
 import { debounce } from '../../utils/debounce';
 import { DebugLogger } from '../../utils/DebugLogger';
+import { StyleUtils } from '../../utils/StyleUtils';
 import { t } from '../../i18n';
 
 /**
@@ -203,7 +204,46 @@ export class InteractiveCardSettings extends BaseSettings {
         this.cardBaseSettingsContent.empty();
 
         const style = this.getCurrentCardStyle();
-        
+
+        // 활성/포커스 상태에서만 상속 토글 표시
+        if (this.selectedState !== 'normal') {
+            new Setting(this.cardBaseSettingsContent)
+                .setName(t().settingsTab.cardSettings.inheritFromNormal)
+                .setDesc(t().settingsTab.cardSettings.inheritFromNormalDescription)
+                .addToggle(toggle => toggle
+                    .setValue(style.inheritFromNormal || false)
+                    .onChange(async (value) => {
+                        style.inheritFromNormal = value;
+
+                        // 상속 활성화 시: 일반 상태의 값을 현재 상태로 복사
+                        if (value) {
+                            const normalStyle = this.plugin.settings.normalCardStyle;
+                            style.backgroundColor = normalStyle.backgroundColor;
+                            style.fontSize = normalStyle.fontSize;
+                            style.borderColor = normalStyle.borderColor;
+                            style.borderWidth = normalStyle.borderWidth;
+                            style.borderRadius = normalStyle.borderRadius;
+                        }
+                        // 상속 비활성화 시: 현재 저장된 값 유지 (사용자가 수정 가능)
+
+                        await this.plugin.saveSettings();
+                        this.updateCardBaseSettings(); // UI 다시 렌더링
+                        this.updatePreviewStyles();
+                        this.forceViewRender();
+                    })
+                );
+
+            // 상속 모드일 때는 다른 설정 비활성화
+            if (style.inheritFromNormal) {
+                const inheritInfo = this.cardBaseSettingsContent.createDiv({ cls: 'setting-item-description' });
+                inheritInfo.setText(`ℹ️ ${t().settingsTab.cardSettings.inheritingFromNormalInfo}`);
+                inheritInfo.style.marginBottom = '12px';
+                inheritInfo.style.fontStyle = 'italic';
+                inheritInfo.style.color = 'var(--text-muted)';
+                return; // 상속 모드에서는 나머지 설정 숨김
+            }
+        }
+
         new Setting(this.cardBaseSettingsContent)
             .setName(t().settingsTab.cardSettings.borderColor)
             .setDesc(t().settingsTab.cardSettings.borderColorDescription)
@@ -404,12 +444,11 @@ export class InteractiveCardSettings extends BaseSettings {
      * 미리 보기 카드를 생성합니다
      */
     private createPreviewCard(container: HTMLElement): HTMLElement {
-        const card = container.createDiv({ cls: 'preview-card'});
+        // Modified Strategy A: 실제 카드와 동일한 클래스 사용
+        const card = container.createDiv({ cls: 'preview-card card-item'});
         card.dataset.state = this.selectedState;
-        
-        const settings = this.plugin.settings;
-        
-        if (settings.header.enabled) {
+
+        if (this.plugin.settings.header.enabled) {
             const headerSection = card.createDiv({ cls: 'card-section card-header'});
             headerSection.dataset.section = 'header';
             if (this.selectedSection === 'header') {
@@ -432,7 +471,7 @@ export class InteractiveCardSettings extends BaseSettings {
             }
         }
 
-        if (settings.body.enabled) {
+        if (this.plugin.settings.body.enabled) {
             const bodySection = card.createDiv({ cls: 'card-section card-body'});
             bodySection.dataset.section = 'body';
             if (this.selectedSection === 'body') {
@@ -455,7 +494,7 @@ export class InteractiveCardSettings extends BaseSettings {
             }
         }
 
-        if (settings.footer.enabled) {
+        if (this.plugin.settings.footer.enabled) {
             const footerSection = card.createDiv({ cls: 'card-section card-footer'});
             footerSection.dataset.section = 'footer';
             if (this.selectedSection === 'footer') {
@@ -477,9 +516,25 @@ export class InteractiveCardSettings extends BaseSettings {
                 footerContent.textContent = footerContentText;
             }
         }
-        
-        this.updatePreviewStyles();
-        
+
+        // Modified Strategy A: 초기 렌더링 시 CSS 커스텀 속성 동기적으로 적용
+        // requestAnimationFrame 사용하지 않고 즉시 적용하여 첫 로드 시 기본 스타일 표시 방지
+        const settings = this.plugin.settings;
+        this.applyPreviewCustomProperties(
+            card,
+            settings.normalCardStyle,
+            settings.activeCardStyle,
+            settings.focusedCardStyle,
+            settings
+        );
+
+        // 상태별 CSS 클래스 초기 설정
+        if (this.selectedState === 'active') {
+            card.classList.add('active');
+        } else if (this.selectedState === 'focused') {
+            card.classList.add('focused');
+        }
+
         return card;
     }
 
@@ -641,11 +696,12 @@ export class InteractiveCardSettings extends BaseSettings {
     }
 
     /**
-     * 미리 보기 스타일을 업데이트합니다
-     * 
+     * 미리 보기 스타일을 업데이트합니다 (Modified Strategy A: Hybrid Approach)
+     *
      * @remarks
-     * requestAnimationFrame으로 브라우저 최적화를 활용하고
-     * 배치 스타일 업데이트로 리플로우를 최소화합니다.
+     * - CSS 커스텀 속성으로 스타일 설정
+     * - 실제 카드와 동일한 CSS 계층 구조 사용
+     * - 인라인 스타일 대신 CSS 변수 활용
      */
     private updatePreviewStyles(): void {
         if (!this.previewCard) return;
@@ -653,100 +709,92 @@ export class InteractiveCardSettings extends BaseSettings {
         requestAnimationFrame(() => {
             if (!this.previewCard) return;
 
-            const style = this.getCurrentStyle();
+            const settings = this.plugin.settings;
 
-            this.applyCardStyles(this.previewCard, style);
-            this.applySectionStyles(style);
+            // Modified Strategy A: CSS 커스텀 속성으로 모든 상태 스타일 설정
+            this.applyPreviewCustomProperties(
+                this.previewCard,
+                settings.normalCardStyle,
+                settings.activeCardStyle,
+                settings.focusedCardStyle,
+                settings
+            );
+
+            // 상태별 CSS 클래스 토글
+            this.previewCard.classList.remove('active', 'focused');
+            if (this.selectedState === 'active') {
+                this.previewCard.classList.add('active');
+            } else if (this.selectedState === 'focused') {
+                this.previewCard.classList.add('focused');
+            }
         });
     }
     
     /**
-     * 현재 상태에 해당하는 스타일을 반환합니다
-     */
-    private getCurrentStyle(): CardStyleSettings {
-        const settings = this.plugin.settings;
-        
-        switch (this.selectedState) {
-            case 'active':
-                return settings.activeCardStyle;
-            case 'focused':
-                return settings.focusedCardStyle;
-            default:
-                return settings.normalCardStyle;
-        }
-    }
-    
-    /**
-     * 카드 전체 스타일을 한번에 적용합니다
-     * 
+     * 미리 보기 카드에 CSS 커스텀 속성 적용 (Modified Strategy A)
+     *
      * @remarks
-     * 모든 스타일을 Object.assign으로 한 번에 적용하여 리플로우를 최소화합니다.
+     * 실제 카드와 동일한 CSS 변수 계층 구조 사용
      */
-    private applyCardStyles(card: HTMLElement, style: CardStyleSettings): void {
-        Object.assign(card.style, {
-            backgroundColor: style.backgroundColor,
-            borderColor: style.borderColor,
-            borderWidth: `${style.borderWidth}px`,
-            borderRadius: `${style.borderRadius}px`,
-            borderStyle: 'solid',
-            fontSize: `${style.fontSize}px`
-        });
-    }
-    
-    /**
-     * 섹션별 스타일을 적용합니다
-     * 
-     * @remarks
-     * 헤더는 아래 테두리만, 풋터는 위 테두리만, 바디는 테두리 없음
-     */
-    private applySectionStyles(cardStyle: CardStyleSettings): void {
-        if (!this.previewCard) return;
-        
-        const settings = this.plugin.settings;
-        
-        const sections = {
-            header: this.previewCard.querySelector('.card-header') as HTMLElement,
-            body: this.previewCard.querySelector('.card-body') as HTMLElement,
-            footer: this.previewCard.querySelector('.card-footer') as HTMLElement
-        };
-        
-        if (sections.header) {
-            const headerStyle = settings.header[`${this.selectedState}Style`] as CardSectionStyleSettings;
-            Object.assign(sections.header.style, {
-                fontSize: `${headerStyle.fontSize}px`,
-                backgroundColor: headerStyle.backgroundColor,
-                borderBottomColor: headerStyle.borderColor,
-                borderBottomWidth: `${headerStyle.borderWidth}px`,
-                borderBottomStyle: headerStyle.borderWidth > 0 ? 'solid' : 'none',
-                borderTopStyle: 'none',
-                borderLeftStyle: 'none',
-                borderRightStyle: 'none'
-            });
+    private applyPreviewCustomProperties(
+        card: HTMLElement,
+        normalStyle: CardStyleSettings,
+        activeStyle: CardStyleSettings,
+        focusedStyle: CardStyleSettings,
+        settings: CardSettings
+    ): void {
+        // 카드 전체 스타일
+        StyleUtils.applyCardCustomProperties(card, normalStyle, activeStyle, focusedStyle);
+
+        // 섹션별 스타일 (헤더, 바디, 풋터)
+        // Header
+        if (settings.header) {
+            card.style.setProperty('--card-header-bg-normal', settings.header.normalStyle.backgroundColor);
+            card.style.setProperty('--card-header-font-size-normal', `${settings.header.normalStyle.fontSize}px`);
+            card.style.setProperty('--card-header-text-color-normal', StyleUtils.getContrastColor(settings.header.normalStyle.backgroundColor));
+
+            card.style.setProperty('--card-header-bg-active', settings.header.activeStyle.backgroundColor);
+            card.style.setProperty('--card-header-font-size-active', `${settings.header.activeStyle.fontSize}px`);
+            card.style.setProperty('--card-header-text-color-active', StyleUtils.getContrastColor(settings.header.activeStyle.backgroundColor));
+
+            card.style.setProperty('--card-header-bg-focused', settings.header.focusedStyle.backgroundColor);
+            card.style.setProperty('--card-header-font-size-focused', `${settings.header.focusedStyle.fontSize}px`);
+            card.style.setProperty('--card-header-text-color-focused', StyleUtils.getContrastColor(settings.header.focusedStyle.backgroundColor));
         }
-        
-        if (sections.body) {
-            const bodyStyle = settings.body[`${this.selectedState}Style`] as CardSectionStyleSettings;
-            Object.assign(sections.body.style, {
-                fontSize: `${bodyStyle.fontSize}px`,
-                backgroundColor: bodyStyle.backgroundColor,
-                borderStyle: 'none'
-            });
+
+        // Body
+        if (settings.body) {
+            card.style.setProperty('--card-body-bg-normal', settings.body.normalStyle.backgroundColor);
+            card.style.setProperty('--card-body-font-size-normal', `${settings.body.normalStyle.fontSize}px`);
+            card.style.setProperty('--card-body-text-color-normal', StyleUtils.getContrastColor(settings.body.normalStyle.backgroundColor));
+
+            card.style.setProperty('--card-body-bg-active', settings.body.activeStyle.backgroundColor);
+            card.style.setProperty('--card-body-font-size-active', `${settings.body.activeStyle.fontSize}px`);
+            card.style.setProperty('--card-body-text-color-active', StyleUtils.getContrastColor(settings.body.activeStyle.backgroundColor));
+
+            card.style.setProperty('--card-body-bg-focused', settings.body.focusedStyle.backgroundColor);
+            card.style.setProperty('--card-body-font-size-focused', `${settings.body.focusedStyle.fontSize}px`);
+            card.style.setProperty('--card-body-text-color-focused', StyleUtils.getContrastColor(settings.body.focusedStyle.backgroundColor));
         }
-        
-        if (sections.footer) {
-            const footerStyle = settings.footer[`${this.selectedState}Style`] as CardSectionStyleSettings;
-            Object.assign(sections.footer.style, {
-                fontSize: `${footerStyle.fontSize}px`,
-                backgroundColor: footerStyle.backgroundColor,
-                borderTopColor: footerStyle.borderColor,
-                borderTopWidth: `${footerStyle.borderWidth}px`,
-                borderTopStyle: footerStyle.borderWidth > 0 ? 'solid' : 'none',
-                borderBottomStyle: 'none',
-                borderLeftStyle: 'none',
-                borderRightStyle: 'none'
-            });
+
+        // Footer
+        if (settings.footer) {
+            card.style.setProperty('--card-footer-bg-normal', settings.footer.normalStyle.backgroundColor);
+            card.style.setProperty('--card-footer-font-size-normal', `${settings.footer.normalStyle.fontSize}px`);
+            card.style.setProperty('--card-footer-text-color-normal', StyleUtils.getContrastColor(settings.footer.normalStyle.backgroundColor));
+
+            card.style.setProperty('--card-footer-bg-active', settings.footer.activeStyle.backgroundColor);
+            card.style.setProperty('--card-footer-font-size-active', `${settings.footer.activeStyle.fontSize}px`);
+            card.style.setProperty('--card-footer-text-color-active', StyleUtils.getContrastColor(settings.footer.activeStyle.backgroundColor));
+
+            card.style.setProperty('--card-footer-bg-focused', settings.footer.focusedStyle.backgroundColor);
+            card.style.setProperty('--card-footer-font-size-focused', `${settings.footer.focusedStyle.fontSize}px`);
+            card.style.setProperty('--card-footer-text-color-focused', StyleUtils.getContrastColor(settings.footer.focusedStyle.backgroundColor));
         }
     }
+
+    // ⭐ getContrastColor, parseColor 메서드 제거됨
+    // Modified Strategy A: StyleUtils.getContrastColor() 사용
 
     /**
      * 선택된 섹션 설정을 렌더링합니다
@@ -958,6 +1006,46 @@ export class InteractiveCardSettings extends BaseSettings {
         const style = this.getCurrentSectionStyle();
 
         new Setting(container).setHeading().setName(t().settingsTab.cardSettings.sectionStyleSettings(this.getSectionLabel()));
+
+        // 활성/포커스 상태에서만 상속 토글 표시
+        if (this.selectedState !== 'normal') {
+            new Setting(container)
+                .setName(t().settingsTab.cardSettings.inheritFromNormal)
+                .setDesc(t().settingsTab.cardSettings.inheritFromNormalDescription)
+                .addToggle(toggle => toggle
+                    .setValue(style.inheritFromNormal || false)
+                    .onChange(async (value) => {
+                        style.inheritFromNormal = value;
+
+                        // 상속 활성화 시: 일반 상태의 값을 현재 상태로 복사
+                        if (value) {
+                            const sectionSettings = this.plugin.settings[this.selectedSection];
+                            const normalStyle = sectionSettings.normalStyle;
+                            style.fontSize = normalStyle.fontSize;
+                            style.backgroundColor = normalStyle.backgroundColor;
+                            style.borderColor = normalStyle.borderColor;
+                            style.borderWidth = normalStyle.borderWidth;
+                            style.borderRadius = normalStyle.borderRadius;
+                        }
+                        // 상속 비활성화 시: 현재 저장된 값 유지 (사용자가 수정 가능)
+
+                        await this.plugin.saveSettings();
+                        this.updateSectionSettings(); // UI 다시 렌더링
+                        this.updatePreviewStyles();
+                        this.forceViewRender();
+                    })
+                );
+
+            // 상속 모드일 때는 다른 설정 비활성화
+            if (style.inheritFromNormal) {
+                const inheritInfo = container.createDiv({ cls: 'setting-item-description' });
+                inheritInfo.setText(`ℹ️ ${t().settingsTab.cardSettings.inheritingFromNormalInfo}`);
+                inheritInfo.style.marginBottom = '12px';
+                inheritInfo.style.fontStyle = 'italic';
+                inheritInfo.style.color = 'var(--text-muted)';
+                return; // 상속 모드에서는 나머지 설정 숨김
+            }
+        }
 
         new Setting(container)
             .setName(t().settingsTab.cardSettings.fontSize)

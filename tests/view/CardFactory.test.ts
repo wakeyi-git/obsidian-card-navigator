@@ -95,12 +95,9 @@ describe('CardFactory', () => {
         
         // CardRenderer mock
         mockRenderer = {
-            renderCard: jest.fn().mockImplementation((cardData: CardData, container: HTMLElement, isActive: boolean) => {
+            renderCard: jest.fn().mockImplementation((cardData: CardData, container: HTMLElement) => {
                 const card = document.createElement('div');
                 card.classList.add('cn-card');
-                if (isActive) {
-                    card.classList.add('is-active');
-                }
                 
                 // Add sections
                 const header = document.createElement('div');
@@ -205,8 +202,7 @@ describe('CardFactory', () => {
             
             expect(mockRenderer.renderCard).toHaveBeenCalledWith(
                 expect.any(Object), // cardData
-                container,
-                false // isActive
+                container
             );
         });
         
@@ -307,18 +303,17 @@ describe('CardFactory', () => {
         it('should pass isActive to renderer', async () => {
             const file = createMockFile('test');
             const onFileOpen = jest.fn();
-            
+
             await factory.createCard(
                 file,
                 container,
                 file, // activeFile = file
                 onFileOpen
             );
-            
+
             expect(mockRenderer.renderCard).toHaveBeenCalledWith(
                 expect.any(Object),
-                container,
-                true // isActive = true
+                container
             );
         });
     });

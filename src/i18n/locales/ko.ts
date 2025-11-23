@@ -452,9 +452,9 @@ export const ko = {
 			importPreset: '프리셋 가져오기',
 			importPresetButton: '가져오기',
 			priorityMode: '우선순위 모드',
-			priorityModeDescription: '폴더와 태그 프리셋의 우선순위를 자동으로 결정할지, 수동으로 설정할지 선택합니다.',
-			manualPriorityType: '우선 적용할 프리셋 타입',
-			manualPriorityTypeDescription: '폴더 프리셋과 태그 프리셋이 모두 매칭될 때, 어느 것을 우선 적용할지 선택합니다.',
+			priorityModeDescription: '프리셋 매핑의 우선순위를 어떻게 결정할지 선택합니다.',
+			preferredPriorityType: '우선 적용할 프리셋 타입',
+			preferredPriorityTypeDescription: '여러 프리셋이 매칭될 때, 어떤 타입을 최우선으로 적용할지 선택합니다.',
 			addFolderMapping: '폴더 매핑 추가',
 			addFolderMappingDescription: '특정 폴더에 프리셋을 매핑합니다',
 			addMappingButton: '매핑 추가',
@@ -505,43 +505,85 @@ export const ko = {
 			priorityModeDescription: '폴더와 태그 프리셋의 우선순위를 자동으로 결정할지, 수동으로 설정할지 선택합니다.',
 			priorityOptions: {
 				auto: '자동',
+				semiAuto: '반자동',
 				manual: '수동',
 			},
-			priorityRulesTitle: '우선순위 규칙 (자동 모드)',
-			priorityRulesHtml: `
+			autoModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					자동 모드에서는 다음 규칙에 따라 우선순위가 결정됩니다:
-					<ol style="margin: 8px 0; padding-left: 20px;">
-						<li>폴더와 태그 프리셋이 모두 매칭되면, <strong>더 구체적인 것</strong>이 우선 적용됩니다</li>
-						<li>폴더 프리셋: 하위 폴더가 상위 폴더보다 우선</li>
-						<li>태그 프리셋: 태그가 많을수록 우선</li>
-						<li>구체성이 같으면 폴더가 태그보다 우선</li>
-					</ol>
+					<strong>자동 모드:</strong> 현재 뷰 모드에 따라 우선순위가 자동으로 결정됩니다.
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>폴더 모드:</strong> 태그 프리셋 우선 (태그가 더 구체적)</li>
+						<li><strong>태그 모드:</strong> 폴더 프리셋 우선 (폴더가 더 구체적)</li>
+					</ul>
+					같은 타입 내에서는 우선순위 값이 낮을수록 먼저 적용됩니다.
 				</div>
 			`,
-			manualPriorityType: '우선 적용할 프리셋 타입',
-			manualPriorityTypeDescription: '폴더 프리셋과 태그 프리셋이 모두 매칭될 때, 어느 것을 우선 적용할지 선택합니다.',
+			semiAutoModeExplanationHtml: `
+				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
+					<strong>반자동 모드:</strong> 선택한 타입을 최우선으로 적용하되, 같은 타입 내에서는 자동으로 결정됩니다.
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>타입 간 우선순위:</strong> 아래에서 선택한 타입(폴더/태그/속성/날짜)이 항상 최우선</li>
+						<li><strong>타입 내 우선순위:</strong> 우선순위 값이 낮을수록 먼저 적용</li>
+					</ul>
+					현재 뷰 모드에 관계없이 일관된 우선순위를 유지할 수 있습니다.
+				</div>
+			`,
 			manualModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					수동 모드에서는 매칭된 프리셋 중 선택한 타입이 항상 우선 적용됩니다.
+					<strong>수동 모드:</strong> 아래 매핑 목록의 순서대로 프리셋이 적용됩니다.
 					<ul style="margin: 8px 0; padding-left: 20px;">
-						<li><strong>폴더 우선:</strong> 폴더 프리셋이 있으면 항상 폴더 프리셋 적용</li>
-						<li><strong>태그 우선:</strong> 태그 프리셋이 있으면 항상 태그 프리셋 적용</li>
+						<li><strong>첫 번째 매치가 우선:</strong> 위에서 아래로 확인하여 첫 번째로 일치하는 매핑의 프리셋이 적용됩니다</li>
+						<li><strong>드래그하여 순서 변경:</strong> 매핑을 드래그하여 우선순위를 조정할 수 있습니다</li>
 					</ul>
+					가장 세밀한 우선순위 제어가 가능합니다.
 				</div>
 			`,
-			mappingPriorityRulesHtml: `
-				<strong>💡 매핑 우선순위 규칙</strong><br><br>
-				<strong>1. 폴더 vs 태그:</strong> 위의 "우선순위 모드" 설정에 따름<br>
-				<strong>2. 같은 종류 내:</strong> 위에 있는 매핑이 우선 적용됨<br><br>
-				<span style="color: var(--text-muted); font-size: 0.9em;">
-				예: 폴더 목록에서 "프로젝트"가 "프로젝트/중요"보다 위에 있으면,<br>
-				"프로젝트/중요/문서.md"에는 "프로젝트" 프리셋이 적용됩니다.
-				</span>
-			`,
+			presetMappingsTitle: '프리셋 매핑',
+			presetMappingsDescription: '드래그하여 순서를 변경하세요. 수동 모드에서는 위에서 아래로 적용됩니다 (첫 매치 우선).',
+			noMappingsYet: '아직 프리셋 매핑이 없습니다. 아래에서 매핑을 추가하세요.',
+			addFolderButton: '+ 폴더',
+			addTagButton: '+ 태그',
+			addPropertyButton: '+ 속성',
+			addDateButton: '+ 날짜',
+			propertyMappingTitle: '속성 매핑 추가',
+			propertyName: '속성 이름',
+			propertyNameDescription: '매칭할 프론트매터 속성',
+			propertyNamePlaceholder: 'status',
+			propertyValue: '속성 값',
+			propertyValueDescription: '일치시킜 값 (정확히 일치)',
+			propertyValuePlaceholder: 'active',
+			propertyMappingAdded: '속성 매핑이 추가되었습니다',
+			enterPropertyNameAndValue: '속성 이름과 값을 모두 입력하세요',
+			dateMappingTitle: '날짜 매핑 추가',
+			dateCriteria: '날짜 기준',
+			dateCriteriaDescription: '확인할 날짜',
+			dateCriteriaCreated: '생성 날짜',
+			dateCriteriaModified: '수정 날짜',
+			dateCriteriaProperty: '속성 (프론트매터)',
+			datePropertyName: '속성 이름',
+			datePropertyNameDescription: '날짜가 포함된 프론트매터 속성',
+			datePropertyNamePlaceholder: 'due-date',
+			dateType: '날짜 유형',
+			dateTypeDescription: '상대 날짜 (최근 N일) 또는 절대 날짜 범위 사용',
+			dateTypeRelative: '상대 (최근 N일)',
+			dateTypeAbsolute: '절대 (날짜 범위)',
+			relativeDays: '상대 일수',
+			relativeDaysDescription: '최근 N일 이내의 파일 매칭',
+			relativeDaysPlaceholder: '7',
+			dateFrom: '시작 날짜',
+			dateFromDescription: '시작 날짜 (YYYY-MM-DD) 또는 비워두기',
+			dateFromPlaceholder: '2024-01-01',
+			dateTo: '종료 날짜',
+			dateToDescription: '종료 날짜 (YYYY-MM-DD) 또는 비워두기',
+			dateToPlaceholder: '2024-12-31',
+			dateMappingAdded: '날짜 매핑이 추가되었습니다',
+			enterDatePropertyName: '속성 이름을 입력하세요',
+			deleteMappingConfirm: (target: string) => `"${target}" 매핑을 삭제하시겠습니까?`,
 			priorityTypeOptions: {
-				folder: '폴더 우선',
-				tag: '태그 우선',
+				folder: '폴더',
+				tag: '태그',
+				property: '속성',
+				date: '날짜',
 			},
 			folderMappingDivider: '폴더 프리셋',
 			addFolderMapping: '폴더 매핑 추가',
@@ -639,6 +681,9 @@ export const ko = {
 				isMarkdownHtml
 					? '표시할 최대 글자 수입니다. ⚠️ 현재 Markdown HTML 렌더링 모드로 설정되어 있어 이 설정이 적용되지 않습니다 (HTML 태그가 잘리는 것을 방지)'
 					: '표시할 최대 글자 수입니다. 내용이 이보다 길면 자동으로 잘리고 "..."이 추가됩니다',
+			inheritFromNormal: '일반 상태에서 상속',
+			inheritFromNormalDescription: '활성화하면 일반 상태의 스타일을 그대로 사용합니다. 공통 스타일을 유지하면서 일부만 변경할 때 유용합니다',
+			inheritingFromNormalInfo: '일반 상태의 스타일을 상속받고 있습니다',
 			fontSize: '폰트 크기',
 			fontSizeDescription: (section: string) => `${section} 영역의 텍스트 크기입니다 (px). 기본값은 일반적으로 14px입니다`,
 			backgroundColor: '배경색',

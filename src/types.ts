@@ -174,6 +174,8 @@ export interface LayoutSettings {
  * 카드 스타일 설정
  */
 export interface CardStyleSettings {
+    /** 일반 상태에서 상속 여부 (활성/포커스 상태에서만 사용) */
+    inheritFromNormal?: boolean;
     /** 카드 전체 배경색 */
     backgroundColor: string;
     /** 헤더 배경색 (선택적) */
@@ -194,10 +196,12 @@ export interface CardStyleSettings {
 
 /**
  * 카드 섹션 스타일 설정
- * 
+ *
  * 각 섹션의 상태별 스타일을 개별적으로 설정합니다.
  */
 export interface CardSectionStyleSettings {
+    /** 일반 상태에서 상속 여부 (활성/포커스 상태에서만 사용) */
+    inheritFromNormal?: boolean;
     /** 폰트 크기 (px) */
     fontSize: number;
     /** 배경색 */
@@ -503,51 +507,103 @@ export interface SavedSearch {
  * 프리셋 우선순위 모드
  */
 export type PresetPriorityMode =
-    | 'auto'    // 현재 모드에 따라 자동 결정
-    | 'manual'; // 수동으로 우선순위 선택
+    | 'auto'       // 현재 모드에 따라 자동 결정 (폴더 모드 → tag-first, 태그 모드 → folder-first)
+    | 'semi-auto'  // 사용자 선택한 타입을 우선하되, 같은 타입 내에서는 자동 결정
+    | 'manual';    // 매핑 목록 순서대로 적용 (첫 매치 우선)
 
 /**
- * 수동 우선순위 타입
+ * 우선순위 타입 (반자동 모드에서 사용)
  */
-export type ManualPriorityType = 
-    | 'folder-first'  // 폴더 프리셋 우선
-    | 'tag-first';    // 태그 프리셋 우선
+export type PriorityType =
+    | 'folder'    // 폴더 프리셋 우선
+    | 'tag'       // 태그 프리셋 우선
+    | 'property'  // 속성 프리셋 우선
+    | 'date';     // 날짜 프리셋 우선
 
 /**
  * 프리셋 우선순위 설정
- * 
- * 폴더 프리셋과 태그 프리셋 중 어느 것을 우선 적용할지 결정합니다.
+ *
+ * 여러 프리셋 타입 중 어느 것을 우선 적용할지 결정합니다.
  */
 export interface PresetPrioritySettings {
     /** 우선순위 모드 */
     mode: PresetPriorityMode;
-    /** 수동 모드일 때의 우선순위 타입 */
-    manualType: ManualPriorityType;
+    /** 반자동 모드일 때의 우선순위 타입 순서 */
+    preferredType: PriorityType;
 }
 
 /**
  * 프리셋 매핑 타입
  */
-export type PresetMappingType = 
-    | 'folder'  // 특정 폴더에 프리셋 연결
-    | 'tag';    // 특정 태그에 프리셋 연결
+export type PresetMappingType =
+    | 'folder'    // 특정 폴더에 프리셋 연결
+    | 'tag'       // 특정 태그에 프리셋 연결
+    | 'property'  // 프론트매터 속성 값에 따라 프리셋 연결
+    | 'date';     // 날짜 범위에 따라 프리셋 연결
+
+/**
+ * 날짜 매핑 기준
+ */
+export type DateMappingCriteria =
+    | 'created-date'   // 파일 생성일
+    | 'modified-date'  // 파일 수정일
+    | 'property';      // 프론트매터의 날짜 속성
 
 /**
  * 프리셋 매핑
- * 
- * 특정 폴더나 태그에 프리셋을 자동으로 적용합니다.
+ *
+ * 특정 폴더, 태그, 속성, 날짜 범위에 프리셋을 자동으로 적용합니다.
+ *
+ * ⭐ 개선 (2025-11-23):
+ * - property, date 타입 추가
+ * - 고유 ID 추가로 매핑 관리 개선
+ * - 배열 순서가 곧 우선순위 (인덱스 = 우선순위)
  */
 export interface PresetMapping {
+    /** 매핑 고유 ID (자동 생성, addMapping 호출 시 생성됨) */
+    id?: string;
     /** 매핑 타입 */
     type: PresetMappingType;
-    /** 대상 (폴더 경로 또는 태그명) */
+    /**
+     * 대상
+     * - folder: 폴더 경로 (예: "Projects/Work")
+     * - tag: 태그명 (예: "meeting")
+     * - property: 속성명 (예: "status")
+     * - date: 날짜 범위를 설명하는 레이블 (예: "최근 7일")
+     */
     target: string;
     /** 적용할 프리셋 ID */
     presetId: string;
-    /** 우선순위 (낮을수록 먼저 적용) */
+    /**
+     * 우선순위 (낮을수록 먼저 적용)
+     * @deprecated 배열 순서로 우선순위를 관리하므로 더 이상 사용하지 않음
+     */
     priority: number;
+
+    // ===== 폴더 매핑 전용 옵션 =====
     /** 하위 폴더 포함 여부 (폴더 매핑일 때만 사용) */
     includeSubfolders?: boolean;
+
+    // ===== 속성 매핑 전용 옵션 =====
+    /**
+     * 속성 값 (property 매핑일 때 사용)
+     * - 예: status 속성이 "in-progress"인 파일
+     */
+    propertyValue?: string;
+
+    // ===== 날짜 매핑 전용 옵션 =====
+    /** 날짜 매핑 기준 (date 매핑일 때 사용) */
+    dateCriteria?: DateMappingCriteria;
+    /** 사용자 정의 날짜 속성명 (dateCriteria가 'property'일 때 사용) */
+    datePropertyName?: string;
+    /** 시작 날짜 (YYYY-MM-DD 형식, date 매핑일 때 사용) */
+    dateFrom?: string;
+    /** 종료 날짜 (YYYY-MM-DD 형식, date 매핑일 때 사용) */
+    dateTo?: string;
+    /** 상대 날짜 사용 여부 (예: "최근 7일") */
+    useRelativeDate?: boolean;
+    /** 상대 날짜 일수 (useRelativeDate가 true일 때 사용) */
+    relativeDays?: number;
 }
 
 /**
@@ -570,6 +626,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             borderRadius: 0
         },
         activeStyle: {
+            inheritFromNormal: true, // 기본적으로 일반 상태에서 상속
             fontSize: 14,
             backgroundColor: 'var(--background-primary-alt)',
             borderColor: 'transparent',
@@ -577,6 +634,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             borderRadius: 0
         },
         focusedStyle: {
+            inheritFromNormal: true, // 기본적으로 일반 상태에서 상속
             fontSize: 14,
             backgroundColor: 'var(--background-primary-alt)',
             borderColor: 'transparent',
@@ -598,6 +656,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             borderRadius: 0
         },
         activeStyle: {
+            inheritFromNormal: true, // 기본적으로 일반 상태에서 상속
             fontSize: 13,
             backgroundColor: 'var(--background-primary)',
             borderColor: 'transparent',
@@ -605,6 +664,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             borderRadius: 0
         },
         focusedStyle: {
+            inheritFromNormal: true, // 기본적으로 일반 상태에서 상속
             fontSize: 13,
             backgroundColor: 'var(--background-primary)',
             borderColor: 'transparent',
@@ -626,6 +686,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             borderRadius: 0
         },
         activeStyle: {
+            inheritFromNormal: true, // 기본적으로 일반 상태에서 상속
             fontSize: 12,
             backgroundColor: 'var(--background-primary-alt)',
             borderColor: 'transparent',
@@ -633,6 +694,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             borderRadius: 0
         },
         focusedStyle: {
+            inheritFromNormal: true, // 기본적으로 일반 상태에서 상속
             fontSize: 12,
             backgroundColor: 'var(--background-primary-alt)',
             borderColor: 'transparent',
@@ -649,6 +711,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
         borderRadius: 5
     },
     activeCardStyle: {
+        inheritFromNormal: false, // 테두리 스타일이 다르므로 상속하지 않음
         backgroundColor: 'var(--background-secondary)',
         fontSize: 14,
         borderColor: 'var(--interactive-accent)',
@@ -656,6 +719,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
         borderRadius: 5
     },
     focusedCardStyle: {
+        inheritFromNormal: false, // 테두리 스타일이 다르므로 상속하지 않음
         backgroundColor: 'var(--background-secondary-alt)',
         fontSize: 14,
         borderColor: 'var(--interactive-accent)',
@@ -698,7 +762,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
     presetMappings: [],
     presetPriority: {
         mode: 'auto',
-        manualType: 'tag-first'
+        preferredType: 'tag'
     },
     savedSearches: [],
     enableFuzzySearch: false,

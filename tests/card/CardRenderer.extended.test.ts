@@ -140,7 +140,7 @@ describe('CardRenderer - Extended Tests', () => {
                 { content: 'Created: 2024-01-01' }
             );
             
-            const cardEl = await renderer.renderCard(cardData, container, false);
+            const cardEl = await renderer.renderCard(cardData, container);
             
             expect(cardEl).toBeTruthy();
             expect(cardEl.querySelector('.card-header')).toBeTruthy();
@@ -159,7 +159,7 @@ describe('CardRenderer - Extended Tests', () => {
             // body의 contentRenderMode를 markdown-html로 설정
             cardData.cardSettings.body.contentRenderMode = 'markdown-html';
             
-            const cardEl = await renderer.renderCard(cardData, container, false);
+            const cardEl = await renderer.renderCard(cardData, container);
             
             expect(cardEl).toBeTruthy();
             const body = cardEl.querySelector('.card-body');
@@ -177,7 +177,7 @@ describe('CardRenderer - Extended Tests', () => {
             // 바디만 markdown-html 모드
             cardData.cardSettings.body.contentRenderMode = 'markdown-html';
             
-            const cardEl = await renderer.renderCard(cardData, container, false);
+            const cardEl = await renderer.renderCard(cardData, container);
             
             const body = cardEl.querySelector('.card-body');
             expect(body?.classList.contains('markdown-preview-view')).toBe(true);
@@ -187,45 +187,46 @@ describe('CardRenderer - Extended Tests', () => {
     describe('스타일 적용', () => {
         it('활성 카드에 activeStyle을 적용해야 함', async () => {
             const cardData = createMockCardData('test');
-            
-            const cardEl = await renderer.renderCard(cardData, container, true);
-            
+
+            const cardEl = await renderer.renderCard(cardData, container);
+
             expect(cardEl).toBeTruthy();
             const header = cardEl.querySelector('.card-header') as HTMLElement;
-            
-            // activeStyle이 적용되었는지 확인 (fontSize 등)
-            expect(header.style.fontSize).toBeTruthy();
+
+            // Modified Strategy A: CSS custom properties should be applied to card element
+            expect(cardEl.style.getPropertyValue('--card-header-font-size-normal')).toBeTruthy();
         });
         
         it('비활성 카드에 normalStyle을 적용해야 함', async () => {
             const cardData = createMockCardData('test');
-            
-            const cardEl = await renderer.renderCard(cardData, container, false);
-            
+
+            const cardEl = await renderer.renderCard(cardData, container);
+
             expect(cardEl).toBeTruthy();
             const header = cardEl.querySelector('.card-header') as HTMLElement;
-            
-            // normalStyle이 적용되었는지 확인
-            expect(header.style.fontSize).toBeTruthy();
+
+            // Modified Strategy A: CSS custom properties should be applied to card element
+            expect(cardEl.style.getPropertyValue('--card-header-font-size-normal')).toBeTruthy();
         });
         
         it('섹션별 스타일을 개별적으로 적용해야 함', async () => {
             const cardData = createMockCardData('test');
-            
+
             // 각 섹션의 스타일 커스터마이즈
             cardData.cardSettings.header.normalStyle.fontSize = 16;
             cardData.cardSettings.body.normalStyle.fontSize = 14;
             cardData.cardSettings.footer.normalStyle.fontSize = 12;
-            
-            const cardEl = await renderer.renderCard(cardData, container, false);
-            
+
+            const cardEl = await renderer.renderCard(cardData, container);
+
             const header = cardEl.querySelector('.card-header') as HTMLElement;
             const body = cardEl.querySelector('.card-body') as HTMLElement;
             const footer = cardEl.querySelector('.card-footer') as HTMLElement;
-            
-            expect(header.style.fontSize).toBe('16px');
-            expect(body.style.fontSize).toBe('14px');
-            expect(footer.style.fontSize).toBe('12px');
+
+            // Modified Strategy A: CSS custom properties should be set on card element
+            expect(cardEl.style.getPropertyValue('--card-header-font-size-normal')).toBe('16px');
+            expect(cardEl.style.getPropertyValue('--card-body-font-size-normal')).toBe('14px');
+            expect(cardEl.style.getPropertyValue('--card-footer-font-size-normal')).toBe('12px');
         });
     });
     
@@ -238,7 +239,7 @@ describe('CardRenderer - Extended Tests', () => {
                 { content: '' }
             );
             
-            const cardEl = await renderer.renderCard(cardData, container, false);
+            const cardEl = await renderer.renderCard(cardData, container);
             
             const header = cardEl.querySelector('.card-header');
             expect(header).toBeTruthy();
@@ -253,7 +254,7 @@ describe('CardRenderer - Extended Tests', () => {
                 { content: '' }
             );
             
-            const cardEl = await renderer.renderCard(cardData, container, false);
+            const cardEl = await renderer.renderCard(cardData, container);
             
             const body = cardEl.querySelector('.card-body');
             expect(body).toBeTruthy();
@@ -270,7 +271,7 @@ describe('CardRenderer - Extended Tests', () => {
             );
             
             await expect(
-                renderer.renderCard(cardData, container, false)
+                renderer.renderCard(cardData, container)
             ).resolves.not.toThrow();
         });
         
@@ -282,7 +283,7 @@ describe('CardRenderer - Extended Tests', () => {
                 { content: '' }
             );
             
-            const cardEl = await renderer.renderCard(cardData, container, false);
+            const cardEl = await renderer.renderCard(cardData, container);
             
             // textContent를 사용하므로 XSS 안전
             expect(cardEl.innerHTML).not.toContain('<script>');
@@ -296,7 +297,7 @@ describe('CardRenderer - Extended Tests', () => {
                 { content: 'Footer', visible: false }
             );
             
-            const cardEl = await renderer.renderCard(cardData, container, false);
+            const cardEl = await renderer.renderCard(cardData, container);
             
             expect(cardEl.querySelector('.card-header')).toBeFalsy();
             expect(cardEl.querySelector('.card-body')).toBeTruthy();
@@ -313,7 +314,7 @@ describe('CardRenderer - Extended Tests', () => {
                 { content: '<span class="internal-link" data-file-path="note.md">Note</span>' }
             );
             
-            const cardEl = await renderer.renderCard(cardData, container, false);
+            const cardEl = await renderer.renderCard(cardData, container);
             
             const link = cardEl.querySelector('.internal-link') as HTMLElement;
             expect(link).toBeTruthy();
@@ -328,7 +329,7 @@ describe('CardRenderer - Extended Tests', () => {
                 { content: '<span class="tag-link" data-tag="important">important</span>' }
             );
             
-            const cardEl = await renderer.renderCard(cardData, container, false);
+            const cardEl = await renderer.renderCard(cardData, container);
             
             const tag = cardEl.querySelector('.tag-link') as HTMLElement;
             expect(tag).toBeTruthy();
@@ -345,7 +346,7 @@ describe('CardRenderer - Extended Tests', () => {
                 }
             );
             
-            const cardEl = await renderer.renderCard(cardData, container, false);
+            const cardEl = await renderer.renderCard(cardData, container);
             
             const links = cardEl.querySelectorAll('.internal-link');
             expect(links.length).toBe(2);
@@ -358,7 +359,7 @@ describe('CardRenderer - Extended Tests', () => {
             
             for (let i = 0; i < 100; i++) {
                 const cardData = createMockCardData(`test-${i}`);
-                await renderer.renderCard(cardData, container, false);
+                await renderer.renderCard(cardData, container);
             }
             
             const endTime = performance.now();
@@ -404,7 +405,7 @@ const code = "test";
             cardData.cardSettings.body.contentRenderMode = 'markdown-html';
             
             const startTime = performance.now();
-            await renderer.renderCard(cardData, container, false);
+            await renderer.renderCard(cardData, container);
             const endTime = performance.now();
             
             // 복잡한 마크다운도 100ms 이내 렌더링

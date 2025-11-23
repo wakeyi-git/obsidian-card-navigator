@@ -128,8 +128,6 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		this.tagMode = new TagMode(this.app, this);
 		this.sortManager = new SortManager(this.app);
 		// ✅ 함수를 전달하여 항상 최신 settings를 참조
-		this.dragDropHandler = new DragDropHandler(this.app, () => this.settings);
-		// ✅ 함수를 전달하여 항상 최신 settings를 참조
 		this.contextMenu = new CardContextMenu(this.app, () => this.settings);
 		// ✅ 함수를 전달하여 항상 최신 settings를 참조
 		this.selectionManager = new SelectionManager(
@@ -140,7 +138,9 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				await this.refresh();
 			}
 		);
-		
+		// ✅ selectionManager를 DragDropHandler에 전달하여 다중 선택 드래그 지원
+		this.dragDropHandler = new DragDropHandler(this.app, () => this.settings, this.selectionManager);
+
 		this.eventHandler = new ViewEventHandler(
 			this.app,
 			this.dragDropHandler,

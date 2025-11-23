@@ -5,7 +5,7 @@ import { t } from '../i18n';
 
 /**
  * 드래그 상태 인터페이스
- * 
+ *
  * 드래그 진행 여부를 확인할 수 있는 인터페이스입니다.
  */
 interface DragState {
@@ -13,30 +13,57 @@ interface DragState {
 }
 
 /**
+ * SelectionManager 인터페이스
+ *
+ * 다중 선택 관리를 위한 최소한의 인터페이스입니다.
+ */
+interface ISelectionManager {
+    getSelectedFiles(): TFile[];
+    isSelected(file: TFile): boolean;
+}
+
+/**
  * 드래그앤드롭 핸들러
- * 
+ *
  * 카드를 드래그하여 편집기에 링크를 삽입하거나,
  * 다른 카드로 드래그하여 양방향 링크를 생성할 수 있습니다.
+ * 다중 선택된 카드들도 함께 드래그할 수 있습니다.
  */
 export class DragDropHandler {
     private app: App;
     private logger: DebugLogger;
     private getSettings: () => CardNavigatorSettings;
+    private selectionManager?: ISelectionManager;
     // 드래그 시 사용할 파일 내용을 캠싱
     private cachedDragContent: Map<string, string> = new Map();
 
-    constructor(app: App, getSettings?: () => CardNavigatorSettings) {
+    constructor(app: App, getSettings?: () => CardNavigatorSettings, selectionManager?: ISelectionManager) {
         this.app = app;
         // ✅ 함수를 저장하여 항상 최신 settings를 참조
         this.getSettings = getSettings || (() => ({ debug: { enabled: false, categories: {} } } as CardNavigatorSettings));
         this.logger = new DebugLogger(this.getSettings);
+        this.selectionManager = selectionManager;
+    }
+
+    /**
+     * 파일에 해당하는 카드 요소를 찾습니다
+     */
+    private findCardElement(file: TFile): HTMLElement | null {
+        const cards = document.querySelectorAll('.card-item');
+        for (let i = 0; i < cards.length; i++) {
+            const card = cards[i] as HTMLElement;
+            if (card.dataset.filePath === file.path) {
+                return card;
+            }
+        }
+        return null;
     }
 
     /**
      * 드래그 가능 설정
-     * 
+     *
      * 카드를 드래그 가능하게 설정하고 드래그 이벤트를 바인딩합니다.
-     * 
+     *
      * @param cardEl - 카드 HTML 요소
      * @param file - 연결된 파일
      * @returns 드래그 상태를 확인할 수 있는 객체
@@ -52,13 +79,20 @@ export class DragDropHandler {
         cardEl.addEventListener('mousedown', async () => {
             const settings = this.getSettings();
             if (settings.dragDrop.contentType === 'full-content') {
-                // 파일 내용을 미리 로드하여 캠싱
-                const content = await this.getFileContentForDrag(file, settings.dragDrop.fullContentOptions);
-                this.cachedDragContent.set(file.path, content);
-                this.logger.debug('DragDrop', t().dragDrop.contentCached, {
-                    file: file.basename,
-                    length: content.length
-                });
+                // 다중 선택된 파일들 확인
+                const filesToCache = this.selectionManager?.isSelected(file)
+                    ? this.selectionManager.getSelectedFiles()
+                    : [file];
+
+                // 모든 파일 내용을 미리 로드하여 캠싱
+                for (const f of filesToCache) {
+                    const content = await this.getFileContentForDrag(f, settings.dragDrop.fullContentOptions);
+                    this.cachedDragContent.set(f.path, content);
+                    this.logger.debug('DragDrop', t().dragDrop.contentCached, {
+                        file: f.basename,
+                        length: content.length
+                    });
+                }
             }
         });
 
@@ -66,43 +100,86 @@ export class DragDropHandler {
             if (!e.dataTransfer) return;
 
             dragging = true;
-            
+
             if (dragEndTimeout) {
                 clearTimeout(dragEndTimeout);
                 dragEndTimeout = null;
             }
 
-            this.logger.debug('DragDrop', t().dragDrop.dragStart, { file: file.basename });
+            // 다중 선택된 파일들 확인
+            const selectedFiles = this.selectionManager?.isSelected(file)
+                ? this.selectionManager.getSelectedFiles()
+                : [file];
+
+            this.logger.debug('DragDrop', t().dragDrop.dragStart, {
+                file: file.basename,
+                selectedCount: selectedFiles.length
+            });
 
             // 설정에 따라 드래그 데이터 결정
             const settings = this.getSettings();
             let dragContent: string;
 
             if (settings.dragDrop.contentType === 'link') {
-                // 링크 형식
-                dragContent = `[[${file.basename}]]`;
-                this.logger.debug('DragDrop', t().dragDrop.dragContentLink, { content: dragContent });
+                // 링크 형식 - 다중 파일인 경우 모든 링크 포함
+                dragContent = selectedFiles.map(f => `[[${f.basename}]]`).join('\n');
+                this.logger.debug('DragDrop', t().dragDrop.dragContentLink, {
+                    content: dragContent,
+                    fileCount: selectedFiles.length
+                });
             } else {
                 // 파일 전체 내용 (캠싱된 내용 사용)
-                dragContent = this.cachedDragContent.get(file.path) || `[[${file.basename}]]`;
+                // 다중 파일인 경우 각 파일의 내용을 구분자로 연결
+                const contents = selectedFiles.map(f =>
+                    this.cachedDragContent.get(f.path) || `[[${f.basename}]]`
+                );
+                dragContent = contents.join('\n\n---\n\n');
+
                 this.logger.debug('DragDrop', t().dragDrop.dragContentFile, {
                     length: dragContent.length,
-                    cached: this.cachedDragContent.has(file.path)
+                    fileCount: selectedFiles.length
                 });
+
                 // 사용 후 캠시 삭제
-                this.cachedDragContent.delete(file.path);
+                selectedFiles.forEach(f => this.cachedDragContent.delete(f.path));
             }
 
             e.dataTransfer.setData('text/plain', dragContent);
-            e.dataTransfer.setData('file-path', file.path);
+            // 다중 파일인 경우 모든 파일 경로를 JSON으로 저장
+            e.dataTransfer.setData('file-path', JSON.stringify(selectedFiles.map(f => f.path)));
             e.dataTransfer.effectAllowed = 'copyLink';
-            
+
             cardEl.addClass('dragging');
+
+            // 다중 선택된 다른 카드들도 dragging 클래스 추가
+            if (selectedFiles.length > 1) {
+                selectedFiles.forEach(f => {
+                    if (f !== file) {
+                        const otherCard = this.findCardElement(f);
+                        if (otherCard) {
+                            otherCard.addClass('dragging');
+                        }
+                    }
+                });
+            }
         });
 
         cardEl.addEventListener('dragend', () => {
             cardEl.removeClass('dragging');
-            
+
+            // 다중 선택된 다른 카드들도 dragging 클래스 제거
+            if (this.selectionManager?.isSelected(file)) {
+                const selectedFiles = this.selectionManager.getSelectedFiles();
+                selectedFiles.forEach(f => {
+                    if (f !== file) {
+                        const otherCard = this.findCardElement(f);
+                        if (otherCard) {
+                            otherCard.removeClass('dragging');
+                        }
+                    }
+                });
+            }
+
             dragEndTimeout = setTimeout(() => {
                 dragging = false;
                 dragEndTimeout = null;
@@ -148,18 +225,37 @@ export class DragDropHandler {
 
             if (!e.dataTransfer) return;
 
-            const draggedFilePath = e.dataTransfer.getData('file-path');
-            if (!draggedFilePath || draggedFilePath === targetFile.path) return;
+            const filePathData = e.dataTransfer.getData('file-path');
+            if (!filePathData) return;
 
-            const draggedFile = this.app.vault.getAbstractFileByPath(draggedFilePath);
-            if (!(draggedFile instanceof TFile)) return;
+            // JSON 파싱 시도 (다중 파일)
+            let draggedFilePaths: string[];
+            try {
+                draggedFilePaths = JSON.parse(filePathData);
+                if (!Array.isArray(draggedFilePaths)) {
+                    draggedFilePaths = [filePathData];
+                }
+            } catch {
+                // JSON이 아니면 단일 파일 경로
+                draggedFilePaths = [filePathData];
+            }
+
+            // 드롭 대상과 동일한 파일 제외
+            draggedFilePaths = draggedFilePaths.filter(path => path !== targetFile.path);
+            if (draggedFilePaths.length === 0) return;
 
             this.logger.debug('DragDrop', t().dragDrop.cardDropped, {
-                from: draggedFile.basename,
+                fileCount: draggedFilePaths.length,
                 to: targetFile.basename
             });
 
-            await this.createBidirectionalLink(draggedFile, targetFile);
+            // 모든 드래그된 파일에 대해 양방향 링크 생성
+            for (const draggedFilePath of draggedFilePaths) {
+                const draggedFile = this.app.vault.getAbstractFileByPath(draggedFilePath);
+                if (draggedFile instanceof TFile) {
+                    await this.createBidirectionalLink(draggedFile, targetFile);
+                }
+            }
         });
     }
 

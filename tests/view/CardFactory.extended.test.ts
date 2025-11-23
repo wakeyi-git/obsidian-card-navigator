@@ -107,11 +107,10 @@ describe('CardFactory - Extended Tests', () => {
             jest.spyOn(mockRenderer, 'renderCard').mockResolvedValue(document.createElement('div'));
             
             await factory.createCard(file, container, file, onFileOpen);
-            
+
             expect(mockRenderer.renderCard).toHaveBeenCalledWith(
                 expect.anything(),
-                expect.anything(),
-                true
+                expect.anything()
             );
         });
         
@@ -124,11 +123,10 @@ describe('CardFactory - Extended Tests', () => {
             jest.spyOn(mockRenderer, 'renderCard').mockResolvedValue(document.createElement('div'));
             
             await factory.createCard(file, container, activeFile, onFileOpen);
-            
+
             expect(mockRenderer.renderCard).toHaveBeenCalledWith(
                 expect.anything(),
-                expect.anything(),
-                false
+                expect.anything()
             );
         });
     });

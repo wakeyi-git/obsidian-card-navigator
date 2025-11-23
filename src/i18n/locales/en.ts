@@ -452,9 +452,9 @@ export const en = {
 			importPreset: 'Import Preset',
 			importPresetButton: 'Import',
 			priorityMode: 'Priority Mode',
-			priorityModeDescription: 'Choose whether to automatically determine priority between folder and tag presets, or set it manually.',
-			manualPriorityType: 'Preferred Preset Type',
-			manualPriorityTypeDescription: 'When both folder and tag presets match, choose which to apply first.',
+			priorityModeDescription: 'Choose how to determine preset mapping priority.',
+			preferredPriorityType: 'Preferred Preset Type',
+			preferredPriorityTypeDescription: 'When multiple presets match, choose which type to prioritize first.',
 			addFolderMapping: 'Add Folder Mapping',
 			addFolderMappingDescription: 'Map a preset to a specific folder',
 			addMappingButton: 'Add Mapping',
@@ -505,43 +505,85 @@ export const en = {
 			priorityModeDescription: 'Choose whether to automatically determine priority between folder and tag presets, or set it manually.',
 			priorityOptions: {
 				auto: 'Auto',
+				semiAuto: 'Semi-Auto',
 				manual: 'Manual',
 			},
-			priorityRulesTitle: 'Priority Rules (Auto Mode)',
-			priorityRulesHtml: `
+			autoModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					In auto mode, priority is determined by the following rules:
-					<ol style="margin: 8px 0; padding-left: 20px;">
-						<li>When both folder and tag presets match, the <strong>more specific</strong> one is applied</li>
-						<li>Folder presets: Subfolder has priority over parent folder</li>
-						<li>Tag presets: More tags take priority</li>
-						<li>When specificity is equal, folder has priority over tag</li>
-					</ol>
+					<strong>Auto Mode:</strong> Priority is automatically determined based on the current view mode.
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>Folder Mode:</strong> Tag presets take priority (tags are more specific)</li>
+						<li><strong>Tag Mode:</strong> Folder presets take priority (folders are more specific)</li>
+					</ul>
+					Within the same type, lower priority values are applied first.
 				</div>
 			`,
-			manualPriorityType: 'Preferred Preset Type',
-			manualPriorityTypeDescription: 'When both folder and tag presets match, choose which to apply first.',
+			semiAutoModeExplanationHtml: `
+				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
+					<strong>Semi-Auto Mode:</strong> Prioritize the selected type first, but auto-determine within the same type.
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>Between types:</strong> The selected type (folder/tag/property/date) always takes priority</li>
+						<li><strong>Within type:</strong> Lower priority values are applied first</li>
+					</ul>
+					Maintains consistent priority regardless of the current view mode.
+				</div>
+			`,
 			manualModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					In manual mode, the selected type is always applied first among matched presets.
+					<strong>Manual Mode:</strong> Presets are applied based on the mapping list order below.
 					<ul style="margin: 8px 0; padding-left: 20px;">
-						<li><strong>Folder first:</strong> Always apply folder preset if available</li>
-						<li><strong>Tag first:</strong> Always apply tag preset if available</li>
+						<li><strong>First match wins:</strong> Checked from top to bottom, the first matching mapping's preset is applied</li>
+						<li><strong>Drag to reorder:</strong> Drag mappings to adjust their priority</li>
 					</ul>
+					Provides the finest control over priority.
 				</div>
 			`,
-			mappingPriorityRulesHtml: `
-				<strong>💡 Mapping Priority Rules</strong><br><br>
-				<strong>1. Folder vs Tag:</strong> Determined by "Priority Mode" setting above<br>
-				<strong>2. Within same type:</strong> Mappings listed higher have priority<br><br>
-				<span style="color: var(--text-muted); font-size: 0.9em;">
-				Example: If "Projects" is above "Projects/Important" in the folder list,<br>
-				"Projects/Important/document.md" will use the "Projects" preset.
-				</span>
-			`,
+			presetMappingsTitle: 'Preset Mappings',
+			presetMappingsDescription: 'Drag to reorder mappings. In manual mode, mappings are applied from top to bottom (first match wins).',
+			noMappingsYet: 'No preset mappings yet. Add a mapping below.',
+			addFolderButton: '+ Folder',
+			addTagButton: '+ Tag',
+			addPropertyButton: '+ Property',
+			addDateButton: '+ Date',
+			propertyMappingTitle: 'Add Property Mapping',
+			propertyName: 'Property Name',
+			propertyNameDescription: 'Frontmatter property to match',
+			propertyNamePlaceholder: 'status',
+			propertyValue: 'Property Value',
+			propertyValueDescription: 'Value to match (exact match)',
+			propertyValuePlaceholder: 'active',
+			propertyMappingAdded: 'Property mapping added',
+			enterPropertyNameAndValue: 'Please enter both property name and value',
+			dateMappingTitle: 'Add Date Mapping',
+			dateCriteria: 'Date Criteria',
+			dateCriteriaDescription: 'Which date to check',
+			dateCriteriaCreated: 'Created Date',
+			dateCriteriaModified: 'Modified Date',
+			dateCriteriaProperty: 'Property (frontmatter)',
+			datePropertyName: 'Property Name',
+			datePropertyNameDescription: 'Frontmatter property containing the date',
+			datePropertyNamePlaceholder: 'due-date',
+			dateType: 'Date Type',
+			dateTypeDescription: 'Use relative (last N days) or absolute date range',
+			dateTypeRelative: 'Relative (last N days)',
+			dateTypeAbsolute: 'Absolute (date range)',
+			relativeDays: 'Relative Days',
+			relativeDaysDescription: 'Match files from the last N days',
+			relativeDaysPlaceholder: '7',
+			dateFrom: 'Date From',
+			dateFromDescription: 'Start date (YYYY-MM-DD) or leave empty',
+			dateFromPlaceholder: '2024-01-01',
+			dateTo: 'Date To',
+			dateToDescription: 'End date (YYYY-MM-DD) or leave empty',
+			dateToPlaceholder: '2024-12-31',
+			dateMappingAdded: 'Date mapping added',
+			enterDatePropertyName: 'Please enter property name',
+			deleteMappingConfirm: (target: string) => `Delete mapping for "${target}"?`,
 			priorityTypeOptions: {
-				folder: 'Folder first',
-				tag: 'Tag first',
+				folder: 'Folder',
+				tag: 'Tag',
+				property: 'Property',
+				date: 'Date',
 			},
 			folderMappingDivider: 'Folder Presets',
 			addFolderMapping: 'Add Folder Mapping',
@@ -639,6 +681,9 @@ export const en = {
 				isMarkdownHtml
 					? 'Maximum number of characters to display. ⚠️ This setting is not applied in Markdown HTML rendering mode (to prevent HTML tag truncation)'
 					: 'Maximum number of characters to display. Content longer than this will be truncated with "..."',
+			inheritFromNormal: 'Inherit from Normal State',
+			inheritFromNormalDescription: 'When enabled, uses the same style as the normal state. Useful for maintaining common styles while changing only specific properties',
+			inheritingFromNormalInfo: 'Inheriting styles from normal state',
 			fontSize: 'Font Size',
 			fontSizeDescription: (section: string) => `Text size for the ${section} area (px). Default is typically 14px`,
 			backgroundColor: 'Background Color',

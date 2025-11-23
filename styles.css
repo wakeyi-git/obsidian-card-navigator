@@ -205,17 +205,17 @@
 	/* ⭐ Phase 3 개선 (2025-11-14): CSS Grid auto-fit 활용 */
 	/* grid-template-columns는 LayoutManager가 동적으로 설정 */
 	/* 초기값 제거: LayoutManager의 설정과 충돌 방지 */
-	
+
 	/* ⭐ Phase 3 개선: grid-auto-rows로 카드 높이 유연하게 관리 */
 	/* 최소 높이를 보장하면서 내용에 맞게 자동 조정 */
 	grid-auto-rows: minmax(var(--card-min-height, 100px), auto);
-	
+
 	/* ⭐ 버그 수정 2025-11-14: 균등배분 대신 시작점 정렬 */
 	/* align-content: stretch (기본값) → start로 변경 */
 	align-content: start;
 	/* justify-content도 명시적으로 설정 (가로 모드 대비) */
 	justify-content: start;
-	
+
 	gap: 10px;
 	/* ⭐ Phase 3: overflow는 LayoutManager가 모드별로 동적 설정 */
 	/* overflow-y: auto 제거 - JavaScript가 제어 */
@@ -230,18 +230,21 @@
 	--card-max-height: 300px;
 }
 
-/* ⭐ 개별 카드 - CSS 변수 기반 스타일 (충돌 방지) */
+/* ⭐ 개별 카드 - CSS 변수 기반 스타일 (Modified Strategy A: Hybrid Approach) */
 .card-navigator-cards .card-item {
-	/* ⭐ card-navigator- 접두사 사용 */
-	background: var(--card-navigator-bg-normal, var(--background-secondary));
-	font-size: var(--card-navigator-font-size-normal, 14px);
+	/* ⭐ Per-card custom properties with global fallbacks */
+	/* Per-card properties allow preset-based styling for individual files */
+	background: var(--card-bg-normal, var(--card-navigator-bg-normal, var(--background-secondary)));
+	font-size: var(--card-font-size-normal, var(--card-navigator-font-size-normal, 14px));
+	font-weight: var(--card-font-weight-normal, var(--card-navigator-font-weight-normal, normal));
+	color: var(--card-text-color-normal, var(--card-navigator-text-color-normal, var(--text-normal)));
 	border: var(--card-navigator-border-width-normal, 1px) solid var(--card-navigator-border-color-normal, var(--background-modifier-border));
 	border-radius: var(--card-navigator-border-radius-normal, 5px);
 
 	/* 기본 레이아웃 */
 	cursor: pointer;
 	transition: all 0.2s ease;
-	overflow-y: auto;
+	overflow: hidden; /* ⭐ border-radius가 깔끔하게 보이도록 */
 	display: flex;
 	flex-direction: column;
 
@@ -249,7 +252,7 @@
 	min-width: 0;
 	/* ⭐ max 값은 모드별로 CSS 클래스에서 적용 */
 	/* ⭐ height는 모드별로 다르게 적용 */
-	
+
 	/* ⭐ 버그 수정 2025-11-14: 포커스 문제 해결 */
 	user-select: none; /* 텍스트 선택 방지 */
 	-webkit-user-select: none;
@@ -271,32 +274,54 @@
 	max-width: var(--card-max-width, 400px);
 }
 
-/* ⭐ 활성 카드 - CSS 변수 기반 스타일 */
+/* ⭐ 활성 카드 - CSS 변수 기반 스타일 (Modified Strategy A: Hybrid Approach) */
 .card-navigator-cards .card-item.active {
-	background: var(--card-navigator-bg-active, var(--background-secondary));
-	font-size: var(--card-navigator-font-size-active, 14px);
+	background: var(--card-bg-active, var(--card-navigator-bg-active, var(--background-secondary)));
+	font-size: var(--card-font-size-active, var(--card-navigator-font-size-active, 14px));
+	font-weight: var(--card-font-weight-active, var(--card-navigator-font-weight-active, normal));
+	color: var(--card-text-color-active, var(--card-navigator-text-color-active, var(--text-normal)));
 	border: var(--card-navigator-border-width-active, 2px) solid var(--card-navigator-border-color-active, var(--interactive-accent));
 	border-radius: var(--card-navigator-border-radius-active, 5px);
 }
 
-/* ⭐ 포커스 카드 - CSS 변수 기반 스타일 (Phase 3에서 사용) */
+/* ⭐ 포커스 카드 - CSS 변수 기반 스타일 (Modified Strategy A: Hybrid Approach) */
 .card-navigator-cards .card-item.focused {
-	background: var(--card-navigator-bg-focused, var(--background-secondary-alt));
-	font-size: var(--card-navigator-font-size-focused, 14px);
+	background: var(--card-bg-focused, var(--card-navigator-bg-focused, var(--background-secondary-alt)));
+	font-size: var(--card-font-size-focused, var(--card-navigator-font-size-focused, 14px));
+	font-weight: var(--card-font-weight-focused, var(--card-navigator-font-weight-focused, normal));
+	color: var(--card-text-color-focused, var(--card-navigator-text-color-focused, var(--text-normal)));
 	border: var(--card-navigator-border-width-focused, 2px) solid var(--card-navigator-border-color-focused, var(--interactive-accent));
 	border-radius: var(--card-navigator-border-radius-focused, 5px);
 	/* outline: 2px solid var(--interactive-accent); */
 	/* outline-offset: 2px; */
 }
 
-/* 카드 헤더 */
+/* 카드 헤더 - Modified Strategy A: Hybrid Approach */
 .card-navigator-cards .card-header {
 	padding: 10px 12px;
-	background: var(--background-primary-alt);
+	background: var(--card-header-bg-normal, var(--background-primary-alt));
 	border-bottom: 1px solid var(--background-modifier-border);
-	font-weight: 600;
-	font-size: 0.95em;
-	color: var(--text-normal);
+	font-weight: var(--card-header-font-weight-normal, 600);
+	font-size: var(--card-header-font-size-normal, 0.95em);
+	color: var(--card-header-text-color-normal, var(--text-normal));
+	/* border-top-left-radius: var(--card-navigator-border-radius-normal, 5px);
+	border-top-right-radius: var(--card-navigator-border-radius-normal, 5px); */
+}
+
+/* 활성 카드 헤더 */
+.card-navigator-cards .card-item.active .card-header {
+	background: var(--card-header-bg-active, var(--background-primary-alt));
+	font-size: var(--card-header-font-size-active, 0.95em);
+	font-weight: var(--card-header-font-weight-active, 600);
+	color: var(--card-header-text-color-active, var(--text-normal));
+}
+
+/* 포커스 카드 헤더 */
+.card-navigator-cards .card-item.focused .card-header {
+	background: var(--card-header-bg-focused, var(--background-primary-alt));
+	font-size: var(--card-header-font-size-focused, 0.95em);
+	font-weight: var(--card-header-font-weight-focused, 600);
+	color: var(--card-header-text-color-focused, var(--text-normal));
 }
 
 /* ⭐ 일반 텍스트 모드 헤더: 1줄 제한 (2025-11-17) */
@@ -313,13 +338,32 @@
 	overflow: visible !important;
 }
 
-/* 카드 바디 */
+/* 카드 바디 - Modified Strategy A: Hybrid Approach */
 .card-navigator-cards .card-body {
 	padding: 12px;
 	flex: 1;
-	font-size: 0.85em;
-	color: var(--text-muted);
+	background: var(--card-body-bg-normal, transparent);
+	font-size: var(--card-body-font-size-normal, 0.85em);
+	font-weight: var(--card-body-font-weight-normal, normal);
+	color: var(--card-body-text-color-normal, var(--text-muted));
 	line-height: 1.5;
+	overflow-y: auto; /* ⭐ 바디 내용이 넘칠 때 스크롤 */
+}
+
+/* 활성 카드 바디 */
+.card-navigator-cards .card-item.active .card-body {
+	background: var(--card-body-bg-active, transparent);
+	font-size: var(--card-body-font-size-active, 0.85em);
+	font-weight: var(--card-body-font-weight-active, normal);
+	color: var(--card-body-text-color-active, var(--text-muted));
+}
+
+/* 포커스 카드 바디 */
+.card-navigator-cards .card-item.focused .card-body {
+	background: var(--card-body-bg-focused, transparent);
+	font-size: var(--card-body-font-size-focused, 0.85em);
+	font-weight: var(--card-body-font-weight-focused, normal);
+	color: var(--card-body-text-color-focused, var(--text-muted));
 }
 
 /* ⭐ 일반 텍스트 모드: 4줄로 제한 (2025-11-17 수정) */
@@ -378,13 +422,32 @@
 	text-decoration: underline;
 }
 
-/* 카드 풋터 */
+/* 카드 풋터 - Modified Strategy A: Hybrid Approach */
 .card-navigator-cards .card-footer {
     padding: 8px 12px;
-    background: var(--background-primary-alt);
+    background: var(--card-footer-bg-normal, var(--background-primary-alt));
     border-top: 1px solid var(--background-modifier-border);
-    font-size: 0.75em;
-    color: var(--text-faint);
+    font-size: var(--card-footer-font-size-normal, 0.75em);
+    font-weight: var(--card-footer-font-weight-normal, normal);
+    color: var(--card-footer-text-color-normal, var(--text-faint));
+    /* border-bottom-left-radius: var(--card-navigator-border-radius-normal, 5px);
+    border-bottom-right-radius: var(--card-navigator-border-radius-normal, 5px); */
+}
+
+/* 활성 카드 풋터 */
+.card-navigator-cards .card-item.active .card-footer {
+    background: var(--card-footer-bg-active, var(--background-primary-alt));
+    font-size: var(--card-footer-font-size-active, 0.75em);
+    font-weight: var(--card-footer-font-weight-active, normal);
+    color: var(--card-footer-text-color-active, var(--text-faint));
+}
+
+/* 포커스 카드 풋터 */
+.card-navigator-cards .card-item.focused .card-footer {
+    background: var(--card-footer-bg-focused, var(--background-primary-alt));
+    font-size: var(--card-footer-font-size-focused, 0.75em);
+    font-weight: var(--card-footer-font-weight-focused, normal);
+    color: var(--card-footer-text-color-focused, var(--text-faint));
 }
 
 /* ⭐ 일반 텍스트 모드 풋터: 1줄 제한 (2025-11-17) */
@@ -400,6 +463,28 @@
     text-overflow: clip !important;
     overflow: visible !important;
 }
+
+/* ⭐ 활성 카드의 헤더/풋터 border-radius */
+/* .card-navigator-cards .card-item.active .card-header {
+    border-top-left-radius: var(--card-navigator-border-radius-active, 5px);
+    border-top-right-radius: var(--card-navigator-border-radius-active, 5px);
+} */
+
+/* .card-navigator-cards .card-item.active .card-footer {
+    border-bottom-left-radius: var(--card-navigator-border-radius-active, 5px);
+    border-bottom-right-radius: var(--card-navigator-border-radius-active, 5px);
+} */
+
+/* ⭐ 포커스 카드의 헤더/풋터 border-radius */
+/* .card-navigator-cards .card-item.focused .card-header {
+    border-top-left-radius: var(--card-navigator-border-radius-focused, 5px);
+    border-top-right-radius: var(--card-navigator-border-radius-focused, 5px);
+} */
+
+/* .card-navigator-cards .card-item.focused .card-footer {
+    border-bottom-left-radius: var(--card-navigator-border-radius-focused, 5px);
+    border-bottom-right-radius: var(--card-navigator-border-radius-focused, 5px);
+} */
 
 /* 카드 제목 (Phase 1과 호환성 유지) */
 .card-navigator-cards .card-title {
@@ -480,23 +565,7 @@
 	border-radius: 2px;
 }
 
-/* 자동완성 제안 항목 */
-.search-suggestion-item {
-	padding: 8px 12px;
-	cursor: pointer;
-	border-radius: 4px;
-	font-size: 0.9em;
-	color: var(--text-normal);
-	transition: background 0.2s ease;
-}
-
-.search-suggestion-item:hover {
-	background: var(--background-modifier-hover);
-}
-
-.search-suggestion-item.is-selected {
-	background: var(--background-modifier-active-hover);
-}
+/* 자동완성 제안 항목 - 하단의 Search Suggestions 섹션(2248번 줄)에서 통합 정의됨 */
 
 /* 필터 모달 배경 */
 .filter-modal-backdrop {
@@ -710,7 +779,20 @@
 .card-navigator-cards .card-item.dragging {
 	opacity: 0.5;
 	transform: rotate(5deg);
-	transition: opacity 0.2s ease, transform 0.2s ease;
+	border: 2px dashed var(--interactive-accent) !important;
+	box-shadow: none !important;
+	outline: none !important;
+	transition: opacity 0.2s ease, transform 0.2s ease, border 0.2s ease;
+}
+
+/* 선택된 카드를 드래그할 때도 동일한 스타일 적용 */
+.card-navigator-cards .card-item.selected.dragging {
+	opacity: 0.5;
+	transform: rotate(5deg);
+	border: 2px dashed var(--interactive-accent) !important;
+	box-shadow: none !important;
+	outline: none !important;
+	transition: opacity 0.2s ease, transform 0.2s ease, border 0.2s ease;
 }
 
 /* 드롭 타겟 카드 스타일 */
@@ -746,39 +828,9 @@
    ⭐ Phase 5 Stage 3: 다중 선택 시스템 스타일
    ============================================================================= */
 
-/* 선택된 카드 스타일 */
-.card-navigator-cards .card-item.selected {
-	outline: 3px solid var(--interactive-accent);
-	outline-offset: -3px;
-	box-shadow: 0 0 0 1px var(--interactive-accent);
-}
+/* 선택된 카드 스타일은 하단 Batch Actions 섹션에서 정의됨 (2474번 줄 참조) */
 
-/* 선택된 카드의 헤더 */
-.card-navigator-cards .card-item.selected .card-header {
-	background: var(--interactive-accent-hover);
-	color: var(--text-on-accent);
-}
-
-/* 선택 정보 바 */
-.selection-bar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 10px 12px;
-	margin-bottom: 10px;
-	background: var(--background-secondary);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 6px;
-	box-shadow: 0 2px 8px var(--cn-shadow-md);
-	animation: slideDown 0.2s ease;
-}
-
-/* 선택 카운트 */
-.selection-count {
-	font-size: 0.9em;
-	font-weight: 600;
-	color: var(--interactive-accent);
-}
+/* 선택 정보 바 및 관련 스타일 - 하단의 다중 선택 섹션(2427번 줄)에서 통합 정의됨 (sticky 포지션 포함) */
 
 /* 일괄 작업 버튼 컨테이너 */
 .batch-actions {
@@ -825,13 +877,13 @@
 		align-items: flex-start;
 		gap: 8px;
 	}
-	
+
 	.batch-actions {
 		width: 100%;
 		justify-content: flex-end;
 		flex-wrap: wrap;
 	}
-	
+
 	.batch-action-icon {
 		flex: 0 0 auto;
 	}
@@ -908,8 +960,7 @@
 	border-bottom-color: var(--background-modifier-border-hover);
 }
 
-.card-navigator-settings .setting-tab-button.is-active,
-.card-navigator-settings .setting-tab-button[data-tab].is-active {
+.card-navigator-settings .setting-tab-button.is-active {
 	color: var(--interactive-accent);
 	background: transparent;
 	font-weight: 600;
@@ -1090,11 +1141,11 @@
 	.card-navigator-preset-item {
 		padding: 12px;
 	}
-	
+
 	.preset-buttons {
 		width: 100%;
 	}
-	
+
 	.preset-buttons button {
 		flex: 1;
 		min-width: 0;
@@ -1279,7 +1330,7 @@
 		flex-direction: column;
 		align-items: stretch;
 	}
-	
+
 	.mapping-buttons {
 		justify-content: flex-end;
 		margin-top: 8px;
@@ -1404,7 +1455,7 @@
 	font-size: 13px;
 	font-weight: 500;
 	color: var(--text-muted);
-	
+
 	/* 🎨 Phase 3: 부드러운 전환 */
 	transition: all 0.2s ease;
 }
@@ -1413,7 +1464,7 @@
 	background: var(--background-modifier-hover);
 	color: var(--text-normal);
 	border-color: var(--background-modifier-border-hover);
-	
+
 	/* 살짝 위로 올라가는 효과 */
 	transform: translateY(-1px);
 }
@@ -1431,49 +1482,124 @@
 }
 
 /* ========================================
-   미리 보기 카드
+   미리 보기 카드 (Modified Strategy A: Hybrid Approach)
    ======================================== */
 
+/* 미리 보기 카드 기본 스타일 */
 .card-settings-container .preview-card {
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
+	border-radius: var(--card-navigator-border-radius-normal, 5px);
 	overflow: hidden;
 	background: var(--background-primary);
-	/* ⭐ min-height 감소 (2025-11-16): 빈 공간 최소화 */
 	min-height: 150px;
 	box-shadow: 0 2px 8px var(--cn-shadow-sm);
-	
-	/* 🎨 Phase 3: 카드 전체에 트랜지션 */
 	transition: all 0.3s ease;
 }
 
-/* 카드 섹션 */
+/* Modified Strategy A: 실제 카드와 동일한 CSS 변수 기반 스타일 적용 */
+.card-settings-container .preview-card.card-item {
+	/* 카드 전체 스타일 - CSS 변수 계층 구조 사용 */
+	background: var(--card-bg-normal, var(--card-navigator-bg-normal, var(--background-secondary)));
+	font-size: var(--card-font-size-normal, var(--card-navigator-font-size-normal, 14px));
+	color: var(--card-text-color-normal, var(--card-navigator-text-color-normal, var(--text-normal)));
+}
+
+.card-settings-container .preview-card.card-item.active {
+	background: var(--card-bg-active, var(--card-navigator-bg-active, var(--background-secondary)));
+	font-size: var(--card-font-size-active, var(--card-navigator-font-size-active, 14px));
+	color: var(--card-text-color-active, var(--card-navigator-text-color-active, var(--text-normal)));
+}
+
+.card-settings-container .preview-card.card-item.focused {
+	background: var(--card-bg-focused, var(--card-navigator-bg-focused, var(--background-secondary-alt)));
+	font-size: var(--card-font-size-focused, var(--card-navigator-font-size-focused, 14px));
+	color: var(--card-text-color-focused, var(--card-navigator-text-color-focused, var(--text-normal)));
+}
+
+/* 헤더 섹션 스타일 */
+.card-settings-container .preview-card.card-item .card-header {
+	background: var(--card-header-bg-normal, var(--background-primary-alt));
+	font-size: var(--card-header-font-size-normal, 0.95em);
+	color: var(--card-header-text-color-normal, var(--text-normal));
+}
+
+.card-settings-container .preview-card.card-item.active .card-header {
+	background: var(--card-header-bg-active, var(--background-primary-alt));
+	font-size: var(--card-header-font-size-active, 0.95em);
+	color: var(--card-header-text-color-active, var(--text-normal));
+}
+
+.card-settings-container .preview-card.card-item.focused .card-header {
+	background: var(--card-header-bg-focused, var(--background-primary-alt));
+	font-size: var(--card-header-font-size-focused, 0.95em);
+	color: var(--card-header-text-color-focused, var(--text-normal));
+}
+
+/* 바디 섹션 스타일 */
+.card-settings-container .preview-card.card-item .card-body {
+	background: var(--card-body-bg-normal, transparent);
+	font-size: var(--card-body-font-size-normal, 0.85em);
+	color: var(--card-body-text-color-normal, var(--text-muted));
+}
+
+.card-settings-container .preview-card.card-item.active .card-body {
+	background: var(--card-body-bg-active, transparent);
+	font-size: var(--card-body-font-size-active, 0.85em);
+	color: var(--card-body-text-color-active, var(--text-muted));
+}
+
+.card-settings-container .preview-card.card-item.focused .card-body {
+	background: var(--card-body-bg-focused, transparent);
+	font-size: var(--card-body-font-size-focused, 0.85em);
+	color: var(--card-body-text-color-focused, var(--text-muted));
+}
+
+/* 풋터 섹션 스타일 */
+.card-settings-container .preview-card.card-item .card-footer {
+	background: var(--card-footer-bg-normal, var(--background-primary-alt));
+	font-size: var(--card-footer-font-size-normal, 0.75em);
+	color: var(--card-footer-text-color-normal, var(--text-faint));
+}
+
+.card-settings-container .preview-card.card-item.active .card-footer {
+	background: var(--card-footer-bg-active, var(--background-primary-alt));
+	font-size: var(--card-footer-font-size-active, 0.75em);
+	color: var(--card-footer-text-color-active, var(--text-faint));
+}
+
+.card-settings-container .preview-card.card-item.focused .card-footer {
+	background: var(--card-footer-bg-focused, var(--background-primary-alt));
+	font-size: var(--card-footer-font-size-focused, 0.75em);
+	color: var(--card-footer-text-color-focused, var(--text-faint));
+}
+
+/* 카드 섹션 - 기본 레이아웃 스타일 */
 .card-settings-container .card-section {
 	padding: 14px;
 	cursor: pointer;
 	position: relative;
 	border-bottom: 1px solid var(--background-modifier-border);
-	
-	/* 🎨 Phase 3: 섹션 전환 효과 */
 	transition: all 0.25s ease;
 }
 
-.card-settings-container .card-section:first-child {
-	border-radius: 8px 8px 0 0;
-}
+/* .card-settings-container .card-section:first-child {
+	border-top-left-radius: var(--card-navigator-border-radius-normal, 5px);
+	border-top-right-radius: var(--card-navigator-border-radius-normal, 5px);
+} */
 
-.card-settings-container .card-section:last-child {
+/* .card-settings-container .card-section:last-child {
 	border-bottom: none;
-	border-radius: 0 0 8px 8px;
-}
+	border-bottom-left-radius: var(--card-navigator-border-radius-normal, 5px);
+	border-bottom-right-radius: var(--card-navigator-border-radius-normal, 5px);
+} */
 
 .card-settings-container .card-section:only-child {
-	border-radius: 8px;
+	border-radius: var(--card-navigator-border-radius-normal, 5px);
 }
 
 .card-settings-container .card-section:hover {
 	background-color: var(--background-modifier-hover);
-	
+
 	/* 살짝 확대 효과 */
 	transform: scale(1.01);
 }
@@ -1482,9 +1608,54 @@
 	/* 선택된 섹션 하이라이트 */
 	box-shadow: inset 0 0 0 2px var(--interactive-accent);
 	background-color: var(--background-modifier-hover);
-	
+
 	/* 🎨 Phase 3: 펄스 애니메이션 (첫 선택 시) */
 	animation: pulse-once 0.4s ease-out;
+}
+
+/* 선택된 섹션의 테두리 둥글기 - Normal state */
+.card-settings-container .preview-card .card-section.selected:first-child {
+	border-top-left-radius: var(--card-navigator-border-radius-normal, 5px);
+	border-top-right-radius: var(--card-navigator-border-radius-normal, 5px);
+}
+
+.card-settings-container .preview-card .card-section.selected:last-child {
+	border-bottom-left-radius: var(--card-navigator-border-radius-normal, 5px);
+	border-bottom-right-radius: var(--card-navigator-border-radius-normal, 5px);
+}
+
+.card-settings-container .preview-card .card-section.selected:only-child {
+	border-radius: var(--card-navigator-border-radius-normal, 5px);
+}
+
+/* 선택된 섹션의 테두리 둥글기 - Active state */
+.card-settings-container .preview-card[data-state="active"] .card-section.selected:first-child {
+	border-top-left-radius: var(--card-navigator-border-radius-active, 5px);
+	border-top-right-radius: var(--card-navigator-border-radius-active, 5px);
+}
+
+.card-settings-container .preview-card[data-state="active"] .card-section.selected:last-child {
+	border-bottom-left-radius: var(--card-navigator-border-radius-active, 5px);
+	border-bottom-right-radius: var(--card-navigator-border-radius-active, 5px);
+}
+
+.card-settings-container .preview-card[data-state="active"] .card-section.selected:only-child {
+	border-radius: var(--card-navigator-border-radius-active, 5px);
+}
+
+/* 선택된 섹션의 테두리 둥글기 - Focused state */
+.card-settings-container .preview-card[data-state="focused"] .card-section.selected:first-child {
+	border-top-left-radius: var(--card-navigator-border-radius-focused, 5px);
+	border-top-right-radius: var(--card-navigator-border-radius-focused, 5px);
+}
+
+.card-settings-container .preview-card[data-state="focused"] .card-section.selected:last-child {
+	border-bottom-left-radius: var(--card-navigator-border-radius-focused, 5px);
+	border-bottom-right-radius: var(--card-navigator-border-radius-focused, 5px);
+}
+
+.card-settings-container .preview-card[data-state="focused"] .card-section.selected:only-child {
+	border-radius: var(--card-navigator-border-radius-focused, 5px);
 }
 
 @keyframes pulse-once {
@@ -1505,6 +1676,44 @@
 
 .card-settings-container .card-section.hidden {
 	display: none;
+}
+
+/* ⭐ 활성 상태 미리 보기 카드의 border-radius */
+.card-settings-container .preview-card[data-state="active"] {
+	border-radius: var(--card-navigator-border-radius-active, 5px);
+}
+
+.card-settings-container .preview-card[data-state="active"] .card-section:first-child {
+	border-top-left-radius: var(--card-navigator-border-radius-active, 5px);
+	border-top-right-radius: var(--card-navigator-border-radius-active, 5px);
+}
+
+.card-settings-container .preview-card[data-state="active"] .card-section:last-child {
+	border-bottom-left-radius: var(--card-navigator-border-radius-active, 5px);
+	border-bottom-right-radius: var(--card-navigator-border-radius-active, 5px);
+}
+
+.card-settings-container .preview-card[data-state="active"] .card-section:only-child {
+	border-radius: var(--card-navigator-border-radius-active, 5px);
+}
+
+/* ⭐ 포커스 상태 미리 보기 카드의 border-radius */
+.card-settings-container .preview-card[data-state="focused"] {
+	border-radius: var(--card-navigator-border-radius-focused, 5px);
+}
+
+.card-settings-container .preview-card[data-state="focused"] .card-section:first-child {
+	border-top-left-radius: var(--card-navigator-border-radius-focused, 5px);
+	border-top-right-radius: var(--card-navigator-border-radius-focused, 5px);
+}
+
+.card-settings-container .preview-card[data-state="focused"] .card-section:last-child {
+	border-bottom-left-radius: var(--card-navigator-border-radius-focused, 5px);
+	border-bottom-right-radius: var(--card-navigator-border-radius-focused, 5px);
+}
+
+.card-settings-container .preview-card[data-state="focused"] .card-section:only-child {
+	border-radius: var(--card-navigator-border-radius-focused, 5px);
 }
 
 /* 섹션 콘텐츠 */
@@ -1529,7 +1738,7 @@
 	border-radius: 4px;
 	color: var(--text-muted);
 	border: 1px solid var(--background-modifier-border);
-	
+
 	/* 🎨 Phase 3: 라벨 페이드 인/아웃 */
 	transition: all 0.2s ease;
 }
@@ -1585,7 +1794,7 @@
 	margin-bottom: 16px;
 	padding: 0 0 8px 0;
 	border-bottom: 1px solid var(--background-modifier-border);
-	
+
 	/* 🎨 Phase 3: 헤더 변경 시 페이드 */
 	transition: all 0.3s ease;
 }
@@ -1712,7 +1921,7 @@
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 6px;
 	overflow: hidden;
-	
+
 	/* 🎨 Phase 3: 접기/펴기 애니메이션 */
 	transition: all 0.3s ease;
 }
@@ -1728,7 +1937,7 @@
 	font-weight: 500;
 	color: var(--text-normal);
 	user-select: none;
-	
+
 	/* 🎨 Phase 3: 호버 효과 */
 	transition: all 0.2s ease;
 }
@@ -1744,7 +1953,7 @@
 .card-settings-container .advanced-settings-content {
 	padding: 16px;
 	background: var(--background-primary);
-	
+
 	/* 🎨 Phase 3: 펼쳐질 때 페이드 인 */
 	animation: slideDownSettings 0.3s ease-out;
 }
@@ -1806,18 +2015,18 @@
 		grid-template-columns: 1fr;
 		grid-template-rows: auto auto auto;
 	}
-	
+
 	.card-settings-container .card-base-settings {
 		grid-row: 1;
 		grid-column: 1;
 		max-height: none;
 	}
-	
+
 	.card-settings-container .card-preview-section {
 		grid-row: 2;
 		grid-column: 1;
 	}
-	
+
 	.card-settings-container .card-section-settings {
 		grid-row: 3;
 		grid-column: 1;
@@ -1828,18 +2037,18 @@
 	.card-settings-container {
 		gap: 16px;
 	}
-	
+
 	.card-settings-container .preview-header {
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 12px;
 	}
-	
+
 	.card-settings-container .preview-state-tabs {
 		width: 100%;
 		justify-content: stretch;
 	}
-	
+
 	.card-settings-container .preview-state-tabs button {
 		flex: 1;
 	}
@@ -1861,7 +2070,7 @@
 	right: 0;
 	height: 2px;
 	background: var(--interactive-accent);
-	
+
 	/* 저장 중 애니메이션 */
 	animation: saving-progress 0.6s ease-in-out;
 }
@@ -2118,13 +2327,6 @@ button:focus-visible {
 	vertical-align: super;
 }
 
-/* ⭐ Markdown 렌더링 모드 풋터: 줄바꿈 허용 (2025-11-17) */
-.card-navigator-cards .card-footer.card-markdown-content {
-	white-space: normal;
-	text-overflow: clip;
-	overflow: visible;
-}
-
 /* =============================================================================
    ⭐ 검색 제안 UI (Search Suggestions) - 2025-11-17
    Obsidian 스타일과 동일한 검색 옵션 표시
@@ -2179,13 +2381,6 @@ button:focus-visible {
 .suggestion-item:not(.is-selected) .search-suggestion-item:hover,
 .suggestion-item:not(.is-selected) .search-operator-item:hover {
     background-color: var(--background-modifier-hover);
-}
-
-/* ⭐ Markdown 렌더링 모드 풋터: 줄바꿈 허용 (2025-11-17) */
-.card-navigator-cards .card-footer.card-markdown-content {
-	white-space: normal;
-	text-overflow: clip;
-	overflow: visible;
 }
 
 /* =============================================================================
@@ -2337,25 +2532,11 @@ button:focus-visible {
 
 /* 중복 스타일 제거됨 - 상단의 .batch-action-icon 스타일 참조 */
 
-/* 선택된 카드 스타일 */
+/* 선택된 카드 스타일 - 테두리와 그림자만 (배경색/글자색은 인라인 스타일에서 처리) */
 .card-navigator-cards .card-item.selected {
 	border: 2px solid var(--interactive-accent);
 	box-shadow: 0 0 0 3px var(--interactive-accent-hover);
 	background: var(--background-secondary);
-}
-
-/* 선택된 카드의 텍스트 가시성 보장 */
-.card-navigator-cards .card-item.selected .card-header,
-.card-navigator-cards .card-item.selected .card-body,
-.card-navigator-cards .card-item.selected .card-footer {
-	color: var(--text-normal);
-}
-
-/* 선택된 카드 내부의 모든 텍스트 요소 */
-.card-navigator-cards .card-item.selected .card-header *,
-.card-navigator-cards .card-item.selected .card-body *,
-.card-navigator-cards .card-item.selected .card-footer * {
-	color: inherit;
 }
 
 /* 선택된 카드 호버 */
@@ -2896,4 +3077,60 @@ button:focus-visible {
 .multi-sort-modal-buttons button.mod-cta:hover {
 	background: var(--interactive-accent-hover);
 	border-color: var(--interactive-accent-hover);
+}
+
+/* ============================================
+   Preset Mapping Styles
+   ============================================ */
+
+.unified-mapping-list {
+	margin-top: 20px;
+}
+
+.preset-mappings-container {
+	margin-bottom: 16px;
+}
+
+/* .preset-mapping-item은 .multi-sort-level-item의 스타일을 상속받음 - 추가 스타일 불필요 */
+
+.preset-mapping-type-icon {
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+	color: var(--text-muted);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.preset-mapping-content {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+}
+
+.preset-mapping-target {
+	font-weight: 500;
+	color: var(--text-normal);
+	font-size: 14px;
+}
+
+.preset-mapping-preset-name {
+	font-size: 13px;
+	margin: 0;
+}
+
+.preset-mapping-add-buttons {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.preset-mapping-add-buttons .setting-item {
+	border: none;
+	padding: 0;
+}
+
+.preset-mapping-add-buttons button {
+	font-size: 13px;
 }
