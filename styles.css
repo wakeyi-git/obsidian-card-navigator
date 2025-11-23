@@ -3134,3 +3134,248 @@ button:focus-visible {
 .preset-mapping-add-buttons button {
 	font-size: 13px;
 }
+
+/* =============================================================================
+   Image Thumbnail Styles
+   ============================================================================= */
+
+/* 이미지 섬네일 컨테이너 */
+.card-thumbnail-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	overflow: hidden;
+	border-radius: 4px;
+	margin: 4px auto;
+	background: var(--background-secondary);
+}
+
+/* 크기 설정 */
+.card-thumbnail-container[data-size="small"] {
+	width: 80px;
+	height: 80px;
+}
+
+.card-thumbnail-container[data-size="medium"] {
+	width: 150px;
+	height: 150px;
+}
+
+.card-thumbnail-container[data-size="large"] {
+	width: 250px;
+	height: 250px;
+}
+
+/* 종횡비 설정 */
+.card-thumbnail-container[data-aspect-ratio="square"] {
+	aspect-ratio: 1 / 1;
+}
+
+.card-thumbnail-container[data-aspect-ratio="16:9"] {
+	aspect-ratio: 16 / 9;
+	height: auto;
+}
+
+.card-thumbnail-container[data-aspect-ratio="4:3"] {
+	aspect-ratio: 4 / 3;
+	height: auto;
+}
+
+.card-thumbnail-container[data-aspect-ratio="original"] {
+	width: auto;
+	height: auto;
+	max-width: 250px;
+	max-height: 250px;
+}
+
+/* 이미지 스타일 */
+.card-thumbnail-image {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 0.2s ease;
+}
+
+/* 호버 효과 */
+.card-thumbnail-container:hover .card-thumbnail-image {
+	transform: scale(1.05);
+}
+
+/* 로딩 상태 */
+.card-thumbnail-image:not([src]) {
+	background: var(--background-modifier-border);
+	animation: thumbnail-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes thumbnail-pulse {
+	0%, 100% { opacity: 0.6; }
+	50% { opacity: 1; }
+}
+
+/* 클릭 가능한 이미지 표시 */
+.card-thumbnail-container[style*="cursor: pointer"]:hover {
+	box-shadow: 0 2px 8px var(--cn-shadow-md);
+	transform: translateY(-1px);
+	transition: all 0.2s ease;
+}
+
+/* 이미지가 있는 섹션 패딩 조정 */
+.card-header:has(.card-thumbnail-container),
+.card-body:has(.card-thumbnail-container),
+.card-footer:has(.card-thumbnail-container) {
+	padding: 8px;
+}
+
+/* =============================================================================
+   ⭐ Card Grouping / Section Styles
+   ============================================================================= */
+
+/* 그룹화가 활성화되면 상위 컨테이너는 grid가 아닌 block으로 동작 */
+.card-navigator-cards:has(.card-group-section) {
+	display: block;
+}
+
+/* 그룹 섹션 */
+.card-group-section {
+	margin-bottom: var(--size-4-4);
+}
+
+/* 그룹 헤더 */
+.card-group-header {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	padding: var(--size-4-2) var(--size-4-4);
+	background-color: var(--background-secondary);
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	transition: background-color 0.2s;
+	user-select: none;
+}
+
+.card-group-header:hover {
+	background-color: var(--background-secondary-alt);
+}
+
+/* 토글 아이콘 */
+.card-group-toggle-icon {
+	flex-shrink: 0;
+	color: var(--text-muted);
+	transition: transform 0.2s;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+}
+
+.card-group-toggle-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* 그룹 아이콘 */
+.card-group-icon {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-muted);
+}
+
+.card-group-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* 그룹명 */
+.card-group-name {
+	flex: 1;
+	font-weight: 600;
+	color: var(--text-normal);
+	font-size: 0.95em;
+}
+
+/* 파일 개수 */
+.card-group-count {
+	color: var(--text-muted);
+	font-size: 0.85em;
+	font-weight: 500;
+}
+
+/* 액션 버튼 컨테이너 */
+.card-group-actions {
+	display: flex;
+	gap: var(--size-4-1);
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+
+.card-group-header:hover .card-group-actions {
+	opacity: 1;
+}
+
+/* 액션 버튼 */
+.card-group-action-btn {
+	padding: var(--size-4-1);
+	border-radius: var(--radius-s);
+	color: var(--text-muted);
+	transition: background-color 0.2s, color 0.2s;
+}
+
+.card-group-action-btn:hover {
+	background-color: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.card-group-action-btn svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* 카드 컨테이너 */
+.card-group-content {
+	margin-top: var(--size-4-2);
+	display: grid;
+	gap: var(--card-gap);
+	transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+	overflow: hidden;
+	max-height: 100000px; /* 충분히 큰 값 */
+	opacity: 1;
+}
+
+/* 헤더가 없는 그룹 (그룹화 비활성화) */
+.card-group-section:not(:has(.card-group-header)) .card-group-content {
+	margin-top: 0;
+}
+
+/* 접힌 상태 */
+.card-group-section.is-collapsed .card-group-content {
+	max-height: 0;
+	opacity: 0;
+	margin-top: 0;
+}
+
+.card-group-section.is-collapsed .card-group-toggle-icon {
+	transform: rotate(-90deg);
+}
+
+/* 다크 모드 최적화 */
+.theme-dark .card-group-header {
+	background-color: var(--background-secondary);
+}
+
+.theme-dark .card-group-header:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+/* 라이트 모드 최적화 */
+.theme-light .card-group-header {
+	background-color: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+}
+
+.theme-light .card-group-header:hover {
+	background-color: var(--background-secondary-alt);
+	border-color: var(--background-modifier-border-hover);
+}

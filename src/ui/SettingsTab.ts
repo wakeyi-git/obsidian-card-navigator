@@ -146,6 +146,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         // 5. 기타 탭
         const otherTab = container.createDiv({ cls: 'setting-tab-pane' });
         this.addLanguageSettings(otherTab);
+        this.addGroupingSettings(otherTab);
         this.addSearchSettings(otherTab);
         this.addScrollBehaviorSettings(otherTab);
         this.addTagClickActionSettings(otherTab);
@@ -222,6 +223,152 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                         new Notice('Language changed. Please reload the plugin for full effect.');
                     });
             });
+    }
+
+    /**
+     * 그룹화 설정을 추가합니다
+     */
+    private addGroupingSettings(containerEl: HTMLElement): void {
+        const t = this.plugin.t();
+
+        // 섹션 헤더
+        new Setting(containerEl).setHeading().setName(t.settings.grouping.title);
+
+        // 그룹화 활성화
+        new Setting(containerEl)
+            .setName(t.settings.grouping.enableGrouping)
+            .setDesc(t.settings.grouping.enableGroupingDescription)
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.grouping.enabled)
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.enabled = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                    this.display();
+                })
+            );
+
+        if (!this.plugin.settings.grouping.enabled) {
+            return;
+        }
+
+        // 그룹화 기준 ('none' 옵션 제거)
+        new Setting(containerEl)
+            .setName(t.settings.grouping.groupBy)
+            .setDesc(t.settings.grouping.groupByDescription)
+            .addDropdown(dropdown => dropdown
+                .addOption('folder', t.settings.grouping.criteria.folder)
+                .addOption('tag', t.settings.grouping.criteria.tag)
+                .addOption('date-year', t.settings.grouping.criteria.dateYear)
+                .addOption('date-month', t.settings.grouping.criteria.dateMonth)
+                .addOption('date-week', t.settings.grouping.criteria.dateWeek)
+                .addOption('property', t.settings.grouping.criteria.property)
+                .addOption('size', t.settings.grouping.criteria.size)
+                .addOption('first-letter', t.settings.grouping.criteria.firstLetter)
+                .setValue(this.plugin.settings.grouping.criteria === 'none' ? 'folder' : this.plugin.settings.grouping.criteria)
+                .onChange(async (value: import('../types').GroupCriteria) => {
+                    this.plugin.settings.grouping.criteria = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                    this.display();
+                })
+            );
+
+        // 날짜 기준 (date-* 타입일 때만 표시)
+        if (this.plugin.settings.grouping.criteria.startsWith('date-')) {
+            new Setting(containerEl)
+                .setName(t.settings.grouping.dateBasis)
+                .setDesc(t.settings.grouping.dateBasisDescription)
+                .addDropdown(dropdown => dropdown
+                    .addOption('created', t.settings.grouping.dateBasisOptions.created)
+                    .addOption('modified', t.settings.grouping.dateBasisOptions.modified)
+                    .setValue(this.plugin.settings.grouping.dateBasis)
+                    .onChange(async (value: 'created' | 'modified') => {
+                        this.plugin.settings.grouping.dateBasis = value;
+                        await this.plugin.saveSettings();
+                        await this.plugin.refreshView();
+                    })
+                );
+        }
+
+        // 태그 모드 (tag 타입일 때만 표시)
+        if (this.plugin.settings.grouping.criteria === 'tag') {
+            new Setting(containerEl)
+                .setName(t.settings.grouping.tagMode)
+                .setDesc(t.settings.grouping.tagModeDescription)
+                .addDropdown(dropdown => dropdown
+                    .addOption('first', t.settings.grouping.tagModeOptions.first)
+                    .addOption('all', t.settings.grouping.tagModeOptions.all)
+                    .setValue(this.plugin.settings.grouping.tagMode)
+                    .onChange(async (value: 'first' | 'all') => {
+                        this.plugin.settings.grouping.tagMode = value;
+                        await this.plugin.saveSettings();
+                        await this.plugin.refreshView();
+                    })
+                );
+        }
+
+        // 속성명 (property 타입일 때만 표시)
+        if (this.plugin.settings.grouping.criteria === 'property') {
+            new Setting(containerEl)
+                .setName(t.settings.grouping.propertyName)
+                .setDesc(t.settings.grouping.propertyNameDescription)
+                .addText(text => text
+                    .setPlaceholder(t.settings.grouping.propertyNamePlaceholder)
+                    .setValue(this.plugin.settings.grouping.propertyName || '')
+                    .onChange(async (value) => {
+                        this.plugin.settings.grouping.propertyName = value;
+                        await this.plugin.saveSettings();
+                        await this.plugin.refreshView();
+                    })
+                );
+        }
+
+        // 폴더 계층 구조 (folder 타입일 때만 표시)
+        if (this.plugin.settings.grouping.criteria === 'folder') {
+            new Setting(containerEl)
+                .setName(t.settings.grouping.showFullFolderPath)
+                .setDesc(t.settings.grouping.showFullFolderPathDescription)
+                .addToggle(toggle => toggle
+                    .setValue(this.plugin.settings.grouping.folderHierarchical)
+                    .onChange(async (value) => {
+                        this.plugin.settings.grouping.folderHierarchical = value;
+                        await this.plugin.saveSettings();
+                        await this.plugin.refreshView();
+                    })
+                );
+        }
+
+        // 그룹 정렬
+        new Setting(containerEl)
+            .setName(t.settings.grouping.sortGroupsBy)
+            .setDesc(t.settings.grouping.sortGroupsByDescription)
+            .addDropdown(dropdown => dropdown
+                .addOption('name', t.settings.grouping.sortGroupsOptions.name)
+                .addOption('file-count', t.settings.grouping.sortGroupsOptions.fileCount)
+                .addOption('latest-file', t.settings.grouping.sortGroupsOptions.latestFile)
+                .setValue(this.plugin.settings.grouping.groupSort)
+                .onChange(async (value: import('../types').GroupSortCriteria) => {
+                    this.plugin.settings.grouping.groupSort = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                })
+            );
+
+        // 그룹 정렬 순서
+        new Setting(containerEl)
+            .setName(t.settings.grouping.groupSortOrder)
+            .setDesc(t.settings.grouping.groupSortOrderDescription)
+            .addDropdown(dropdown => dropdown
+                .addOption('asc', t.settings.grouping.groupSortOrderOptions.asc)
+                .addOption('desc', t.settings.grouping.groupSortOrderOptions.desc)
+                .setValue(this.plugin.settings.grouping.groupSortOrder)
+                .onChange(async (value: 'asc' | 'desc') => {
+                    this.plugin.settings.grouping.groupSortOrder = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                })
+            );
     }
 
     /**
@@ -429,6 +576,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                 'DragDrop': 'dragDrop',
                 'Mode': 'mode',
                 'Settings': 'settings',
+                'Grouping': 'grouping',
                 'Event': 'event',
                 'UI': 'ui',
                 'Performance': 'performance'

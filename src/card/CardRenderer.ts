@@ -1,9 +1,10 @@
-import { App, Component, MarkdownRenderer, setIcon } from 'obsidian';
-import { CardData, CardSection, RenderMode, CardNavigatorSettings, CardSettings } from '../types';
+import { App, Component, MarkdownRenderer, setIcon, TFile } from 'obsidian';
+import { CardData, CardSection, RenderMode, CardNavigatorSettings, CardSettings, ImageThumbnailSettings } from '../types';
 import { DebugLogger } from '../utils/DebugLogger';
 import { StyleUtils } from '../utils/StyleUtils';
 import { t } from '../i18n';
 import type { SearchInput } from '../search/SearchInput';
+import { CardDataExtractor } from './CardData';
 
 /**
  * View 인터페이스 - 순환 참조 방지
@@ -102,17 +103,35 @@ export class CardRenderer {
 
         // Modified Strategy A: CSS가 섹션 스타일을 자동으로 처리
         if (data.header.visible) {
-            const headerEl = await this.renderSection(data.header, 'card-header', data.file.path, headerRenderMode);
+            const headerEl = await this.renderSectionWithImageSupport(
+                data.header,
+                'card-header',
+                data.file,
+                headerRenderMode,
+                data.cardSettings.header
+            );
             cardEl.appendChild(headerEl);
         }
 
         if (data.body.visible) {
-            const bodyEl = await this.renderSection(data.body, 'card-body', data.file.path, bodyRenderMode);
+            const bodyEl = await this.renderSectionWithImageSupport(
+                data.body,
+                'card-body',
+                data.file,
+                bodyRenderMode,
+                data.cardSettings.body
+            );
             cardEl.appendChild(bodyEl);
         }
 
         if (data.footer.visible) {
-            const footerEl = await this.renderSection(data.footer, 'card-footer', data.file.path, footerRenderMode);
+            const footerEl = await this.renderSectionWithImageSupport(
+                data.footer,
+                'card-footer',
+                data.file,
+                footerRenderMode,
+                data.cardSettings.footer
+            );
             cardEl.appendChild(footerEl);
         }
 
@@ -343,14 +362,44 @@ export class CardRenderer {
     // StyleUtils.getContrastColor()를 통해 필요시 사용 가능
 
     /**
+     * 이미지 지원을 포함한 섹션 렌더링
+     *
+     * @param section - 섹션 데이터
+     * @param className - CSS 클래스명
+     * @param file - 파일 객체
+     * @param renderMode - 렌더링 모드
+     * @param sectionSettings - 섹션 설정
+     * @returns 섹션 요소
+     */
+    private async renderSectionWithImageSupport(
+        section: CardSection,
+        className: string,
+        file: import('obsidian').TFile,
+        renderMode: RenderMode,
+        sectionSettings: import('../types').CardSectionSettings
+    ): Promise<HTMLElement> {
+        // 이미지 섬네일 타입인 경우 이미지 렌더링
+        if (sectionSettings.contentType === 'image-thumbnail' && sectionSettings.imageThumbnail) {
+            return await this.renderImageThumbnail(
+                file,
+                sectionSettings.imageThumbnail,
+                className
+            );
+        }
+
+        // 그 외의 경우 기존 섹션 렌더링
+        return await this.renderSection(section, className, file.path, renderMode);
+    }
+
+    /**
      * 섹션을 렌더링합니다
-     * 
+     *
      * @param section - 섹션 데이터
      * @param className - CSS 클래스명
      * @param sourcePath - 마크다운 렌더링에 사용할 파일 경로
      * @param renderMode - 렌더링 모드
      * @returns 섹션 요소
-     * 
+     *
      * @remarks
      * 렌더링 모드에 따라 일반 텍스트 또는 마크다운으로 표시합니다.
      * 내용이 비어있으면 타입에 따라 기본 텍스트를 표시합니다.
@@ -785,6 +834,138 @@ export class CardRenderer {
                 card.style.setProperty('--card-footer-font-size-focused', `${cardSettings.footer.focusedStyle.fontSize}px`);
                 card.style.setProperty('--card-footer-text-color-focused', StyleUtils.getContrastColor(cardSettings.footer.focusedStyle.backgroundColor));
             }
+        }
+    }
+
+    /**
+     * 이미지 섬네일을 렌더링합니다
+     *
+     * @param file - 파일 객체
+     * @param settings - 이미지 섬네일 설정
+     * @param className - CSS 클래스명
+     * @returns 섹션 요소
+     */
+    private async renderImageThumbnail(
+        file: TFile,
+        settings: ImageThumbnailSettings,
+        className: string
+    ): Promise<HTMLElement> {
+        const sectionEl = document.createElement('div');
+        sectionEl.className = className;
+
+        if (!settings.enabled) {
+            sectionEl.style.display = 'none';
+            return sectionEl;
+        }
+
+        const imageUrl = await this.extractImageWithFallback(file, settings);
+
+        if (!imageUrl) {
+            // 폴백이 'none'이거나 모든 방법이 실패한 경우
+            sectionEl.style.display = 'none';
+            return sectionEl;
+        }
+
+        const imgContainer = sectionEl.createEl('div', {
+            cls: 'card-thumbnail-container'
+        });
+
+        imgContainer.setAttribute('data-size', settings.size);
+        imgContainer.setAttribute('data-aspect-ratio', settings.aspectRatio);
+
+        const img = imgContainer.createEl('img', {
+            cls: 'card-thumbnail-image',
+            attr: {
+                'loading': 'lazy',  // 지연 로딩
+                'decoding': 'async' // 비동기 디코딩
+            }
+        });
+
+        // 이미지 로딩 처리
+        let retryCount = 0;
+        const maxRetries = settings.retryCount || 2;
+
+        const loadImage = () => {
+            img.src = imageUrl;
+
+            img.addEventListener('error', () => {
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    setTimeout(loadImage, 1000 * retryCount);
+                } else {
+                    // 최종 실패 시 폴백
+                    this.applyFallbackImage(img, file, settings.fallback);
+                }
+            });
+        };
+
+        loadImage();
+
+        // 클릭 이벤트
+        if (settings.clickAction !== 'none') {
+            imgContainer.style.cursor = 'pointer';
+            imgContainer.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (settings.clickAction !== 'none') {
+                    await this.handleImageClick(file, imageUrl, settings.clickAction);
+                }
+            });
+        }
+
+        return sectionEl;
+    }
+
+    /**
+     * 이미지 추출 (폴백 포함)
+     */
+    private async extractImageWithFallback(
+        file: TFile,
+        settings: ImageThumbnailSettings
+    ): Promise<string | null> {
+        // 먼저 실제 이미지 시도
+        const extractor = new CardDataExtractor(this.app, () => this.settings);
+        let imageUrl = await extractor.extractFirstImage(file, settings.allowExternalImages);
+
+        // 이미지가 없으면 폴백
+        if (!imageUrl && settings.fallback !== 'none') {
+            imageUrl = await extractor.extractFallbackImage(file, settings.fallback);
+        }
+
+        return imageUrl;
+    }
+
+    /**
+     * 폴백 이미지 적용
+     */
+    private async applyFallbackImage(
+        img: HTMLImageElement,
+        file: TFile,
+        fallbackType: import('../types').ThumbnailFallback
+    ): Promise<void> {
+        const extractor = new CardDataExtractor(this.app, () => this.settings);
+        const fallbackUrl = await extractor.extractFallbackImage(file, fallbackType);
+
+        if (fallbackUrl) {
+            img.src = fallbackUrl;
+        } else {
+            // 완전히 실패한 경우 placeholder
+            img.style.display = 'none';
+        }
+    }
+
+    /**
+     * 이미지 클릭 처리
+     */
+    private async handleImageClick(
+        file: TFile,
+        imageUrl: string,
+        action: 'open-file' | 'open-image'
+    ): Promise<void> {
+        if (action === 'open-file') {
+            await this.app.workspace.openLinkText(file.path, '', false);
+        } else if (action === 'open-image') {
+            // 이미지를 새 탭에서 열기
+            window.open(imageUrl, '_blank');
         }
     }
 

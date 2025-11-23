@@ -165,7 +165,17 @@ export function createMockSettings(overrides?: Partial<CardNavigatorSettings>): 
         },
         savedSearches: [],
         enableFuzzySearch: false,
-        fuzzySearchThreshold: 0.3
+        fuzzySearchThreshold: 0.3,
+        grouping: {
+            enabled: false,
+            criteria: 'none',
+            dateBasis: 'modified',
+            tagMode: 'first',
+            folderHierarchical: false,
+            groupSort: 'name',
+            groupSortOrder: 'asc',
+            inheritFileSorting: true
+        }
     };
     
     // Deep merge overrides

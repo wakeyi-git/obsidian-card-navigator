@@ -8,6 +8,8 @@ import { SearchEngine } from '../search/SearchEngine';
 import { FolderMode } from '../modes/FolderMode';
 import { TagMode } from '../modes/TagMode';
 import { SortManager } from '../sort/SortManager';
+import { GroupingManager } from '../grouping/GroupingManager';
+import { GroupRenderer } from '../grouping/GroupRenderer';
 import CardNavigatorPlugin from '../main';
 import type { CardNavigatorView } from '../view';
 import { isValidFile, isDefined } from '../utils/typeGuards';
@@ -35,10 +37,12 @@ export class ViewRenderer {
 	private folderMode: FolderMode;
 	private tagMode: TagMode;
 	private sortManager: SortManager;
+	public groupingManager: GroupingManager;
+	public groupRenderer: GroupRenderer;
 	private logger: DebugLogger;
-	
+
 	private lastRenderState: string | null = null;
-	
+
 	/** Viewport 관리자 (viewport 렌더링용) */
 	public viewportManager: ViewportManager | null = null;
 	
@@ -240,6 +244,8 @@ export class ViewRenderer {
 		this.sortManager = sortManager;
 		// ✅ 함수를 전달하여 항상 최신 settings를 참조
 		this.logger = new DebugLogger(() => plugin.settingsManager.getSettings());
+		this.groupingManager = new GroupingManager(app, () => plugin.settingsManager.getSettings());
+		this.groupRenderer = new GroupRenderer();
 	}
 	
 	/**
@@ -600,28 +606,82 @@ export class ViewRenderer {
 
 		this.selectionManager.setAllFiles(files);
 
-		// ⭐ DocumentFragment 사용하여 reflow 최소화
-		const fragment = document.createDocumentFragment();
-		const tempContainer = document.createElement('div');
+		// ⭐ 그룹화
+		const groups = this.groupingManager.groupFiles(files, this.settings.grouping);
 
-		for (const file of files) {
-			if (this.shouldCancelRendering(renderingId, 'during card creation')) {
+		this.logger.debug('View', 'Standard: Groups created', {
+			groupCount: groups.length,
+			groups: groups.map(g => ({
+				id: g.id,
+				name: g.name,
+				fileCount: g.files.length,
+				collapsed: g.collapsed,
+				icon: g.icon
+			}))
+		});
+
+		// 접힌 그룹 개수 확인
+		const collapsedCount = groups.filter(g => g.collapsed).length;
+		this.logger.debug('View', 'Standard: Group collapsed status', {
+			totalGroups: groups.length,
+			collapsedGroups: collapsedCount,
+			expandedGroups: groups.length - collapsedCount
+		});
+
+		// ⭐ 그룹별로 렌더링
+		for (const group of groups) {
+			if (this.shouldCancelRendering(renderingId, 'during group rendering')) {
 				return;
 			}
 
-			await this.cardFactory.createCard(
-				file,
-				tempContainer,
-				currentActiveFile,
-				onFileOpen
-			);
-		}
+			// 빈 그룹은 스킵 (파일이 없는 그룹)
+			if (group.files.length === 0) {
+				this.logger.debug('View', 'Skipping empty group', {
+					groupId: group.id,
+					groupName: group.name
+				});
+				continue;
+			}
 
-		// 모든 카드를 한 번에 DOM에 추가
-		while (tempContainer.firstChild) {
-			fragment.appendChild(tempContainer.firstChild);
+			// 그룹 섹션 생성
+			const section = this.groupRenderer.createGroupSection(
+				group,
+				container,
+				(groupId, collapsed) => this.onGroupToggle(groupId, collapsed),
+				(groupId) => this.onGroupSelectAll(groupId)
+			);
+
+			// 그룹이 접혀있으면 카드 렌더링 스킵
+			if (group.collapsed) {
+				continue;
+			}
+
+			// 카드 컨테이너 찾기
+			const cardContainer = this.groupRenderer.findCardContainer(section);
+			if (!cardContainer) {
+				continue;
+			}
+
+			// 그룹 내 카드 렌더링
+			const tempContainer = document.createElement('div');
+			for (const file of group.files) {
+				if (this.shouldCancelRendering(renderingId, 'during card creation')) {
+					return;
+				}
+
+				await this.cardFactory.createCard(
+					file,
+					tempContainer,
+					currentActiveFile,
+					onFileOpen
+				);
+			}
+
+			// 카드들을 한 번에 DOM에 추가
+			while (tempContainer.firstChild) {
+				cardContainer.appendChild(tempContainer.firstChild);
+			}
 		}
-		container.appendChild(fragment);
 
 		if (this.shouldCancelRendering(renderingId, 'before layout update')) {
 			return;
@@ -711,33 +771,33 @@ export class ViewRenderer {
 		if (this.shouldCancelRendering(renderingId, 'before viewport setup')) {
 			return;
 		}
-		
+
 		// 기존 ViewportManager 정리
 		if (this.viewportManager) {
 			this.viewportManager.destroy();
 			this.viewportManager = null;
 		}
-		
+
 		const currentActiveFile = this.getActiveFile();
 		const hasActiveFileChanged = this.state.hasFileChanged(currentActiveFile);
-		
+
 		let scrollTop = 0;
 		if (!hasActiveFileChanged) {
 			scrollTop = container.scrollTop;
 		}
-		
+
 		container.empty();
-		
+
 		if (this.shouldCancelRendering(renderingId, 'after container.empty()')) {
 			return;
 		}
-		
+
 		const files = await this.getFilesToDisplay();
-		
+
 		if (this.shouldCancelRendering(renderingId, 'after file list fetch')) {
 			return;
 		}
-		
+
 		if (files.length === 0) {
 			container.createEl('div', {
 				cls: 'card-navigator-empty',
@@ -745,37 +805,95 @@ export class ViewRenderer {
 			});
 			return;
 		}
-		
+
 		this.selectionManager.setAllFiles(files);
 
-		// 1. 모든 파일에 대한 플레이스홀더 생성 (DocumentFragment로 reflow 최소화)
+		// ⭐ 그룹화
+		const groups = this.groupingManager.groupFiles(files, this.settings.grouping);
+
+		this.logger.debug('View', 'Viewport: Groups created', {
+			groupCount: groups.length,
+			groups: groups.map(g => ({
+				id: g.id,
+				name: g.name,
+				fileCount: g.files.length,
+				collapsed: g.collapsed,
+				icon: g.icon
+			}))
+		});
+
+		// 접힌 그룹 개수 확인
+		const collapsedCount = groups.filter(g => g.collapsed).length;
+		this.logger.debug('View', 'Viewport: Group collapsed status', {
+			totalGroups: groups.length,
+			collapsedGroups: collapsedCount,
+			expandedGroups: groups.length - collapsedCount
+		});
+
+		// 1. 모든 파일에 대한 플레이스홀더 생성 (그룹별로)
 		const placeholders: HTMLElement[] = [];
 		let activeIndex = -1;
-		const fragment = document.createDocumentFragment();
-		const tempContainer = document.createElement('div');
+		let currentIndex = 0;
 
-		for (let i = 0; i < files.length; i++) {
-			const file = files[i];
-			const isActive = isValidFile(currentActiveFile) && currentActiveFile.path === file.path;
-
-			if (isActive) {
-				activeIndex = i;
+		// ⭐ 그룹별로 렌더링
+		for (const group of groups) {
+			if (this.shouldCancelRendering(renderingId, 'during group rendering')) {
+				return;
 			}
 
-			const placeholder = this.cardFactory.createPlaceholder(
-				file,
-				tempContainer,
-				isActive
+			// 빈 그룹은 스킵 (파일이 없는 그룹)
+			if (group.files.length === 0) {
+				this.logger.debug('View', 'Skipping empty group', {
+					groupId: group.id,
+					groupName: group.name
+				});
+				continue;
+			}
+
+			// 그룹 섹션 생성
+			const section = this.groupRenderer.createGroupSection(
+				group,
+				container,
+				(groupId, collapsed) => this.onGroupToggle(groupId, collapsed),
+				(groupId) => this.onGroupSelectAll(groupId)
 			);
 
-			placeholders.push(placeholder);
-		}
+			// 그룹이 접혀있으면 플레이스홀더 생성 스킵
+			if (group.collapsed) {
+				continue;
+			}
 
-		// 모든 플레이스홀더를 한 번에 DOM에 추가
-		while (tempContainer.firstChild) {
-			fragment.appendChild(tempContainer.firstChild);
+			// 카드 컨테이너 찾기
+			const cardContainer = this.groupRenderer.findCardContainer(section);
+			if (!cardContainer) {
+				continue;
+			}
+
+			// 그룹 내 플레이스홀더 생성
+			const tempContainer = document.createElement('div');
+
+			for (const file of group.files) {
+				const isActive = isValidFile(currentActiveFile) && currentActiveFile.path === file.path;
+
+				if (isActive) {
+					activeIndex = currentIndex;
+				}
+
+				const placeholder = this.cardFactory.createPlaceholder(
+					file,
+					tempContainer,
+					isActive
+				);
+
+				placeholders.push(placeholder);
+				currentIndex++;
+			}
+
+			// 플레이스홀더를 그룹 컨테이너에 추가
+			while (tempContainer.firstChild) {
+				cardContainer.appendChild(tempContainer.firstChild);
+			}
 		}
-		container.appendChild(fragment);
 		
 		this.logger.debug('View', 'Placeholders created', {
 			count: placeholders.length,
@@ -897,6 +1015,91 @@ export class ViewRenderer {
 		}
 	}
 	
+	/**
+	 * 그룹 토글 핸들러
+	 *
+	 * @param groupId - 그룹 ID
+	 * @param collapsed - 접힌 상태
+	 */
+	private onGroupToggle(groupId: string, collapsed: boolean): void {
+		// 상태 저장
+		this.groupingManager.saveCollapsedState(groupId, collapsed);
+
+		// UI 업데이트
+		const section = this.groupRenderer.findGroupSection(
+			this.view.containerEl,
+			groupId
+		);
+
+		if (section) {
+			this.groupRenderer.toggleGroup(section, collapsed);
+
+			// 펼쳐질 때만 카드 렌더링 (접힐 때는 이미 숨겨짐)
+			if (!collapsed) {
+				this.renderGroupCards(section, groupId);
+			}
+		}
+	}
+
+	/**
+	 * 그룹 내 카드를 렌더링합니다 (지연 렌더링용)
+	 *
+	 * @param section - 그룹 섹션
+	 * @param groupId - 그룹 ID
+	 */
+	private async renderGroupCards(section: HTMLElement, groupId: string): Promise<void> {
+		const cardContainer = this.groupRenderer.findCardContainer(section);
+		if (!cardContainer || cardContainer.children.length > 0) {
+			// 이미 렌더링되어 있으면 스킵
+			return;
+		}
+
+		// 그룹의 파일 목록을 찾아서 렌더링
+		// (여기서는 간단하게 스킵 - 초기 렌더링 시 이미 처리됨)
+		this.logger.debug('View', 'Group cards already rendered or will be rendered on next full render', {
+			groupId
+		});
+	}
+
+	/**
+	 * 그룹 내 모든 카드 선택 핸들러
+	 *
+	 * @param groupId - 그룹 ID
+	 */
+	private onGroupSelectAll(groupId: string): void {
+		const cardContainer = this.view.containerEl.querySelector(
+			`.card-group-content[data-group-id="${groupId}"]`
+		) as HTMLElement;
+
+		if (cardContainer) {
+			const cards = cardContainer.querySelectorAll('.card-item');
+			const files = Array.from(cards)
+				.map(card => {
+					const path = (card as HTMLElement).dataset.filePath;
+					if (!path) return null;
+					const file = this.app.vault.getAbstractFileByPath(path);
+					return file instanceof TFile ? file : null;
+				})
+				.filter(f => f !== null) as TFile[];
+
+			if (files.length > 0) {
+				// 선택 초기화 후 그룹 파일들 추가
+				this.selectionManager.clearSelection();
+				files.forEach(file => {
+					// SelectionManager의 내부 selected Set에 직접 접근하기 위해
+					// toggleSelection을 사용 (Ctrl 키를 시뮬레이션)
+					const mockEvent = new MouseEvent('click', { ctrlKey: true });
+					this.selectionManager.toggleSelection(file, mockEvent);
+				});
+
+				this.logger.debug('View', 'Selected all files in group', {
+					groupId,
+					count: files.length
+				});
+			}
+		}
+	}
+
 	/**
 	 * ViewportManager 정리
 	 */

@@ -853,10 +853,25 @@ export class InteractiveCardSettings extends BaseSettings {
                 .addOption('property', t().settingsTab.cardSettings.contentType.property)
                 .addOption('backlinks', t().settingsTab.cardSettings.contentType.backlinks)
                 .addOption('outgoing-links', t().settingsTab.cardSettings.contentType.outgoingLinks)
+                .addOption('image-thumbnail', t().settingsTab.cardSettings.contentType.imageThumbnail)
                 .setValue(sectionSettings.contentType)
                 .onChange(async (value) => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     sectionSettings.contentType = value as any;
+
+                    // 이미지 섬네일 선택 시 기본 설정 생성
+                    if (value === 'image-thumbnail' && !sectionSettings.imageThumbnail) {
+                        sectionSettings.imageThumbnail = {
+                            enabled: true,
+                            size: 'medium',
+                            aspectRatio: 'square',
+                            fallback: 'icon',
+                            allowExternalImages: false,
+                            retryCount: 2,
+                            clickAction: 'open-file'
+                        };
+                    }
+
                     await this.plugin.saveSettings();
                     this.updateSectionSettings();
                     this.refreshPreviewCard();
@@ -916,7 +931,12 @@ export class InteractiveCardSettings extends BaseSettings {
                     })
                 );
         }
-        
+
+        // 이미지 섬네일 설정
+        if (sectionSettings.contentType === 'image-thumbnail') {
+            this.addImageThumbnailSettings(container, sectionSettings);
+        }
+
         if (sectionSettings.contentType === 'content') {
             new Setting(container)
                 .setName(t().settingsTab.cardSettings.includeFirstHeader)
@@ -1361,5 +1381,136 @@ export class InteractiveCardSettings extends BaseSettings {
             default:
                 return defaultSection.normalStyle;
         }
+    }
+
+    /**
+     * 이미지 섬네일 설정 UI를 추가합니다
+     */
+    private addImageThumbnailSettings(
+        container: HTMLElement,
+        sectionSettings: import('../../types').CardSectionSettings
+    ): void {
+        if (!sectionSettings.imageThumbnail) {
+            sectionSettings.imageThumbnail = {
+                enabled: true,
+                size: 'medium',
+                aspectRatio: 'square',
+                fallback: 'icon',
+                allowExternalImages: false,
+                retryCount: 2,
+                clickAction: 'open-file'
+            };
+        }
+
+        const imgSettings = sectionSettings.imageThumbnail;
+
+        // 활성화 토글
+        new Setting(container)
+            .setName(t().settingsTab.cardSettings.imageThumbnail.enabled)
+            .setDesc(t().settingsTab.cardSettings.imageThumbnail.enabledDescription)
+            .addToggle(toggle => toggle
+                .setValue(imgSettings.enabled)
+                .onChange(async (value) => {
+                    imgSettings.enabled = value;
+                    await this.plugin.saveSettings();
+                    this.refreshPreviewCard();
+                })
+            );
+
+        // 크기 설정
+        new Setting(container)
+            .setName(t().settingsTab.cardSettings.imageThumbnail.size)
+            .setDesc(t().settingsTab.cardSettings.imageThumbnail.sizeDescription)
+            .addDropdown(dropdown => dropdown
+                .addOption('small', t().settingsTab.cardSettings.imageThumbnail.sizeSmall)
+                .addOption('medium', t().settingsTab.cardSettings.imageThumbnail.sizeMedium)
+                .addOption('large', t().settingsTab.cardSettings.imageThumbnail.sizeLarge)
+                .setValue(imgSettings.size)
+                .onChange(async (value) => {
+                    imgSettings.size = value as import('../../types').ThumbnailSize;
+                    await this.plugin.saveSettings();
+                    this.refreshPreviewCard();
+                })
+            );
+
+        // 종횡비 설정
+        new Setting(container)
+            .setName(t().settingsTab.cardSettings.imageThumbnail.aspectRatio)
+            .setDesc(t().settingsTab.cardSettings.imageThumbnail.aspectRatioDescription)
+            .addDropdown(dropdown => dropdown
+                .addOption('square', t().settingsTab.cardSettings.imageThumbnail.aspectRatioSquare)
+                .addOption('original', t().settingsTab.cardSettings.imageThumbnail.aspectRatioOriginal)
+                .addOption('16:9', t().settingsTab.cardSettings.imageThumbnail.aspectRatio16_9)
+                .addOption('4:3', t().settingsTab.cardSettings.imageThumbnail.aspectRatio4_3)
+                .setValue(imgSettings.aspectRatio)
+                .onChange(async (value) => {
+                    imgSettings.aspectRatio = value as import('../../types').ThumbnailAspectRatio;
+                    await this.plugin.saveSettings();
+                    this.refreshPreviewCard();
+                })
+            );
+
+        // 폴백 옵션
+        new Setting(container)
+            .setName(t().settingsTab.cardSettings.imageThumbnail.fallback)
+            .setDesc(t().settingsTab.cardSettings.imageThumbnail.fallbackDescription)
+            .addDropdown(dropdown => dropdown
+                .addOption('none', t().settingsTab.cardSettings.imageThumbnail.fallbackNone)
+                .addOption('icon', t().settingsTab.cardSettings.imageThumbnail.fallbackIcon)
+                .addOption('folder-color', t().settingsTab.cardSettings.imageThumbnail.fallbackFolderColor)
+                .addOption('tag-color', t().settingsTab.cardSettings.imageThumbnail.fallbackTagColor)
+                .addOption('first-emoji', t().settingsTab.cardSettings.imageThumbnail.fallbackEmoji)
+                .setValue(imgSettings.fallback)
+                .onChange(async (value) => {
+                    imgSettings.fallback = value as import('../../types').ThumbnailFallback;
+                    await this.plugin.saveSettings();
+                    this.refreshPreviewCard();
+                })
+            );
+
+        // 외부 이미지 허용
+        new Setting(container)
+            .setName(t().settingsTab.cardSettings.imageThumbnail.allowExternal)
+            .setDesc(t().settingsTab.cardSettings.imageThumbnail.allowExternalDescription)
+            .addToggle(toggle => toggle
+                .setValue(imgSettings.allowExternalImages)
+                .onChange(async (value) => {
+                    imgSettings.allowExternalImages = value;
+                    await this.plugin.saveSettings();
+                    this.refreshPreviewCard();
+                })
+            );
+
+        // 재시도 횟수
+        new Setting(container)
+            .setName(t().settingsTab.cardSettings.imageThumbnail.retryCount)
+            .setDesc(t().settingsTab.cardSettings.imageThumbnail.retryCountDescription)
+            .addText(text => text
+                .setValue(String(imgSettings.retryCount))
+                .onChange(async (value) => {
+                    const num = parseInt(value);
+                    if (!isNaN(num) && num >= 0) {
+                        imgSettings.retryCount = num;
+                        await this.plugin.saveSettings();
+                        this.refreshPreviewCard();
+                    }
+                })
+            );
+
+        // 클릭 동작
+        new Setting(container)
+            .setName(t().settingsTab.cardSettings.imageThumbnail.clickAction)
+            .setDesc(t().settingsTab.cardSettings.imageThumbnail.clickActionDescription)
+            .addDropdown(dropdown => dropdown
+                .addOption('open-file', t().settingsTab.cardSettings.imageThumbnail.clickOpenFile)
+                .addOption('open-image', t().settingsTab.cardSettings.imageThumbnail.clickOpenImage)
+                .addOption('none', t().settingsTab.cardSettings.imageThumbnail.clickNone)
+                .setValue(imgSettings.clickAction)
+                .onChange(async (value) => {
+                    imgSettings.clickAction = value as 'open-file' | 'open-image' | 'none';
+                    await this.plugin.saveSettings();
+                    this.refreshPreviewCard();
+                })
+            );
     }
 }

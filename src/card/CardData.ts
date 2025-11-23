@@ -342,6 +342,10 @@ export class CardDataExtractor {
             case 'outgoing-links':
                 content = await this.extractOutgoingLinks(file);
                 break;
+            case 'image-thumbnail':
+                // 이미지는 별도 처리 (extractFirstImage 메서드 사용)
+                content = '';
+                break;
             default:
                 content = '';
         }
@@ -826,10 +830,10 @@ export class CardDataExtractor {
 
     /**
      * HTML 특수문자를 엔티티로 인코딩합니다
-     * 
+     *
      * @param text - 인코딩할 텍스트
      * @returns HTML 엔티티로 인코딩된 텍스트
-     * 
+     *
      * @remarks
      * 한글이나 특수문자를 포함한 파일 경로를 안전하게 HTML 속성에 사용하기 위함
      * Node.js 환경에서도 작동하도록 순수 JavaScript 구현 사용
@@ -841,5 +845,189 @@ export class CardDataExtractor {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    /**
+     * 파일에서 첫 번째 이미지를 추출합니다
+     *
+     * @param file - 파일 객체
+     * @param allowExternal - 외부 이미지 허용 여부
+     * @returns 이미지 경로 또는 URL
+     */
+    async extractFirstImage(
+        file: TFile,
+        allowExternal: boolean = false
+    ): Promise<string | null> {
+        try {
+            const cacheKey = `${file.path}-${file.stat.mtime}-first-image`;
+            const cached = this.contentCache.get(cacheKey);
+
+            if (cached !== undefined) {
+                return cached;
+            }
+
+            const content = await this.app.vault.read(file);
+            const cache = this.app.metadataCache.getFileCache(file);
+
+            // 1. Embedded images ![[image.png]]
+            if (cache?.embeds && cache.embeds.length > 0) {
+                for (const embed of cache.embeds) {
+                    const linkFile = this.app.metadataCache.getFirstLinkpathDest(
+                        embed.link,
+                        file.path
+                    );
+
+                    if (linkFile && this.isImageFile(linkFile)) {
+                        const imagePath = this.app.vault.getResourcePath(linkFile);
+                        this.contentCache.set(cacheKey, imagePath);
+                        return imagePath;
+                    }
+                }
+            }
+
+            // 2. Markdown images ![](image.jpg)
+            const markdownImageRegex = /!\[.*?\]\((.+?)\)/;
+            const match = content.match(markdownImageRegex);
+
+            if (match) {
+                const imagePath = match[1];
+
+                // 외부 이미지 URL (http/https)
+                if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+                    if (allowExternal) {
+                        this.contentCache.set(cacheKey, imagePath);
+                        return imagePath;
+                    }
+                } else {
+                    // 로컬 상대 경로
+                    const linkFile = this.app.metadataCache.getFirstLinkpathDest(
+                        imagePath,
+                        file.path
+                    );
+
+                    if (linkFile && this.isImageFile(linkFile)) {
+                        const resourcePath = this.app.vault.getResourcePath(linkFile);
+                        this.contentCache.set(cacheKey, resourcePath);
+                        return resourcePath;
+                    }
+                }
+            }
+
+            this.contentCache.set(cacheKey, '');
+            return null;
+
+        } catch (error) {
+            this.logger.error('Card', 'Image extraction error', error);
+            return null;
+        }
+    }
+
+    /**
+     * 파일이 이미지인지 확인합니다
+     */
+    private isImageFile(file: TFile): boolean {
+        const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'webp'];
+        return imageExtensions.includes(file.extension.toLowerCase());
+    }
+
+    /**
+     * 폴백 이미지를 생성합니다
+     */
+    async extractFallbackImage(
+        file: TFile,
+        fallbackType: import('../types').ThumbnailFallback
+    ): Promise<string | null> {
+        switch (fallbackType) {
+            case 'none':
+                return null;
+
+            case 'icon':
+                // 파일 타입 아이콘 반환 (SVG data URL)
+                return this.getFileTypeIcon(file);
+
+            case 'folder-color':
+                // 폴더 경로 기반 색상 생성
+                return this.generateColorPlaceholder(file.parent?.path || '');
+
+            case 'tag-color': {
+                // 첫 번째 태그 기반 색상 생성
+                const tags = this.extractTags(file);
+                return this.generateColorPlaceholder(tags);
+            }
+
+            case 'first-emoji':
+                // 본문의 첫 번째 이모지 추출
+                return await this.extractFirstEmoji(file);
+
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * 파일 타입 아이콘을 SVG data URL로 반환
+     */
+    private getFileTypeIcon(_file: TFile): string {
+        // 간단한 문서 아이콘 SVG
+        const svg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+            </svg>
+        `.trim();
+
+        return `data:image/svg+xml;base64,${btoa(svg)}`;
+    }
+
+    /**
+     * 문자열 기반 색상 플레이스홀더 생성
+     */
+    private generateColorPlaceholder(seed: string): string {
+        // seed 문자열을 해시하여 일관된 색상 생성
+        const hash = this.hashString(seed);
+        const hue = hash % 360;
+
+        // SVG data URL로 단색 배경 생성
+        const svg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+                <rect width="200" height="200" fill="hsl(${hue}, 60%, 70%)"/>
+            </svg>
+        `.trim();
+
+        return `data:image/svg+xml;base64,${btoa(svg)}`;
+    }
+
+    /**
+     * 첫 번째 이모지 추출
+     */
+    private async extractFirstEmoji(file: TFile): Promise<string | null> {
+        const content = await this.app.vault.read(file);
+        const emojiRegex = /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/u;
+        const match = content.match(emojiRegex);
+
+        if (match) {
+            // 이모지를 큰 텍스트로 표시한 SVG 생성
+            const emoji = match[0];
+            const svg = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+                    <text x="50%" y="50%" font-size="120" text-anchor="middle" dominant-baseline="central">${emoji}</text>
+                </svg>
+            `.trim();
+            return `data:image/svg+xml;base64,${btoa(svg)}`;
+        }
+
+        return null;
+    }
+
+    /**
+     * 문자열 해시 함수
+     */
+    private hashString(str: string): number {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        return Math.abs(hash);
     }
 }

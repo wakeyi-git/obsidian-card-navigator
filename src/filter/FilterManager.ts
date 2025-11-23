@@ -3,13 +3,13 @@ import { FilterOptions } from '../types';
 
 /**
  * FilterManager 클래스
- * 
+ *
  * 주요 기능:
  * - 태그 필터링
  * - 날짜 범위 필터링 (생성일, 수정일)
  * - 프론트매터 속성 필터링
  * - 경로 필터링
- * 
+ *
  * 사용 예:
  * ```typescript
  * const filterManager = new FilterManager(app);
@@ -259,7 +259,7 @@ export class FilterManager {
     
     /**
      * 빈 필터 옵션을 생성합니다
-     * 
+     *
      * @returns 빈 FilterOptions 객체
      */
     static createEmptyFilter(): FilterOptions {

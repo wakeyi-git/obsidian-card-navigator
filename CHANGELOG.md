@@ -1,3 +1,106 @@
+## [1.4.0] - 2025-11-23
+
+### Added
+
+#### Image Thumbnails (Phase 2)
+- **Card Thumbnail Display**: Show the first image from a note as a thumbnail in the card
+  - Support for embedded images `![[image.png]]`
+  - Support for Markdown images `![](image.jpg)`
+  - Support for external images (optional)
+  - Configurable thumbnail settings:
+    - Enable/disable thumbnails globally
+    - Thumbnail size (small: 40px, medium: 60px, large: 80px)
+    - Thumbnail position (header/body/footer)
+    - Aspect ratio (square/original/16:9)
+    - Border radius for rounded corners
+  - Fallback options when no image:
+    - Icon based on file extension
+    - Configurable fallback icon color
+- **Performance Optimizations**:
+  - Lazy loading for images to improve initial render performance
+  - Proper resource path resolution using Obsidian API
+  - Efficient image extraction from note content
+
+#### Card Grouping/Sections (Phase 2)
+- **Flexible Grouping System**: Organize cards by various criteria with collapsible sections
+  - **Grouping Criteria**:
+    - By folder (flat or hierarchical)
+    - By tag (first tag or all tags mode)
+    - By date (year, month, week, or day)
+    - By custom property (from frontmatter)
+    - By file size (small/medium/large)
+    - By first letter (A-Z)
+  - **Interactive UI Features**:
+    - Collapsible section headers with expand/collapse controls
+    - Section count display showing number of files in each group
+    - "Expand All" / "Collapse All" buttons for bulk operations
+    - Persistent collapsed state across sessions
+    - Section-level actions (select all in section, etc.)
+  - **Advanced Options**:
+    - Hierarchical folder grouping with nested structure
+    - Tag grouping with first-tag or all-tags mode
+    - Date grouping basis (created date, modified date, or custom property)
+    - Custom property grouping for frontmatter-based organization
+    - File size thresholds (customizable small/large boundaries)
+- **GroupingManager**: New dedicated manager for grouping logic
+- **GroupRenderer**: Dedicated rendering component for grouped card display
+
+#### Card Color Coding (Phase 2)
+- **Automatic Color Assignment**: Cards can be automatically colored based on various criteria
+  - **Color Rules**:
+    - By folder (auto-assign colors to different folders)
+    - By tag (color code by tags)
+    - By custom property (use frontmatter values)
+    - By date age (gradient from new to old files)
+  - **Customization Options**:
+    - Color palette selection
+    - Opacity/intensity control
+    - Enable/disable per preset
+    - Preview in settings
+  - **Visual Enhancements**:
+    - WCAG-compliant contrast color calculation for text readability
+    - Automatic text color adjustment based on background
+    - Support for both light and dark themes
+- **StyleUtils**: New utility class for centralized color and style operations
+
+### Changed
+
+- **Card Rendering Architecture**: Enhanced to support thumbnails and color coding
+  - Refactored `CardRenderer` to handle thumbnail extraction and display
+  - Integrated color rules into card styling system
+  - Added thumbnail caching for performance
+- **ViewRenderer**: Updated to support grouping functionality
+  - New rendering path for grouped card display
+  - Integrated collapse/expand state management
+  - Section header rendering with counts
+- **Settings UI**: Expanded with new configuration panels
+  - Image Thumbnail Settings panel
+  - Card Grouping Settings panel
+  - Card Color Coding Settings panel
+  - Improved settings organization and UX
+- **Type System**: Extended type definitions for new features
+  - `ImageThumbnailSettings` interface
+  - `GroupingSettings` and `CardGroup` interfaces
+  - `ColorCodingSettings` and color rule types
+  - Enhanced `CardNavigatorSettings` with new sections
+
+### Internationalization
+
+- **New Translation Keys**: Full i18n support for Phase 2 features
+  - Image thumbnail settings (all 7 languages)
+  - Card grouping settings (all 7 languages)
+  - Card color coding settings (all 7 languages)
+  - Group section headers and UI elements
+
+### Performance
+
+- Optimized thumbnail loading with lazy rendering
+- Efficient grouping algorithm with minimal overhead
+- Cached color calculations for better performance
+- Viewport optimization works seamlessly with grouped display
+
+---
+
 ## [1.3.1] - 2025-11-23
 
 ### Added

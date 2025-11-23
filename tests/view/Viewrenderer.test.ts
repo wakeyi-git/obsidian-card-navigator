@@ -249,6 +249,16 @@ describe('ViewRenderer', () => {
 			savedSearches: [],
 			enableFuzzySearch: false,
 			fuzzySearchThreshold: 0.3,
+			grouping: {
+				enabled: false,
+				criteria: 'none',
+				dateBasis: 'modified',
+				tagMode: 'first',
+				folderHierarchical: false,
+				groupSort: 'name',
+				groupSortOrder: 'asc',
+				inheritFileSorting: true
+			},
 			debug: {
 				enabled: false,
 				categories: {}

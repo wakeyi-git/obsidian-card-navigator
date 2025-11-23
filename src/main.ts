@@ -298,6 +298,32 @@ export default class CardNavigatorPlugin extends Plugin {
 			}
 		});
 
+		// 모든 그룹 펼치기
+		this.addCommand({
+			id: 'expand-all-groups',
+			name: t().commands.expandAllGroups,
+			callback: () => {
+				const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR)[0];
+				if (leaf?.view instanceof CardNavigatorView) {
+					const view = leaf.view;
+					view.expandAllGroups();
+				}
+			}
+		});
+
+		// 모든 그룹 접기
+		this.addCommand({
+			id: 'collapse-all-groups',
+			name: t().commands.collapseAllGroups,
+			callback: () => {
+				const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR)[0];
+				if (leaf?.view instanceof CardNavigatorView) {
+					const view = leaf.view;
+					view.collapseAllGroups();
+				}
+			}
+		});
+
 		this.settingsTab = new CardNavigatorSettingTab(this.app, this);
 		this.addSettingTab(this.settingsTab);
 

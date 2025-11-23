@@ -148,7 +148,7 @@ export class LayoutManager {
 
     /**
      * 세로 모드 레이아웃을 적용합니다
-     * 
+     *
      * @param columns - 열 수
      */
     private applyVerticalMode(columns: number): void {
@@ -170,11 +170,14 @@ export class LayoutManager {
         // 모드 클래스 적용
         this.containerEl.classList.remove('horizontal-mode');
         this.containerEl.classList.add('vertical-mode');
+
+        // 그룹화된 카드 컨테이너에도 동일한 grid 설정 적용
+        this.applyGridToGroupContents(styles);
     }
 
     /**
      * 가로 모드 레이아웃을 적용합니다
-     * 
+     *
      * @param rows - 행 수
      */
     private applyHorizontalMode(rows: number): void {
@@ -196,15 +199,38 @@ export class LayoutManager {
         // 모드 클래스 적용
         this.containerEl.classList.remove('vertical-mode');
         this.containerEl.classList.add('horizontal-mode');
+
+        // 그룹화된 카드 컨테이너에도 동일한 grid 설정 적용
+        this.applyGridToGroupContents(styles);
+    }
+
+    /**
+     * 그룹화된 카드 컨테이너에 grid 설정을 적용합니다
+     *
+     * @param styles - 적용할 grid 스타일
+     */
+    private applyGridToGroupContents(styles: Record<string, string>): void {
+        const groupContents = this.containerEl.querySelectorAll('.card-group-content');
+        groupContents.forEach((content) => {
+            const element = content as HTMLElement;
+            Object.entries(styles).forEach(([key, value]) => {
+                // overflow 속성은 건너뜀 (그룹 컨테이너는 스크롤하지 않음)
+                if (key === 'overflowX' || key === 'overflowY') {
+                    return;
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (element.style as any)[key] = value;
+            });
+        });
     }
 
     /**
      * 그리드 크기를 계산합니다
-     * 
+     *
      * @param containerSize - 컨테이너 크기 (너비 또는 높이)
      * @param cardSize - 카드 크기 (최소 너비 또는 최소 높이)
      * @returns 그리드 개수 (열 수 또는 행 수)
-     * 
+     *
      * @remarks
      * 간격을 고려하여 정확한 개수를 계산합니다.
      * 계산된 크기가 컨테이너를 초과하면 1개를 줄여 반환합니다.

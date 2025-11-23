@@ -50,10 +50,10 @@ export interface CardData {
 
 /**
  * 카드 콘텐츠 타입
- * 
+ *
  * 각 섹션에 표시할 수 있는 내용의 종류입니다.
  */
-export type CardContentType = 
+export type CardContentType =
     | 'filename'          // 파일명
     | 'file-path'         // 파일 경로
     | 'first-header'      // 첫 번째 # 제목
@@ -63,7 +63,55 @@ export type CardContentType =
     | 'modified-date'     // 수정일
     | 'property'          // 프론트매터 속성값
     | 'backlinks'         // 백링크
-    | 'outgoing-links';   // 나가는 링크
+    | 'outgoing-links'    // 나가는 링크
+    | 'image-thumbnail';  // 이미지 섬네일
+
+/**
+ * 이미지 섬네일 크기
+ */
+export type ThumbnailSize =
+    | 'small'   // 80px
+    | 'medium'  // 150px
+    | 'large';  // 250px
+
+/**
+ * 이미지 종횡비
+ */
+export type ThumbnailAspectRatio =
+    | 'square'    // 1:1
+    | 'original'  // 원본 비율 유지
+    | '16:9'      // 16:9
+    | '4:3';      // 4:3
+
+/**
+ * 이미지 폴백 타입
+ */
+export type ThumbnailFallback =
+    | 'none'          // 폴백 없음 (이미지 없으면 섹션 숨김)
+    | 'icon'          // 파일 타입 아이콘
+    | 'folder-color'  // 폴더 기반 색상
+    | 'tag-color'     // 태그 기반 색상
+    | 'first-emoji';  // 본문의 첫 번째 이모지
+
+/**
+ * 이미지 섬네일 설정
+ */
+export interface ImageThumbnailSettings {
+    /** 이미지 섬네일 활성화 여부 */
+    enabled: boolean;
+    /** 섬네일 크기 */
+    size: ThumbnailSize;
+    /** 종횡비 */
+    aspectRatio: ThumbnailAspectRatio;
+    /** 폴백 옵션 */
+    fallback: ThumbnailFallback;
+    /** 외부 이미지 허용 여부 (http/https) */
+    allowExternalImages: boolean;
+    /** 이미지 로딩 실패 시 재시도 횟수 */
+    retryCount: number;
+    /** 이미지를 클릭 시 동작 */
+    clickAction: 'open-file' | 'open-image' | 'none';
+}
 
 /**
  * 카드 섹션 설정
@@ -77,7 +125,7 @@ export interface CardSectionSettings {
     customProperty?: string;
     /**
      * 최대 글자 수
-     * 
+     *
      * @remarks
      * contentType이 'content'이고 contentRenderMode가 'markdown-html'일 때는 무시됩니다.
      */
@@ -86,6 +134,8 @@ export interface CardSectionSettings {
     contentRenderMode?: RenderMode;
     /** 본문 표시 시 첫 번째 헤더 포함 여부 (contentType이 'content'일 때만 사용) */
     includeFirstHeader?: boolean;
+    /** 이미지 섬네일 설정 (contentType이 'image-thumbnail'일 때만 사용) */
+    imageThumbnail?: ImageThumbnailSettings;
     /** 일반 상태 스타일 */
     normalStyle: CardSectionStyleSettings;
     /** 활성 상태 스타일 */
@@ -219,7 +269,7 @@ export interface CardSectionStyleSettings {
  * 
  * 기능 영역별로 디버그 로그를 선택적으로 활성화할 수 있습니다.
  */
-export type DebugCategory = 
+export type DebugCategory =
     | 'Plugin'
     | 'View'
     | 'Layout'
@@ -233,6 +283,7 @@ export type DebugCategory =
     | 'Selection'
     | 'DragDrop'
     | 'Settings'
+    | 'Grouping'
     | 'Event'
     | 'UI'
     | 'Performance';
@@ -245,11 +296,89 @@ export interface DebugSettings {
     enabled: boolean;
     /**
      * 카테고리별 활성화 상태
-     * 
+     *
      * @remarks
      * 설정하지 않은 카테고리는 기본적으로 활성화됩니다.
      */
     categories?: Partial<Record<DebugCategory, boolean>>;
+}
+
+/**
+ * 그룹화 기준
+ */
+export type GroupCriteria =
+    | 'none'            // 그룹화 안 함 (기존 동작)
+    | 'folder'          // 폴더별
+    | 'tag'             // 태그별
+    | 'date-year'       // 연도별
+    | 'date-month'      // 월별
+    | 'date-week'       // 주별
+    | 'property'        // 프론트매터 속성별
+    | 'size'            // 파일 크기별
+    | 'first-letter';   // 첫 글자별
+
+/**
+ * 날짜 그룹화 기준 (생성일 vs 수정일)
+ */
+export type DateGroupBasis =
+    | 'created'     // 생성일
+    | 'modified';   // 수정일
+
+/**
+ * 태그 그룹화 모드
+ */
+export type TagGroupMode =
+    | 'first'   // 첫 번째 태그만
+    | 'all';    // 모든 태그 (파일 중복 표시)
+
+/**
+ * 그룹 정렬 기준
+ */
+export type GroupSortCriteria =
+    | 'name'          // 그룹명 알파벳 순
+    | 'file-count'    // 파일 개수 순
+    | 'latest-file';  // 최신 파일 기준
+
+/**
+ * 그룹화 설정
+ */
+export interface GroupingSettings {
+    /** 그룹화 활성화 여부 */
+    enabled: boolean;
+    /** 그룹화 기준 */
+    criteria: GroupCriteria;
+    /** 날짜 그룹화 기준 (criteria가 date-* 일 때 사용) */
+    dateBasis: DateGroupBasis;
+    /** 태그 그룹화 모드 (criteria가 'tag'일 때 사용) */
+    tagMode: TagGroupMode;
+    /** 프론트매터 속성명 (criteria가 'property'일 때 사용) */
+    propertyName?: string;
+    /** 폴더 그룹화 계층 구조 사용 여부 */
+    folderHierarchical: boolean;
+    /** 그룹 정렬 기준 */
+    groupSort: GroupSortCriteria;
+    /** 그룹 정렬 순서 */
+    groupSortOrder: SortOrder;
+    /** 그룹 내 파일 정렬 (기존 sort 설정 사용) */
+    inheritFileSorting: boolean;
+}
+
+/**
+ * 카드 그룹 (렌더링용 데이터 구조)
+ */
+export interface CardGroup {
+    /** 그룹 고유 ID (접기 상태 저장용) */
+    id: string;
+    /** 그룹명 (화면 표시용) */
+    name: string;
+    /** 그룹 아이콘 (이모지) */
+    icon: string;
+    /** 그룹에 속한 파일 목록 */
+    files: TFile[];
+    /** 접힌 상태 */
+    collapsed: boolean;
+    /** 정렬 키 (그룹 정렬에 사용) */
+    sortKey: string | number;
 }
 
 /**
@@ -316,6 +445,8 @@ export interface CardNavigatorSettings {
     pinnedFiles?: string[];
     /** 핀된 파일 항상 표시 여부 */
     alwaysShowPinnedFiles?: boolean;
+    /** 그룹화 설정 */
+    grouping: GroupingSettings;
     /** 디버그 설정 */
     debug: DebugSettings;
 }
@@ -368,7 +499,7 @@ export interface ParsedQuery {
 
 /**
  * 필터 옵션
- * 
+ *
  * 파일 목록을 필터링할 때 사용하는 조건들입니다.
  */
 export interface FilterOptions {
@@ -770,6 +901,16 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
     enableCardHoverActions: true,
     pinnedFiles: [],
     alwaysShowPinnedFiles: false,
+    grouping: {
+        enabled: false,
+        criteria: 'none',
+        dateBasis: 'modified',
+        tagMode: 'first',
+        folderHierarchical: false,
+        groupSort: 'name',
+        groupSortOrder: 'asc',
+        inheritFileSorting: true
+    },
     debug: {
         enabled: false,
         categories: {}

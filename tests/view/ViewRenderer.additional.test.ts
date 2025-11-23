@@ -182,9 +182,10 @@ describe('ViewRenderer - Additional Coverage', () => {
             
             // Standard rendering for < 100 files
             // activeFile is null when getActiveFile() returns null
+            // With grouping enabled, container is now the group content container
             expect(cardFactory.createCard).toHaveBeenCalledWith(
                 mockFile,
-                container,
+                expect.any(HTMLElement), // group content container
                 null,
                 onFileOpen
             );
@@ -368,9 +369,10 @@ describe('ViewRenderer - Additional Coverage', () => {
             
             await renderer.renderCards(container, onFileOpen);
             
+            // With grouping enabled, container is now the group content container
             expect(cardFactory.createCard).toHaveBeenCalledWith(
                 expect.any(Object),
-                container,
+                expect.any(HTMLElement), // group content container
                 activeFile,
                 onFileOpen
             );

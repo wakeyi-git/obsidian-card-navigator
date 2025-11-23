@@ -415,22 +415,22 @@ export class CardNavigatorView extends ItemView implements ICardView {
 
 	async onClose() {
 		this.logger.debug('View', t().debug.view.closing);
-		
+
 		// ⭐ ViewportManager 정리 추가
 		if (isDefined(this.viewRenderer)) {
 			this.viewRenderer.destroy();
 		}
-		
+
 		if (isDefined(this.layoutManager)) {
 			this.layoutManager.destroy();
 			this.layoutManager = null;
 		}
-		
+
 		if (isDefined(this.searchInput)) {
 			this.searchInput.destroy();
 			this.searchInput = null;
 		}
-		
+
 		if (isDefined(this.toolbar)) {
 			this.toolbar.destroy();
 			this.toolbar = null;
@@ -665,4 +665,33 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		
 		this.keyboardNavigator.focusFileCard(activeFile);
 	}
+
+	/**
+	 * 모든 그룹을 펼칩니다
+	 */
+	expandAllGroups(): void {
+		const sections = this.viewRenderer.groupRenderer.findAllGroupSections(this.containerEl);
+		sections.forEach(section => {
+			const groupId = section.dataset.groupId;
+			if (groupId) {
+				this.viewRenderer.groupRenderer.toggleGroup(section, false);
+				this.viewRenderer.groupingManager.saveCollapsedState(groupId, false);
+			}
+		});
+	}
+
+	/**
+	 * 모든 그룹을 접습니다
+	 */
+	collapseAllGroups(): void {
+		const sections = this.viewRenderer.groupRenderer.findAllGroupSections(this.containerEl);
+		sections.forEach(section => {
+			const groupId = section.dataset.groupId;
+			if (groupId) {
+				this.viewRenderer.groupRenderer.toggleGroup(section, true);
+				this.viewRenderer.groupingManager.saveCollapsedState(groupId, true);
+			}
+		});
+	}
+
 }
