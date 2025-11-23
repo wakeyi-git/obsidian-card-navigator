@@ -490,8 +490,8 @@ export class ViewRenderer {
 		currentActiveFile: TFile | null,
 		context: string
 	): import('../types').CardGroup[] {
-		// 그룹화
-		const groups = this.groupingManager.groupFiles(files, this.settings.grouping);
+		// 그룹화 (핀된 파일 정보 전달)
+		const groups = this.groupingManager.groupFiles(files, this.settings.grouping, this.settings.pinnedFiles);
 
 		this.logger.debug('View', `${context}: Groups created`, {
 			groupCount: groups.length,
@@ -1068,8 +1068,8 @@ export class ViewRenderer {
 			return null;
 		}
 
-		// 그룹 생성
-		const groups = this.groupingManager.groupFiles(files, this.settings.grouping);
+		// 그룹 생성 (핀된 파일 정보 전달)
+		const groups = this.groupingManager.groupFiles(files, this.settings.grouping, this.settings.pinnedFiles);
 
 		// 접힌 그룹 중 활성 파일을 포함하는 그룹 찾기
 		for (const section of collapsedSections) {
@@ -1175,9 +1175,9 @@ export class ViewRenderer {
 			return;
 		}
 
-		// 그룹의 파일 목록을 다시 가져와서 렌더링
+		// 그룹의 파일 목록을 다시 가져와서 렌더링 (핀된 파일 정보 전달)
 		const files = await this.getFilesToDisplay();
-		const groups = this.groupingManager.groupFiles(files, this.settings.grouping);
+		const groups = this.groupingManager.groupFiles(files, this.settings.grouping, this.settings.pinnedFiles);
 		const group = groups.find(g => g.id === groupId);
 
 		if (!group || group.files.length === 0) {

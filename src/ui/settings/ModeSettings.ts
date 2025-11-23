@@ -46,9 +46,6 @@ export class ModeSettings extends BaseSettings {
         if (settings.currentMode === 'tag') {
             this.addTagModeSettings(containerEl, settings);
         }
-
-        // 핀 설정
-        this.addPinSettings(containerEl, settings);
     }
 
     /**
@@ -169,25 +166,4 @@ export class ModeSettings extends BaseSettings {
         }
     }
 
-    /**
-     * 핀 설정을 추가합니다
-     *
-     * @param containerEl - 컨테이너 요소
-     * @param settings - 설정 객체
-     */
-    private addPinSettings(containerEl: HTMLElement, settings: CardNavigatorSettings): void {
-        this.createDivider(containerEl, t().settingsTab.pinSettings?.title || 'Pin Settings');
-
-        // 핀된 파일 항상 표시 토글
-        new Setting(containerEl)
-            .setName(t().settingsTab.pinSettings?.alwaysShowPinned || 'Always show pinned files')
-            .setDesc(t().settingsTab.pinSettings?.alwaysShowPinnedDescription || 'Show pinned files even when scrolling or changing modes')
-            .addToggle(toggle => toggle
-                .setValue(settings.alwaysShowPinnedFiles || false)
-                .onChange(async (value) => {
-                    settings.alwaysShowPinnedFiles = value;
-                    await this.plugin.saveSettings();
-                })
-            );
-    }
 }

@@ -22,9 +22,10 @@ export class GroupingManager {
      *
      * @param files - 그룹화할 파일 목록
      * @param settings - 그룹화 설정
+     * @param pinnedFiles - 핀된 파일 경로 목록 (선택사항)
      * @returns 그룹 배열
      */
-    groupFiles(files: TFile[], settings: GroupingSettings): CardGroup[] {
+    groupFiles(files: TFile[], settings: GroupingSettings, pinnedFiles?: string[]): CardGroup[] {
         if (!settings.enabled || settings.criteria === 'none') {
             // 그룹화 비활성화 시 전체를 하나의 그룹으로 (헤더 숨김)
             return [{
@@ -41,31 +42,57 @@ export class GroupingManager {
 
         this.logger.debug('Grouping', `Grouping ${files.length} files by ${settings.criteria}`);
 
+        // 핀된 파일과 일반 파일 분리
+        let pinnedFileObjects: TFile[] = [];
+        let unpinnedFiles = files;
+
+        if (settings.showPinnedAsGroup && pinnedFiles && pinnedFiles.length > 0) {
+            pinnedFileObjects = files.filter(file => pinnedFiles.includes(file.path));
+            unpinnedFiles = files.filter(file => !pinnedFiles.includes(file.path));
+
+            this.logger.debug('Grouping', `Separated ${pinnedFileObjects.length} pinned files and ${unpinnedFiles.length} unpinned files`);
+        }
+
         switch (settings.criteria) {
             case 'folder':
-                groups = this.groupByFolder(files, settings.folderHierarchical);
+                groups = this.groupByFolder(unpinnedFiles, settings.folderHierarchical);
                 break;
             case 'tag':
-                groups = this.groupByTag(files, settings.tagMode);
+                groups = this.groupByTag(unpinnedFiles, settings.tagMode);
                 break;
             case 'date-year':
-                groups = this.groupByDateYear(files, settings.dateBasis);
+                groups = this.groupByDateYear(unpinnedFiles, settings.dateBasis);
                 break;
             case 'date-month':
-                groups = this.groupByDateMonth(files, settings.dateBasis);
+                groups = this.groupByDateMonth(unpinnedFiles, settings.dateBasis);
                 break;
             case 'date-week':
-                groups = this.groupByDateWeek(files, settings.dateBasis);
+                groups = this.groupByDateWeek(unpinnedFiles, settings.dateBasis);
                 break;
             case 'property':
-                groups = this.groupByProperty(files, settings.propertyName || '');
+                groups = this.groupByProperty(unpinnedFiles, settings.propertyName || '');
                 break;
             case 'size':
-                groups = this.groupBySize(files);
+                groups = this.groupBySize(unpinnedFiles);
                 break;
             case 'first-letter':
-                groups = this.groupByFirstLetter(files);
+                groups = this.groupByFirstLetter(unpinnedFiles);
                 break;
+        }
+
+        // 핀된 파일 그룹 추가 (맨 앞에)
+        if (settings.showPinnedAsGroup && pinnedFileObjects.length > 0) {
+            const pinnedGroup: CardGroup = {
+                id: 'pinned',
+                name: 'Pinned',
+                icon: 'pin',
+                files: pinnedFileObjects,
+                collapsed: false,
+                sortKey: '000-pinned' // 항상 맨 앞에 오도록
+            };
+            groups.unshift(pinnedGroup);
+
+            this.logger.debug('Grouping', `Added pinned group with ${pinnedFileObjects.length} files`);
         }
 
         // 그룹 정렬
@@ -526,6 +553,10 @@ export class GroupingManager {
      */
     private sortGroups(groups: CardGroup[], settings: GroupingSettings): void {
         groups.sort((a, b) => {
+            // 핀된 그룹은 항상 맨 위에 (정렬 규칙 무시)
+            if (a.id === 'pinned') return -1;
+            if (b.id === 'pinned') return 1;
+
             let comparison = 0;
 
             switch (settings.groupSort) {

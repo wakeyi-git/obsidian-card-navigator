@@ -307,6 +307,8 @@ export const en = {
 				asc: 'Ascending',
 				desc: 'Descending',
 			},
+			showPinnedAsGroup: 'Show pinned files as separate group',
+			showPinnedAsGroupDescription: 'When grouping is enabled, show pinned files in a "Pinned" group at the top',
 		},
 	},
 
@@ -406,9 +408,11 @@ export const en = {
 	// Settings Tab UI
 	settingsTab: {
 		tabs: {
-			mode: 'Mode & Sort',
+			source: 'Mode & Search',
+			grouping: 'Grouping & Sort',
 			card: 'Card Settings',
 			layout: 'Layout',
+			interaction: 'Interaction',
 			presets: 'Presets',
 			other: 'Other',
 		},

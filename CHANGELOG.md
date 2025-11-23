@@ -1,3 +1,42 @@
+## [1.4.4] - 2025-11-23
+
+### Added
+
+#### Pin Settings Enhancement
+- **Pinned Files Grouping**: New option to show pinned files as a separate group when grouping is enabled
+  - New setting: "Show pinned files as separate group" under Pin Settings
+  - When enabled, pinned files appear in a dedicated "Pinned" group at the top
+  - Pinned group always stays at the top regardless of group sorting rules
+  - Related files: [GroupingManager.ts](src/grouping/GroupingManager.ts), [types.ts](src/types.ts)
+
+### Changed
+
+#### Settings UI Reorganization
+- **Pin Settings Location**: Moved pin settings from "Mode & Search" tab to "Grouping & Sort" tab
+  - Pin settings now appear as a subsection after grouping settings
+  - "Show pinned files as separate group" option only visible when grouping is enabled
+  - Improves logical grouping of related settings
+  - Related files: [SettingsTab.ts](src/ui/SettingsTab.ts), [ModeSettings.ts](src/ui/settings/ModeSettings.ts)
+
+- **Tab Label Updates**: Updated settings tab labels for better clarity
+  - "카드 목록 작성" → "모드 및 검색" (Mode & Search)
+  - All tab labels now support internationalization (Korean/English)
+  - Related files: [ko.ts](src/i18n/locales/ko.ts), [en.ts](src/i18n/locales/en.ts)
+
+#### Pinned Files Behavior Improvements
+- **Smart Grouping Integration**: Pinned files now work harmoniously with grouping
+  - When grouping is disabled: Pinned files appear at the top (existing behavior)
+  - When grouping is enabled + "Show as separate group" OFF: Pinned files have priority within each group
+  - When grouping is enabled + "Show as separate group" ON: Pinned files appear in dedicated "Pinned" group
+  - Related file: [SortManager.ts](src/sort/SortManager.ts)
+
+### Improved
+
+#### User Experience
+- **Better Pin Management**: Users can now choose how pinned files interact with grouping
+- **Contextual Settings**: Related settings are now grouped together logically
+- **Multilingual Support**: All tab labels properly support multiple languages
+
 ## [1.4.3] - 2025-11-23
 
 ### Changed

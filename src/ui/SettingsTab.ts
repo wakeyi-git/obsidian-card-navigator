@@ -19,8 +19,8 @@ type SettingTabType = 'source' | 'grouping' | 'card' | 'layout' | 'interaction' 
  * 플러그인 설정 UI를 탭 기반으로 제공합니다.
  *
  * 탭 구성:
- * 1. 카드 목록 작성 - 폴더/태그/검색 모드 설정
- * 2. 그룹화 및 정렬 - 카드 그룹화 및 정렬 설정
+ * 1. 모드 및 검색 - 폴더/태그/검색 모드 설정
+ * 2. 그룹화 및 정렬 - 카드 그룹화, 정렬, 핀 설정
  * 3. 카드 설정 - 카드 내용(데이터) 및 스타일링 (통합)
  * 4. 레이아웃 - 그리드/메이슨리 레이아웃 설정
  * 5. 상호작용 - 네비게이션, 클릭, 드래그 앤 드롭 설정
@@ -88,14 +88,15 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
      * 탭 버튼들을 생성합니다
      */
     private createTabButtons(container: HTMLElement): void {
+        const t = this.plugin.t();
         const tabs: { id: SettingTabType; label: string; icon: string }[] = [
-            { id: 'source', label: '카드 목록 작성', icon: 'folder-open' },
-            { id: 'grouping', label: '그룹화 및 정렬', icon: 'layers' },
-            { id: 'card', label: '카드 설정', icon: 'credit-card' },
-            { id: 'layout', label: '레이아웃', icon: 'layout-grid' },
-            { id: 'interaction', label: '상호작용', icon: 'mouse-pointer' },
-            { id: 'presets', label: '프리셋', icon: 'save' },
-            { id: 'other', label: '기타', icon: 'more-horizontal' }
+            { id: 'source', label: t.settingsTab.tabs.source, icon: 'folder-open' },
+            { id: 'grouping', label: t.settingsTab.tabs.grouping, icon: 'layers' },
+            { id: 'card', label: t.settingsTab.tabs.card, icon: 'credit-card' },
+            { id: 'layout', label: t.settingsTab.tabs.layout, icon: 'layout-grid' },
+            { id: 'interaction', label: t.settingsTab.tabs.interaction, icon: 'mouse-pointer' },
+            { id: 'presets', label: t.settingsTab.tabs.presets, icon: 'save' },
+            { id: 'other', label: t.settingsTab.tabs.other, icon: 'more-horizontal' }
         ];
 
         tabs.forEach(tab => {
@@ -126,7 +127,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
      * 탭 콘텐츠들을 생성합니다
      */
     private createTabContents(container: HTMLElement): void {
-        // 1. 카드 목록 작성 탭 (폴더/태그/검색 모드)
+        // 1. 모드 및 검색 탭 (폴더/태그/검색 모드)
         const sourceTab = container.createDiv({ cls: 'setting-tab-pane' });
         this.modeSettings.render(sourceTab);
         this.addSearchSettings(sourceTab);
@@ -381,6 +382,47 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                     await this.plugin.refreshView();
                 })
             );
+
+        // 핀 설정 섹션
+        this.addPinSettings(containerEl, t);
+    }
+
+    /**
+     * 핀 설정을 추가합니다
+     */
+    private addPinSettings(containerEl: HTMLElement, t: ReturnType<typeof this.plugin.t>): void {
+        // 구분선
+        new Setting(containerEl)
+            .setName(t.settingsTab.pinSettings?.title || 'Pin Settings')
+            .setHeading();
+
+        // 핀된 파일 항상 표시 토글
+        new Setting(containerEl)
+            .setName(t.settingsTab.pinSettings?.alwaysShowPinned || 'Always show pinned files')
+            .setDesc(t.settingsTab.pinSettings?.alwaysShowPinnedDescription || 'Show pinned files even when scrolling or changing modes')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.alwaysShowPinnedFiles || false)
+                .onChange(async (value) => {
+                    this.plugin.settings.alwaysShowPinnedFiles = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                })
+            );
+
+        // 핀된 파일을 별도 그룹으로 표시 (그룹화가 활성화된 경우에만)
+        if (this.plugin.settings.grouping.enabled) {
+            new Setting(containerEl)
+                .setName(t.settings.grouping.showPinnedAsGroup)
+                .setDesc(t.settings.grouping.showPinnedAsGroupDescription)
+                .addToggle(toggle => toggle
+                    .setValue(this.plugin.settings.grouping.showPinnedAsGroup ?? true)
+                    .onChange(async (value) => {
+                        this.plugin.settings.grouping.showPinnedAsGroup = value;
+                        await this.plugin.saveSettings();
+                        await this.plugin.refreshView();
+                    })
+                );
+        }
     }
 
     /**

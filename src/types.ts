@@ -361,6 +361,8 @@ export interface GroupingSettings {
     groupSortOrder: SortOrder;
     /** 그룹 내 파일 정렬 (기존 sort 설정 사용) */
     inheritFileSorting: boolean;
+    /** 핀된 파일을 별도 그룹으로 분리 여부 */
+    showPinnedAsGroup?: boolean;
 }
 
 /**
@@ -909,7 +911,8 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
         folderHierarchical: false,
         groupSort: 'name',
         groupSortOrder: 'asc',
-        inheritFileSorting: true
+        inheritFileSorting: true,
+        showPinnedAsGroup: true
     },
     debug: {
         enabled: false,

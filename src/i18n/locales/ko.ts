@@ -307,6 +307,8 @@ export const ko = {
 				asc: '오름차순',
 				desc: '내림차순',
 			},
+			showPinnedAsGroup: '핀된 파일을 별도 그룹으로 표시',
+			showPinnedAsGroupDescription: '그룹화 시 핀된 파일을 "Pinned" 그룹으로 분리하여 맨 위에 표시합니다',
 		},
 	},
 
@@ -406,9 +408,11 @@ export const ko = {
 	// Settings Tab UI
 	settingsTab: {
 		tabs: {
-			mode: '모드 & 정렬',
+			source: '모드 및 검색',
+			grouping: '그룹화 및 정렬',
 			card: '카드 설정',
 			layout: '레이아웃',
+			interaction: '상호작용',
 			presets: '프리셋',
 			other: '기타',
 		},
