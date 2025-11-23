@@ -244,7 +244,7 @@ describe('ViewRenderer', () => {
 			presetMappings: [],
 			presetPriority: {
 				mode: 'auto',
-				manualType: 'tag-first'
+				preferredType: 'tag'
 			},
 			savedSearches: [],
 			enableFuzzySearch: false,

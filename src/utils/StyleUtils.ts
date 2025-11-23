@@ -79,14 +79,12 @@ export class StyleUtils {
         // Normal state - always set
         card.style.setProperty('--card-bg-normal', normalStyle.backgroundColor);
         card.style.setProperty('--card-font-size-normal', `${normalStyle.fontSize}px`);
-        card.style.setProperty('--card-font-weight-normal', normalStyle.fontWeight);
         card.style.setProperty('--card-text-color-normal', this.getContrastColor(normalStyle.backgroundColor));
 
         // Active state - only if not inheriting
         if (!activeStyle.inheritFromNormal) {
             card.style.setProperty('--card-bg-active', activeStyle.backgroundColor);
             card.style.setProperty('--card-font-size-active', `${activeStyle.fontSize}px`);
-            card.style.setProperty('--card-font-weight-active', activeStyle.fontWeight);
             card.style.setProperty('--card-text-color-active', this.getContrastColor(activeStyle.backgroundColor));
         }
 
@@ -94,74 +92,7 @@ export class StyleUtils {
         if (!focusedStyle.inheritFromNormal) {
             card.style.setProperty('--card-bg-focused', focusedStyle.backgroundColor);
             card.style.setProperty('--card-font-size-focused', `${focusedStyle.fontSize}px`);
-            card.style.setProperty('--card-font-weight-focused', focusedStyle.fontWeight);
             card.style.setProperty('--card-text-color-focused', this.getContrastColor(focusedStyle.backgroundColor));
-        }
-
-        // Section styles (header, body, footer) for normal state
-        if (normalStyle.headerStyle) {
-            card.style.setProperty('--card-header-bg-normal', normalStyle.headerStyle.backgroundColor);
-            card.style.setProperty('--card-header-font-size-normal', `${normalStyle.headerStyle.fontSize}px`);
-            card.style.setProperty('--card-header-font-weight-normal', normalStyle.headerStyle.fontWeight);
-            card.style.setProperty('--card-header-text-color-normal', this.getContrastColor(normalStyle.headerStyle.backgroundColor));
-        }
-
-        if (normalStyle.bodyStyle) {
-            card.style.setProperty('--card-body-bg-normal', normalStyle.bodyStyle.backgroundColor);
-            card.style.setProperty('--card-body-font-size-normal', `${normalStyle.bodyStyle.fontSize}px`);
-            card.style.setProperty('--card-body-font-weight-normal', normalStyle.bodyStyle.fontWeight);
-            card.style.setProperty('--card-body-text-color-normal', this.getContrastColor(normalStyle.bodyStyle.backgroundColor));
-        }
-
-        if (normalStyle.footerStyle) {
-            card.style.setProperty('--card-footer-bg-normal', normalStyle.footerStyle.backgroundColor);
-            card.style.setProperty('--card-footer-font-size-normal', `${normalStyle.footerStyle.fontSize}px`);
-            card.style.setProperty('--card-footer-font-weight-normal', normalStyle.footerStyle.fontWeight);
-            card.style.setProperty('--card-footer-text-color-normal', this.getContrastColor(normalStyle.footerStyle.backgroundColor));
-        }
-
-        // Section styles for active state
-        if (activeStyle.headerStyle) {
-            card.style.setProperty('--card-header-bg-active', activeStyle.headerStyle.backgroundColor);
-            card.style.setProperty('--card-header-font-size-active', `${activeStyle.headerStyle.fontSize}px`);
-            card.style.setProperty('--card-header-font-weight-active', activeStyle.headerStyle.fontWeight);
-            card.style.setProperty('--card-header-text-color-active', this.getContrastColor(activeStyle.headerStyle.backgroundColor));
-        }
-
-        if (activeStyle.bodyStyle) {
-            card.style.setProperty('--card-body-bg-active', activeStyle.bodyStyle.backgroundColor);
-            card.style.setProperty('--card-body-font-size-active', `${activeStyle.bodyStyle.fontSize}px`);
-            card.style.setProperty('--card-body-font-weight-active', activeStyle.bodyStyle.fontWeight);
-            card.style.setProperty('--card-body-text-color-active', this.getContrastColor(activeStyle.bodyStyle.backgroundColor));
-        }
-
-        if (activeStyle.footerStyle) {
-            card.style.setProperty('--card-footer-bg-active', activeStyle.footerStyle.backgroundColor);
-            card.style.setProperty('--card-footer-font-size-active', `${activeStyle.footerStyle.fontSize}px`);
-            card.style.setProperty('--card-footer-font-weight-active', activeStyle.footerStyle.fontWeight);
-            card.style.setProperty('--card-footer-text-color-active', this.getContrastColor(activeStyle.footerStyle.backgroundColor));
-        }
-
-        // Section styles for focused state
-        if (focusedStyle.headerStyle) {
-            card.style.setProperty('--card-header-bg-focused', focusedStyle.headerStyle.backgroundColor);
-            card.style.setProperty('--card-header-font-size-focused', `${focusedStyle.headerStyle.fontSize}px`);
-            card.style.setProperty('--card-header-font-weight-focused', focusedStyle.headerStyle.fontWeight);
-            card.style.setProperty('--card-header-text-color-focused', this.getContrastColor(focusedStyle.headerStyle.backgroundColor));
-        }
-
-        if (focusedStyle.bodyStyle) {
-            card.style.setProperty('--card-body-bg-focused', focusedStyle.bodyStyle.backgroundColor);
-            card.style.setProperty('--card-body-font-size-focused', `${focusedStyle.bodyStyle.fontSize}px`);
-            card.style.setProperty('--card-body-font-weight-focused', focusedStyle.bodyStyle.fontWeight);
-            card.style.setProperty('--card-body-text-color-focused', this.getContrastColor(focusedStyle.bodyStyle.backgroundColor));
-        }
-
-        if (focusedStyle.footerStyle) {
-            card.style.setProperty('--card-footer-bg-focused', focusedStyle.footerStyle.backgroundColor);
-            card.style.setProperty('--card-footer-font-size-focused', `${focusedStyle.footerStyle.fontSize}px`);
-            card.style.setProperty('--card-footer-font-weight-focused', focusedStyle.footerStyle.fontWeight);
-            card.style.setProperty('--card-footer-text-color-focused', this.getContrastColor(focusedStyle.footerStyle.backgroundColor));
         }
     }
 
@@ -172,18 +103,9 @@ export class StyleUtils {
      */
     static removeCardCustomProperties(card: HTMLElement): void {
         const properties = [
-            '--card-bg-normal', '--card-font-size-normal', '--card-font-weight-normal', '--card-text-color-normal',
-            '--card-bg-active', '--card-font-size-active', '--card-font-weight-active', '--card-text-color-active',
-            '--card-bg-focused', '--card-font-size-focused', '--card-font-weight-focused', '--card-text-color-focused',
-            '--card-header-bg-normal', '--card-header-font-size-normal', '--card-header-font-weight-normal', '--card-header-text-color-normal',
-            '--card-body-bg-normal', '--card-body-font-size-normal', '--card-body-font-weight-normal', '--card-body-text-color-normal',
-            '--card-footer-bg-normal', '--card-footer-font-size-normal', '--card-footer-font-weight-normal', '--card-footer-text-color-normal',
-            '--card-header-bg-active', '--card-header-font-size-active', '--card-header-font-weight-active', '--card-header-text-color-active',
-            '--card-body-bg-active', '--card-body-font-size-active', '--card-body-font-weight-active', '--card-body-text-color-active',
-            '--card-footer-bg-active', '--card-footer-font-size-active', '--card-footer-font-weight-active', '--card-footer-text-color-active',
-            '--card-header-bg-focused', '--card-header-font-size-focused', '--card-header-font-weight-focused', '--card-header-text-color-focused',
-            '--card-body-bg-focused', '--card-body-font-size-focused', '--card-body-font-weight-focused', '--card-body-text-color-focused',
-            '--card-footer-bg-focused', '--card-footer-font-size-focused', '--card-footer-font-weight-focused', '--card-footer-text-color-focused'
+            '--card-bg-normal', '--card-font-size-normal', '--card-text-color-normal',
+            '--card-bg-active', '--card-font-size-active', '--card-text-color-active',
+            '--card-bg-focused', '--card-font-size-focused', '--card-text-color-focused'
         ];
 
         properties.forEach(prop => card.style.removeProperty(prop));
