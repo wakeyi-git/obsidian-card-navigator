@@ -228,8 +228,8 @@ export class SearchEngine {
             }
         }
 
-        // 결과를 캐시에 저장
-        this.searchCache.set(cacheKey, results);
+        // 결과를 캐시에 저장 (검색 대상 파일 목록도 전달)
+        this.searchCache.set(cacheKey, results, files);
         return results;
     }
     

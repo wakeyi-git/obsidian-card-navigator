@@ -104,9 +104,23 @@ export class TieredCache {
 	 *
 	 * @param key - 캐시 키
 	 * @param value - 저장할 값
+	 * @param searchedFiles - 검색 대상 파일 목록 (선택적)
+	 *
+	 * @remarks
+	 * affectedFiles는 검색 결과 + 검색 대상 파일을 모두 포함합니다.
+	 * 이렇게 해야 검색 대상 파일이 변경될 때 캐시가 올바르게 무효화됩니다.
+	 * 예: tag:test 검색 결과가 [] 이어도, 검색 대상 파일에 #test 태그를 추가하면 캐시 무효화됨
 	 */
-	set(key: string, value: TFile[]): void {
-		const affectedFiles = new Set(value.map(f => f.path));
+	set(key: string, value: TFile[], searchedFiles?: TFile[]): void {
+		const affectedFiles = new Set<string>();
+
+		// 검색 결과 파일 추가
+		value.forEach(f => affectedFiles.add(f.path));
+
+		// 검색 대상 파일도 추가 (중요: 빈 결과일 때도 무효화되도록)
+		if (searchedFiles) {
+			searchedFiles.forEach(f => affectedFiles.add(f.path));
+		}
 
 		// L1에 저장
 		this.hotCache.set(key, value, affectedFiles);
