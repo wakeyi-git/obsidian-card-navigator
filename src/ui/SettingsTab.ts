@@ -652,10 +652,12 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
      * 캐시 통계를 추가합니다
      */
     private addCacheStatistics(containerEl: HTMLElement): void {
+        const trans = t().settingsTab.cacheStatistics;
+
         // 섹션 헤더
         new Setting(containerEl)
             .setHeading()
-            .setName('Search Cache Statistics');
+            .setName(trans.title);
 
         // 통계 컨테이너
         const statsContainer = containerEl.createDiv({ cls: 'cache-stats-container' });
@@ -664,24 +666,26 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         statsContainer.style.borderRadius = '6px';
         statsContainer.style.marginBottom = '20px';
 
-        // 활성 뷰 가져오기
-        const activeView = this.app.workspace.getActiveViewOfType(CardNavigatorView);
+        // ⭐ Fix: Check all leaves of CardNavigatorView type, not just active view
+        const leaves = this.app.workspace.getLeavesOfType('card-navigator');
+        const viewLeaf = leaves.length > 0 ? leaves[0] : null;
+        const view = viewLeaf ? (viewLeaf.view as CardNavigatorView) : null;
 
-        if (!activeView) {
+        if (!view) {
             statsContainer.createEl('p', {
-                text: 'Open Card Navigator view to see cache statistics',
+                text: trans.viewNotOpen,
                 cls: 'setting-item-description'
             });
             return;
         }
 
         // 캐시 통계 가져오기
-        const stats = activeView.searchEngine?.getCacheStats();
-        const cacheSize = activeView.searchEngine?.size;
+        const stats = view.searchEngine?.getCacheStats();
+        const cacheSize = view.searchEngine?.size;
 
         if (!stats || !cacheSize) {
             statsContainer.createEl('p', {
-                text: 'Cache statistics not available',
+                text: trans.notAvailable,
                 cls: 'setting-item-description'
             });
             return;
@@ -698,33 +702,33 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
             row.createEl('strong', { text: String(value), cls: 'cache-stat-value' });
         };
 
-        createStatRow('Total Requests', stats.totalRequests);
-        createStatRow('Cache Hit Rate', `${(stats.hitRate * 100).toFixed(1)}%`);
+        createStatRow(trans.totalRequests, stats.totalRequests);
+        createStatRow(trans.hitRate, `${(stats.hitRate * 100).toFixed(1)}%`);
 
         statsContainer.createEl('div', { cls: 'cache-stat-divider' })
             .style.borderTop = '1px solid var(--background-modifier-border)';
 
-        createStatRow('L1 Hits (Hot)', stats.l1Hits);
-        createStatRow('L2 Hits (Warm)', stats.l2Hits);
-        createStatRow('L3 Hits (Cold)', stats.l3Hits);
-        createStatRow('Cache Misses', stats.misses);
+        createStatRow(trans.l1Hits, stats.l1Hits);
+        createStatRow(trans.l2Hits, stats.l2Hits);
+        createStatRow(trans.l3Hits, stats.l3Hits);
+        createStatRow(trans.misses, stats.misses);
 
         statsContainer.createEl('div', { cls: 'cache-stat-divider' })
             .style.borderTop = '1px solid var(--background-modifier-border)';
 
-        createStatRow('L1 Cache Size', `${cacheSize.l1} / 10`);
-        createStatRow('L2 Cache Size', `${cacheSize.l2} / 40`);
-        createStatRow('Total Cache Size', `${cacheSize.total} / 50`);
+        createStatRow(trans.l1Size, `${cacheSize.l1} / 10`);
+        createStatRow(trans.l2Size, `${cacheSize.l2} / 40`);
+        createStatRow(trans.totalSize, `${cacheSize.total} / 50`);
 
         // 캐시 클리어 버튼
         new Setting(containerEl)
-            .setName('Clear Search Cache')
-            .setDesc('Clear all cached search results. This will reset cache statistics.')
+            .setName(trans.clearCache)
+            .setDesc(trans.clearCacheDescription)
             .addButton(button => button
-                .setButtonText('Clear Cache')
+                .setButtonText(trans.clearCacheButton)
                 .onClick(() => {
-                    activeView.searchEngine?.clearCache();
-                    new Notice('Search cache cleared');
+                    view.searchEngine?.clearCache();
+                    new Notice(trans.cacheCleared);
                     // UI 새로고침
                     this.display();
                 })
