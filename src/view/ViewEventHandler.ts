@@ -123,6 +123,16 @@ export class ViewEventHandler {
 			try {
 				const target = e.target as HTMLElement;
 
+				// ⭐ 버그 수정: 태그나 내부 링크 클릭은 카드 클릭으로 처리하지 않음
+				// 이벤트 위임이 먼저 실행되므로, 여기서 조기에 필터링해야 함
+				if (target.classList.contains('tag-link') ||
+					target.classList.contains('internal-link') ||
+					target.closest('.tag-link') ||
+					target.closest('.internal-link')) {
+					// 태그/링크의 자체 핸들러가 처리하도록 허용
+					return;
+				}
+
 				// 호버 액션 버튼 클릭은 무시 (버튼 자체에서 처리)
 				if (target.closest('.card-hover-actions')) {
 					return;
@@ -264,9 +274,9 @@ export class ViewEventHandler {
 	 * 드래그 중이거나 수정 키가 눌린 경우를 처리하고,
 	 * 일반 클릭인 경우 파일을 엽니다.
 	 *
-	 * ⭐ 버그 수정 (2025-11-18):
-	 * 태그나 내부 링크를 클릭한 경우 카드 클릭으로 처리하지 않습니다.
-	 * 이벤트 버블링을 통해 카드까지 전파된 경우를 필터링합니다.
+	 * ⭐ 버그 수정 (2025-11-24):
+	 * 태그나 내부 링크 클릭은 clickHandler에서 조기 필터링되므로
+	 * 이 메서드는 실제 카드 클릭만 처리합니다.
 	 *
 	 * @param e - 마우스 이벤트
 	 * @param file - 클릭된 파일
@@ -286,17 +296,6 @@ export class ViewEventHandler {
 				hasModifierKey: e.ctrlKey || e.metaKey || e.shiftKey,
 				timestamp: Date.now()
 			});
-
-			// ⭐ 버그 수정: 태그나 내부 링크 클릭은 무시
-			// 이벤트가 버블링되어 카드까지 전파된 경우를 필터링
-			const target = e.target as HTMLElement;
-			if (target.classList.contains('tag-link') ||
-				target.classList.contains('internal-link')) {
-				this.logger.debug('Event', '클릭 무시: 태그 또는 링크 클릭', {
-					className: target.className
-				});
-				return;
-			}
 
 			e.preventDefault();
 			e.stopPropagation();

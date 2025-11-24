@@ -118,6 +118,10 @@ export class CardFactory {
 				this.rebindHoverActions(card, file);
 			}
 
+			// ⭐ 버그 수정 (2025-11-24): 태그/링크 이벤트 재바인딩
+			// cloneNode는 이벤트 리스너를 복사하지 않으므로 태그/링크 클릭 핸들러도 다시 설정해야 함
+			this.renderer.setupLinkHandlers(card);
+
 			// ⭐ 컨테이너에 카드 추가 (캐시 미스 경로와 동일하게)
 			container.appendChild(card);
 
