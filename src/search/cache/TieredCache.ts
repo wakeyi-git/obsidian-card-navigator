@@ -73,7 +73,12 @@ export class TieredCache {
 			}
 
 			// L2 히트 시 L1에도 추가 (Hot으로 승격)
-			this.hotCache.set(key, l2Result, new Set(l2Result.map(f => f.path)));
+			// affectedFiles에 검색 대상 파일도 포함 (빈 결과일 때도 무효화되도록)
+			const affectedFiles = new Set(l2Result.map(f => f.path));
+			if (files) {
+				files.forEach(f => affectedFiles.add(f.path));
+			}
+			this.hotCache.set(key, l2Result, affectedFiles);
 			return l2Result;
 		}
 
@@ -88,7 +93,10 @@ export class TieredCache {
 				}
 
 				// L3 히트 시 L1에 추가
-				this.hotCache.set(key, l3Result, new Set(l3Result.map(f => f.path)));
+				// affectedFiles에 검색 대상 파일도 포함 (빈 결과일 때도 무효화되도록)
+				const affectedFiles = new Set(l3Result.map(f => f.path));
+				files.forEach(f => affectedFiles.add(f.path));
+				this.hotCache.set(key, l3Result, affectedFiles);
 				return l3Result;
 			}
 		}
