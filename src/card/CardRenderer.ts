@@ -502,14 +502,10 @@ export class CardRenderer {
             sectionEl.addClass('markdown-preview-section');
             sectionEl.addClass('markdown-rendered');
 
-            // ⭐ 마크다운 렌더링을 requestAnimationFrame으로 분산 (reflow 방지)
-            // setTimeout보다 브라우저 렌더링 사이클에 최적화됨
+            // 마크다운 렌더링을 완료할 때까지 대기
             const content = section.content;
-            requestAnimationFrame(() => {
-                this.renderMarkdown(content, sectionEl, sourcePath).then(() => {
-                    sectionEl.addClass('card-markdown-content');
-                });
-            });
+            await this.renderMarkdown(content, sectionEl, sourcePath);
+            sectionEl.addClass('card-markdown-content');
 
             this.logger.debug('Card', t().debug.card.markdownRenderingComplete, {
                 sectionType: section.type,

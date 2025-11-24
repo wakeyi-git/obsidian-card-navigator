@@ -1,3 +1,19 @@
+## [1.5.2] - 2025-11-24
+
+### Fixed
+
+#### Markdown HTML Rendering
+- **Initial Render Stability**: Fixed inconsistent markdown rendering on initial load
+  - Markdown HTML mode now properly waits for rendering to complete before displaying cards
+  - Resolved timing issue where complex content (images, embeds, formulas) wouldn't render on first load
+  - Eliminated race condition between card display and markdown rendering completion
+  - Related files: [CardRenderer.ts](src/card/CardRenderer.ts)
+
+### Technical Details
+- Changed from `requestAnimationFrame` async scheduling to proper `await` for markdown rendering
+- Ensures markdown rendering completes before cards are added to DOM
+- Particularly improves rendering stability for content-heavy notes with media and embeds
+
 ## [1.5.1] - 2025-11-24
 
 ### Added
