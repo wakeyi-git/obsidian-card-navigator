@@ -86,6 +86,13 @@ export class SearchEngine {
     }
 
     /**
+     * 캐시 크기 상세 정보를 반환합니다
+     */
+    get size() {
+        return this.searchCache.size;
+    }
+
+    /**
      * 캐시 통계를 반환합니다
      */
     getCacheStats() {

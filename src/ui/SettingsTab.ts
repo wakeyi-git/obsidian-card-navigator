@@ -7,6 +7,7 @@ import { SortSettings } from './settings/SortSettings';
 import { PresetSettings } from './settings/PresetSettings';
 import { InteractiveCardSettings } from './settings/InteractiveCardSettings';
 import { getAvailableLanguages, getLanguageDisplayName, getLanguage, setLanguageAsync, type LanguageSetting, t } from '../i18n';
+import { CardNavigatorView } from '../view';
 
 /**
  * 설정 탭 타입
@@ -640,6 +641,92 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.incrementalRenderChunkSize = value;
                     await this.plugin.saveSettings();
+                })
+            );
+
+        // 캐시 통계
+        this.addCacheStatistics(containerEl);
+    }
+
+    /**
+     * 캐시 통계를 추가합니다
+     */
+    private addCacheStatistics(containerEl: HTMLElement): void {
+        // 섹션 헤더
+        new Setting(containerEl)
+            .setHeading()
+            .setName('Search Cache Statistics');
+
+        // 통계 컨테이너
+        const statsContainer = containerEl.createDiv({ cls: 'cache-stats-container' });
+        statsContainer.style.padding = '10px';
+        statsContainer.style.backgroundColor = 'var(--background-secondary)';
+        statsContainer.style.borderRadius = '6px';
+        statsContainer.style.marginBottom = '20px';
+
+        // 활성 뷰 가져오기
+        const activeView = this.app.workspace.getActiveViewOfType(CardNavigatorView);
+
+        if (!activeView) {
+            statsContainer.createEl('p', {
+                text: 'Open Card Navigator view to see cache statistics',
+                cls: 'setting-item-description'
+            });
+            return;
+        }
+
+        // 캐시 통계 가져오기
+        const stats = activeView.searchEngine?.getCacheStats();
+        const cacheSize = activeView.searchEngine?.size;
+
+        if (!stats || !cacheSize) {
+            statsContainer.createEl('p', {
+                text: 'Cache statistics not available',
+                cls: 'setting-item-description'
+            });
+            return;
+        }
+
+        // 통계 표시
+        const createStatRow = (label: string, value: string | number) => {
+            const row = statsContainer.createDiv({ cls: 'cache-stat-row' });
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.padding = '4px 0';
+
+            row.createEl('span', { text: label, cls: 'cache-stat-label' });
+            row.createEl('strong', { text: String(value), cls: 'cache-stat-value' });
+        };
+
+        createStatRow('Total Requests', stats.totalRequests);
+        createStatRow('Cache Hit Rate', `${(stats.hitRate * 100).toFixed(1)}%`);
+
+        statsContainer.createEl('div', { cls: 'cache-stat-divider' })
+            .style.borderTop = '1px solid var(--background-modifier-border)';
+
+        createStatRow('L1 Hits (Hot)', stats.l1Hits);
+        createStatRow('L2 Hits (Warm)', stats.l2Hits);
+        createStatRow('L3 Hits (Cold)', stats.l3Hits);
+        createStatRow('Cache Misses', stats.misses);
+
+        statsContainer.createEl('div', { cls: 'cache-stat-divider' })
+            .style.borderTop = '1px solid var(--background-modifier-border)';
+
+        createStatRow('L1 Cache Size', `${cacheSize.l1} / 10`);
+        createStatRow('L2 Cache Size', `${cacheSize.l2} / 40`);
+        createStatRow('Total Cache Size', `${cacheSize.total} / 50`);
+
+        // 캐시 클리어 버튼
+        new Setting(containerEl)
+            .setName('Clear Search Cache')
+            .setDesc('Clear all cached search results. This will reset cache statistics.')
+            .addButton(button => button
+                .setButtonText('Clear Cache')
+                .onClick(() => {
+                    activeView.searchEngine?.clearCache();
+                    new Notice('Search cache cleared');
+                    // UI 새로고침
+                    this.display();
                 })
             );
     }

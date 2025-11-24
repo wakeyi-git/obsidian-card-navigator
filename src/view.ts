@@ -79,7 +79,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 	private layoutManager: LayoutManager | null = null;
 	private keyboardNavigator: KeyboardNavigator;
 	private scrollManager: ScrollManager;
-	private searchEngine: SearchEngine;
+	public searchEngine: SearchEngine;
 	private searchInput: SearchInput | null = null;
 	public folderMode: FolderMode;
 	public tagMode: TagMode;
