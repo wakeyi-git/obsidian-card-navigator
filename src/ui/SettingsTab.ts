@@ -667,7 +667,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         statsContainer.style.marginBottom = '20px';
 
         // ⭐ Fix: Check all leaves of CardNavigatorView type, not just active view
-        const leaves = this.app.workspace.getLeavesOfType('card-navigator');
+        const leaves = this.app.workspace.getLeavesOfType('card-navigator-view');
         const viewLeaf = leaves.length > 0 ? leaves[0] : null;
         const view = viewLeaf ? (viewLeaf.view as CardNavigatorView) : null;
 
