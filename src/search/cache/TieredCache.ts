@@ -55,7 +55,9 @@ export class TieredCache {
 		if (l1Result !== undefined) {
 			this.stats.l1Hits++;
 			this.updateHitRate();
-			this.logger.debug('Cache', `L1 Hit: ${key}`);
+			if (this.logger.debug) {
+				this.logger.debug('Cache', `L1 Hit: ${key}`);
+			}
 			return l1Result;
 		}
 
@@ -64,7 +66,9 @@ export class TieredCache {
 		if (l2Result !== undefined) {
 			this.stats.l2Hits++;
 			this.updateHitRate();
-			this.logger.debug('Cache', `L2 Hit: ${key}`);
+			if (this.logger.debug) {
+				this.logger.debug('Cache', `L2 Hit: ${key}`);
+			}
 
 			// L2 히트 시 L1에도 추가 (Hot으로 승격)
 			this.hotCache.set(key, l2Result, new Set(l2Result.map(f => f.path)));
@@ -77,7 +81,9 @@ export class TieredCache {
 			if (l3Result !== undefined) {
 				this.stats.l3Hits++;
 				this.updateHitRate();
-				this.logger.debug('Cache', `L3 Hit: ${key}`);
+				if (this.logger.debug) {
+					this.logger.debug('Cache', `L3 Hit: ${key}`);
+				}
 
 				// L3 히트 시 L1에 추가
 				this.hotCache.set(key, l3Result, new Set(l3Result.map(f => f.path)));
@@ -113,9 +119,11 @@ export class TieredCache {
 		const l1Count = this.hotCache.invalidate(filePath);
 		const l2Count = this.warmCache.invalidate(filePath);
 
-		this.logger.debug('Cache', `캐시 무효화: L1=${l1Count}, L2=${l2Count}`, {
-			file: filePath
-		});
+		if (this.logger.debug) {
+			this.logger.debug('Cache', `캐시 무효화: L1=${l1Count}, L2=${l2Count}`, {
+				file: filePath
+			});
+		}
 	}
 
 	/**
@@ -166,7 +174,9 @@ export class TieredCache {
 			const candidates = this.hotCache.getPromotionCandidates(3);
 			for (const entry of candidates) {
 				this.warmCache.set(entry.key, entry.value, entry.affectedFiles);
-				this.logger.debug('Cache', `L1 → L2 승격: ${entry.key} (hitCount: ${entry.hitCount})`);
+				if (this.logger.debug) {
+					this.logger.debug('Cache', `L1 → L2 승격: ${entry.key} (hitCount: ${entry.hitCount})`);
+				}
 			}
 		}, 30000); // 30초마다
 	}

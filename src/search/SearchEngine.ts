@@ -2,36 +2,33 @@ import { TFile, App } from 'obsidian';
 import { SearchQuery, ParsedQuery, CardNavigatorSettings } from '../types';
 import { SearchParser } from './SearchParser';
 import { PaginatedSearchResult } from './PaginatedSearchResult';
-import { LRUCache } from '../utils/memoize';
+import { TieredCache } from './cache/TieredCache';
 import { DebugLogger } from '../utils/DebugLogger';
 import { t } from '../i18n';
 import { fuzzyMatch } from '../utils/fuzzyMatch';
 
 /**
  * 검색 엔진
- * 
+ *
  * 파일명, 경로, 본문, 메타데이터를 검색하고 고급 검색 옵션을 제공합니다.
- * 
+ *
  * @remarks
- * 검색 결과는 LRU 캐시에 저장되며, 파일 변경 시 자동으로 무효화됩니다.
+ * 검색 결과는 3단계 캐시(L1/L2/L3)에 저장되며, 파일 변경 시 자동으로 무효화됩니다.
  * 정규식 검색과 고급 검색(path:, tag:, line: 등)을 지원합니다.
  */
 export class SearchEngine {
     private app: App;
     private logger: DebugLogger;
     private parser: SearchParser;
-    private searchCache: LRUCache<string, TFile[]>;
+    private searchCache: TieredCache;
     private getSettings: () => CardNavigatorSettings;
-
-    /** ⭐ 캐시 엔트리별로 영향받는 파일 경로 추적 */
-    private cacheAffectedFiles = new Map<string, Set<string>>();
 
     constructor(app: App, logger: DebugLogger, getSettings: () => CardNavigatorSettings) {
         this.app = app;
         this.logger = logger;
         this.getSettings = getSettings;
         this.parser = new SearchParser();
-        this.searchCache = new LRUCache<string, TFile[]>(50);
+        this.searchCache = new TieredCache(app, logger);
         this.setupCacheInvalidation();
     }
 
@@ -71,37 +68,35 @@ export class SearchEngine {
      * @param file - 변경된 파일
      */
     private invalidateCacheForFile(file: TFile): void {
-        let invalidatedCount = 0;
-
-        // 변경된 파일을 포함하는 캐시 항목 찾기
-        for (const [cacheKey, affectedFiles] of this.cacheAffectedFiles.entries()) {
-            if (affectedFiles.has(file.path)) {
-                this.searchCache.delete(cacheKey);
-                this.cacheAffectedFiles.delete(cacheKey);
-                invalidatedCount++;
-            }
-        }
-
-        if (invalidatedCount > 0) {
-            this.logger.debug('Search', `선택적 캐시 무효화: ${invalidatedCount}개 항목 삭제`, {
-                file: file.path
-            });
-        }
+        this.searchCache.invalidate(file.path);
     }
-    
+
     /**
      * 검색 캐시를 지웁니다
      */
     clearCache(): void {
         this.searchCache.clear();
-        this.cacheAffectedFiles.clear();
     }
-    
+
     /**
      * 캐시 크기를 반환합니다 (테스트용)
      */
     getCacheSize(): number {
-        return this.searchCache.size;
+        return this.searchCache.size.total;
+    }
+
+    /**
+     * 캐시 통계를 반환합니다
+     */
+    getCacheStats() {
+        return this.searchCache.getStats();
+    }
+
+    /**
+     * 리소스 정리 (플러그인 언로드 시 호출)
+     */
+    destroy(): void {
+        this.searchCache.destroy();
     }
     
     private generateSearchCacheKey(
@@ -170,51 +165,57 @@ export class SearchEngine {
      *
      * @remarks
      * 파일 본문을 직접 읽어서 검색하므로 동기 버전보다 정확하지만 느립니다.
-     * 검색 결과는 캐시에 저장되어 재사용됩니다.
+     * 검색 결과는 3단계 캐시에 저장되어 재사용됩니다.
      */
     async search(query: string, files: TFile[], caseSensitive: boolean = false): Promise<TFile[]> {
         if (!query || query.trim() === '') {
             return files;
         }
-        
+
         const cacheKey = this.generateSearchCacheKey(query, files, caseSensitive);
-        const cached = this.searchCache.get(cacheKey);
-        
+
+        // L3 캐시를 위한 SearchQuery 추출 (고급 검색인 경우)
+        let searchQuery: SearchQuery | undefined;
+        if (this.parser.isAdvancedSearch(query)) {
+            const parsed = this.parser.parse(query);
+            // 단순 검색 쿼리인 경우에만 L3 캐시 사용
+            if (parsed.type === 'search' && parsed.search) {
+                searchQuery = parsed.search;
+            }
+        }
+
+        // 캐시 조회 (L1 → L2 → L3)
+        const cached = this.searchCache.get(cacheKey, searchQuery, files);
         if (cached !== undefined) {
             return cached;
         }
-        
+
+        // 캐시 미스 - 실제 검색 실행
+        let results: TFile[];
+
         if (this.isRegexQuery(query)) {
             try {
-                return await this.searchWithRegex(query, files);
+                results = await this.searchWithRegex(query, files);
             } catch (error) {
                 this.logger.error('Search', t().searchEngine.regexError, error);
-                this.searchCache.set(cacheKey, []);
-                return [];
+                results = [];
             }
-        }
-        
-        if (this.parser.isAdvancedSearch(query)) {
-            const results = await this.advancedSearch(query, files, caseSensitive);
-            this.searchCache.set(cacheKey, results);
-            // ⭐ 영향받는 파일 경로 저장
-            this.cacheAffectedFiles.set(cacheKey, new Set(results.map(f => f.path)));
-            return results;
-        }
+        } else if (this.parser.isAdvancedSearch(query)) {
+            results = await this.advancedSearch(query, files, caseSensitive);
+        } else {
+            const searchQueryStr = caseSensitive ? query : query.toLowerCase();
+            results = [];
 
-        const searchQuery = caseSensitive ? query : query.toLowerCase();
-        const results: TFile[] = [];
-
-        for (const file of files) {
-            const found = await this.searchInFileAsync(searchQuery, file, caseSensitive);
-            if (found) {
-                results.push(file);
+            for (const file of files) {
+                const found = await this.searchInFileAsync(searchQueryStr, file, caseSensitive);
+                if (found) {
+                    results.push(file);
+                }
             }
         }
 
+        // 결과를 캐시에 저장
         this.searchCache.set(cacheKey, results);
-        // ⭐ 영향받는 파일 경로 저장
-        this.cacheAffectedFiles.set(cacheKey, new Set(results.map(f => f.path)));
         return results;
     }
     
