@@ -6,6 +6,8 @@ import { TieredCache } from './cache/TieredCache';
 import { DebugLogger } from '../utils/DebugLogger';
 import { t } from '../i18n';
 import { fuzzyMatch } from '../utils/fuzzyMatch';
+import { SearchStrategy } from './strategies/types';
+import { PathSearchStrategy } from './strategies/PathSearchStrategy';
 
 /**
  * 검색 엔진
@@ -23,13 +25,42 @@ export class SearchEngine {
     private searchCache: TieredCache;
     private getSettings: () => CardNavigatorSettings;
 
+    /** 검색 전략 레지스트리 */
+    private strategies: Map<string, SearchStrategy>;
+
     constructor(app: App, logger: DebugLogger, getSettings: () => CardNavigatorSettings) {
         this.app = app;
         this.logger = logger;
         this.getSettings = getSettings;
         this.parser = new SearchParser();
         this.searchCache = new TieredCache(app, logger);
+        this.strategies = new Map();
+
+        this.registerDefaultStrategies();
         this.setupCacheInvalidation();
+    }
+
+    /**
+     * 기본 검색 전략 등록
+     */
+    private registerDefaultStrategies(): void {
+        const config = {
+            app: this.app,
+            logger: this.logger,
+            getSettings: this.getSettings
+        };
+
+        this.registerStrategy('path', new PathSearchStrategy(config));
+    }
+
+    /**
+     * 커스텀 검색 전략 등록 (확장성)
+     *
+     * @param type - 검색 타입 (예: 'path', 'content', 'tag')
+     * @param strategy - 검색 전략 인스턴스
+     */
+    registerStrategy(type: string, strategy: SearchStrategy): void {
+        this.strategies.set(type, strategy);
     }
 
     /**
@@ -455,6 +486,12 @@ export class SearchEngine {
      * 검색 쿼리로 파일을 필터링합니다 (동기)
      */
     private filterByQuerySync(files: TFile[], query: SearchQuery, caseSensitive: boolean): TFile[] {
+        // 전략 패턴 사용 (Phase 1 - PathSearchStrategy)
+        const strategy = this.strategies.get(query.type);
+        if (strategy) {
+            return strategy.executeSync(query.value, files, caseSensitive);
+        }
+
         switch (query.type) {
             case 'path':
                 return this.filterByPath(files, query.value, caseSensitive);
@@ -507,6 +544,12 @@ export class SearchEngine {
      * 검색 쿼리로 파일을 필터링합니다 (비동기)
      */
     private async filterByQuery(files: TFile[], query: SearchQuery, caseSensitive: boolean): Promise<TFile[]> {
+        // 전략 패턴 사용 (Phase 1 - PathSearchStrategy)
+        const strategy = this.strategies.get(query.type);
+        if (strategy) {
+            return await strategy.executeAsync(query.value, files, caseSensitive);
+        }
+
         switch (query.type) {
             case 'path':
                 return this.filterByPath(files, query.value, caseSensitive);
