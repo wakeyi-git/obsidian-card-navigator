@@ -1,3 +1,52 @@
+## [1.5.0] - 2025-11-24
+
+### Added
+
+#### Search Highlight Feature
+- **Search Term Highlighting**: Added visual highlighting of search terms in card content
+  - Automatically highlights matching text in cards based on current search query
+  - Supports all search types: text, tag, path, content, file, line, section, property
+  - Supports Boolean operators (AND, OR) - extracts all search terms except NOT
+  - Theme-aware styling with distinct colors for light/dark modes
+  - Related files: [highlightUtils.ts](src/utils/highlightUtils.ts), [CardRenderer.ts](src/card/CardRenderer.ts), [styles.css](styles.css)
+
+- **Search Highlight Settings**: Added configurable options in Settings → "Search"
+  - **Enable Search Highlight**: Toggle to enable/disable search term highlighting (default: enabled)
+  - **Case Sensitive Search**: Toggle for case-sensitive search matching (default: disabled)
+  - Available in both Korean and English
+  - Related files: [SettingsTab.ts](src/ui/SettingsTab.ts), [types.ts](src/types.ts), [ko.ts](src/i18n/locales/ko.ts), [en.ts](src/i18n/locales/en.ts)
+
+- **Case Sensitive Toggle Button**: Added inline toggle button in search input field
+  - Clickable icon button positioned inside search input (right side)
+  - Uses Lucide `case-sensitive` icon with Obsidian standard `clickable-icon` style
+  - Active state shows accent color (icon color changes, no background)
+  - Automatically shifts left when clear button appears
+  - Smooth transition animation (0.2s ease)
+  - Instantly re-applies highlights when toggled
+  - Related files: [SearchInput.ts](src/search/SearchInput.ts), [styles.css](styles.css)
+
+### Fixed
+
+#### Search Highlight Rendering
+- **Cached Card Highlight Application**: Fixed highlighting not applied to cached cards
+  - Added `applyHighlight()` public method to CardRenderer
+  - CardFactory now applies highlights to cached cards after cloning
+  - Uses double `requestAnimationFrame` to ensure DOM is fully rendered before highlighting
+  - Related files: [CardRenderer.ts](src/card/CardRenderer.ts), [CardFactory.ts](src/view/CardFactory.ts)
+
+- **Regex Test Bug**: Fixed highlighting failure due to `regex.test()` side effects
+  - Replaced `test()` + `replace()` pattern with direct `replace()` comparison
+  - Prevents `lastIndex` corruption in regex matching
+  - Related file: [highlightUtils.ts](src/utils/highlightUtils.ts)
+
+### Improved
+
+#### User Experience
+- **Visual Search Feedback**: Instantly see what text matches your search query
+- **Flexible Search Options**: Toggle case sensitivity on-the-fly without opening settings
+- **Smooth Animations**: Clean transitions when buttons appear/disappear
+- **Consistent Highlighting**: Works reliably across all cards, including cached ones
+
 ## [1.4.9] - 2025-11-24
 
 ### Fixed

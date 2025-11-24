@@ -200,8 +200,13 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		this.searchInputContainer = header.createEl('div', {
 			cls: 'search-input-container-wrapper hidden'
 		});
-		
-		this.searchInput = new SearchInput(this.app, this.searchInputContainer);
+
+		this.searchInput = new SearchInput(
+			this.app,
+			this.searchInputContainer,
+			this.plugin.settings,
+			async () => await this.plugin.saveSettings()
+		);
 		this.searchInput.render();
 		
 		if (this.toolbar) {

@@ -1,16 +1,17 @@
-import { App } from 'obsidian';
+import { App, setIcon } from 'obsidian';
 import { SearchSuggest } from './SearchSuggest';
 import { debounce } from '../utils/performance';
 import { TIMING } from '../constants';
+import { CardNavigatorSettings } from '../types';
 
 /**
  * 검색 입력 필드 관리자
- * 
+ *
  * 검색 입력 필드 생성, 디바운싱, 자동완성을 제공합니다.
- * 
+ *
  * @example
  * ```typescript
- * const searchInput = new SearchInput(app, containerEl);
+ * const searchInput = new SearchInput(app, containerEl, settings, saveSettings);
  * searchInput.render();
  * searchInput.onInput((query) => console.log(query));
  * ```
@@ -20,13 +21,23 @@ export class SearchInput {
     private containerEl: HTMLElement;
     private inputEl: HTMLInputElement | null = null;
     private clearButtonEl: HTMLElement | null = null;
+    private caseSensitiveToggleEl: HTMLElement | null = null;
     private onInputCallback: ((query: string) => void) | null = null;
     private searchSuggest: SearchSuggest | null = null;
     private debouncedCallback: ((value: string) => void) | null = null;
-    
-    constructor(app: App, containerEl: HTMLElement) {
+    private settings: CardNavigatorSettings;
+    private saveSettings: () => Promise<void>;
+
+    constructor(
+        app: App,
+        containerEl: HTMLElement,
+        settings: CardNavigatorSettings,
+        saveSettings: () => Promise<void>
+    ) {
         this.app = app;
         this.containerEl = containerEl;
+        this.settings = settings;
+        this.saveSettings = saveSettings;
     }
     
     /**
@@ -36,7 +47,7 @@ export class SearchInput {
         const searchContainer = this.containerEl.createEl('div', {
             cls: 'search-input-container'
         });
-        
+
         this.inputEl = searchContainer.createEl('input', {
             cls: 'search-input',
             attr: {
@@ -44,18 +55,29 @@ export class SearchInput {
                 placeholder: 'Search cards...'
             }
         }) as HTMLInputElement;
-        
+
         this.searchSuggest = new SearchSuggest(this.app, this.inputEl);
-        
+
+        // 대소문자 구분 토글 버튼 (Obsidian 표준 clickable-icon 스타일)
+        this.caseSensitiveToggleEl = searchContainer.createEl('div', {
+            cls: 'clickable-icon search-input-case-sensitive-toggle',
+            attr: {
+                'aria-label': 'Toggle case sensitive search'
+            }
+        });
+
+        setIcon(this.caseSensitiveToggleEl, 'case-sensitive');
+        this.updateCaseSensitiveIcon();
+
         this.clearButtonEl = searchContainer.createEl('div', {
             cls: 'search-input-clear-button',
             attr: {
                 'aria-label': 'Clear search'
             }
         });
-        
+
         this.clearButtonEl.style.display = 'none';
-        
+
         this.setupEventListeners();
     }
     
@@ -63,33 +85,65 @@ export class SearchInput {
      * 이벤트 리스너를 설정합니다
      */
     private setupEventListeners(): void {
-        if (!this.inputEl || !this.clearButtonEl) {
+        if (!this.inputEl || !this.clearButtonEl || !this.caseSensitiveToggleEl) {
             return;
         }
-        
+
         this.inputEl.addEventListener('input', (e) => {
             const target = e.target as HTMLInputElement;
             const value = target.value;
-            
-            if (this.clearButtonEl) {
-                this.clearButtonEl.style.display = value ? 'flex' : 'none';
+
+            if (this.clearButtonEl && this.caseSensitiveToggleEl) {
+                if (value) {
+                    this.clearButtonEl.style.display = 'flex';
+                    this.caseSensitiveToggleEl.classList.add('shifted');
+                } else {
+                    this.clearButtonEl.style.display = 'none';
+                    this.caseSensitiveToggleEl.classList.remove('shifted');
+                }
             }
-            
+
             if (this.debouncedCallback) {
                 this.debouncedCallback(value);
             }
         });
-        
+
         this.clearButtonEl.addEventListener('click', () => {
             this.clear();
         });
-        
+
+        this.caseSensitiveToggleEl.addEventListener('click', async () => {
+            this.settings.caseSensitiveSearch = !this.settings.caseSensitiveSearch;
+            await this.saveSettings();
+            this.updateCaseSensitiveIcon();
+
+            // 검색어가 있으면 즉시 재검색
+            if (this.inputEl && this.inputEl.value && this.onInputCallback) {
+                this.onInputCallback(this.inputEl.value);
+            }
+        });
+
         this.inputEl.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.clear();
                 e.preventDefault();
             }
         });
+    }
+
+    /**
+     * 대소문자 구분 아이콘 상태를 업데이트합니다
+     */
+    private updateCaseSensitiveIcon(): void {
+        if (!this.caseSensitiveToggleEl) {
+            return;
+        }
+
+        if (this.settings.caseSensitiveSearch) {
+            this.caseSensitiveToggleEl.classList.add('is-active');
+        } else {
+            this.caseSensitiveToggleEl.classList.remove('is-active');
+        }
     }
     
     /**
@@ -108,11 +162,15 @@ export class SearchInput {
     clear(): void {
         if (this.inputEl) {
             this.inputEl.value = '';
-            
+
             if (this.clearButtonEl) {
                 this.clearButtonEl.style.display = 'none';
             }
-            
+
+            if (this.caseSensitiveToggleEl) {
+                this.caseSensitiveToggleEl.classList.remove('shifted');
+            }
+
             if (this.onInputCallback) {
                 this.onInputCallback('');
             }

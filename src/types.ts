@@ -498,6 +498,10 @@ export interface CardNavigatorSettings {
     enableFuzzySearch: boolean;
     /** 퍼지 검색 임계값 (0-1) */
     fuzzySearchThreshold: number;
+    /** 검색어 하이라이트 활성화 여부 */
+    enableSearchHighlight?: boolean;
+    /** 대소문자 구분 검색 */
+    caseSensitiveSearch?: boolean;
     /** 카드 호버 액션 활성화 여부 */
     enableCardHoverActions?: boolean;
     /** 핀된 파일 경로 목록 */
@@ -959,6 +963,8 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
     savedSearches: [],
     enableFuzzySearch: false,
     fuzzySearchThreshold: 0.3,
+    enableSearchHighlight: true,
+    caseSensitiveSearch: false,
     enableCardHoverActions: true,
     pinnedFiles: [],
     alwaysShowPinnedFiles: false,

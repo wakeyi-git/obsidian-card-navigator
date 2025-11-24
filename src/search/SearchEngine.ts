@@ -16,6 +16,11 @@ import { LineSearchStrategy } from './strategies/LineSearchStrategy';
 import { SectionSearchStrategy } from './strategies/SectionSearchStrategy';
 import { FileSearchStrategy } from './strategies/FileSearchStrategy';
 import { TaskSearchStrategy } from './strategies/TaskSearchStrategy';
+import { CreatedDateSearchStrategy } from './strategies/CreatedDateSearchStrategy';
+import { ModifiedDateSearchStrategy } from './strategies/ModifiedDateSearchStrategy';
+import { LinkSearchStrategy } from './strategies/LinkSearchStrategy';
+import { OutgoingLinkSearchStrategy } from './strategies/OutgoingLinkSearchStrategy';
+import { BlockSearchStrategy } from './strategies/BlockSearchStrategy';
 
 /**
  * 검색 엔진
@@ -72,12 +77,24 @@ export class SearchEngine {
             getSettings: this.getSettings
         };
 
+        // 기본 검색 전략
         this.registerStrategy('path', new PathSearchStrategy(config));
         this.registerStrategy('content', new ContentSearchStrategy(config));
         this.registerStrategy('tag', new TagSearchStrategy(config));
         this.registerStrategy('line', new LineSearchStrategy(config));
         this.registerStrategy('section', new SectionSearchStrategy(config));
         this.registerStrategy('file', new FileSearchStrategy(config));
+
+        // 날짜 검색 전략 (Phase 5)
+        this.registerStrategy('created', new CreatedDateSearchStrategy(config, this.parser));
+        this.registerStrategy('modified', new ModifiedDateSearchStrategy(config, this.parser));
+
+        // 링크 검색 전략 (Phase 5)
+        this.registerStrategy('link', new LinkSearchStrategy(config));
+        this.registerStrategy('outgoing-link', new OutgoingLinkSearchStrategy(config));
+
+        // 블록 검색 전략 (Phase 5)
+        this.registerStrategy('block', new BlockSearchStrategy(config));
     }
 
     /**
@@ -481,372 +498,88 @@ export class SearchEngine {
     
     /**
      * 검색 쿼리로 파일을 필터링합니다 (동기)
+     *
+     * @remarks
+     * Strategy Pattern을 사용하여 각 검색 타입을 처리합니다 (Phase 4)
      */
     private filterByQuerySync(files: TFile[], query: SearchQuery, caseSensitive: boolean): TFile[] {
-        // 전략 패턴 사용 (Phase 1 - PathSearchStrategy)
+        // 전략 패턴 사용 - 대부분의 검색 타입
         const strategy = this.strategies.get(query.type);
         if (strategy) {
             return strategy.executeSync(query.value, files, caseSensitive);
         }
 
-        switch (query.type) {
-            case 'path':
-                return this.filterByPath(files, query.value, caseSensitive);
-
-            case 'file':
-                return this.filterByFile(files, query.value, caseSensitive);
-
-            case 'tag':
-                return this.filterByTag(files, query.value);
-
-            case 'line':
-                this.logger.warn('Search', t().searchEngine.lineSearchUnsupported);
-                return files;
-
-            case 'section':
-                return this.filterBySection(files, query.value, caseSensitive);
-
-            case 'property':
-                return this.filterByProperty(files, query.propertyName!, query.value, caseSensitive);
-
-            case 'created':
-                return this.filterByCreatedDate(files, query.value);
-
-            case 'modified':
-                return this.filterByModifiedDate(files, query.value);
-
-            case 'task':
-            case 'task-todo':
-            case 'task-done':
-            case 'block':
-            case 'content':
-                this.logger.warn('Search', t().searchEngine.unsupportedSearchType(query.type));
-                return files;
-
-            case 'link':
-                return this.filterByLink(files, query.value);
-
-            case 'outgoing-link':
-                return this.filterByOutgoingLink(files, query.value);
-
-            case 'text':
-            default: {
-                const searchQuery = caseSensitive ? query.value : query.value.toLowerCase();
-                return files.filter(file => this.searchInFile(searchQuery, file, caseSensitive));
-            }
+        // 특수 케이스: property는 propertyName이 필요함
+        if (query.type === 'property') {
+            return this.filterByProperty(files, query.propertyName!, query.value, caseSensitive);
         }
+
+        // 비동기 검색이 필요한 타입들 (동기 버전에서는 경고)
+        if (query.type === 'task' || query.type === 'task-todo' || query.type === 'task-done') {
+            this.logger.warn('Search', t().searchEngine.unsupportedSearchType(query.type));
+            return files;
+        }
+
+        // 기본 텍스트 검색
+        if (query.type === 'text') {
+            const searchQuery = caseSensitive ? query.value : query.value.toLowerCase();
+            return files.filter(file => this.searchInFile(searchQuery, file, caseSensitive));
+        }
+
+        // 알 수 없는 검색 타입
+        this.logger.warn('Search', `Unknown search type: ${query.type}`);
+        return files;
     }
     
     /**
      * 검색 쿼리로 파일을 필터링합니다 (비동기)
+     *
+     * @remarks
+     * Strategy Pattern을 사용하여 각 검색 타입을 처리합니다 (Phase 4)
      */
     private async filterByQuery(files: TFile[], query: SearchQuery, caseSensitive: boolean): Promise<TFile[]> {
-        // 전략 패턴 사용 (Phase 1 - PathSearchStrategy)
+        // 전략 패턴 사용 - 대부분의 검색 타입
         const strategy = this.strategies.get(query.type);
         if (strategy) {
             return await strategy.executeAsync(query.value, files, caseSensitive);
         }
 
-        switch (query.type) {
-            case 'path':
-                return this.filterByPath(files, query.value, caseSensitive);
-
-            case 'file':
-                return this.filterByFile(files, query.value, caseSensitive);
-
-            case 'tag':
-                return this.filterByTag(files, query.value);
-
-            case 'line':
-                return await this.filterByLine(files, query.value, caseSensitive);
-
-            case 'section':
-                return this.filterBySection(files, query.value, caseSensitive);
-
-            case 'property':
-                return this.filterByProperty(files, query.propertyName!, query.value, caseSensitive);
-
-            case 'created':
-                return this.filterByCreatedDate(files, query.value);
-
-            case 'modified':
-                return this.filterByModifiedDate(files, query.value);
-
-            case 'task':
-                return await this.filterByTask(files, query.value, 'all', caseSensitive);
-
-            case 'task-todo':
-                return await this.filterByTask(files, query.value, 'todo', caseSensitive);
-
-            case 'task-done':
-                return await this.filterByTask(files, query.value, 'done', caseSensitive);
-
-            case 'block':
-                return await this.filterByBlock(files, query.value, caseSensitive);
-
-            case 'content':
-                return await this.filterByContent(files, query.value, caseSensitive);
-
-            case 'link':
-                return this.filterByLink(files, query.value);
-
-            case 'outgoing-link':
-                return this.filterByOutgoingLink(files, query.value);
-
-            case 'text':
-            default: {
-                const searchQuery = caseSensitive ? query.value : query.value.toLowerCase();
-                const results: TFile[] = [];
-
-                for (const file of files) {
-                    const found = await this.searchInFileAsync(searchQuery, file, caseSensitive);
-                    if (found) {
-                        results.push(file);
-                    }
-                }
-
-                return results;
-            }
-        }
-    }
-    
-    /**
-     * 경로로 파일을 필터링합니다
-     *
-     * @param files - 필터링할 파일 목록
-     * @param path - 검색할 폴더 경로 (Wildcard * 와 ? 지원)
-     * @param caseSensitive - 대소문자 구분 여부
-     * @returns 필터링된 파일
-     *
-     * @remarks
-     * - 파일의 폴더 경로만 검색하며 파일명은 제외됩니다
-     * - Wildcard: * (0개 이상 문자), ? (정확히 1개 문자)
-     * - 퍼지 검색이 활성화된 경우 유사한 경로도 매칭합니다
-     */
-    private filterByPath(files: TFile[], path: string, caseSensitive: boolean): TFile[] {
-        // Wildcard 포함 여부 확인
-        if (this.hasWildcard(path)) {
-            const regex = this.wildcardToRegex(path, caseSensitive);
-            return files.filter(file => {
-                const folderPath = file.parent?.path || '';
-                return regex.test(folderPath);
-            });
+        // 특수 케이스: property는 propertyName이 필요함
+        if (query.type === 'property') {
+            return this.filterByProperty(files, query.propertyName!, query.value, caseSensitive);
         }
 
-        const settings = this.getSettings();
-        const useFuzzy = settings.enableFuzzySearch;
-        const fuzzyThreshold = settings.fuzzySearchThreshold;
-        const searchPath = caseSensitive ? path : path.toLowerCase();
-
-        return files.filter(file => {
-            const folderPath = file.parent?.path || '';
-            const comparePath = caseSensitive ? folderPath : folderPath.toLowerCase();
-
-            if (useFuzzy) {
-                const match = fuzzyMatch(searchPath, comparePath, {
-                    caseSensitive,
-                    threshold: fuzzyThreshold
-                });
-                return match.matched;
-            } else {
-                return comparePath.includes(searchPath);
-            }
-        });
-    }
-    
-    /**
-     * 파일명으로 파일을 필터링합니다
-     *
-     * @param files - 필터링할 파일 목록
-     * @param filename - 검색할 파일명 (Wildcard * 와 ? 지원)
-     * @param caseSensitive - 대소문자 구분 여부
-     * @returns 필터링된 파일
-     *
-     * @remarks
-     * - Wildcard: * (0개 이상 문자), ? (정확히 1개 문자)
-     * - 퍼지 검색이 활성화된 경우 유사한 파일명도 매칭합니다
-     */
-    private filterByFile(files: TFile[], filename: string, caseSensitive: boolean): TFile[] {
-        // Wildcard 포함 여부 확인
-        if (this.hasWildcard(filename)) {
-            const regex = this.wildcardToRegex(filename, caseSensitive);
-            return files.filter(file => regex.test(file.basename));
+        // 특수 케이스: task는 status가 필요함
+        if (query.type === 'task') {
+            return await this.filterByTask(files, query.value, 'all', caseSensitive);
+        }
+        if (query.type === 'task-todo') {
+            return await this.filterByTask(files, query.value, 'todo', caseSensitive);
+        }
+        if (query.type === 'task-done') {
+            return await this.filterByTask(files, query.value, 'done', caseSensitive);
         }
 
-        const settings = this.getSettings();
-        const useFuzzy = settings.enableFuzzySearch;
-        const fuzzyThreshold = settings.fuzzySearchThreshold;
-        const searchFilename = caseSensitive ? filename : filename.toLowerCase();
+        // 기본 텍스트 검색
+        if (query.type === 'text') {
+            const searchQuery = caseSensitive ? query.value : query.value.toLowerCase();
+            const results: TFile[] = [];
 
-        return files.filter(file => {
-            const basename = caseSensitive ? file.basename : file.basename.toLowerCase();
-
-            if (useFuzzy) {
-                const match = fuzzyMatch(searchFilename, basename, {
-                    caseSensitive,
-                    threshold: fuzzyThreshold
-                });
-                return match.matched;
-            } else {
-                return basename.includes(searchFilename);
-            }
-        });
-    }
-    
-    /**
-     * 태그로 파일을 필터링합니다
-     *
-     * @remarks
-     * 프론트매터 태그와 인라인 태그를 모두 검색합니다.
-     * 퍼지 검색이 활성화된 경우 유사한 태그도 매칭합니다.
-     */
-    private filterByTag(files: TFile[], tag: string): TFile[] {
-        const settings = this.getSettings();
-        const useFuzzy = settings.enableFuzzySearch;
-        const fuzzyThreshold = settings.fuzzySearchThreshold;
-
-        return files.filter(file => {
-            // 에러 핸들링
-            let cache;
-            try {
-                cache = this.app.metadataCache.getFileCache(file);
-            } catch (error) {
-                this.logger.error('Search', t().searchEngine.cacheAccessError, { path: file.path, error });
-                return false;
-            }
-            if (!cache) return false;
-
-            const frontmatterTags = cache.frontmatter?.tags ?? [];
-            if (Array.isArray(frontmatterTags)) {
-                if (frontmatterTags.some(t => {
-                    const tagStr = String(t);
-                    if (useFuzzy) {
-                        // Try matching with and without #
-                        const match1 = fuzzyMatch(tag, tagStr, {
-                            caseSensitive: false,
-                            threshold: fuzzyThreshold
-                        });
-                        const match2 = fuzzyMatch(tag.substring(1), tagStr, {
-                            caseSensitive: false,
-                            threshold: fuzzyThreshold
-                        });
-                        return match1.matched || match2.matched;
-                    } else {
-                        return tagStr === tag || tagStr === tag.substring(1);
-                    }
-                })) {
-                    return true;
-                }
-            } else if (typeof frontmatterTags === 'string') {
-                if (useFuzzy) {
-                    const match1 = fuzzyMatch(tag, frontmatterTags, {
-                        caseSensitive: false,
-                        threshold: fuzzyThreshold
-                    });
-                    const match2 = fuzzyMatch(tag.substring(1), frontmatterTags, {
-                        caseSensitive: false,
-                        threshold: fuzzyThreshold
-                    });
-                    if (match1.matched || match2.matched) {
-                        return true;
-                    }
-                } else {
-                    if (frontmatterTags === tag || frontmatterTags === tag.substring(1)) {
-                        return true;
-                    }
-                }
-            }
-
-            if (cache.tags) {
-                return cache.tags.some(t => {
-                    if (useFuzzy) {
-                        const match = fuzzyMatch(tag, t.tag, {
-                            caseSensitive: false,
-                            threshold: fuzzyThreshold
-                        });
-                        return match.matched;
-                    } else {
-                        return t.tag === tag;
-                    }
-                });
-            }
-
-            return false;
-        });
-    }
-    
-    /**
-     * 라인 내용으로 파일을 필터링합니다
-     */
-    private async filterByLine(files: TFile[], lineContent: string, caseSensitive: boolean): Promise<TFile[]> {
-        const settings = this.getSettings();
-        const useFuzzy = settings.enableFuzzySearch;
-        const fuzzyThreshold = settings.fuzzySearchThreshold;
-        const results: TFile[] = [];
-        const searchContent = caseSensitive ? lineContent : lineContent.toLowerCase();
-
-        for (const file of files) {
-            try {
-                const content = await this.app.vault.read(file);
-                const lines = content.split('\n');
-
-                const found = lines.some(line => {
-                    const searchLine = caseSensitive ? line : line.toLowerCase();
-
-                    // 퍼지 검색 적용
-                    if (useFuzzy) {
-                        const match = fuzzyMatch(searchContent, searchLine, {
-                            caseSensitive,
-                            threshold: fuzzyThreshold
-                        });
-                        if (match.matched) return true;
-                    }
-
-                    return searchLine.includes(searchContent);
-                });
-
+            for (const file of files) {
+                const found = await this.searchInFileAsync(searchQuery, file, caseSensitive);
                 if (found) {
                     results.push(file);
                 }
-            } catch (error) {
-                this.logger.error('Search', t().searchEngine.lineSearchError, { path: file.path, error });
             }
+
+            return results;
         }
 
-        return results;
+        // 알 수 없는 검색 타입
+        this.logger.warn('Search', `Unknown search type: ${query.type}`);
+        return files;
     }
     
-    /**
-     * 섹션(헤더) 제목으로 파일을 필터링합니다
-     *
-     * @remarks
-     * 퍼지 검색이 활성화된 경우 유사한 헤더도 매칭합니다.
-     */
-    private filterBySection(files: TFile[], sectionTitle: string, caseSensitive: boolean): TFile[] {
-        const settings = this.getSettings();
-        const useFuzzy = settings.enableFuzzySearch;
-        const fuzzyThreshold = settings.fuzzySearchThreshold;
-        const searchTitle = caseSensitive ? sectionTitle : sectionTitle.toLowerCase();
-
-        return files.filter(file => {
-            const cache = this.app.metadataCache.getFileCache(file);
-            if (!cache?.headings) return false;
-
-            return cache.headings.some(heading => {
-                const headingText = caseSensitive ? heading.heading : heading.heading.toLowerCase();
-
-                if (useFuzzy) {
-                    const match = fuzzyMatch(searchTitle, headingText, {
-                        caseSensitive,
-                        threshold: fuzzyThreshold
-                    });
-                    return match.matched;
-                } else {
-                    return headingText.includes(searchTitle);
-                }
-            });
-        });
-    }
     
     /**
      * 프론트매터 속성으로 파일을 필터링합니다
@@ -858,60 +591,6 @@ export class SearchEngine {
         return this.propertyStrategy.filterByProperty(files, propertyName, propertyValue, caseSensitive);
     }
     
-    /**
-     * 생성일로 파일을 필터링합니다
-     * 
-     * @param dateStr - YYYY-MM-DD 또는 YYYY-MM-DD..YYYY-MM-DD (범위)
-     */
-    private filterByCreatedDate(files: TFile[], dateStr: string): TFile[] {
-        if (dateStr.includes('..')) {
-            const range = this.parser.parseDateRange(dateStr);
-            if (!range) return files;
-            
-            const [start, end] = range;
-            
-            return files.filter(file => {
-                const fileDate = new Date(file.stat.ctime);
-                return fileDate >= start && fileDate <= end;
-            });
-        }
-        
-        const date = this.parser.parseDate(dateStr);
-        if (!date) return files;
-        
-        return files.filter(file => {
-            const fileDate = new Date(file.stat.ctime);
-            return fileDate.toDateString() === date.toDateString();
-        });
-    }
-    
-    /**
-     * 수정일로 파일을 필터링합니다
-     *
-     * @param dateStr - YYYY-MM-DD 또는 YYYY-MM-DD..YYYY-MM-DD (범위)
-     */
-    private filterByModifiedDate(files: TFile[], dateStr: string): TFile[] {
-        if (dateStr.includes('..')) {
-            const range = this.parser.parseDateRange(dateStr);
-            if (!range) return files;
-
-            const [start, end] = range;
-
-            return files.filter(file => {
-                const fileDate = new Date(file.stat.mtime);
-                return fileDate >= start && fileDate <= end;
-            });
-        }
-
-        const date = this.parser.parseDate(dateStr);
-        if (!date) return files;
-
-        return files.filter(file => {
-            const fileDate = new Date(file.stat.mtime);
-            return fileDate.toDateString() === date.toDateString();
-        });
-    }
-
     /**
      * 태스크로 파일을 필터링합니다
      *
@@ -936,268 +615,6 @@ export class SearchEngine {
     }
 
 
-    /**
-     * 블록으로 파일을 필터링합니다
-     *
-     * @param files - 필터링할 파일 목록
-     * @param blockContent - 블록 내용 검색어
-     * @param caseSensitive - 대소문자 구분 여부
-     * @returns 필터링된 파일
-     *
-     * @remarks
-     * Obsidian의 블록 ID (^block-id) 기능을 활용합니다
-     */
-    private async filterByBlock(
-        files: TFile[],
-        blockContent: string,
-        caseSensitive: boolean
-    ): Promise<TFile[]> {
-        const settings = this.getSettings();
-        const useFuzzy = settings.enableFuzzySearch;
-        const fuzzyThreshold = settings.fuzzySearchThreshold;
-        const results: TFile[] = [];
-        const searchContent = caseSensitive ? blockContent : blockContent.toLowerCase();
-
-        for (const file of files) {
-            try {
-                const cache = this.app.metadataCache.getFileCache(file);
-
-                if (!cache?.blocks) continue;
-
-                const content = await this.app.vault.read(file);
-                const lines = content.split('\n');
-
-                for (const blockId in cache.blocks) {
-                    const block = cache.blocks[blockId];
-                    const lineIndex = block.position.start.line;
-
-                    if (lineIndex >= 0 && lineIndex < lines.length) {
-                        const blockLine = lines[lineIndex];
-                        const lineToSearch = caseSensitive ? blockLine : blockLine.toLowerCase();
-
-                        // blockContent가 비어있으면 모든 블록 매칭
-                        if (!blockContent || blockContent.trim() === '') {
-                            results.push(file);
-                            break;
-                        }
-
-                        // 퍼지 검색 적용
-                        if (useFuzzy) {
-                            const match = fuzzyMatch(searchContent, lineToSearch, {
-                                caseSensitive,
-                                threshold: fuzzyThreshold
-                            });
-                            if (match.matched) {
-                                results.push(file);
-                                break;
-                            }
-                        }
-
-                        if (lineToSearch.includes(searchContent)) {
-                            results.push(file);
-                            break;
-                        }
-                    }
-                }
-            } catch (error) {
-                this.logger.error('Search', t().searchEngine.blockSearchError, { path: file.path, error });
-            }
-        }
-
-        return results;
-    }
-
-    /**
-     * 본문 내용으로 파일을 필터링합니다
-     *
-     * @param files - 필터링할 파일 목록
-     * @param content - 검색할 내용
-     * @param caseSensitive - 대소문자 구분 여부
-     * @returns 필터링된 파일
-     *
-     * @remarks
-     * 프론트매터를 제외한 본문만 검색합니다
-     */
-    private async filterByContent(
-        files: TFile[],
-        content: string,
-        caseSensitive: boolean
-    ): Promise<TFile[]> {
-        const settings = this.getSettings();
-        const useFuzzy = settings.enableFuzzySearch;
-        const fuzzyThreshold = settings.fuzzySearchThreshold;
-        const results: TFile[] = [];
-        const searchContent = caseSensitive ? content : content.toLowerCase();
-
-        for (const file of files) {
-            try {
-                const fileContent = await this.app.vault.read(file);
-
-                // 프론트매터 제거
-                let bodyContent = fileContent;
-                if (fileContent.startsWith('---')) {
-                    const secondDelimiter = fileContent.indexOf('\n---', 1);
-                    if (secondDelimiter !== -1) {
-                        bodyContent = fileContent.substring(secondDelimiter + 4);
-                    }
-                }
-
-                const contentToSearch = caseSensitive ? bodyContent : bodyContent.toLowerCase();
-
-                // 퍼지 검색 적용
-                if (useFuzzy) {
-                    const match = fuzzyMatch(searchContent, contentToSearch, {
-                        caseSensitive,
-                        threshold: fuzzyThreshold
-                    });
-                    if (match.matched) {
-                        results.push(file);
-                        continue;
-                    }
-                }
-
-                if (contentToSearch.includes(searchContent)) {
-                    results.push(file);
-                }
-            } catch (error) {
-                this.logger.error('Search', t().searchEngine.contentSearchError, { path: file.path, error });
-            }
-        }
-
-        return results;
-    }
-
-    /**
-     * 링크로 파일을 필터링합니다
-     *
-     * @param files - 필터링할 파일 목록
-     * @param targetFile - 대상 파일명
-     * @returns targetFile을 링크한 파일들
-     *
-     * @remarks
-     * 파일이 targetFile로의 링크를 포함하는지 검사합니다
-     */
-    private filterByLink(files: TFile[], targetFile: string): TFile[] {
-        const settings = this.getSettings();
-        const useFuzzy = settings.enableFuzzySearch;
-        const fuzzyThreshold = settings.fuzzySearchThreshold;
-
-        return files.filter(file => {
-            const cache = this.app.metadataCache.getFileCache(file);
-            if (!cache?.links) return false;
-
-            return cache.links.some(link => {
-                const linkPath = link.link;
-
-                // 퍼지 검색 적용
-                if (useFuzzy) {
-                    // 링크 경로에서 파일명만 추출
-                    const linkFilename = linkPath.split('/').pop() || linkPath;
-                    const match = fuzzyMatch(targetFile, linkFilename, {
-                        caseSensitive: false,
-                        threshold: fuzzyThreshold
-                    });
-                    if (match.matched) return true;
-                }
-
-                // 확장자 없이도 매칭
-                return linkPath === targetFile ||
-                       linkPath === targetFile + '.md' ||
-                       linkPath.endsWith('/' + targetFile) ||
-                       linkPath.endsWith('/' + targetFile + '.md');
-            });
-        });
-    }
-
-    /**
-     * 역링크로 파일을 필터링합니다
-     *
-     * @param files - 필터링할 파일 목록
-     * @param targetFile - 대상 파일명
-     * @returns targetFile이 링크한 파일들 (backlinks)
-     *
-     * @remarks
-     * targetFile에서 나가는 링크를 포함한 파일들을 찾습니다
-     */
-    private filterByOutgoingLink(files: TFile[], targetFile: string): TFile[] {
-        // targetFile에 해당하는 TFile 찾기
-        const target = this.app.vault.getAbstractFileByPath(targetFile);
-        if (!(target instanceof TFile)) {
-            // 확장자 없이 시도
-            const targetWithExt = this.app.vault.getAbstractFileByPath(targetFile + '.md');
-            if (!(targetWithExt instanceof TFile)) {
-                return [];
-            }
-            return this.getBacklinks(targetWithExt as TFile, files);
-        }
-
-        return this.getBacklinks(target, files);
-    }
-
-    /**
-     * 파일의 백링크를 가져옵니다
-     */
-    private getBacklinks(target: TFile, files: TFile[]): TFile[] {
-        // Obsidian API의 resolvedLinks를 사용하여 백링크 찾기
-        const resolvedLinks = this.app.metadataCache.resolvedLinks;
-        const backlinkPaths = new Set<string>();
-
-        // 모든 파일을 순회하면서 target을 링크하는 파일 찾기
-        for (const sourcePath in resolvedLinks) {
-            const links = resolvedLinks[sourcePath];
-            if (links && links[target.path]) {
-                backlinkPaths.add(sourcePath);
-            }
-        }
-
-        return files.filter(file => backlinkPaths.has(file.path));
-    }
-
-    /**
-     * Wildcard 문자 포함 여부 확인
-     *
-     * @param pattern - 검사할 패턴
-     * @returns Wildcard 문자(* 또는 ?)가 포함되어 있으면 true
-     */
-    private hasWildcard(pattern: string): boolean {
-        return pattern.includes('*') || pattern.includes('?');
-    }
-
-    /**
-     * Wildcard 패턴을 정규식으로 변환합니다
-     *
-     * @param pattern - Wildcard 패턴
-     * @param caseSensitive - 대소문자 구분 여부
-     * @returns 정규식 객체
-     *
-     * @remarks
-     * - * → .* (0개 이상의 모든 문자)
-     * - ? → . (정확히 1개의 문자)
-     * - 정규식 특수 문자는 이스케이프됩니다
-     *
-     * @example
-     * ```typescript
-     * wildcardToRegex('2025*', false)    // /^2025.*$/i
-     * wildcardToRegex('note-??', false)  // /^note-..$/i
-     * wildcardToRegex('*.md', true)      // /^.*\.md$/
-     * ```
-     */
-    private wildcardToRegex(pattern: string, caseSensitive: boolean): RegExp {
-        // 정규식 특수 문자 이스케이프 (*, ? 제외)
-        let regexPattern = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&');
-
-        // Wildcard를 정규식으로 변환
-        regexPattern = regexPattern
-            .replace(/\*/g, '.*')   // * → .*
-            .replace(/\?/g, '.');   // ? → .
-
-        // 완전 매칭을 위해 ^ 와 $ 추가
-        regexPattern = '^' + regexPattern + '$';
-
-        const flags = caseSensitive ? '' : 'i';
-        return new RegExp(regexPattern, flags);
-    }
-    
     /**
      * 파일을 검색합니다 (비동기, 본문 포함)
      *

@@ -516,6 +516,30 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                     })
                 );
         }
+
+        // 검색어 하이라이트 설정
+        new Setting(containerEl)
+            .setName(t().settings.enableSearchHighlight.name)
+            .setDesc(t().settings.enableSearchHighlight.description)
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableSearchHighlight ?? true)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableSearchHighlight = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+
+        // 대소문자 구분 검색 설정
+        new Setting(containerEl)
+            .setName(t().settings.caseSensitiveSearch.name)
+            .setDesc(t().settings.caseSensitiveSearch.description)
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.caseSensitiveSearch ?? false)
+                .onChange(async (value) => {
+                    this.plugin.settings.caseSensitiveSearch = value;
+                    await this.plugin.saveSettings();
+                })
+            );
     }
 
     /**

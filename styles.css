@@ -649,9 +649,30 @@
 
 /* ⭐ 검색 입력 필드 - Obsidian 표준 스타일 상속 */
 .card-navigator-header .search-input {
-	width: 100%;
+	flex: 1;
+	/* 오른쪽에 대소문자 구분 아이콘만 공간 확보 (지우기 버튼은 동적으로 표시) */
+	padding-right: 32px;
 	/* Obsidian의 기본 스타일을 상속받습니다 */
 	/* 자동 돋보기 아이콘도 Obsidian이 자동으로 표시합니다 */
+}
+
+/* ⭐ 대소문자 구분 토글 버튼 - Obsidian 표준 clickable-icon 스타일 상속 */
+/* Obsidian의 clickable-icon 스타일을 자동으로 상속받습니다 */
+/* 활성 상태만 추가 정의 */
+
+.card-navigator-header .search-input-case-sensitive-toggle {
+	position: absolute;
+	right: 2px;
+	transition: right 0.2s ease;
+}
+
+/* 지우기 버튼이 표시될 때 왼쪽으로 이동 */
+.card-navigator-header .search-input-case-sensitive-toggle.shifted {
+	right: 28px;
+}
+
+.card-navigator-header .search-input-case-sensitive-toggle.is-active {
+	color: var(--interactive-accent);
 }
 
 /* ⭐ 검색 지우기 버튼 - Obsidian 표준 스타일 상속 + 세로 중앙 정렬 */
@@ -661,6 +682,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	position: absolute;
+	right: 0;
 }
 
 /* 검색어 하이라이트 */
@@ -3636,4 +3659,82 @@ button:focus-visible {
 .theme-light .card-group-header:hover {
 	background-color: var(--background-secondary-alt);
 	border-color: var(--background-modifier-border-hover);
+}
+
+/* =============================================================================
+   Search Highlight Styles
+   ============================================================================= */
+
+/* 검색어 하이라이트 기본 스타일 */
+mark.search-highlight {
+	background-color: var(--text-highlight-bg);
+	color: var(--text-normal);
+	padding: 0 2px;
+	border-radius: 2px;
+	font-weight: 500;
+	/* 부드러운 전환 효과 */
+	transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* 라이트 모드 하이라이트 */
+.theme-light mark.search-highlight {
+	background-color: rgba(255, 208, 0, 0.4);
+	color: var(--text-normal);
+}
+
+/* 다크 모드 하이라이트 */
+.theme-dark mark.search-highlight {
+	background-color: rgba(255, 208, 0, 0.3);
+	color: var(--text-normal);
+}
+
+/* 호버 시 강조 */
+.card-item:hover mark.search-highlight {
+	background-color: var(--text-highlight-bg-active);
+}
+
+.theme-light .card-item:hover mark.search-highlight {
+	background-color: rgba(255, 208, 0, 0.6);
+}
+
+.theme-dark .card-item:hover mark.search-highlight {
+	background-color: rgba(255, 208, 0, 0.5);
+}
+
+/* 활성 카드의 하이라이트 */
+.card-item.is-active mark.search-highlight {
+	background-color: var(--text-accent);
+	color: var(--text-on-accent);
+	font-weight: 600;
+}
+
+/* 포커스 카드의 하이라이트 */
+.card-item.is-focused mark.search-highlight {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+/* 마크다운 렌더링 모드에서의 하이라이트 */
+.card-markdown-content mark.search-highlight {
+	/* 마크다운 렌더링 시에도 동일한 스타일 유지 */
+	background-color: inherit;
+	padding: inherit;
+	border-radius: inherit;
+}
+
+/* 링크 내부의 하이라이트 */
+a mark.search-highlight,
+.internal-link mark.search-highlight,
+.external-link mark.search-highlight {
+	/* 링크 색상 유지 */
+	color: inherit;
+	text-decoration: inherit;
+}
+
+/* 태그 내부의 하이라이트 */
+.tag mark.search-highlight,
+.tag-link mark.search-highlight {
+	/* 태그 색상 유지 */
+	color: inherit;
 }

@@ -1,5 +1,6 @@
 import { App } from 'obsidian';
 import { SearchInput } from '../../src/search/SearchInput';
+import { CardNavigatorSettings } from '../../src/types';
 
 // Mock modules
 jest.mock('../../src/search/SearchSuggest');
@@ -11,16 +12,26 @@ describe('SearchInput', () => {
     let app: App;
     let containerEl: HTMLElement;
     let searchInput: SearchInput;
-    
+    let mockSettings: CardNavigatorSettings;
+    let mockSaveSettings: jest.Mock;
+
     beforeEach(() => {
         // Mock App
         app = {} as App;
-        
+
         // Create container element
         containerEl = document.createElement('div');
-        
+
+        // Mock settings
+        mockSettings = {
+            caseSensitiveSearch: false,
+            enableSearchHighlight: true
+        } as CardNavigatorSettings;
+
+        mockSaveSettings = jest.fn().mockResolvedValue(undefined);
+
         // Create SearchInput instance
-        searchInput = new SearchInput(app, containerEl);
+        searchInput = new SearchInput(app, containerEl, mockSettings, mockSaveSettings);
     });
     
     afterEach(() => {
@@ -178,8 +189,8 @@ describe('SearchInput', () => {
         });
         
         it('should handle focus before render', () => {
-            const newSearchInput = new SearchInput(app, containerEl);
-            
+            const newSearchInput = new SearchInput(app, containerEl, mockSettings, mockSaveSettings);
+
             expect(() => newSearchInput.focus()).not.toThrow();
         });
     });

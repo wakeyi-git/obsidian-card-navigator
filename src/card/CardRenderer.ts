@@ -5,6 +5,7 @@ import { StyleUtils } from '../utils/StyleUtils';
 import { t } from '../i18n';
 import type { SearchInput } from '../search/SearchInput';
 import { CardDataExtractor } from './CardData';
+import { extractSearchTerms, highlightInElement } from '../utils/highlightUtils';
 
 /**
  * View 인터페이스 - 순환 참조 방지
@@ -140,14 +141,23 @@ export class CardRenderer {
 
         this.setupLinkHandlersInternal(cardEl);
 
+        // 검색어 하이라이트 적용
+        // 이중 requestAnimationFrame을 사용하여 마크다운 렌더링이 완전히 완료된 후 하이라이트 적용
+        // 첫 번째 프레임에서 DOM이 추가되고, 두 번째 프레임에서 완전히 렌더링됨
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                this.applySearchHighlight(cardEl);
+            });
+        });
+
         return cardEl;
     }
 
     /**
      * 카드 내 내부 링크와 태그에 클릭 핸들러를 설정합니다 (public)
-     * 
+     *
      * @param cardEl - 카드 요소
-     * 
+     *
      * @remarks
      * 외부에서 호출 가능한 public 메서드입니다.
      * 내부적으로는 setupLinkHandlersInternal을 호출합니다.
@@ -155,7 +165,20 @@ export class CardRenderer {
     public setupLinkHandlers(cardEl: HTMLElement): void {
         this.setupLinkHandlersInternal(cardEl);
     }
-    
+
+    /**
+     * 카드에 검색어 하이라이트를 적용합니다 (public)
+     *
+     * @param cardEl - 카드 요소
+     *
+     * @remarks
+     * 외부에서 호출 가능한 public 메서드입니다.
+     * 캐시된 카드에도 하이라이트를 적용할 수 있습니다.
+     */
+    public applyHighlight(cardEl: HTMLElement): void {
+        this.applySearchHighlight(cardEl);
+    }
+
     /**
      * 카드 내 내부 링크와 태그에 클릭 핸들러를 설정합니다 (internal)
      * 
@@ -389,6 +412,47 @@ export class CardRenderer {
 
         // 그 외의 경우 기존 섹션 렌더링
         return await this.renderSection(section, className, file.path, renderMode);
+    }
+
+    /**
+     * 카드에 검색어 하이라이트를 적용합니다
+     *
+     * @param cardEl - 카드 요소
+     *
+     * @remarks
+     * - SearchInput에서 현재 검색어를 가져옵니다
+     * - 검색어를 추출하여 카드의 텍스트 노드에 하이라이트를 적용합니다
+     * - 설정에서 하이라이트 기능이 비활성화된 경우 적용하지 않습니다
+     */
+    private applySearchHighlight(cardEl: HTMLElement): void {
+        // 설정 확인
+        if (!this.settings.enableSearchHighlight) {
+            return;
+        }
+
+        // 검색어 가져오기
+        const searchQuery = this.view.searchInput?.getValue() || '';
+
+        if (!searchQuery || searchQuery.trim() === '') {
+            return;
+        }
+
+        // 검색어 추출
+        const searchTerms = extractSearchTerms(searchQuery);
+
+        if (searchTerms.length === 0) {
+            return;
+        }
+
+        // 하이라이트 적용
+        try {
+            highlightInElement(cardEl, searchTerms, {
+                caseSensitive: this.settings.caseSensitiveSearch || false,
+                highlightClass: 'search-highlight'
+            });
+        } catch (error) {
+            this.logger.error('Card', 'Failed to apply search highlight', error);
+        }
     }
 
     /**

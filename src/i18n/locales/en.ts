@@ -185,6 +185,14 @@ export const en = {
 			name: 'Fuzzy Search Threshold',
 			description: 'Minimum similarity score for fuzzy matching (0-1, lower = more permissive)',
 		},
+		enableSearchHighlight: {
+			name: 'Search Highlight',
+			description: 'Highlight search terms in cards with yellow background',
+		},
+		caseSensitiveSearch: {
+			name: 'Case Sensitive Search',
+			description: 'Distinguish between uppercase and lowercase in search',
+		},
 
 		// Mode settings
 		defaultMode: {

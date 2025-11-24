@@ -91,14 +91,16 @@ const createMockLeaf = (app: jest.Mocked<App>): jest.Mocked<WorkspaceLeaf> => {
 const createMockPlugin = (app: jest.Mocked<App>): jest.Mocked<CardNavigatorPlugin> => {
     const plugin = {
         app,
+        settings: DEFAULT_SETTINGS,
         settingsManager: new SettingsManager(app, async () => {}),
         presetManager: {
             autoApplyPreset: jest.fn(() => Promise.resolve())
         },
         loadData: jest.fn(() => Promise.resolve(DEFAULT_SETTINGS)),
-        saveData: jest.fn(() => Promise.resolve())
+        saveData: jest.fn(() => Promise.resolve()),
+        saveSettings: jest.fn(() => Promise.resolve())
     } as any;
-    
+
     return plugin;
 };
 

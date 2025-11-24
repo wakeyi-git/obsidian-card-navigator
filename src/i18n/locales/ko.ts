@@ -185,6 +185,14 @@ export const ko = {
 			name: '퍼지 검색 임계값',
 			description: '퍼지 매칭을 위한 최소 유사도 점수 (0-1, 낮을수록 관대)',
 		},
+		enableSearchHighlight: {
+			name: '검색어 하이라이트',
+			description: '카드에서 검색어를 노란색으로 강조 표시',
+		},
+		caseSensitiveSearch: {
+			name: '대소문자 구분 검색',
+			description: '검색 시 대소문자를 구분하여 검색',
+		},
 
 		// Mode settings
 		defaultMode: {
