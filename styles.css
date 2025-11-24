@@ -192,6 +192,52 @@
 	/* SVG는 이벤트를 받지 않음 */
 }
 
+/* =============================================================================
+   ⭐ Section 13.1: 증분 렌더링 진행률 바
+   ============================================================================= */
+
+/* 진행률 바 컨테이너 */
+.card-navigator-progress-bar {
+	position: relative;
+	width: 100%;
+	height: 3px;
+	background: var(--background-modifier-border);
+	overflow: hidden;
+	opacity: 1;
+	transition: opacity 0.3s ease;
+}
+
+/* 진행률 바가 페이드아웃될 때 */
+.card-navigator-progress-bar.fade-out {
+	opacity: 0;
+}
+
+/* 진행률 채우기 */
+.card-navigator-progress-bar .progress-fill {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	background: var(--interactive-accent);
+	transition: width 0.2s ease;
+	box-shadow: 0 0 10px var(--interactive-accent);
+}
+
+/* 진행률 바 애니메이션 (불확정 상태) */
+.card-navigator-progress-bar .progress-fill.indeterminate {
+	width: 30% !important;
+	animation: progress-indeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes progress-indeterminate {
+	0% {
+		left: -30%;
+	}
+	100% {
+		left: 100%;
+	}
+}
+
 /* 검색 입력 래퍼 (토글 가능) - 리팩토링 2025-11-23 */
 .search-input-container-wrapper {
 	padding: 0 10px;

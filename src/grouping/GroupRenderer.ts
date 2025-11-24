@@ -1,5 +1,6 @@
 import { CardGroup } from '../types';
 import { setIcon } from 'obsidian';
+import { GroupStateManager } from './GroupStateManager';
 
 /**
  * 그룹 섹션 헤더를 렌더링합니다
@@ -8,6 +9,7 @@ import { setIcon } from 'obsidian';
  */
 export class GroupRenderer {
     private isHorizontalMode: boolean = false;
+    private stateManager: GroupStateManager | null = null;
 
     /**
      * 가로 모드 설정
@@ -15,6 +17,14 @@ export class GroupRenderer {
      */
     setHorizontalMode(isHorizontal: boolean): void {
         this.isHorizontalMode = isHorizontal;
+    }
+
+    /**
+     * GroupStateManager 설정
+     * @param manager - GroupStateManager 인스턴스
+     */
+    setStateManager(manager: GroupStateManager): void {
+        this.stateManager = manager;
     }
 
     /**
@@ -131,12 +141,11 @@ export class GroupRenderer {
 
         // 헤더 클릭 → 토글
         header.addEventListener('click', () => {
-            // ⭐ group.collapsed는 렌더링 시점의 스냅샷이므로 직접 수정하지 않음
-            // localStorage에서 현재 상태를 읽어 반전시킴
-            const key = `card-navigator-group-collapsed-${group.id}`;
-            const stored = localStorage.getItem(key);
-            // localStorage에 저장된 값이 없으면 현재 그룹의 collapsed 상태 사용
-            const currentState = stored !== null ? stored === 'true' : group.collapsed;
+            // ⭐ GroupStateManager에서 현재 상태를 읽어 반전시킴
+            // stateManager가 없으면 렌더링 시점의 그룹 상태 사용 (fallback)
+            const currentState = this.stateManager
+                ? this.stateManager.getCollapsed(group.id)
+                : group.collapsed;
             const newState = !currentState;
             onToggle(group.id, newState);
         });

@@ -2,12 +2,17 @@ import { TFile, App } from 'obsidian';
 import { CardGroup, GroupingSettings, TagGroupMode, DateGroupBasis } from '../types';
 import { DebugLogger } from '../utils/DebugLogger';
 import { GroupStateManager } from './GroupStateManager';
+import { PinManager } from './PinManager';
 
 /**
  * 파일을 그룹으로 나누는 관리자
  *
  * 다양한 기준으로 파일 목록을 그룹화하고,
  * 그룹 정렬 및 접힌 상태 관리를 담당합니다.
+ *
+ * ⭐ Section 3.3: PinManager 통합
+ * - 핀 파일 분리 로직을 PinManager로 위임
+ * - 중복 코드 제거 및 성능 향상
  */
 export class GroupingManager {
     private app: App;
@@ -20,6 +25,13 @@ export class GroupingManager {
         this.logger = new DebugLogger(getSettings);
         this.stateManager = new GroupStateManager();
         this.stateManager.loadAll(); // ⭐ 초기화 시 일괄 로드
+    }
+
+    /**
+     * GroupStateManager 인스턴스를 가져옵니다
+     */
+    getStateManager(): GroupStateManager {
+        return this.stateManager;
     }
 
     /**
@@ -47,13 +59,15 @@ export class GroupingManager {
 
         this.logger.debug('Grouping', `Grouping ${files.length} files by ${settings.criteria}`);
 
-        // 핀된 파일과 일반 파일 분리
+		// ⭐ Section 3.3: PinManager를 사용한 핀/일반 파일 분리
         let pinnedFileObjects: TFile[] = [];
         let unpinnedFiles = files;
 
         if (settings.showPinnedAsGroup && pinnedFiles && pinnedFiles.length > 0) {
-            pinnedFileObjects = files.filter(file => pinnedFiles.includes(file.path));
-            unpinnedFiles = files.filter(file => !pinnedFiles.includes(file.path));
+			const pinManager = new PinManager(pinnedFiles);
+			const partition = pinManager.partitionFiles(files);
+            pinnedFileObjects = partition.pinned;
+            unpinnedFiles = partition.normal;
 
             this.logger.debug('Grouping', `Separated ${pinnedFileObjects.length} pinned files and ${unpinnedFiles.length} unpinned files`);
         }

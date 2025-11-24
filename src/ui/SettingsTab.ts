@@ -173,6 +173,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         // 2. 그룹화 및 정렬 탭
         const groupingTab = container.createDiv({ cls: 'setting-tab-pane' });
         this.addGroupingSettings(groupingTab);
+        this.addPinSettings(groupingTab, this.plugin.t());
         this.sortSettings.render(groupingTab);
         this.tabContainers.set('grouping', groupingTab);
 
@@ -198,9 +199,10 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         this.presetSettings.render(presetsTab);
         this.tabContainers.set('presets', presetsTab);
 
-        // 7. 기타 탭 (언어, 디버그, 설정 관리만)
+        // 7. 기타 탭 (언어, 성능, 디버그, 설정 관리)
         const otherTab = container.createDiv({ cls: 'setting-tab-pane' });
         this.addLanguageSettings(otherTab);
+        this.addPerformanceSettings(otherTab);
         this.addDebugSettings(otherTab);
         this.addResetButton(otherTab);
         this.tabContainers.set('other', otherTab);
@@ -419,9 +421,6 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                     await this.plugin.refreshView();
                 })
             );
-
-        // 핀 설정 섹션
-        this.addPinSettings(containerEl, t);
     }
 
     /**
@@ -446,20 +445,18 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                 })
             );
 
-        // 핀된 파일을 별도 그룹으로 표시 (그룹화가 활성화된 경우에만)
-        if (this.plugin.settings.grouping.enabled) {
-            new Setting(containerEl)
-                .setName(t.settings.grouping.showPinnedAsGroup)
-                .setDesc(t.settings.grouping.showPinnedAsGroupDescription)
-                .addToggle(toggle => toggle
-                    .setValue(this.plugin.settings.grouping.showPinnedAsGroup ?? true)
-                    .onChange(async (value) => {
-                        this.plugin.settings.grouping.showPinnedAsGroup = value;
-                        await this.plugin.saveSettings();
-                        await this.plugin.refreshView();
-                    })
-                );
-        }
+        // 핀된 파일을 별도 그룹으로 표시
+        new Setting(containerEl)
+            .setName(t.settings.grouping.showPinnedAsGroup)
+            .setDesc(t.settings.grouping.showPinnedAsGroupDescription)
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.grouping.showPinnedAsGroup ?? true)
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.showPinnedAsGroup = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                })
+            );
     }
 
     /**
@@ -619,6 +616,32 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                     );
             }
         }
+    }
+
+    /**
+     * 성능 설정을 추가합니다
+     *
+     * ⭐ Section 13.2: 증분 렌더링 청크 크기 조정
+     */
+    private addPerformanceSettings(containerEl: HTMLElement): void {
+        const trans = t().settingsTab.performanceSettings;
+
+        // 섹션 헤더
+        new Setting(containerEl).setHeading().setName(trans.title);
+
+        // 증분 렌더링 청크 크기
+        new Setting(containerEl)
+            .setName(trans.chunkSize)
+            .setDesc(trans.chunkSizeDescription)
+            .addSlider(slider => slider
+                .setLimits(5, 50, 5)
+                .setValue(this.plugin.settings.incrementalRenderChunkSize || 20)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.incrementalRenderChunkSize = value;
+                    await this.plugin.saveSettings();
+                })
+            );
     }
 
     /**

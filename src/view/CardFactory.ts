@@ -6,7 +6,6 @@ import { ViewEventHandler } from './ViewEventHandler';
 import { ICardView } from '../interfaces/ICardView';
 import { isValidFile } from '../utils/typeGuards';
 import { DebugLogger } from '../utils/DebugLogger';
-import { StyleUtils } from '../utils/StyleUtils';
 import { StylePresets } from '../utils/StylePresets';
 import { t } from '../i18n';
 
@@ -113,6 +112,11 @@ export class CardFactory {
 
 			// 이벤트 바인딩 (복제된 요소이므로 다시 바인딩 필요)
 			this.eventHandler.bindCardEvents(card, file, onFileOpen);
+
+			// ⭐ 호버 액션 버튼 이벤트 재바인딩 (cloneNode는 이벤트 리스너를 복사하지 않음)
+			if (this.settings.enableCardHoverActions !== false) {
+				this.rebindHoverActions(card, file);
+			}
 
 			// ⭐ 컨테이너에 카드 추가 (캐시 미스 경로와 동일하게)
 			container.appendChild(card);
@@ -411,41 +415,81 @@ export class CardFactory {
 	// StyleUtils.getContrastColor()를 통해 필요시 사용 가능
 
 	/**
-	 * 플레이스홀더에 호버 액션 버튼을 추가합니다
+	 * 캐시된 카드의 호버 액션 버튼 이벤트를 재바인딩합니다
 	 *
 	 * @private
 	 */
-	private addHoverActionsToPlaceholder(cardEl: HTMLElement, file: TFile): void {
-		const actionsContainer = cardEl.createEl('div', {
-			cls: 'card-hover-actions'
-		});
-
-		// Pin action
-		const pinBtn = actionsContainer.createEl('div', {
-			cls: 'clickable-icon card-hover-action-btn',
-			attr: {
-				'aria-label': t().toolbar.hoverActions.pin
-			}
-		});
-
-		const isPinned = this.settings.pinnedFiles?.includes(file.path) || false;
-		setIcon(pinBtn, 'pin');
-		if (isPinned) {
-			pinBtn.addClass('is-pinned');
+	private rebindHoverActions(cardEl: HTMLElement, file: TFile): void {
+		const actionsContainer = cardEl.querySelector('.card-hover-actions');
+		if (!actionsContainer) {
+			return;
 		}
 
+		// 모든 버튼을 순서대로 가져오기
+		const buttons = Array.from(actionsContainer.querySelectorAll('.card-hover-action-btn')) as HTMLElement[];
+
+		if (buttons.length < 4) {
+			this.logger.error('Card', 'Hover action buttons not found', {
+				expected: 4,
+				found: buttons.length
+			});
+			return;
+		}
+
+		const [pinBtn, copyLinkBtn, starBtn, deleteBtn] = buttons;
+
+		// 각 버튼을 복제하고 이벤트 핸들러 재바인딩
+		if (pinBtn) {
+			const newPinBtn = pinBtn.cloneNode(true) as HTMLElement;
+			pinBtn.replaceWith(newPinBtn);
+			this.bindPinButtonHandler(newPinBtn, cardEl, file);
+		}
+
+		if (copyLinkBtn) {
+			const newCopyLinkBtn = copyLinkBtn.cloneNode(true) as HTMLElement;
+			copyLinkBtn.replaceWith(newCopyLinkBtn);
+			this.bindCopyLinkButtonHandler(newCopyLinkBtn, file);
+		}
+
+		if (starBtn) {
+			const newStarBtn = starBtn.cloneNode(true) as HTMLElement;
+			starBtn.replaceWith(newStarBtn);
+			this.bindStarButtonHandler(newStarBtn, file);
+		}
+
+		if (deleteBtn) {
+			const newDeleteBtn = deleteBtn.cloneNode(true) as HTMLElement;
+			deleteBtn.replaceWith(newDeleteBtn);
+			this.bindDeleteButtonHandler(newDeleteBtn, file);
+		}
+	}
+
+	/**
+	 * 핀 버튼 이벤트 핸들러를 바인딩합니다
+	 * @private
+	 */
+	private bindPinButtonHandler(pinBtn: HTMLElement, cardEl: HTMLElement, file: TFile): void {
 		pinBtn.addEventListener('click', async (e) => {
 			e.stopPropagation();
+			e.preventDefault();
+
 			const pinnedFiles = this.settings.pinnedFiles || [];
 			const index = pinnedFiles.indexOf(file.path);
 
 			if (index > -1) {
 				pinnedFiles.splice(index, 1);
+				pinBtn.removeClass('is-pinned');
+				cardEl.removeClass('is-pinned-card');
+				cardEl.removeAttribute('data-pinned');
 			} else {
 				pinnedFiles.push(file.path);
+				pinBtn.addClass('is-pinned');
+				cardEl.addClass('is-pinned-card');
+				cardEl.setAttribute('data-pinned', 'true');
 			}
 
 			this.settings.pinnedFiles = pinnedFiles;
+			this.invalidateCache(file);
 
 			if (this.view.plugin) {
 				await this.view.plugin.saveSettings();
@@ -455,43 +499,31 @@ export class CardFactory {
 				}
 			}
 		});
+	}
 
-		// Copy link action
-		const copyLinkBtn = actionsContainer.createEl('div', {
-			cls: 'clickable-icon card-hover-action-btn',
-			attr: {
-				'aria-label': t().toolbar.hoverActions.link
-			}
-		});
-		setIcon(copyLinkBtn, 'link');
+	/**
+	 * 링크 복사 버튼 이벤트 핸들러를 바인딩합니다
+	 * @private
+	 */
+	private bindCopyLinkButtonHandler(copyLinkBtn: HTMLElement, file: TFile): void {
 		copyLinkBtn.addEventListener('click', async (e) => {
 			e.stopPropagation();
+			e.preventDefault();
 			const link = this.app.fileManager.generateMarkdownLink(file, '');
 			await navigator.clipboard.writeText(link);
 		});
+	}
 
-		// Star action
-		const starBtn = actionsContainer.createEl('div', {
-			cls: 'clickable-icon card-hover-action-btn',
-			attr: {
-				'aria-label': t().toolbar.hoverActions.star
-			}
-		});
-
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const bookmarks = (this.app as any).internalPlugins?.plugins?.bookmarks;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const isBookmarked = bookmarks?.instance?.items?.some((item: any) =>
-			item.type === 'file' && item.path === file.path
-		) || false;
-
-		setIcon(starBtn, 'star');
-		if (isBookmarked) {
-			starBtn.addClass('is-starred');
-		}
-
+	/**
+	 * 북마크 버튼 이벤트 핸들러를 바인딩합니다
+	 * @private
+	 */
+	private bindStarButtonHandler(starBtn: HTMLElement, file: TFile): void {
 		starBtn.addEventListener('click', async (e) => {
 			e.stopPropagation();
+			e.preventDefault();
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const bookmarks = (this.app as any).internalPlugins?.plugins?.bookmarks;
 			if (bookmarks?.instance) {
 				const bookmarkPlugin = bookmarks.instance;
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -512,8 +544,77 @@ export class CardFactory {
 				}
 			}
 		});
+	}
 
-		// Delete action
+	/**
+	 * 삭제 버튼 이벤트 핸들러를 바인딩합니다
+	 * @private
+	 */
+	private bindDeleteButtonHandler(deleteBtn: HTMLElement, file: TFile): void {
+		deleteBtn.addEventListener('click', async (e) => {
+			e.stopPropagation();
+			e.preventDefault();
+			const confirmed = confirm(`Delete "${file.basename}"?`);
+			if (confirmed) {
+				await this.app.vault.delete(file);
+			}
+		});
+	}
+
+	/**
+	 * 플레이스홀더에 호버 액션 버튼을 추가합니다
+	 *
+	 * @private
+	 */
+	private addHoverActionsToPlaceholder(cardEl: HTMLElement, file: TFile): void {
+		const actionsContainer = cardEl.createEl('div', {
+			cls: 'card-hover-actions'
+		});
+
+		// Pin button
+		const pinBtn = actionsContainer.createEl('div', {
+			cls: 'clickable-icon card-hover-action-btn',
+			attr: {
+				'aria-label': t().toolbar.hoverActions.pin
+			}
+		});
+		const isPinned = this.settings.pinnedFiles?.includes(file.path) || false;
+		setIcon(pinBtn, 'pin');
+		if (isPinned) {
+			pinBtn.addClass('is-pinned');
+		}
+		this.bindPinButtonHandler(pinBtn, cardEl, file);
+
+		// Copy link button
+		const copyLinkBtn = actionsContainer.createEl('div', {
+			cls: 'clickable-icon card-hover-action-btn',
+			attr: {
+				'aria-label': t().toolbar.hoverActions.link
+			}
+		});
+		setIcon(copyLinkBtn, 'link');
+		this.bindCopyLinkButtonHandler(copyLinkBtn, file);
+
+		// Star button
+		const starBtn = actionsContainer.createEl('div', {
+			cls: 'clickable-icon card-hover-action-btn',
+			attr: {
+				'aria-label': t().toolbar.hoverActions.star
+			}
+		});
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const bookmarks = (this.app as any).internalPlugins?.plugins?.bookmarks;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const isBookmarked = bookmarks?.instance?.items?.some((item: any) =>
+			item.type === 'file' && item.path === file.path
+		) || false;
+		setIcon(starBtn, 'star');
+		if (isBookmarked) {
+			starBtn.addClass('is-starred');
+		}
+		this.bindStarButtonHandler(starBtn, file);
+
+		// Delete button
 		const deleteBtn = actionsContainer.createEl('div', {
 			cls: 'clickable-icon card-hover-action-btn delete-action',
 			attr: {
@@ -521,13 +622,7 @@ export class CardFactory {
 			}
 		});
 		setIcon(deleteBtn, 'trash');
-		deleteBtn.addEventListener('click', async (e) => {
-			e.stopPropagation();
-			const confirmed = confirm(`Delete "${file.basename}"?`);
-			if (confirmed) {
-				await this.app.vault.delete(file);
-			}
-		});
+		this.bindDeleteButtonHandler(deleteBtn, file);
 	}
 
 	/**

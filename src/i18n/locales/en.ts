@@ -901,6 +901,11 @@ export const en = {
 			cardGap: 'Card Gap',
 			cardGapDescription: (min: number, max: number) => `Set the gap between cards (${min}-${max}px)`,
 		},
+		performanceSettings: {
+			title: 'Performance',
+			chunkSize: 'Incremental rendering chunk size',
+			chunkSizeDescription: 'Number of cards to render at once when displaying many cards. Lower values provide smoother experience but slower loading. Higher values load faster but may cause brief UI freezes. (Default: 20)',
+		},
 	},
 
 	// Modals

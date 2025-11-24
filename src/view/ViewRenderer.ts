@@ -17,8 +17,10 @@ import { DebugLogger } from '../utils/DebugLogger';
 import { RenderProfiler } from '../utils/RenderProfiler';
 import { ViewportManager } from './ViewportManager';
 import { IncrementalRenderer } from './IncrementalRenderer';
+import { ProgressBar } from '../ui/ProgressBar';
 import { VIEWPORT } from '../constants';
 import { t } from '../i18n';
+import type { RenderState, RenderChanges } from '../types';
 
 /**
  * 뷰 렌더링을 담당합니다
@@ -45,6 +47,9 @@ export class ViewRenderer {
 
 	private lastRenderState: string | null = null;
 
+	/** ⭐ Phase 1.2: 조건부 재렌더링을 위한 상세 상태 정보 */
+	private lastDetailedState: RenderState | null = null;
+
 	/** Viewport 관리자 (viewport 렌더링용) */
 	public viewportManager: ViewportManager | null = null;
 
@@ -56,6 +61,9 @@ export class ViewRenderer {
 
 	/** ⭐ 증분 렌더러 (Phase 3.1) */
 	private incrementalRenderer: IncrementalRenderer;
+
+	/** ⭐ Section 13.1: 진행률 바 (증분 렌더링용) */
+	private progressBar: ProgressBar | null = null;
 
 	/** 플러그인 설정 */
 	private get settings() {
@@ -256,6 +264,8 @@ export class ViewRenderer {
 		this.logger = new DebugLogger(() => plugin.settingsManager.getSettings());
 		this.groupingManager = new GroupingManager(app, () => plugin.settingsManager.getSettings());
 		this.groupRenderer = new GroupRenderer();
+		// GroupRenderer에 StateManager 설정
+		this.groupRenderer.setStateManager(this.groupingManager.getStateManager());
 
 		// ⭐ RenderProfiler 초기화 (Phase 4.1)
 		this.profiler = new RenderProfiler();
@@ -270,24 +280,35 @@ export class ViewRenderer {
 		this.incrementalRenderer.setShouldCancelCallback((renderingId, context) => {
 			return this.shouldCancelRendering(renderingId, context);
 		});
+		// ⭐ Section 13.2: 청크 크기 설정
+		this.incrementalRenderer.setChunkSize(this.settings.incrementalRenderChunkSize || 20);
+
+		// ⭐ Section 13.1: ProgressBar 초기화
+		this.progressBar = new ProgressBar(this.view.containerEl);
 	}
 	
 	/**
 	 * 카드를 렌더링합니다
-	 * 
+	 *
 	 * @param container - 카드를 추가할 컨테이너
 	 * @param onFileOpen - 파일 열기 콜백
-	 * 
+	 *
 	 * @remarks
-	 * 상태 해시 기반 렌더링 스킵, 스크롤 위치 보존, 렌더링 ID 시스템을 통해
-	 * 성능을 최적화하고 빠른 파일 전환을 처리합니다.
+	 * ⭐ Phase 1.2: 조건부 재렌더링 지원
+	 * - 상태 해시 기반 렌더링 스킵
+	 * - 변경 감지를 통한 선택적 업데이트
+	 * - 스크롤 위치 보존
+	 * - 렌더링 ID 시스템을 통한 빠른 파일 전환 처리
 	 */
 	async renderCards(
 		container: HTMLElement,
 		onFileOpen: (file: TFile) => void
 	): Promise<void> {
-		const currentState = await this.generateStateHash();
+		// ⭐ Phase 1.2: 상세 상태 정보 생성
+		const currentDetailedState = await this.generateDetailedState();
+		const currentState = JSON.stringify(currentDetailedState);
 
+		// 상태가 완전히 동일하면 렌더링 스킵
 		if (currentState === this.lastRenderState) {
 			this.logger.debug('View', 'State unchanged, skipping render', {
 				currentState: currentState.substring(0, 50)
@@ -295,10 +316,30 @@ export class ViewRenderer {
 			return;
 		}
 
-		this.logger.debug('View', 'State changed, will render', {
+		// ⭐ Phase 1.2: 변경 사항 감지
+		const changes = this.detectChanges(this.lastDetailedState, currentDetailedState);
+
+		this.logger.debug('View', 'State changed, analyzing changes', {
 			lastState: this.lastRenderState?.substring(0, 50) || 'null',
-			currentState: currentState.substring(0, 50)
+			currentState: currentState.substring(0, 50),
+			changeType: changes.changeType,
+			filesChanged: changes.filesChanged,
+			groupsChanged: changes.groupsChanged,
+			sortChanged: changes.sortChanged
 		});
+
+		// ⭐ Phase 1.2: 변경 유형에 따라 최적화된 업데이트 수행
+		if (changes.changeType === 'none') {
+			// 변경 사항 없음 (실제로는 여기 도달하지 않음 - 위에서 스킵됨)
+			return;
+		} else if (changes.changeType === 'partial' && changes.sortChanged && !changes.filesChanged && !changes.groupsChanged) {
+			// 정렬만 변경됨 - 재정렬만 수행
+			this.logger.debug('View', 'Partial update: sort only');
+
+			// 현재는 전체 재렌더링 수행 (추후 재정렬 최적화 추가 가능)
+			// TODO: 정렬만 변경된 경우 DOM 재배치만 수행
+			// 지금은 full render로 fallback
+		}
 
 		// ⭐ 스크롤 위치 보존: 활성 파일이 변경되지 않았으면 스크롤 위치 저장
 		const currentActiveFile = this.getActiveFile();
@@ -362,8 +403,10 @@ export class ViewRenderer {
 				
 				await this.renderCardsStandard(container, onFileOpen, renderingId, files);
 			}
-			
+
+			// ⭐ Phase 1.2: 렌더링 완료 후 상태 저장
 			this.lastRenderState = currentState;
+			this.lastDetailedState = currentDetailedState;
 
 			// ⭐ 스크롤 위치 복원: 활성 파일이 변경되지 않았으면 저장했던 스크롤 위치로 복원
 			if (!hasActiveFileChanged && scrollTop > 0) {
@@ -384,23 +427,35 @@ export class ViewRenderer {
 	
 	/**
 	 * 현재 렌더링 상태의 해시를 생성합니다
-	 * 
+	 *
 	 * @returns 상태 해시 문자열
-	 * 
+	 *
 	 * @remarks
 	 * 성능 최적화를 위해 상태가 변경되지 않았으면 렌더링을 건너뜁니다.
 	 * 해시에는 파일 개수, 모드, 정렬, 검색어, 폴더 경로/태그가 포함됩니다.
 	 */
 	private async generateStateHash(): Promise<string> {
+		const state = await this.generateDetailedState();
+		return JSON.stringify(state);
+	}
+
+	/**
+	 * ⭐ Phase 1.2: 상세한 렌더링 상태 정보를 생성합니다
+	 *
+	 * @returns 렌더링 상태 객체
+	 *
+	 * @remarks
+	 * 변경 감지를 위해 구조화된 상태 정보를 반환합니다.
+	 */
+	private async generateDetailedState(): Promise<RenderState> {
 		const files = await this.getFilesToDisplay();
 		const settings = this.settings;
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const stateObject: any = {
+		const stateObject: RenderState = {
 			fileCount: files.length,
 			mode: settings.currentMode,
-			sortBy: settings.sort.criteria,
-			sortOrder: settings.sort.order,
+			sortBy: JSON.stringify(settings.sort.criteria),
+			sortOrder: JSON.stringify(settings.sort.order),
 			query: this.state.getSearchQuery(),
 			// ⭐ 그룹화 설정 포함 (설정 변경 시 재렌더링 트리거)
 			groupingEnabled: settings.grouping.enabled,
@@ -442,15 +497,155 @@ export class ViewRenderer {
 			}
 		}
 
-		return JSON.stringify(stateObject);
+		return stateObject;
+	}
+
+	/**
+	 * ⭐ Phase 1.2: 렌더링 상태 변경을 감지합니다
+	 *
+	 * @param oldState - 이전 렌더링 상태
+	 * @param newState - 새로운 렌더링 상태
+	 * @returns 변경 사항
+	 *
+	 * @remarks
+	 * 변경 유형을 세밀하게 분석하여 최소한의 업데이트만 수행합니다.
+	 */
+	private detectChanges(oldState: RenderState | null, newState: RenderState): RenderChanges {
+		// 이전 상태가 없으면 전체 렌더링 필요
+		if (!oldState) {
+			return {
+				filesChanged: true,
+				groupsChanged: true,
+				sortChanged: true,
+				stylesChanged: true,
+				changedFiles: new Set<string>(),
+				changeType: 'full'
+			};
+		}
+
+		const changes: RenderChanges = {
+			filesChanged: false,
+			groupsChanged: false,
+			sortChanged: false,
+			stylesChanged: false,
+			changedFiles: new Set<string>(),
+			changeType: 'none'
+		};
+
+		// 파일 목록 변경 확인
+		if (oldState.fileCount !== newState.fileCount ||
+			oldState.mode !== newState.mode ||
+			oldState.query !== newState.query ||
+			oldState.folderPath !== newState.folderPath ||
+			oldState.activeTags !== newState.activeTags ||
+			oldState.specifiedTags !== newState.specifiedTags) {
+			changes.filesChanged = true;
+			changes.changeType = 'full';
+		}
+
+		// 그룹화 변경 확인
+		if (oldState.groupingEnabled !== newState.groupingEnabled ||
+			oldState.groupingCriteria !== newState.groupingCriteria ||
+			oldState.groupingSort !== newState.groupingSort ||
+			oldState.groupingSortOrder !== newState.groupingSortOrder) {
+			changes.groupsChanged = true;
+			changes.changeType = 'full';
+		}
+
+		// 정렬 변경 확인
+		if (oldState.sortBy !== newState.sortBy ||
+			oldState.sortOrder !== newState.sortOrder) {
+			changes.sortChanged = true;
+			if (changes.changeType === 'none') {
+				changes.changeType = 'partial';
+			}
+		}
+
+		// 변경 사항이 없으면 스타일만 변경되었을 수 있음
+		if (changes.changeType === 'none') {
+			// 추후 스타일 관련 설정 추가 시 여기서 체크
+			// 현재는 항상 full render이므로 스타일 전용 업데이트는 없음
+		}
+
+		return changes;
+	}
+
+	/**
+	 * ⭐ Phase 1.2: 변경된 카드만 업데이트합니다
+	 *
+	 * @param container - 카드 컨테이너
+	 * @param changedFiles - 변경된 파일 경로 목록
+	 *
+	 * @remarks
+	 * 파일 메타데이터 변경 시 해당 카드만 재렌더링합니다.
+	 */
+	private async updateChangedCards(
+		container: HTMLElement,
+		changedFiles: Set<string>
+	): Promise<void> {
+		this.logger.debug('View', 'Updating changed cards', {
+			changedCount: changedFiles.size
+		});
+
+		const currentActiveFile = this.getActiveFile();
+		const onFileOpen = (file: TFile) => {
+			this.view.openFile(file);
+		};
+
+		for (const filePath of changedFiles) {
+			// DOM에서 해당 카드 찾기
+			const cardElement = container.querySelector(
+				`.card-item[data-file-path="${filePath}"]`
+			) as HTMLElement;
+
+			if (cardElement) {
+				const file = this.app.vault.getAbstractFileByPath(filePath);
+				if (file instanceof TFile) {
+					// 카드 재생성
+					const parent = cardElement.parentElement;
+					if (parent) {
+						// 기존 카드 제거
+						cardElement.remove();
+
+						// 새 카드 생성
+						await this.cardFactory.createCard(
+							file,
+							parent,
+							currentActiveFile,
+							onFileOpen
+						);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * ⭐ Phase 1.2: 스타일만 업데이트합니다
+	 *
+	 * @param container - 카드 컨테이너
+	 *
+	 * @remarks
+	 * 레이아웃 설정이 변경된 경우 레이아웃만 업데이트합니다.
+	 */
+	private updateStyles(container: HTMLElement): void {
+		this.logger.debug('View', 'Updating styles only');
+
+		// 레이아웃 업데이트
+		if (isDefined(this.layoutManager)) {
+			this.layoutManager.updateLayout();
+		}
+
+		// active 클래스 업데이트
+		this.updateActiveCardClass(container);
 	}
 	
 	/**
 	 * 상태 해시를 무시하고 강제로 재렌더링합니다
-	 * 
+	 *
 	 * @param container - 카드를 추가할 컨테이너
 	 * @param onFileOpen - 파일 열기 콜백
-	 * 
+	 *
 	 * @remarks
 	 * 설정 변경 후나 사용자가 명시적으로 새로고침을 요청했을 때 사용합니다.
 	 */
@@ -459,6 +654,7 @@ export class ViewRenderer {
 		onFileOpen: (file: TFile) => void
 	): Promise<void> {
 		this.lastRenderState = null;
+		this.lastDetailedState = null; // ⭐ Phase 1.2
 		await this.renderCards(container, onFileOpen);
 	}
 	
@@ -679,12 +875,13 @@ export class ViewRenderer {
 	
 	/**
 	 * 렌더링 상태를 초기화하여 다음 렌더링을 강제합니다
-	 * 
+	 *
 	 * @remarks
 	 * 파일 구조 변경 시 사용: 파일 삭제/생성, 폴더 구조 변경
 	 */
 	resetRenderState(): void {
 		this.lastRenderState = null;
+		this.lastDetailedState = null; // ⭐ Phase 1.2
 	}
 	
 	/**
@@ -771,18 +968,31 @@ export class ViewRenderer {
 							fileCount: group.files.length
 						});
 
+						// ⭐ Section 13.1: 진행률 바 표시
+						if (this.progressBar) {
+							this.progressBar.show();
+						}
+
 						// 증분 렌더링 사용
 						const success = await this.incrementalRenderer.renderInChunks(
 							group.files,
 							cardContainer,
 							currentActiveFile,
 							onFileOpen,
-							undefined, // 진행률 콜백 없음 (추후 추가 가능)
+							(progress) => {
+								// ⭐ Section 13.1: 진행률 업데이트
+								if (this.progressBar) {
+									this.progressBar.updateProgress(progress);
+								}
+							},
 							renderingId
 						);
 
 						if (!success) {
 							// 렌더링이 취소됨
+							if (this.progressBar) {
+								this.progressBar.hide(false); // 즉시 숨김
+							}
 							return;
 						}
 					} else {
@@ -817,9 +1027,28 @@ export class ViewRenderer {
 		if (this.shouldCancelRendering(renderingId, 'before layout update')) {
 			return;
 		}
-		
+
 		if (isDefined(this.layoutManager)) {
 			this.layoutManager.updateLayout();
+		}
+
+		// ⭐ 활성 카드로 즉시 스크롤 (애니메이션 없이)
+		if (currentActiveFile) {
+			const activeCard = Array.from(container.querySelectorAll('.card-item')).find(
+				card => (card as HTMLElement).dataset.filePath === currentActiveFile.path
+			) as HTMLElement;
+
+			if (activeCard) {
+				const isHorizontalMode = container.classList.contains('horizontal-mode');
+				const finalBlock: ScrollLogicalPosition = isHorizontalMode ? 'nearest' : 'center';
+				const finalInline: ScrollLogicalPosition = isHorizontalMode ? 'center' : 'nearest';
+
+				activeCard.scrollIntoView({
+					behavior: 'instant',
+					block: finalBlock,
+					inline: finalInline
+				});
+			}
 		}
 
 		// ⭐ DOM에 실제로 렌더링된 카드만 수집 (접힌 그룹의 카드 제외)
@@ -842,6 +1071,9 @@ export class ViewRenderer {
 		if (isDefined(this.layoutManager)) {
 			this.layoutManager.updateViewportCards(cardElements);
 		}
+
+		// ⭐ Section 8.3: 카드 요소 캐시 빌드
+		this.selectionManager.buildCardCache();
 
 		// ⭐ 프로파일링 종료 (Phase 4.1)
 		this.profiler.endMeasure();
@@ -1021,16 +1253,30 @@ export class ViewRenderer {
 
 		// ⭐ 모든 그룹을 한 번에 DOM에 추가 (리플로우 최소화)
 		container.appendChild(containerFragment);
-		
+
 		this.logger.debug('View', 'Placeholders created', {
 			count: placeholders.length,
 			activeIndex
 		});
-		
+
 		if (this.shouldCancelRendering(renderingId, 'after placeholder creation')) {
 			return;
 		}
-		
+
+		// ⭐ 활성 카드로 즉시 스크롤 (애니메이션 없이, ViewportManager 생성 전)
+		if (activeIndex >= 0 && placeholders[activeIndex]) {
+			const activeCard = placeholders[activeIndex];
+			const isHorizontalMode = container.classList.contains('horizontal-mode');
+			const finalBlock: ScrollLogicalPosition = isHorizontalMode ? 'nearest' : 'center';
+			const finalInline: ScrollLogicalPosition = isHorizontalMode ? 'center' : 'nearest';
+
+			activeCard.scrollIntoView({
+				behavior: 'instant',
+				block: finalBlock,
+				inline: finalInline
+			});
+		}
+
 		// 2. ViewportManager 생성
 		this.viewportManager = new ViewportManager(
 			container,
@@ -1044,21 +1290,21 @@ export class ViewRenderer {
 				threshold: VIEWPORT.VISIBILITY_THRESHOLD
 			}
 		);
-		
+
 		// 3. 모든 플레이스홀더를 ViewportManager에 등록
 		placeholders.forEach(placeholder => {
 			this.viewportManager?.observe(placeholder);
 		});
-		
+
 		// 4. 활성 카드 주변 초기 렌더링
 		if (activeIndex >= 0) {
 			await this.renderInitialCards(placeholders, activeIndex, onFileOpen);
 		}
-		
+
 		if (this.shouldCancelRendering(renderingId, 'after initial render')) {
 			return;
 		}
-		
+
 		// 5. 레이아웃 적용
 		if (isDefined(this.layoutManager)) {
 			this.layoutManager.updateLayout();
@@ -1085,6 +1331,9 @@ export class ViewRenderer {
 		if (isDefined(this.layoutManager)) {
 			this.layoutManager.updateViewportCards(cardElements);
 		}
+
+		// ⭐ Section 8.3: 카드 요소 캐시 빌드
+		this.selectionManager.buildCardCache();
 
 		// ⭐ 프로파일링 종료 (Phase 4.1)
 		this.profiler.endMeasure();

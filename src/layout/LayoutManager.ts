@@ -3,6 +3,20 @@ import { DebugLogger } from '../utils/DebugLogger';
 import { ViewportLayoutManager } from './ViewportLayoutManager';
 
 /**
+ * ⭐ Section 7.1: 레이아웃 상태 인터페이스
+ */
+interface LayoutState {
+	cardMinWidth: number;
+	cardMinHeight: number;
+	cardMaxWidth: number;
+	cardMaxHeight: number;
+	gap: number;
+	mode: LayoutMode;
+	containerWidth: number;
+	containerHeight: number;
+}
+
+/**
  * 카드 레이아웃을 관리합니다
  *
  * 화면 크기에 따라 가로/세로 모드를 자동 전환하고,
@@ -14,6 +28,8 @@ import { ViewportLayoutManager } from './ViewportLayoutManager';
  * - 읽기/쓰기 작업 분리로 레이아웃 thrashing 방지
  * - ResizeObserver와 디바운싱으로 불필요한 재계산 방지
  * - Phase 3.5: ViewportLayoutManager로 보이는 카드만 레이아웃 계산
+ * - Section 7.1: 레이아웃 변경 감지로 불필요한 재계산 방지
+ * - Section 7.2: CSS 변수 배치 업데이트로 리페인트 최소화
  */
 export class LayoutManager {
     private containerEl: HTMLElement;
@@ -23,6 +39,9 @@ export class LayoutManager {
     private resizeTimeout: NodeJS.Timeout | null = null;
     private previousSize: { width: number; height: number } | null = null;
     private logger: DebugLogger;
+
+	/** ⭐ Section 7.1: 마지막 적용된 레이아웃 상태 */
+	private lastLayoutState: LayoutState | null = null;
 
     /** ⭐ Phase 3.5: 뷰포트 기반 레이아웃 관리자 */
     private viewportLayoutManager: ViewportLayoutManager | null = null;
@@ -157,6 +176,88 @@ export class LayoutManager {
         }, this.RESIZE_DEBOUNCE_MS);
     }
 
+	/**
+	 * ⭐ Section 7.1: 현재 레이아웃 상태를 생성합니다
+	 *
+	 * @returns 현재 레이아웃 상태 객체
+	 */
+	private getCurrentLayoutState(): LayoutState {
+		const rect = this.containerEl.getBoundingClientRect();
+		return {
+			cardMinWidth: this.settings.cardMinWidth,
+			cardMinHeight: this.settings.cardMinHeight,
+			cardMaxWidth: this.settings.cardMaxWidth,
+			cardMaxHeight: this.settings.cardMaxHeight,
+			gap: this.settings.gap,
+			mode: this.currentMode,
+			containerWidth: Math.floor(rect.width),
+			containerHeight: Math.floor(rect.height)
+		};
+	}
+
+	/**
+	 * ⭐ Section 7.1: 레이아웃 상태가 변경되었는지 확인합니다
+	 *
+	 * @param oldState - 이전 레이아웃 상태
+	 * @param newState - 새 레이아웃 상태
+	 * @returns 변경 여부
+	 *
+	 * @remarks
+	 * 설정 변경, 모드 변경, 또는 컨테이너 크기 변경을 감지합니다.
+	 * 컨테이너 크기는 정수로 내림하여 비교하므로 1px 미만의 변화는 무시됩니다.
+	 */
+	private hasLayoutChanged(oldState: LayoutState | null, newState: LayoutState): boolean {
+		if (!oldState) {
+			return true; // 최초 렌더링
+		}
+
+		// 설정 변경 확인
+		if (oldState.cardMinWidth !== newState.cardMinWidth ||
+			oldState.cardMinHeight !== newState.cardMinHeight ||
+			oldState.cardMaxWidth !== newState.cardMaxWidth ||
+			oldState.cardMaxHeight !== newState.cardMaxHeight ||
+			oldState.gap !== newState.gap) {
+			this.logger.debug('Layout', '레이아웃 설정 변경 감지', {
+				old: {
+					cardMinWidth: oldState.cardMinWidth,
+					cardMinHeight: oldState.cardMinHeight,
+					cardMaxWidth: oldState.cardMaxWidth,
+					cardMaxHeight: oldState.cardMaxHeight,
+					gap: oldState.gap
+				},
+				new: {
+					cardMinWidth: newState.cardMinWidth,
+					cardMinHeight: newState.cardMinHeight,
+					cardMaxWidth: newState.cardMaxWidth,
+					cardMaxHeight: newState.cardMaxHeight,
+					gap: newState.gap
+				}
+			});
+			return true;
+		}
+
+		// 모드 변경 확인
+		if (oldState.mode !== newState.mode) {
+			this.logger.debug('Layout', '레이아웃 모드 변경 감지', {
+				oldMode: oldState.mode,
+				newMode: newState.mode
+			});
+			return true;
+		}
+
+		// 컨테이너 크기 변경 확인 (정수 단위)
+		if (oldState.containerWidth !== newState.containerWidth ||
+			oldState.containerHeight !== newState.containerHeight) {
+			this.logger.debug('Layout', '컨테이너 크기 변경 감지', {
+				oldSize: `${oldState.containerWidth}×${oldState.containerHeight}`,
+				newSize: `${newState.containerWidth}×${newState.containerHeight}`
+			});
+			return true;
+		}
+
+		return false;
+	}
+
     /**
      * 레이아웃을 업데이트합니다
      *
@@ -165,8 +266,27 @@ export class LayoutManager {
      * - JavaScript: CSS 변수 업데이트 (--grid-columns, --grid-rows 등)
      * - CSS: 클래스 기반 레이아웃 정의 (.vertical-mode, .horizontal-mode)
      * 성능을 위해 모든 읽기 작업을 먼저 수행하고 쓰기 작업을 일괄 적용합니다.
+     *
+     * ⭐ Section 7.1: 레이아웃 변경 감지 추가
+     * - 레이아웃 상태가 변경되지 않았으면 업데이트 건너뜀
+     *
+     * ⭐ Section 7.2: CSS 변수 배치 업데이트
+     * - cssText를 사용한 한 번의 DOM 조작으로 모든 CSS 변수 설정
+     * - 리페인트 최소화로 성능 향상
      */
     updateLayout(): void {
+		// ⭐ Section 7.1: 레이아웃 변경 감지
+		const currentState = this.getCurrentLayoutState();
+
+		if (!this.hasLayoutChanged(this.lastLayoutState, currentState)) {
+			this.logger.debug('Layout', '레이아웃 상태 변경 없음, 업데이트 건너뜀', {
+				mode: currentState.mode,
+				containerSize: `${currentState.containerWidth}×${currentState.containerHeight}`,
+				cardMinSize: `${currentState.cardMinWidth}×${currentState.cardMinHeight}`
+			});
+			return;
+		}
+
         const rect = this.containerEl.getBoundingClientRect();
         const mode = this.currentMode;
 
@@ -184,15 +304,8 @@ export class LayoutManager {
             cardMinHeight: this.settings.cardMinHeight
         });
 
-        // CSS 변수 업데이트
-        this.updateCSSVariables();
-
-        // 그리드 크기 변수 업데이트
-        if (mode === 'vertical') {
-            this.containerEl.style.setProperty('--grid-columns', gridSize.toString());
-        } else {
-            this.containerEl.style.setProperty('--grid-rows', gridSize.toString());
-        }
+        // ⭐ Section 7.2: 모든 CSS 변수를 배치로 업데이트
+        this.batchUpdateCSSVariables(gridSize, mode);
 
         // 모드 클래스는 항상 적용 (그룹화 여부와 무관)
         if (mode === 'vertical') {
@@ -220,6 +333,9 @@ export class LayoutManager {
             }
         });
 
+		// ⭐ Section 7.1: 레이아웃 상태 저장
+		this.lastLayoutState = currentState;
+
         if (hasGroups) {
             this.logger.debug('Layout', '그룹화 모드: CSS에 레이아웃 위임');
             return;
@@ -229,10 +345,64 @@ export class LayoutManager {
         this.applyGridToGroupContents();
     }
 
+	/**
+	 * ⭐ Section 7.2: 모든 CSS 변수를 배치로 업데이트합니다
+	 *
+	 * @param gridSize - 그리드 크기 (열 또는 행 개수)
+	 * @param mode - 레이아웃 모드
+	 *
+	 * @remarks
+	 * 성능 최적화를 위해 모든 CSS 변수를 한 번에 설정합니다.
+	 * 개별 setProperty 호출 대신 cssText를 사용하여 리페인트를 최소화합니다.
+	 */
+	private batchUpdateCSSVariables(gridSize: number, mode: LayoutMode): void {
+		// 기존 인라인 스타일 보존 (다른 코드에서 설정한 스타일이 있을 수 있음)
+		const existingStyles = this.containerEl.style.cssText;
+
+		// 새로운 CSS 변수 문자열 생성
+		const cssVarString = [
+			`--card-min-width: ${this.settings.cardMinWidth}px`,
+			`--card-min-height: ${this.settings.cardMinHeight}px`,
+			`--card-max-width: ${this.settings.cardMaxWidth}px`,
+			`--card-max-height: ${this.settings.cardMaxHeight}px`,
+			`--card-gap: ${this.settings.gap}px`,
+			mode === 'vertical'
+				? `--grid-columns: ${gridSize}`
+				: `--grid-rows: ${gridSize}`
+		].join('; ');
+
+		// ⭐ 배치 업데이트: 한 번의 DOM 조작으로 모든 변수 설정
+		// 기존 스타일과 병합하여 설정
+		if (existingStyles) {
+			// 기존 스타일에서 우리가 관리하는 CSS 변수 제거
+			const filteredStyles = existingStyles
+				.split(';')
+				.filter(style => {
+					const trimmed = style.trim();
+					return trimmed &&
+						!trimmed.startsWith('--card-min-width') &&
+						!trimmed.startsWith('--card-min-height') &&
+						!trimmed.startsWith('--card-max-width') &&
+						!trimmed.startsWith('--card-max-height') &&
+						!trimmed.startsWith('--card-gap') &&
+						!trimmed.startsWith('--grid-columns') &&
+						!trimmed.startsWith('--grid-rows');
+				})
+				.join('; ');
+
+			this.containerEl.style.cssText = filteredStyles
+				? `${filteredStyles}; ${cssVarString}`
+				: cssVarString;
+		} else {
+			this.containerEl.style.cssText = cssVarString;
+		}
+	}
+
     /**
      * CSS 변수를 업데이트합니다
      *
      * @remarks
+     * @deprecated Section 7.2에서 batchUpdateCSSVariables()로 대체됨
      * 카드 크기 관련 CSS 변수만 업데이트합니다.
      */
     private updateCSSVariables(): void {
@@ -292,13 +462,25 @@ export class LayoutManager {
 
     /**
      * 설정을 업데이트합니다
-     * 
+     *
      * @param settings - 새로운 레이아웃 설정
      */
     updateSettings(settings: LayoutSettings): void {
         this.settings = settings;
         this.updateLayout();
     }
+
+	/**
+	 * ⭐ Section 7.1: 레이아웃을 강제로 업데이트합니다
+	 *
+	 * @remarks
+	 * 변경 감지를 무시하고 무조건 레이아웃을 다시 계산합니다.
+	 * 주로 디버깅이나 특정 상황에서 레이아웃 리셋이 필요한 경우 사용합니다.
+	 */
+	forceUpdateLayout(): void {
+		this.lastLayoutState = null;
+		this.updateLayout();
+	}
 
     /**
      * 현재 레이아웃 모드를 반환합니다

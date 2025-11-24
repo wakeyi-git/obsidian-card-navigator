@@ -329,6 +329,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 
 				// ⭐ Phase 2: 캐시 무효화
 				this.cardFactory.invalidateCache(file);
+				this.sortManager.invalidateCacheForFile(file);
 
 				// ⭐ resolvedLinks 업데이트 대기 + 디바운싱
 				setTimeout(() => {
@@ -352,6 +353,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 
 				// ⭐ Phase 2: 캐시 무효화
 				this.cardFactory.invalidateCache(file);
+				this.sortManager.clearCache(); // 파일 삭제는 전체 캐시 무효화
 
 				// ⭐ Vault 파일 목록 업데이트 대기 + 디바운싱
 				setTimeout(() => {
@@ -385,6 +387,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				if (oldFile instanceof TFile) {
 					this.cardFactory.invalidateCache(oldFile);
 				}
+				this.sortManager.clearCache(); // 파일 이름 변경은 전체 캐시 무효화
 
 				// ⭐ 디바운싱 적용: metadata 이벤트와 합쳐짐
 				if (this.debouncedForceRender) {

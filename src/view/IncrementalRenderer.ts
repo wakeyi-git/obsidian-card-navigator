@@ -8,10 +8,12 @@ import { DebugLogger } from '../utils/DebugLogger';
  * 대량의 카드를 청크 단위로 나눠서 렌더링하여 브라우저 블로킹을 방지합니다.
  *
  * @remarks
- * - 기본 청크 크기: 20개
+ * - 기본 청크 크기: 20개 (설정에서 조정 가능)
  * - requestAnimationFrame을 활용하여 다음 프레임에서 렌더링
  * - 진행률 콜백을 통해 사용자에게 로딩 상태 피드백
  * - 렌더링 취소 기능 제공 (빠른 파일 전환 대응)
+ *
+ * ⭐ Section 13.2: 청크 크기 설정 지원
  */
 export class IncrementalRenderer {
 	private cardFactory: CardFactory;
@@ -26,6 +28,15 @@ export class IncrementalRenderer {
 	constructor(cardFactory: CardFactory, logger: DebugLogger) {
 		this.cardFactory = cardFactory;
 		this.logger = logger;
+	}
+
+	/**
+	 * ⭐ Section 13.2: 청크 크기를 설정합니다
+	 *
+	 * @param size - 한 번에 렌더링할 카드 수 (5~50)
+	 */
+	setChunkSize(size: number): void {
+		this.chunkSize = Math.max(5, Math.min(50, size));
 	}
 
 	/**
@@ -151,19 +162,6 @@ export class IncrementalRenderer {
 		return new Promise(resolve => {
 			requestAnimationFrame(() => resolve());
 		});
-	}
-
-	/**
-	 * 청크 크기를 설정합니다
-	 *
-	 * @param size - 청크 크기 (1 이상)
-	 */
-	setChunkSize(size: number): void {
-		if (size < 1) {
-			throw new Error('Chunk size must be at least 1');
-		}
-		this.chunkSize = size;
-		this.logger.debug('View', `Chunk size set to ${size}`);
 	}
 
 	/**

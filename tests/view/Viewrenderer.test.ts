@@ -344,7 +344,8 @@ describe('ViewRenderer', () => {
 			selectCard: jest.fn(),
 			deselectCard: jest.fn(),
 			clearSelection: jest.fn(),
-			getSelectedFiles: jest.fn(() => [])
+			getSelectedFiles: jest.fn(() => []),
+			buildCardCache: jest.fn()
 		} as any;
 		
 		// Mock SearchEngine

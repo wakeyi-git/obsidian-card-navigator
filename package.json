@@ -1,6 +1,6 @@
 {
 	"name": "card-navigator",
-	"version": "1.4.6",
+	"version": "1.4.8",
 	"description": "Navigate your notes with a beautiful card-based interface",
 	"main": "main.js",
 	"scripts": {

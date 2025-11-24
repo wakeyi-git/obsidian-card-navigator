@@ -2,6 +2,62 @@ import { TFile } from 'obsidian';
 import type { LanguageSetting } from './i18n';
 
 /**
+ * 렌더링 상태 정보
+ *
+ * @remarks
+ * Phase 1.2: 조건부 재렌더링을 위한 상태 추적
+ */
+export interface RenderState {
+	/** 파일 개수 */
+	fileCount: number;
+	/** 현재 모드 */
+	mode: string;
+	/** 정렬 기준 (JSON 문자열로 직렬화됨) */
+	sortBy: string;
+	/** 정렬 순서 (JSON 문자열로 직렬화됨) */
+	sortOrder: string;
+	/** 검색 쿼리 */
+	query: string;
+	/** 그룹화 활성화 여부 */
+	groupingEnabled: boolean;
+	/** 그룹화 기준 */
+	groupingCriteria: string;
+	/** 그룹 정렬 */
+	groupingSort: string;
+	/** 그룹 정렬 순서 */
+	groupingSortOrder: string;
+	/** 폴더 경로 (폴더 모드) */
+	folderPath?: string;
+	/** 활성 태그 (태그 모드) */
+	activeTags?: string;
+	/** 지정된 태그 (태그 모드) */
+	specifiedTags?: string;
+	/** 추가 설정 */
+	[key: string]: unknown;
+}
+
+/**
+ * 렌더링 변경 사항
+ *
+ * @remarks
+ * Phase 1.2: 어떤 부분이 변경되었는지 추적
+ */
+export interface RenderChanges {
+	/** 파일 목록이 변경됨 */
+	filesChanged: boolean;
+	/** 그룹 구조가 변경됨 */
+	groupsChanged: boolean;
+	/** 정렬 순서가 변경됨 */
+	sortChanged: boolean;
+	/** 스타일만 변경됨 */
+	stylesChanged: boolean;
+	/** 변경된 파일 경로 목록 */
+	changedFiles: Set<string>;
+	/** 변경 타입 (전체/부분) */
+	changeType: 'full' | 'partial' | 'none';
+}
+
+/**
  * 카드 섹션
  * 
  * 카드의 각 영역(헤더/바디/풋터)을 표현합니다.
@@ -452,6 +508,8 @@ export interface CardNavigatorSettings {
     grouping: GroupingSettings;
     /** 디버그 설정 */
     debug: DebugSettings;
+    /** ⭐ Section 13.2: 증분 렌더링 청크 크기 (한 번에 렌더링할 카드 수) */
+    incrementalRenderChunkSize?: number;
 }
 
 /**
@@ -918,5 +976,6 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
     debug: {
         enabled: false,
         categories: {}
-    }
+    },
+    incrementalRenderChunkSize: 20
 };

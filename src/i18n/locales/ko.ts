@@ -901,6 +901,11 @@ export const ko = {
 			cardGap: '카드 간격',
 			cardGapDescription: (min: number, max: number) => `카드 사이의 간격을 설정합니다 (${min}-${max}px)`,
 		},
+		performanceSettings: {
+			title: '성능',
+			chunkSize: '증분 렌더링 청크 크기',
+			chunkSizeDescription: '대량의 카드를 표시할 때 한 번에 렌더링할 카드 수입니다. 값이 작을수록 부드럽지만 로딩이 느리고, 클수록 빠르지만 일시적인 UI 멈춤이 발생할 수 있습니다. (기본값: 20)',
+		},
 	},
 
 	// Modals

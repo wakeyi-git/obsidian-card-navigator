@@ -647,6 +647,7 @@ export class CardRenderer {
 
         pinBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
+            e.preventDefault();
 
             const pinnedFiles = this.settings.pinnedFiles || [];
             const index = pinnedFiles.indexOf(file.path);
@@ -654,9 +655,15 @@ export class CardRenderer {
             if (index > -1) {
                 // Unpin
                 pinnedFiles.splice(index, 1);
+                pinBtn.removeClass('is-pinned');
+                cardEl.removeClass('is-pinned-card');
+                cardEl.removeAttribute('data-pinned');
             } else {
                 // Pin
                 pinnedFiles.push(file.path);
+                pinBtn.addClass('is-pinned');
+                cardEl.addClass('is-pinned-card');
+                cardEl.setAttribute('data-pinned', 'true');
             }
 
             this.settings.pinnedFiles = pinnedFiles;
@@ -665,11 +672,16 @@ export class CardRenderer {
             if (this.view.getPlugin) {
                 const plugin = this.view.getPlugin();
                 if (plugin) {
+                    // ⭐ 캐시 무효화 (핀 상태가 변경되었으므로)
+                    const view = plugin.getView();
+                    if (view && view['cardFactory']) {
+                        view['cardFactory'].invalidateCache(file);
+                    }
+
                     // Save settings first to ensure new state is persisted
                     await plugin.saveSettings();
 
                     // Then refresh view to update sort order and re-render cards
-                    const view = plugin.getView();
                     if (view) {
                         await view.refresh();
                     }
@@ -687,6 +699,7 @@ export class CardRenderer {
         setIcon(copyLinkBtn, 'link');
         copyLinkBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
+            e.preventDefault();
             const link = this.app.fileManager.generateMarkdownLink(file, '');
             await navigator.clipboard.writeText(link);
         });
@@ -714,6 +727,7 @@ export class CardRenderer {
 
         starBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
+            e.preventDefault();
 
             if (bookmarks?.instance) {
                 const bookmarkPlugin = bookmarks.instance;
@@ -748,6 +762,7 @@ export class CardRenderer {
         setIcon(deleteBtn, 'trash');
         deleteBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
+            e.preventDefault();
             // Confirm before delete
             const confirmed = confirm(`Delete "${file.basename}"?`);
             if (confirmed) {

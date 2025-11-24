@@ -128,7 +128,8 @@ describe('ViewRenderer - Additional Coverage', () => {
         selectionManager = {
             setAllFiles: jest.fn(),
             getSelectionCount: jest.fn(() => 0),
-            updateUI: jest.fn()
+            updateUI: jest.fn(),
+            buildCardCache: jest.fn()
         } as any;
         
         // FolderMode mock

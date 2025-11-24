@@ -7,13 +7,18 @@ import { t } from '../i18n';
 
 /**
  * 다중 선택 및 일괄 작업 관리자
- * 
+ *
  * 파일 카드의 다중 선택과 선택된 파일들에 대한 일괄 작업을 제공합니다.
- * 
+ *
+ * ⭐ Section 8.3: 성능 최적화
+ * - 카드 요소 캐싱으로 DOM 쿼리 최소화
+ * - 선택 상태 추적으로 불필요한 UI 업데이트 방지
+ * - 선택 바 재사용으로 DOM 생성/제거 최소화
+ *
  * @example
  * ```typescript
  * const selectionManager = new SelectionManager(app, settings);
- * 
+ *
  * selectionManager.setAllFiles(files);
  * selectionManager.toggleSelection(file, mouseEvent);
  * const selected = selectionManager.getSelectedFiles();
@@ -28,6 +33,15 @@ export class SelectionManager {
     private getSettings: () => CardNavigatorSettings;
     private onRefresh?: () => Promise<void>;
 
+	/** ⭐ Section 8.3: 파일 경로 → 카드 요소 매핑 캐시 */
+	private cardElementCache: Map<string, HTMLElement> = new Map();
+
+	/** ⭐ Section 8.3: 마지막 선택 상태 (변경 감지용) */
+	private lastSelectionState: Set<string> = new Set();
+
+	/** ⭐ Section 8.3: 선택 바 요소 재사용 */
+	private selectionBarElement: HTMLElement | null = null;
+
     constructor(app: App, getSettings: () => CardNavigatorSettings, onRefresh?: () => Promise<void>) {
         this.app = app;
         this.selected = new Set();
@@ -41,11 +55,17 @@ export class SelectionManager {
 
     /**
      * 범위 선택을 위한 전체 파일 목록을 설정합니다
-     * 
+     *
      * @param files - 표시되는 모든 파일의 배열
+	 *
+	 * ⭐ Section 8.3: 카드 요소 캐시 구축
+	 * - 파일 목록이 변경되면 캐시 초기화
      */
     setAllFiles(files: TFile[]): void {
         this.allFiles = files;
+
+		// ⭐ Section 8.3: 캐시 무효화
+		this.cardElementCache.clear();
     }
 
     /**
@@ -143,34 +163,108 @@ export class SelectionManager {
 
     /**
      * UI를 업데이트합니다
-     * 
+     *
      * @remarks
      * 외부에서 선택 상태 복원이 필요할 때 사용합니다.
      * 예: 렌더링 후 선택된 카드의 스타일을 다시 적용
+     *
+     * ⭐ Section 8.3: 상태 기반 UI 업데이트 최적화
+     * - 변경된 카드만 업데이트 (added/removed)
+     * - querySelectorAll 호출 최소화
      */
     public updateUI(): void {
-        document.querySelectorAll('.card-item').forEach(card => {
-            card.removeClass('selected');
-        });
+        // ⭐ Section 8.3: 현재 선택 상태를 Set으로 변환
+        const currentSelection = new Set<string>(
+            Array.from(this.selected).map(f => f.path)
+        );
 
-        this.selected.forEach(file => {
-            const cardEl = this.findCardElement(file);
-            if (cardEl) {
-                cardEl.addClass('selected');
+        // ⭐ Section 8.3: 캐시가 비어있으면 전체 업데이트 (초기 상태 또는 캐시 무효화 후)
+        if (this.cardElementCache.size === 0) {
+            // 전체 카드 업데이트 (기존 방식)
+            document.querySelectorAll('.card-item').forEach(card => {
+                const cardEl = card as HTMLElement;
+                const filePath = cardEl.dataset.filePath;
+                if (filePath) {
+                    // 캐시에 저장
+                    this.cardElementCache.set(filePath, cardEl);
+                    // 선택 상태 적용
+                    if (currentSelection.has(filePath)) {
+                        cardEl.addClass('selected');
+                    } else {
+                        cardEl.removeClass('selected');
+                    }
+                }
+            });
+            this.lastSelectionState = currentSelection;
+            this.updateSelectionInfo();
+            return;
+        }
+
+        // ⭐ Section 8.3: 변경 사항 계산
+        const added = new Set<string>();
+        const removed = new Set<string>();
+
+        // 새로 선택된 파일 찾기
+        currentSelection.forEach(path => {
+            if (!this.lastSelectionState.has(path)) {
+                added.add(path);
             }
         });
+
+        // 선택 해제된 파일 찾기
+        this.lastSelectionState.forEach(path => {
+            if (!currentSelection.has(path)) {
+                removed.add(path);
+            }
+        });
+
+        // ⭐ Section 8.3: 변경된 카드만 업데이트
+        if (added.size > 0 || removed.size > 0) {
+            // 추가된 선택 적용
+            added.forEach(path => {
+                const cached = this.cardElementCache.get(path);
+                if (cached && cached.isConnected) {
+                    cached.addClass('selected');
+                }
+            });
+
+            // 제거된 선택 적용
+            removed.forEach(path => {
+                const cached = this.cardElementCache.get(path);
+                if (cached && cached.isConnected) {
+                    cached.removeClass('selected');
+                }
+            });
+
+            // ⭐ Section 8.3: 선택 상태 갱신
+            this.lastSelectionState = currentSelection;
+        }
 
         this.updateSelectionInfo();
     }
 
     /**
      * 파일에 해당하는 카드 요소를 찾습니다
+	 *
+	 * ⭐ Section 8.3: DOM 쿼리 캐싱 적용
+	 * - 한 번 찾은 카드 요소를 캐시에 저장
+	 * - querySelectorAll 호출 최소화
      */
     private findCardElement(file: TFile): HTMLElement | null {
+		// ⭐ Section 8.3: 캐시 확인
+		const cached = this.cardElementCache.get(file.path);
+		if (cached && cached.isConnected) {
+			// DOM에 연결되어 있는 경우에만 반환
+			return cached;
+		}
+
+		// 캐시 미스: DOM 쿼리 수행
         const cards = document.querySelectorAll('.card-item');
         for (let i = 0; i < cards.length; i++) {
             const card = cards[i] as HTMLElement;
             if (card.dataset.filePath === file.path) {
+				// ⭐ Section 8.3: 캐싱
+				this.cardElementCache.set(file.path, card);
                 return card;
             }
         }
@@ -179,22 +273,40 @@ export class SelectionManager {
 
     /**
      * 선택 정보 표시를 업데이트합니다
+     *
+     * ⭐ Section 8.3: 선택 바 재사용 최적화
+     * - 기존 요소를 재사용하여 DOM 생성/제거 최소화
+     * - 선택 개수만 업데이트
      */
     private updateSelectionInfo(): void {
-        const existingBar = document.querySelector('.selection-bar');
-        existingBar?.remove();
-
         if (this.selected.size > 0) {
             const container = document.querySelector('.card-navigator-container');
-            if (container) {
-                const selectionBar = container.createDiv('selection-bar');
-                
-                selectionBar.createEl('span', {
-                    text: t().selection.selectedFiles(this.selected.size),
+            if (!container) return;
+
+            // ⭐ Section 8.3: 기존 선택 바 재사용
+            if (!this.selectionBarElement || !this.selectionBarElement.isConnected) {
+                // 선택 바가 없거나 DOM에서 제거된 경우 새로 생성
+                this.selectionBarElement = container.createDiv('selection-bar');
+
+                // 선택 개수 표시 요소 생성
+                this.selectionBarElement.createEl('span', {
                     cls: 'selection-count'
                 });
 
-                this.createBatchActionButtons(selectionBar);
+                // 일괄 작업 버튼 생성
+                this.createBatchActionButtons(this.selectionBarElement);
+            }
+
+            // ⭐ Section 8.3: 선택 개수만 업데이트
+            const countEl = this.selectionBarElement.querySelector('.selection-count');
+            if (countEl) {
+                countEl.textContent = t().selection.selectedFiles(this.selected.size);
+            }
+        } else {
+            // ⭐ Section 8.3: 선택이 없으면 선택 바 제거
+            if (this.selectionBarElement && this.selectionBarElement.isConnected) {
+                this.selectionBarElement.remove();
+                this.selectionBarElement = null;
             }
         }
     }
@@ -583,10 +695,31 @@ export class SelectionManager {
 
     /**
      * 선택된 파일 수를 반환합니다
-     * 
+     *
      * @returns 선택된 파일의 개수
      */
     getSelectionCount(): number {
         return this.selected.size;
+    }
+
+    /**
+     * 카드 요소 캐시를 빌드합니다
+     *
+     * @remarks
+     * ⭐ Section 8.3: 카드 렌더링 후 캐시 구축
+     * - ViewRenderer에서 카드를 렌더링한 후 호출
+     * - 모든 카드 요소를 한 번에 캐싱
+     */
+    buildCardCache(): void {
+        this.cardElementCache.clear();
+
+        const cards = document.querySelectorAll('.card-item');
+        cards.forEach(card => {
+            const cardEl = card as HTMLElement;
+            const filePath = cardEl.dataset.filePath;
+            if (filePath) {
+                this.cardElementCache.set(filePath, cardEl);
+            }
+        });
     }
 }

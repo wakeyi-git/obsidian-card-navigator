@@ -1,3 +1,58 @@
+## [1.4.8] - 2025-11-24
+
+### Added
+
+#### Incremental Rendering Progress UI (Section 13.1)
+- **ProgressBar Component**: New visual progress indicator for incremental rendering
+  - Displays a thin 3px progress bar below the toolbar during large card rendering operations
+  - Smooth animations with accent color and glow effect
+  - Auto-hides with fade-out animation when rendering completes
+  - Shows only when rendering 50+ cards
+  - Related files: [ProgressBar.ts](src/ui/ProgressBar.ts), [ViewRenderer.ts](src/view/ViewRenderer.ts), [styles.css](styles.css)
+
+#### Performance Settings UI (Section 13.2)
+- **Chunk Size Configuration**: Added configurable chunk size setting in "Other" → "Performance" tab
+  - Adjustable slider (5-50 cards, step 5)
+  - Default: 20 cards per chunk
+  - Lower values: smoother experience, slower loading
+  - Higher values: faster loading, possible brief UI freezes
+  - Applied dynamically to IncrementalRenderer
+  - Related files: [SettingsTab.ts](src/ui/SettingsTab.ts), [types.ts](src/types.ts), [IncrementalRenderer.ts](src/view/IncrementalRenderer.ts)
+
+#### Internationalization
+- **Performance Settings Translation**: Added translations for new performance settings
+  - Korean: "성능", "증분 렌더링 청크 크기"
+  - English: "Performance", "Incremental rendering chunk size"
+  - Related files: [ko.ts](src/i18n/locales/ko.ts), [en.ts](src/i18n/locales/en.ts)
+
+### Improved
+
+#### Selection Management Optimization (Section 8.3)
+- **State-Based Selection Updates**: Optimized SelectionManager to minimize DOM queries
+  - Card element caching using `Map<string, HTMLElement>` for O(1) lookup
+  - State tracking with Set diff algorithm to detect changes (added/removed)
+  - Only updates changed cards instead of all cards
+  - Selection bar element reuse (recreated only when needed)
+  - `buildCardCache()` method called after rendering to populate cache
+  - Related file: [SelectionManager.ts](src/selection/SelectionManager.ts)
+
+#### Performance
+- **Reduced DOM Queries**: Selection updates now use cached elements instead of repeated `querySelectorAll()`
+- **Incremental Rendering Feedback**: Users can now see progress when rendering many cards
+- **Configurable Performance**: Users can balance smoothness vs speed based on their needs
+
+### Changed
+
+#### Architecture
+- **ViewRenderer Integration**: Progress bar integrated into standard and viewport rendering paths
+  - Shows progress bar for 50+ cards
+  - Hides instantly on render cancellation
+  - Calls `buildCardCache()` after rendering completes
+
+#### Test Coverage
+- **Mock Updates**: Updated test mocks to include `buildCardCache()` method
+- All tests passing (49/49 suites, 1,266 tests)
+
 ## [1.4.7] - 2025-11-24
 
 ### Added

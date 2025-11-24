@@ -3,19 +3,45 @@ import { CardNavigatorView } from '../view';
 import { CardSettings } from '../types';
 
 /**
+ * ⭐ Section 8.2: 카드 DOM 요소 캐시
+ */
+interface CardDOMCache {
+	header: HTMLElement | null;
+	body: HTMLElement | null;
+	footer: HTMLElement | null;
+}
+
+/**
  * 키보드 네비게이션
- * 
+ *
  * 방향키, Enter, Home/End 등을 사용한 카드 탐색을 제공합니다.
- * 
+ *
  * @remarks
  * 그리드 레이아웃을 감지하여 상하좌우 이동을 지원하며,
  * 포커스된 카드는 자동으로 화면에 보이도록 스크롤됩니다.
+ *
+ * ⭐ Section 8.2: 성능 최적화
+ * - DOM 쿼리 캐싱으로 querySelector 호출 최소화
+ * - 열 수 계산 결과 캐싱으로 불필요한 getBoundingClientRect() 제거
+ * - 이벤트 핸들러 바인딩 최적화
  */
 export class KeyboardNavigator {
     private view: CardNavigatorView;
     private focusedIndex: number = -1;
     private cards: HTMLElement[] = [];
     private files: TFile[] = [];
+
+	/** ⭐ Section 8.2: 카드별 DOM 요소 캐시 */
+	private cardDOMCache: Map<HTMLElement, CardDOMCache> = new Map();
+
+	/** ⭐ Section 8.2: 계산된 열 수 캐시 */
+	private cachedColumns: number = -1;
+
+	/** ⭐ Section 8.2: 마지막 컨테이너 너비 (열 수 재계산 판단용) */
+	private lastContainerWidth: number = -1;
+
+	/** ⭐ Section 8.2: 바인딩된 이벤트 핸들러 (재등록 방지) */
+	private boundKeyDownHandler: ((e: KeyboardEvent) => void) | null = null;
     
     constructor(view: CardNavigatorView) {
         this.view = view;
@@ -23,28 +49,45 @@ export class KeyboardNavigator {
     
     /**
      * 키보드 이벤트 리스너를 등록합니다
+	 *
+	 * ⭐ Section 8.2: 이벤트 핸들러 바인딩 최적화
+	 * - 핸들러를 한 번만 바인딩하여 중복 등록 방지
      */
     registerKeyboardListeners(): void {
-        this.view.containerEl.addEventListener('keydown', (e: KeyboardEvent) => {
-            this.handleKeyDown(e);
-        });
-        
+		// ⭐ Section 8.2: 이미 등록된 핸들러가 있으면 재등록하지 않음
+		if (this.boundKeyDownHandler) {
+			return;
+		}
+
+		this.boundKeyDownHandler = (e: KeyboardEvent) => {
+			this.handleKeyDown(e);
+		};
+
+        this.view.containerEl.addEventListener('keydown', this.boundKeyDownHandler);
         this.view.containerEl.setAttribute('tabindex', '0');
     }
     
     /**
      * 현재 카드 목록을 업데이트합니다
-     * 
+     *
      * @param cards - 렌더링된 카드 요소
      * @param files - 해당 파일
+	 *
+	 * ⭐ Section 8.2: 캐시 무효화
+	 * - 카드 목록이 변경되면 DOM 캐시와 열 수 캐시 초기화
      */
     updateCards(cards: HTMLElement[], files: TFile[]): void {
         this.cards = cards;
         this.files = files;
-        
+
         if (this.focusedIndex >= this.cards.length) {
             this.focusedIndex = -1;
         }
+
+		// ⭐ Section 8.2: 캐시 초기화
+		this.cardDOMCache.clear();
+		this.cachedColumns = -1;
+		this.lastContainerWidth = -1;
     }
     
     /**
@@ -148,38 +191,83 @@ export class KeyboardNavigator {
     
     /**
      * 그리드의 열 수를 계산합니다
-     * 
+     *
      * @returns 열 수
-     * 
+     *
      * @remarks
      * 첫 번째 행의 카드들을 분석하여 현재 그리드의 열 수를 동적으로 계산합니다.
+	 *
+	 * ⭐ Section 8.2: 열 수 계산 결과 캐싱
+	 * - 컨테이너 너비가 변경되지 않았으면 캐시된 값 반환
+	 * - getBoundingClientRect() 호출 최소화로 성능 향상
      */
     private calculateColumns(): number {
         if (this.cards.length === 0) return 1;
-        
+
+		// ⭐ Section 8.2: 컨테이너 너비 확인 (있는 경우에만)
+		const container = this.view.containerEl.querySelector('.card-navigator-cards') as HTMLElement;
+		const currentWidth = container ? container.clientWidth : -1;
+
+		// ⭐ Section 8.2: 캐시 히트 - 너비가 변경되지 않았으면 캐시된 값 반환
+		// (컨테이너가 있고, 너비가 동일한 경우에만)
+		if (this.cachedColumns !== -1 && currentWidth > 0 && this.lastContainerWidth === currentWidth) {
+			return this.cachedColumns;
+		}
+
         const firstCard = this.cards[0];
         const firstLeft = firstCard.getBoundingClientRect().left;
-        
+
         let columns = 1;
         for (let i = 1; i < this.cards.length; i++) {
             const card = this.cards[i];
             const left = card.getBoundingClientRect().left;
-            
+
             if (Math.abs(left - firstLeft) > 5) {
                 columns++;
             } else {
                 break;
             }
         }
-        
+
+		// ⭐ Section 8.2: 계산 결과 캐싱
+		this.cachedColumns = columns;
+		this.lastContainerWidth = currentWidth;
+
         return columns;
     }
     
+	/**
+	 * ⭐ Section 8.2: 카드의 DOM 요소를 캐시에서 가져오거나 쿼리합니다
+	 *
+	 * @param card - 카드 요소
+	 * @returns 카드의 하위 DOM 요소 캐시
+	 *
+	 * @remarks
+	 * querySelector를 반복 호출하는 대신 한 번 쿼리한 결과를 캐싱합니다.
+	 */
+	private getCardDOM(card: HTMLElement): CardDOMCache {
+		// 캐시에서 확인
+		let cache = this.cardDOMCache.get(card);
+		if (cache) {
+			return cache;
+		}
+
+		// 캐시 미스: DOM 쿼리 수행 및 캐싱
+		cache = {
+			header: card.querySelector('.card-header') as HTMLElement,
+			body: card.querySelector('.card-body') as HTMLElement,
+			footer: card.querySelector('.card-footer') as HTMLElement
+		};
+
+		this.cardDOMCache.set(card, cache);
+		return cache;
+	}
+
     /**
      * 특정 인덱스의 카드에 포커스를 설정합니다
-     * 
+     *
      * @param index - 카드 인덱스
-     * 
+     *
      * ⭐ 버그 수정 2025-11-16: 섹션별 스타일 적용 및 active 상태 고려
      * ⭐ Phase 4 추가 2025-11-18: 플레이스홀더 자동 렌더링
      */
@@ -241,9 +329,12 @@ export class KeyboardNavigator {
     
     /**
      * ⭐ focused 스타일을 적용합니다 (섹션별 스타일 포함)
-     * 
+     *
      * @private
      * @param card - 카드 DOM 요소
+	 *
+	 * ⭐ Section 8.2: DOM 쿼리 캐싱 적용
+	 * - querySelector를 매번 호출하는 대신 캐시 사용
      */
     private applyFocusedStyle(card: HTMLElement): void {
         // 카드 전체 스타일
@@ -252,21 +343,23 @@ export class KeyboardNavigator {
         const cardBorderColor = card.dataset.focusedBorderColor;
         const cardBorderWidth = card.dataset.focusedBorderWidth;
         const cardBorderRadius = card.dataset.focusedBorderRadius;
-        
+
         if (cardBg) card.style.backgroundColor = cardBg;
         if (cardFontSize) card.style.fontSize = cardFontSize;
         if (cardBorderColor) card.style.borderColor = cardBorderColor;
         if (cardBorderWidth) card.style.borderWidth = cardBorderWidth;
         if (cardBorderRadius) card.style.borderRadius = cardBorderRadius;
-        
+
+		// ⭐ Section 8.2: 캐시된 DOM 요소 사용
+		const { header, body, footer } = this.getCardDOM(card);
+
         // 헤더 스타일
-        const header = card.querySelector('.card-header') as HTMLElement;
         if (header) {
             const headerBg = card.dataset.headerFocusedBg;
             const headerFontSize = card.dataset.headerFocusedFontSize;
             const headerBorderColor = card.dataset.headerFocusedBorderColor;
             const headerBorderWidth = card.dataset.headerFocusedBorderWidth;
-            
+
             if (headerBg) header.style.backgroundColor = headerBg;
             if (headerFontSize) header.style.fontSize = headerFontSize;
             if (headerBorderColor) header.style.borderBottomColor = headerBorderColor;
@@ -275,25 +368,23 @@ export class KeyboardNavigator {
                 header.style.borderBottomStyle = parseInt(headerBorderWidth) > 0 ? 'solid' : 'none';
             }
         }
-        
+
         // 바디 스타일
-        const body = card.querySelector('.card-body') as HTMLElement;
         if (body) {
             const bodyBg = card.dataset.bodyFocusedBg;
             const bodyFontSize = card.dataset.bodyFocusedFontSize;
-            
+
             if (bodyBg) body.style.backgroundColor = bodyBg;
             if (bodyFontSize) body.style.fontSize = bodyFontSize;
         }
-        
+
         // 풋터 스타일
-        const footer = card.querySelector('.card-footer') as HTMLElement;
         if (footer) {
             const footerBg = card.dataset.footerFocusedBg;
             const footerFontSize = card.dataset.footerFocusedFontSize;
             const footerBorderColor = card.dataset.footerFocusedBorderColor;
             const footerBorderWidth = card.dataset.footerFocusedBorderWidth;
-            
+
             if (footerBg) footer.style.backgroundColor = footerBg;
             if (footerFontSize) footer.style.fontSize = footerFontSize;
             if (footerBorderColor) footer.style.borderTopColor = footerBorderColor;
@@ -306,35 +397,40 @@ export class KeyboardNavigator {
     
     /**
      * ⭐ 카드 스타일을 복원합니다 (섹션별 스타일 포함)
-     * 
+     *
      * @private
      * @param card - 카드 DOM 요소
      * @param isActive - active 상태 여부
+	 *
+	 * ⭐ Section 8.2: DOM 쿼리 캐싱 적용
+	 * - querySelector를 매번 호출하는 대신 캐시 사용
      */
     private restoreCardStyle(card: HTMLElement, isActive: boolean): void {
         const statePrefix = isActive ? 'Active' : 'Normal';
-        
+
         // 카드 전체 스타일
         const cardBg = card.dataset[`${isActive ? 'active' : 'normal'}Bg`];
         const cardFontSize = card.dataset[`${isActive ? 'active' : 'normal'}FontSize`];
         const cardBorderColor = card.dataset[`${isActive ? 'active' : 'normal'}BorderColor`];
         const cardBorderWidth = card.dataset[`${isActive ? 'active' : 'normal'}BorderWidth`];
         const cardBorderRadius = card.dataset[`${isActive ? 'active' : 'normal'}BorderRadius`];
-        
+
         if (cardBg) card.style.backgroundColor = cardBg;
         if (cardFontSize) card.style.fontSize = cardFontSize;
         if (cardBorderColor) card.style.borderColor = cardBorderColor;
         if (cardBorderWidth) card.style.borderWidth = cardBorderWidth;
         if (cardBorderRadius) card.style.borderRadius = cardBorderRadius;
-        
+
+		// ⭐ Section 8.2: 캐시된 DOM 요소 사용
+		const { header, body, footer } = this.getCardDOM(card);
+
         // 헤더 스타일
-        const header = card.querySelector('.card-header') as HTMLElement;
         if (header) {
             const headerBg = card.dataset[`header${statePrefix}Bg`];
             const headerFontSize = card.dataset[`header${statePrefix}FontSize`];
             const headerBorderColor = card.dataset[`header${statePrefix}BorderColor`];
             const headerBorderWidth = card.dataset[`header${statePrefix}BorderWidth`];
-            
+
             if (headerBg) header.style.backgroundColor = headerBg;
             if (headerFontSize) header.style.fontSize = headerFontSize;
             if (headerBorderColor) header.style.borderBottomColor = headerBorderColor;
@@ -343,25 +439,23 @@ export class KeyboardNavigator {
                 header.style.borderBottomStyle = parseInt(headerBorderWidth) > 0 ? 'solid' : 'none';
             }
         }
-        
+
         // 바디 스타일
-        const body = card.querySelector('.card-body') as HTMLElement;
         if (body) {
             const bodyBg = card.dataset[`body${statePrefix}Bg`];
             const bodyFontSize = card.dataset[`body${statePrefix}FontSize`];
-            
+
             if (bodyBg) body.style.backgroundColor = bodyBg;
             if (bodyFontSize) body.style.fontSize = bodyFontSize;
         }
-        
+
         // 풋터 스타일
-        const footer = card.querySelector('.card-footer') as HTMLElement;
         if (footer) {
             const footerBg = card.dataset[`footer${statePrefix}Bg`];
             const footerFontSize = card.dataset[`footer${statePrefix}FontSize`];
             const footerBorderColor = card.dataset[`footer${statePrefix}BorderColor`];
             const footerBorderWidth = card.dataset[`footer${statePrefix}BorderWidth`];
-            
+
             if (footerBg) footer.style.backgroundColor = footerBg;
             if (footerFontSize) footer.style.fontSize = footerFontSize;
             if (footerBorderColor) footer.style.borderTopColor = footerBorderColor;
