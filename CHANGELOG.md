@@ -1,3 +1,23 @@
+## [1.5.1] - 2025-11-24
+
+### Added
+
+#### Settings Tab Auto-Scroll
+- **Mouse-Based Auto-Scroll**: Added automatic horizontal scrolling for settings tab bar
+  - Scrolls automatically when mouse is in the left or right 25% edge zones
+  - Continuous smooth scrolling at 6px per frame (60 FPS)
+  - Scroll speed increases based on proximity to edge (intensity-based)
+  - Visual gradient indicators show scroll zones on hover
+  - Scrollbar completely hidden for cleaner UI
+  - Related files: [SettingsTab.ts](src/ui/SettingsTab.ts), [styles.css](styles.css)
+
+### Improved
+
+#### User Experience
+- **No Manual Scrolling**: Navigate through settings tabs without using scrollbar
+- **Natural Interaction**: Intuitive mouse-driven scrolling eliminates horizontal scroll frustration
+- **Visual Feedback**: Subtle gradient overlays indicate active scroll zones
+
 ## [1.5.0] - 2025-11-24
 
 ### Added

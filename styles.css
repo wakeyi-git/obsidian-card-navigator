@@ -1033,15 +1033,51 @@
 	overflow-y: hidden;
 	background: transparent;
 	border-bottom: 1px solid var(--background-modifier-border);
+	position: relative;
+	/* 자동 스크롤을 위해 scroll-behavior 제거 */
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none; /* IE and Edge */
 }
 
+/* 스크롤바 숨기기 (Chrome, Safari) */
 .setting-tab-bar::-webkit-scrollbar {
-	height: 4px;
+	display: none;
 }
 
-.setting-tab-bar::-webkit-scrollbar-thumb {
-	background: var(--background-modifier-border);
-	border-radius: 2px;
+/* 자동 스크롤 영역 표시 */
+.setting-tab-bar::before,
+.setting-tab-bar::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 25%;
+	pointer-events: none;
+	z-index: 1;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+/* 왼쪽 자동 스크롤 영역 */
+.setting-tab-bar::before {
+	left: 0;
+	background: linear-gradient(to right,
+		rgba(var(--interactive-accent-rgb), 0.08) 0%,
+		transparent 100%);
+}
+
+/* 오른쪽 자동 스크롤 영역 */
+.setting-tab-bar::after {
+	right: 0;
+	background: linear-gradient(to left,
+		rgba(var(--interactive-accent-rgb), 0.08) 0%,
+		transparent 100%);
+}
+
+/* 마우스 호버 시 자동 스크롤 영역 표시 */
+.setting-tab-bar:hover::before,
+.setting-tab-bar:hover::after {
+	opacity: 1;
 }
 
 /* 탭 버튼 - Obsidian 기본 스타일과 통일 */

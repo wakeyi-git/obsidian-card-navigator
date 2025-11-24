@@ -1,13 +1,13 @@
-import { App, PluginSettingTab, Setting, setIcon, Notice } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting, setIcon } from 'obsidian';
+import { getAvailableLanguages, getLanguage, getLanguageDisplayName, setLanguageAsync, t, type LanguageSetting } from '../i18n';
 import CardNavigatorPlugin from '../main';
 import { DebugCategory } from '../types';
+import { CardNavigatorView } from '../view';
+import { InteractiveCardSettings } from './settings/InteractiveCardSettings';
 import { LayoutSettings } from './settings/LayoutSettings';
 import { ModeSettings } from './settings/ModeSettings';
-import { SortSettings } from './settings/SortSettings';
 import { PresetSettings } from './settings/PresetSettings';
-import { InteractiveCardSettings } from './settings/InteractiveCardSettings';
-import { getAvailableLanguages, getLanguageDisplayName, getLanguage, setLanguageAsync, type LanguageSetting, t } from '../i18n';
-import { CardNavigatorView } from '../view';
+import { SortSettings } from './settings/SortSettings';
 
 /**
  * 설정 탭 타입
@@ -50,7 +50,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
     constructor(app: App, plugin: CardNavigatorPlugin) {
         super(app, plugin);
         this.plugin = plugin;
-        
+
         // 설정 섹션 초기화
         this.modeSettings = new ModeSettings(plugin);
         this.sortSettings = new SortSettings(plugin);
@@ -159,6 +159,97 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                 button.addClass('is-active');
             }
         });
+
+        // ⭐ 마우스 움직임에 따른 자동 스크롤 기능 추가
+        this.setupAutoScroll(container);
+    }
+
+    /**
+     * 마우스 움직임에 따른 탭 바 자동 스크롤을 설정합니다
+     */
+    private setupAutoScroll(container: HTMLElement): void {
+        let animationFrameId: number | null = null;
+        let isScrolling = false;
+        let currentMouseX = 0;
+        let currentContainerRect: DOMRect | null = null;
+
+        // 연속 스크롤 함수
+        const continuousScroll = () => {
+            if (!isScrolling || !currentContainerRect) {
+                animationFrameId = null;
+                return;
+            }
+
+            const mouseX = currentMouseX - currentContainerRect.left;
+            const containerWidth = currentContainerRect.width;
+
+            // 좌우 가장자리 영역 (25% 영역)
+            const edgeThreshold = containerWidth * 0.3;
+
+            // 스크롤 가능 여부 확인
+            const canScrollLeft = container.scrollLeft > 0;
+            const canScrollRight = container.scrollLeft < (container.scrollWidth - containerWidth);
+
+            let scrolled = false;
+
+            // 좌측 가장자리에서 왼쪽으로 스크롤
+            if (mouseX < edgeThreshold && canScrollLeft) {
+                const intensity = 1 - (mouseX / edgeThreshold); // 0~1
+                const scrollSpeed = intensity * 6; // 프레임당 최대 6px
+                container.scrollLeft -= scrollSpeed;
+                scrolled = true;
+            }
+            // 우측 가장자리에서 오른쪽으로 스크롤
+            else if (mouseX > containerWidth - edgeThreshold && canScrollRight) {
+                const intensity = (mouseX - (containerWidth - edgeThreshold)) / edgeThreshold; // 0~1
+                const scrollSpeed = intensity * 6; // 프레임당 최대 6px
+                container.scrollLeft += scrollSpeed;
+                scrolled = true;
+            }
+
+            // 스크롤이 발생했으면 다음 프레임 예약
+            if (scrolled && isScrolling) {
+                animationFrameId = requestAnimationFrame(continuousScroll);
+            } else {
+                animationFrameId = null;
+            }
+        };
+
+        const handleMouseMove = (e: MouseEvent) => {
+            currentMouseX = e.clientX;
+            currentContainerRect = container.getBoundingClientRect();
+
+            const mouseX = currentMouseX - currentContainerRect.left;
+            const containerWidth = currentContainerRect.width;
+            const edgeThreshold = containerWidth * 0.25;
+
+            // 가장자리 영역에 있는지 확인
+            const isInScrollZone = mouseX < edgeThreshold || mouseX > containerWidth - edgeThreshold;
+
+            if (isInScrollZone && !isScrolling) {
+                // 스크롤 시작
+                isScrolling = true;
+                if (animationFrameId === null) {
+                    animationFrameId = requestAnimationFrame(continuousScroll);
+                }
+            } else if (!isInScrollZone && isScrolling) {
+                // 스크롤 중지
+                isScrolling = false;
+            }
+        };
+
+        const handleMouseLeave = () => {
+            // 마우스가 컨테이너를 벗어나면 스크롤 중지
+            isScrolling = false;
+            currentContainerRect = null;
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        };
+
+        container.addEventListener('mousemove', handleMouseMove);
+        container.addEventListener('mouseleave', handleMouseLeave);
     }
 
     /**
@@ -944,12 +1035,12 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         const json = JSON.stringify(settings, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        
+
         const a = document.createElement('a');
         a.href = url;
         a.download = 'card-navigator-settings.json';
         a.click();
-        
+
         URL.revokeObjectURL(url);
     }
 
