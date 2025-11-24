@@ -69,19 +69,36 @@ export class ColdCache {
 
 	/**
 	 * 태그 기반 검색
+	 *
+	 * SearchEngine.filterByTag와 동일한 로직 사용
 	 */
 	private searchByTag(files: TFile[], tag: string): TFile[] {
-		const results: TFile[] = [];
-		for (const file of files) {
+		return files.filter(file => {
 			const cache = this.app.metadataCache.getFileCache(file);
-			if (!cache) continue;
+			if (!cache) return false;
 
-			const tags = cache.tags?.map(t => t.tag) || [];
-			if (tags.some(t => t.includes(tag))) {
-				results.push(file);
+			// frontmatter tags 검색
+			const frontmatterTags = cache.frontmatter?.tags ?? [];
+			if (Array.isArray(frontmatterTags)) {
+				if (frontmatterTags.some(t => {
+					const tagStr = String(t);
+					return tagStr === tag || tagStr === tag.substring(1);
+				})) {
+					return true;
+				}
+			} else if (typeof frontmatterTags === 'string') {
+				if (frontmatterTags === tag || frontmatterTags === tag.substring(1)) {
+					return true;
+				}
 			}
-		}
-		return results;
+
+			// inline tags 검색
+			if (cache.tags) {
+				return cache.tags.some(t => t.tag === tag);
+			}
+
+			return false;
+		});
 	}
 
 	/**
