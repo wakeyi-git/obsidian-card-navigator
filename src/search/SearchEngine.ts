@@ -12,6 +12,10 @@ import { ContentSearchStrategy } from './strategies/ContentSearchStrategy';
 import { TagSearchStrategy } from './strategies/TagSearchStrategy';
 import { PropertySearchStrategy } from './strategies/PropertySearchStrategy';
 import { RegexSearchStrategy } from './strategies/RegexSearchStrategy';
+import { LineSearchStrategy } from './strategies/LineSearchStrategy';
+import { SectionSearchStrategy } from './strategies/SectionSearchStrategy';
+import { FileSearchStrategy } from './strategies/FileSearchStrategy';
+import { TaskSearchStrategy } from './strategies/TaskSearchStrategy';
 
 /**
  * 검색 엔진
@@ -38,6 +42,9 @@ export class SearchEngine {
     /** Regex 검색 전략 */
     private regexStrategy: RegexSearchStrategy;
 
+    /** Task 검색 전략 (status 파라미터 필요) */
+    private taskStrategy: TaskSearchStrategy;
+
     constructor(app: App, logger: DebugLogger, getSettings: () => CardNavigatorSettings) {
         this.app = app;
         this.logger = logger;
@@ -49,6 +56,7 @@ export class SearchEngine {
         const config = { app, logger, getSettings };
         this.propertyStrategy = new PropertySearchStrategy(config);
         this.regexStrategy = new RegexSearchStrategy(config);
+        this.taskStrategy = new TaskSearchStrategy(config);
 
         this.registerDefaultStrategies();
         this.setupCacheInvalidation();
@@ -67,6 +75,9 @@ export class SearchEngine {
         this.registerStrategy('path', new PathSearchStrategy(config));
         this.registerStrategy('content', new ContentSearchStrategy(config));
         this.registerStrategy('tag', new TagSearchStrategy(config));
+        this.registerStrategy('line', new LineSearchStrategy(config));
+        this.registerStrategy('section', new SectionSearchStrategy(config));
+        this.registerStrategy('file', new FileSearchStrategy(config));
     }
 
     /**
@@ -911,6 +922,7 @@ export class SearchEngine {
      * @returns 필터링된 파일
      *
      * @remarks
+     * TaskSearchStrategy를 사용합니다 (Phase 3)
      * - [ ] 형식의 미완료 태스크
      * - [x] 또는 [X] 형식의 완료 태스크를 검색합니다
      */
@@ -920,84 +932,9 @@ export class SearchEngine {
         status: 'all' | 'todo' | 'done',
         caseSensitive: boolean
     ): Promise<TFile[]> {
-        const settings = this.getSettings();
-        const useFuzzy = settings.enableFuzzySearch;
-        const fuzzyThreshold = settings.fuzzySearchThreshold;
-        const results: TFile[] = [];
-        const searchContent = caseSensitive ? taskContent : taskContent.toLowerCase();
-
-        for (const file of files) {
-            try {
-                const content = await this.app.vault.read(file);
-                const lines = content.split('\n');
-
-                let hasMatch = false;
-                for (const line of lines) {
-                    if (this.isTask(line, status)) {
-                        // taskContent가 비어있으면 모든 태스크 매칭
-                        if (!taskContent || taskContent.trim() === '') {
-                            hasMatch = true;
-                            break;
-                        }
-
-                        // taskContent가 있으면 내용 검색
-                        const lineToSearch = caseSensitive ? line : line.toLowerCase();
-
-                        // 퍼지 검색 적용
-                        if (useFuzzy) {
-                            const match = fuzzyMatch(searchContent, lineToSearch, {
-                                caseSensitive,
-                                threshold: fuzzyThreshold
-                            });
-                            if (match.matched) {
-                                hasMatch = true;
-                                break;
-                            }
-                        }
-
-                        if (lineToSearch.includes(searchContent)) {
-                            hasMatch = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (hasMatch) {
-                    results.push(file);
-                }
-            } catch (error) {
-                this.logger.error('Search', t().searchEngine.taskSearchError, { path: file.path, error });
-            }
-        }
-
-        return results;
+        return await this.taskStrategy.filterByTask(files, taskContent, status, caseSensitive);
     }
 
-    /**
-     * 라인이 태스크인지 확인합니다
-     *
-     * @param line - 검사할 라인
-     * @param status - 태스크 상태
-     * @returns 태스크이면 true
-     */
-    private isTask(line: string, status: 'all' | 'todo' | 'done'): boolean {
-        // - [ ] 미완료 태스크
-        // - [x] 완료 태스크
-        // - [X] 완료 태스크
-        const taskRegex = /^\s*-\s+\[([ xX])\]/;
-        const match = line.match(taskRegex);
-
-        if (!match) return false;
-
-        const checkMark = match[1];
-        const isDone = checkMark !== ' ';
-
-        if (status === 'all') return true;
-        if (status === 'todo') return !isDone;
-        if (status === 'done') return isDone;
-
-        return false;
-    }
 
     /**
      * 블록으로 파일을 필터링합니다
