@@ -1,3 +1,25 @@
+## [1.4.9] - 2025-11-24
+
+### Fixed
+
+#### Event Handling Improvements
+- **Tag and Link Click Handling**: Fixed click event conflicts between cards and their internal elements
+  - **CardFactory Enhancement**: Added link handler rebinding after `cloneNode` operation
+    - `cloneNode()` does not copy event listeners, causing tag/link click handlers to be lost
+    - Now properly rebinds link handlers via `renderer.setupLinkHandlers(card)` after cloning
+    - Related file: [CardFactory.ts](src/view/CardFactory.ts)
+  - **Event Delegation Optimization**: Moved tag/link click filtering to event delegation handler
+    - Event filtering now happens at delegation level for better control flow
+    - Prevents card click event when tags (`tag-link`) or internal links (`internal-link`) are clicked
+    - Improved event handling architecture with early filtering in `clickHandler`
+    - Related file: [ViewEventHandler.ts](src/view/ViewEventHandler.ts)
+
+### Improved
+
+#### User Experience
+- **Click Reliability**: Tags and internal links now consistently respond to clicks without triggering card navigation
+- **Event Architecture**: More robust event handling system with clear separation of concerns
+
 ## [1.4.8] - 2025-11-24
 
 ### Added
