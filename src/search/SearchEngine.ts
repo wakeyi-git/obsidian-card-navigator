@@ -8,6 +8,10 @@ import { t } from '../i18n';
 import { fuzzyMatch } from '../utils/fuzzyMatch';
 import { SearchStrategy } from './strategies/types';
 import { PathSearchStrategy } from './strategies/PathSearchStrategy';
+import { ContentSearchStrategy } from './strategies/ContentSearchStrategy';
+import { TagSearchStrategy } from './strategies/TagSearchStrategy';
+import { PropertySearchStrategy } from './strategies/PropertySearchStrategy';
+import { RegexSearchStrategy } from './strategies/RegexSearchStrategy';
 
 /**
  * 검색 엔진
@@ -28,6 +32,12 @@ export class SearchEngine {
     /** 검색 전략 레지스트리 */
     private strategies: Map<string, SearchStrategy>;
 
+    /** Property 검색 전략 (propertyName 파라미터 필요) */
+    private propertyStrategy: PropertySearchStrategy;
+
+    /** Regex 검색 전략 */
+    private regexStrategy: RegexSearchStrategy;
+
     constructor(app: App, logger: DebugLogger, getSettings: () => CardNavigatorSettings) {
         this.app = app;
         this.logger = logger;
@@ -35,6 +45,10 @@ export class SearchEngine {
         this.parser = new SearchParser();
         this.searchCache = new TieredCache(app, logger);
         this.strategies = new Map();
+
+        const config = { app, logger, getSettings };
+        this.propertyStrategy = new PropertySearchStrategy(config);
+        this.regexStrategy = new RegexSearchStrategy(config);
 
         this.registerDefaultStrategies();
         this.setupCacheInvalidation();
@@ -51,6 +65,8 @@ export class SearchEngine {
         };
 
         this.registerStrategy('path', new PathSearchStrategy(config));
+        this.registerStrategy('content', new ContentSearchStrategy(config));
+        this.registerStrategy('tag', new TagSearchStrategy(config));
     }
 
     /**
@@ -266,71 +282,41 @@ export class SearchEngine {
     
     /**
      * 정규식 쿼리인지 확인합니다
-     * 
+     *
      * @param query - 검색어
      * @returns /pattern/ 또는 /pattern/flags 형식이면 true
+     *
+     * @remarks
+     * RegexSearchStrategy를 사용합니다 (Phase 2)
      */
     isRegexQuery(query: string): boolean {
-        return /^\/(.+?)\/([gimuy]*)$/.test(query.trim());
-    }
-    
-    private parseRegexQuery(query: string): { pattern: string, flags: string } {
-        const match = query.trim().match(/^\/(.+?)\/([gimuy]*)$/);
-
-        if (!match) {
-            throw new Error(t().searchEngine.invalidRegexFormat);
-        }
-
-        return {
-            pattern: match[1],
-            flags: match[2] || ''
-        };
+        return RegexSearchStrategy.isRegexQuery(query);
     }
     
     /**
      * 정규식으로 파일을 검색합니다
-     * 
+     *
      * @param query - 정규식 쿼리 (/pattern/flags)
      * @param files - 검색할 파일 목록
      * @returns 매칭된 파일
-     * 
+     *
+     * @remarks
+     * RegexSearchStrategy를 사용합니다 (Phase 2)
+     *
      * @example
      * ```typescript
      * // TODO로 시작하는 라인 찾기
      * await search('/^TODO/', files);
-     * 
+     *
      * // 날짜 형식 찾기
      * await search('/\\d{4}-\\d{2}-\\d{2}/', files);
-     * 
+     *
      * // 내부 링크 찾기
      * await search('/\\[\\[.*\\]\\]/', files);
      * ```
      */
     async searchWithRegex(query: string, files: TFile[]): Promise<TFile[]> {
-        const { pattern, flags } = this.parseRegexQuery(query);
-        
-        let regex: RegExp;
-        try {
-            regex = new RegExp(pattern, flags);
-        } catch (error) {
-            throw new Error(t().searchEngine.regexCreateError(String(error)));
-        }
-        
-        const results: TFile[] = [];
-        
-        for (const file of files) {
-            try {
-                const content = await this.app.vault.read(file);
-                
-                if (regex.test(content)) {
-                    results.push(file);
-                }
-            } catch (error) {
-                this.logger.error('Search', t().searchEngine.regexSearchError, { path: file.path, error });
-            }
-        }
-        
-        return results;
+        return await this.regexStrategy.executeAsync(query, files, false);
     }
     
     /**
@@ -853,50 +839,12 @@ export class SearchEngine {
     
     /**
      * 프론트매터 속성으로 파일을 필터링합니다
+     *
+     * @remarks
+     * PropertySearchStrategy를 사용합니다 (Phase 2)
      */
     private filterByProperty(files: TFile[], propertyName: string, propertyValue: string, caseSensitive: boolean): TFile[] {
-        const settings = this.getSettings();
-        const useFuzzy = settings.enableFuzzySearch;
-        const fuzzyThreshold = settings.fuzzySearchThreshold;
-        const searchValue = caseSensitive ? propertyValue : propertyValue.toLowerCase();
-
-        return files.filter(file => {
-            const cache = this.app.metadataCache.getFileCache(file);
-            if (!cache?.frontmatter) return false;
-
-            const value = cache.frontmatter[propertyName];
-            if (value == null) return false;
-
-            if (Array.isArray(value)) {
-                return value.some(v => {
-                    const strValue = caseSensitive ? String(v) : String(v).toLowerCase();
-
-                    // 퍼지 검색 적용
-                    if (useFuzzy) {
-                        const match = fuzzyMatch(searchValue, strValue, {
-                            caseSensitive,
-                            threshold: fuzzyThreshold
-                        });
-                        if (match.matched) return true;
-                    }
-
-                    return strValue === searchValue || strValue.includes(searchValue);
-                });
-            }
-
-            const strValue = caseSensitive ? String(value) : String(value).toLowerCase();
-
-            // 퍼지 검색 적용
-            if (useFuzzy) {
-                const match = fuzzyMatch(searchValue, strValue, {
-                    caseSensitive,
-                    threshold: fuzzyThreshold
-                });
-                if (match.matched) return true;
-            }
-
-            return strValue === searchValue || strValue.includes(searchValue);
-        });
+        return this.propertyStrategy.filterByProperty(files, propertyName, propertyValue, caseSensitive);
     }
     
     /**
