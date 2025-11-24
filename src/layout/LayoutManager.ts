@@ -1,17 +1,19 @@
 import { LayoutSettings, LayoutMode, CardNavigatorSettings } from '../types';
 import { DebugLogger } from '../utils/DebugLogger';
+import { ViewportLayoutManager } from './ViewportLayoutManager';
 
 /**
  * 카드 레이아웃을 관리합니다
- * 
+ *
  * 화면 크기에 따라 가로/세로 모드를 자동 전환하고,
  * 반응형 그리드를 계산하여 최적의 카드 배치를 제공합니다.
- * 
+ *
  * @remarks
  * 성능 최적화:
  * - CSS 변수 일괄 업데이트로 리페인트 최소화
  * - 읽기/쓰기 작업 분리로 레이아웃 thrashing 방지
  * - ResizeObserver와 디바운싱으로 불필요한 재계산 방지
+ * - Phase 3.5: ViewportLayoutManager로 보이는 카드만 레이아웃 계산
  */
 export class LayoutManager {
     private containerEl: HTMLElement;
@@ -21,13 +23,20 @@ export class LayoutManager {
     private resizeTimeout: NodeJS.Timeout | null = null;
     private previousSize: { width: number; height: number } | null = null;
     private logger: DebugLogger;
-    
+
+    /** ⭐ Phase 3.5: 뷰포트 기반 레이아웃 관리자 */
+    private viewportLayoutManager: ViewportLayoutManager | null = null;
+
+    /** 전체 설정 가져오기 함수 (ViewportLayoutManager용) */
+    private getFullSettings: () => CardNavigatorSettings;
+
     private readonly RESIZE_DEBOUNCE_MS = 100;
     private readonly SIZE_CHANGE_THRESHOLD = 20;
 
     constructor(containerEl: HTMLElement, settings: LayoutSettings, getFullSettings: () => CardNavigatorSettings) {
         this.containerEl = containerEl;
         this.settings = settings;
+        this.getFullSettings = getFullSettings;
         // ✅ 함수를 전달하여 항상 최신 settings를 참조
         this.logger = new DebugLogger(getFullSettings);
 
@@ -57,6 +66,12 @@ export class LayoutManager {
         }
 
         this.setupResizeObserver();
+
+        // ⭐ Phase 3.5: ViewportLayoutManager 초기화
+        this.viewportLayoutManager = new ViewportLayoutManager(
+            containerEl,
+            getFullSettings
+        );
 
         // 초기 레이아웃 적용
         this.updateLayout();
@@ -287,11 +302,29 @@ export class LayoutManager {
 
     /**
      * 현재 레이아웃 모드를 반환합니다
-     * 
+     *
      * @returns 현재 레이아웃 모드
      */
     getMode(): LayoutMode {
         return this.currentMode;
+    }
+
+    /**
+     * ⭐ Phase 3.5: 뷰포트 레이아웃 관리자에 카드 목록을 업데이트합니다
+     *
+     * @param cards - 카드 요소 배열
+     */
+    updateViewportCards(cards: HTMLElement[]): void {
+        if (this.viewportLayoutManager) {
+            this.viewportLayoutManager.updateCards(cards);
+        }
+    }
+
+    /**
+     * ⭐ Phase 3.5: ViewportLayoutManager 인스턴스를 반환합니다
+     */
+    getViewportLayoutManager(): ViewportLayoutManager | null {
+        return this.viewportLayoutManager;
     }
 
     /**
@@ -302,10 +335,16 @@ export class LayoutManager {
             this.resizeObserver.disconnect();
             this.resizeObserver = null;
         }
-        
+
         if (this.resizeTimeout) {
             clearTimeout(this.resizeTimeout);
             this.resizeTimeout = null;
+        }
+
+        // ⭐ Phase 3.5: ViewportLayoutManager 정리
+        if (this.viewportLayoutManager) {
+            this.viewportLayoutManager.destroy();
+            this.viewportLayoutManager = null;
         }
     }
 }

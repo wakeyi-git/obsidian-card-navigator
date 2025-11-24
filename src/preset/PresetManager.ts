@@ -14,7 +14,21 @@ export class PresetManager {
     /** 현재 적용된 프리셋 ID */
     private currentPresetId: string | null = null;
     private logger: DebugLogger;
-    
+
+    /** ⭐ Phase 2: 프리셋 매핑 인덱스 (성능 최적화 - O(n) → O(1)) */
+    private mappingIndex: {
+        byFolder: Map<string, PresetMapping[]>;  // folder path → mappings
+        byTag: Map<string, PresetMapping[]>;     // tag → mappings
+        byProperty: Map<string, PresetMapping[]>; // property name → mappings
+    } = {
+        byFolder: new Map(),
+        byTag: new Map(),
+        byProperty: new Map()
+    };
+
+    /** 인덱스 빌드 여부 */
+    private isIndexBuilt = false;
+
     constructor(private plugin: CardNavigatorPlugin) {
         // ✅ 함수를 전달하여 항상 최신 settings를 참조
         this.logger = new DebugLogger(() => this.plugin.settingsManager.getSettings());
@@ -24,6 +38,7 @@ export class PresetManager {
      * PresetManager를 초기화합니다
      */
     async initialize(): Promise<void> {
+        this.buildMappingIndex();
         this.logger.debug('Preset', t().debug.presets.managerInitialized);
     }
 
@@ -32,7 +47,63 @@ export class PresetManager {
      */
     reset(): void {
         this.currentPresetId = null;
+        this.isIndexBuilt = false;
         this.logger.debug('Preset', t().debug.presets.managerReset);
+    }
+
+    /**
+     * ⭐ Phase 2: 프리셋 매핑 인덱스를 빌드합니다
+     *
+     * @remarks
+     * 모든 매핑을 타입별로 인덱싱하여 O(1) 검색을 가능하게 합니다.
+     */
+    private buildMappingIndex(): void {
+        // 인덱스 초기화
+        this.mappingIndex.byFolder.clear();
+        this.mappingIndex.byTag.clear();
+        this.mappingIndex.byProperty.clear();
+
+        const settings = this.plugin.settings;
+
+        for (const mapping of settings.presetMappings) {
+            switch (mapping.type) {
+                case 'folder':
+                    if (!this.mappingIndex.byFolder.has(mapping.target)) {
+                        this.mappingIndex.byFolder.set(mapping.target, []);
+                    }
+                    this.mappingIndex.byFolder.get(mapping.target)!.push(mapping);
+                    break;
+
+                case 'tag':
+                    if (!this.mappingIndex.byTag.has(mapping.target)) {
+                        this.mappingIndex.byTag.set(mapping.target, []);
+                    }
+                    this.mappingIndex.byTag.get(mapping.target)!.push(mapping);
+                    break;
+
+                case 'property':
+                    const propName = mapping.target.split(':')[0]; // "property:value" → "property"
+                    if (!this.mappingIndex.byProperty.has(propName)) {
+                        this.mappingIndex.byProperty.set(propName, []);
+                    }
+                    this.mappingIndex.byProperty.get(propName)!.push(mapping);
+                    break;
+            }
+        }
+
+        this.isIndexBuilt = true;
+        this.logger.debug('Preset', '인덱스 빌드 완료', {
+            folders: this.mappingIndex.byFolder.size,
+            tags: this.mappingIndex.byTag.size,
+            properties: this.mappingIndex.byProperty.size
+        });
+    }
+
+    /**
+     * ⭐ 인덱스를 무효화합니다 (매핑이 변경되었을 때 호출)
+     */
+    invalidateIndex(): void {
+        this.isIndexBuilt = false;
     }
 
     /**

@@ -1,3 +1,49 @@
+## [1.4.7] - 2025-11-24
+
+### Added
+
+#### Enhanced Metadata Caching (Phase 5.3)
+- **EnhancedMetadataCache**: New LRU-based caching layer for file content and extracted data
+  - Caches file content with mtime-based invalidation
+  - Caches extracted data (emoji, etc.) to avoid redundant computation
+  - Maximum 200 items with automatic eviction of least recently used entries
+  - Reduces repetitive file reads and improves performance
+  - Related files: [MetadataCache.ts](src/card/MetadataCache.ts), [CardData.ts](src/card/CardData.ts)
+
+#### Debug Logging Enhancement
+- **Cache Logging Category**: Added 'Cache' category to debug logging system
+  - Monitor cache hits/misses in developer console
+  - Track cache invalidation and eviction events
+  - View cache statistics for performance analysis
+  - Related files: [types.ts](src/types.ts), [SettingsTab.ts](src/ui/SettingsTab.ts)
+
+### Changed
+
+#### Performance Optimization
+- **File Reading**: Replaced direct `vault.read()` calls with cached reads via `EnhancedMetadataCache`
+  - File content is now cached and reused across multiple extractions
+  - Same file is read only once even when used by different render modes
+  - Cache automatically invalidates when file is modified (mtime check)
+  - Related file: [CardData.ts](src/card/CardData.ts)
+
+#### Internationalization
+- **Cache Translation**: Added cache-related translations to all language files
+  - Korean: "캐시" - "메타데이터 캐시, 콘텐츠 캐시 등"
+  - English: "Cache" - "Metadata cache, content cache"
+  - Related files: [ko.ts](src/i18n/locales/ko.ts), [en.ts](src/i18n/locales/en.ts)
+
+### Improved
+
+#### Memory Efficiency
+- **LRU Eviction**: Automatic cache size management prevents unbounded memory growth
+- **Smart Invalidation**: Only invalidates cache entries for modified files, preserving others
+
+#### Test Coverage
+- **Cache Testing**: Updated tests to reflect new caching behavior
+  - Tests verify cache reuse across different render modes
+  - Tests confirm cache invalidation on file changes
+  - All 1263 tests passing with new cache implementation
+
 ## [1.4.6] - 2025-11-23
 
 ### Fixed

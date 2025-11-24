@@ -7,6 +7,7 @@ import { ICardView } from '../interfaces/ICardView';
 import { isValidFile } from '../utils/typeGuards';
 import { DebugLogger } from '../utils/DebugLogger';
 import { StyleUtils } from '../utils/StyleUtils';
+import { StylePresets } from '../utils/StylePresets';
 import { t } from '../i18n';
 
 /**
@@ -26,6 +27,13 @@ export class CardFactory {
 	private extractor: CardDataExtractor;
 	private eventHandler: ViewEventHandler;
 	private logger: DebugLogger;
+
+	/** ⭐ Phase 2: 렌더링 메모이제이션 캐시 */
+	private cardCache = new Map<string, {
+		element: HTMLElement;
+		settingsHash: string;
+		mtime: number;
+	}>();
 
 	/** 현재 설정 */
 	private get settings() {
@@ -55,8 +63,8 @@ export class CardFactory {
 	}
 	
 	/**
-	 * 카드를 생성합니다 (파일별 설정 지원)
-	 * 
+	 * ⭐ 카드를 생성합니다 (Phase 2: 메모이제이션 기반 캐싱)
+	 *
 	 * @param file - 카드로 표시할 파일
 	 * @param container - 카드를 추가할 컨테이너
 	 * @param activeFile - 현재 활성 파일 (active 클래스 추가용)
@@ -77,29 +85,74 @@ export class CardFactory {
 		const cardSettings = presetCardSettings
 			? presetCardSettings
 			: this.getGlobalCardSettings();
-		
+
+		// ⭐ Phase 2: 캐시 확인
+		const cacheKey = file.path;
+		const settingsHash = this.hashSettings(cardSettings);
+		const cached = this.cardCache.get(cacheKey);
+		const fileMtime = file.stat?.mtime || 0;
+
+		// 캐시 유효성 검사: 수정 시간과 설정이 동일한지 확인
+		if (cached &&
+			cached.mtime === fileMtime &&
+			cached.settingsHash === settingsHash) {
+			this.logger.debug('Card', `Cache hit for: ${file.path}`);
+
+			// 캐시된 요소 복제
+			const card = cached.element.cloneNode(true) as HTMLElement;
+
+			// active 여부 판단
+			const isActive = isValidFile(activeFile) && activeFile.path === file.path;
+
+			// active 클래스 추가
+			if (isActive) {
+				card.addClass('active');
+			} else {
+				card.removeClass('active');
+			}
+
+			// 이벤트 바인딩 (복제된 요소이므로 다시 바인딩 필요)
+			this.eventHandler.bindCardEvents(card, file, onFileOpen);
+
+			// ⭐ 컨테이너에 카드 추가 (캐시 미스 경로와 동일하게)
+			container.appendChild(card);
+
+			return card;
+		}
+
+		this.logger.debug('Card', `Cache miss for: ${file.path}`);
+
 		// 3. CardData 생성 (카드별 설정 포함)
 		const cardData = await this.createCardData(file, cardSettings);
-		
+
 		// active 여부 판단
 		const isActive = isValidFile(activeFile) && activeFile.path === file.path;
 
 		// 4. 카드 렌더링 (Modified Strategy A: isActive 파라미터 제거됨)
 		const card = await this.renderer.renderCard(cardData, container);
-		
+
 		card.dataset.filePath = file.path;
-		
+
 		// 5. active 클래스 추가
 		if (isActive) {
 			card.addClass('active');
 		}
-		
+
 		// 6. 이벤트 바인딩
 		this.eventHandler.bindCardEvents(card, file, onFileOpen);
 
 		// 7. 카드별 CSS 커스텀 속성 적용
 		this.applyCardStyles(card, cardSettings);
-		
+
+		// ⭐ Phase 2: 캐시에 저장 (active 클래스 제거 후 저장)
+		const cacheElement = card.cloneNode(true) as HTMLElement;
+		cacheElement.removeClass('active');
+		this.cardCache.set(cacheKey, {
+			element: cacheElement,
+			settingsHash: settingsHash,
+			mtime: fileMtime
+		});
+
 		return card;
 	}
 	
@@ -187,8 +240,9 @@ export class CardFactory {
 	 * 카드에 CSS 커스텀 속성 적용 (Modified Strategy A: Hybrid Approach)
 	 *
 	 * @remarks
-	 * - 이전: 28개의 data attributes 저장 + 인라인 스타일
-	 * - 현재: CSS 커스텀 속성으로 per-card 스타일 설정
+	 * ⭐ Phase 2 최적화: StylePresets 캐싱 사용
+	 * - 이전: 매번 개별 setProperty() 호출 (느림)
+	 * - 현재: 사전 계산된 CSS 문자열 캐싱 (빠름)
 	 * - CSS가 상태 변경(normal/active/focused)을 자동으로 처리
 	 *
 	 * @private
@@ -197,17 +251,8 @@ export class CardFactory {
 		card: HTMLElement,
 		cardSettings: CardSettings
 	): void {
-		// Modified Strategy A: CSS 커스텀 속성 사용
-		// 카드 전체 스타일 설정
-		StyleUtils.applyCardCustomProperties(
-			card,
-			cardSettings.normalCardStyle,
-			cardSettings.activeCardStyle,
-			cardSettings.focusedCardStyle
-		);
-
-		// 섹션별 스타일 설정 (헤더, 바디, 풋터)
-		StyleUtils.applySectionCustomProperties(card, cardSettings);
+		// ⭐ Phase 2: StylePresets 사용 (캐싱된 CSS 문자열)
+		StylePresets.applyCardStyles(card, cardSettings);
 
 		// CSS 클래스만으로 상태 전환 가능
 		// 예: card.addClass('active') → CSS가 --card-bg-active 자동 적용
@@ -483,5 +528,44 @@ export class CardFactory {
 				await this.app.vault.delete(file);
 			}
 		});
+	}
+
+	/**
+	 * ⭐ Phase 2: 설정 해시 생성 (캐시 유효성 검증용)
+	 */
+	private hashSettings(cardSettings: CardSettings): string {
+		return JSON.stringify({
+			normalCardStyle: cardSettings.normalCardStyle,
+			activeCardStyle: cardSettings.activeCardStyle,
+			focusedCardStyle: cardSettings.focusedCardStyle,
+			header: cardSettings.header,
+			body: cardSettings.body,
+			footer: cardSettings.footer
+		});
+	}
+
+	/**
+	 * ⭐ Phase 2: 캐시 무효화 (파일 변경 또는 설정 변경 시)
+	 *
+	 * @param file - 무효화할 파일 (선택사항, 없으면 전체 캐시 클리어)
+	 */
+	invalidateCache(file?: TFile): void {
+		if (file) {
+			this.cardCache.delete(file.path);
+			this.logger.debug('Card', `Cache invalidated for: ${file.path}`);
+		} else {
+			this.cardCache.clear();
+			this.logger.debug('Card', 'All card cache cleared');
+		}
+	}
+
+	/**
+	 * ⭐ Phase 2: 캐시 통계 (디버깅용)
+	 */
+	getCacheStats(): { size: number; keys: string[] } {
+		return {
+			size: this.cardCache.size,
+			keys: Array.from(this.cardCache.keys())
+		};
 	}
 }

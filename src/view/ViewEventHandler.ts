@@ -7,7 +7,7 @@ import { CardNavigatorSettings } from '../types';
 
 /**
  * 뷰 이벤트 핸들러
- * 
+ *
  * 카드 클릭, 호버, 드래그앤드롭, 컨텍스트 메뉴 등
  * 모든 사용자 인터랙션을 중앙에서 관리합니다.
  */
@@ -17,7 +17,13 @@ export class ViewEventHandler {
 	private contextMenu: CardContextMenu;
 	private selectionManager: SelectionManager;
 	private logger: DebugLogger;
-	
+
+	/** 이벤트 위임이 설정된 컨테이너 */
+	private delegatedContainers = new WeakSet<HTMLElement>();
+
+	/** 파일 열기 콜백 맵 (파일 경로 → 콜백) */
+	private onFileOpenCallbacks = new Map<string, (file: TFile) => void>();
+
 	constructor(
 		app: App,
 		dragDropHandler: DragDropHandler,
@@ -36,14 +42,98 @@ export class ViewEventHandler {
 	}
 	
 	/**
-	 * 카드 이벤트 바인딩
-	 * 
+	 * ⭐ 컨테이너 레벨에서 이벤트 위임 설정 (최적화)
+	 *
+	 * 각 카드에 개별 이벤트 리스너를 등록하는 대신,
+	 * 컨테이너 하나에만 리스너를 등록하여 메모리 사용량을 줄입니다.
+	 *
+	 * @param container - 카드 컨테이너
+	 * @param onFileOpen - 파일 열기 콜백
+	 */
+	setupDelegatedEvents(
+		container: HTMLElement,
+		onFileOpen: (file: TFile) => void
+	): void {
+		// 이미 설정된 컨테이너는 스킵
+		if (this.delegatedContainers.has(container)) {
+			return;
+		}
+
+		this.delegatedContainers.add(container);
+
+		// 마우스 호버 이벤트 위임
+		container.addEventListener('mouseover', (e: MouseEvent) => {
+			const card = (e.target as HTMLElement).closest('.card-item') as HTMLElement;
+			if (card && container.contains(card)) {
+				card.addClass('card-item-hover');
+			}
+		});
+
+		container.addEventListener('mouseout', (e: MouseEvent) => {
+			const card = (e.target as HTMLElement).closest('.card-item') as HTMLElement;
+			if (card && container.contains(card)) {
+				card.removeClass('card-item-hover');
+			}
+		});
+
+		// 클릭 이벤트 위임
+		container.addEventListener('click', (e: MouseEvent) => {
+			const card = (e.target as HTMLElement).closest('.card-item') as HTMLElement;
+			if (!card || !container.contains(card)) {
+				return;
+			}
+
+			const filePath = card.dataset.filePath;
+			if (!filePath) {
+				return;
+			}
+
+			const file = this.app.vault.getAbstractFileByPath(filePath);
+			if (!(file instanceof TFile)) {
+				return;
+			}
+
+			// 드래그 상태는 카드별로 관리되므로 여기서는 간단히 처리
+			this.handleCardClick(e, file, { isDragging: () => false }, onFileOpen);
+		});
+
+		// 컨텍스트 메뉴 이벤트 위임
+		container.addEventListener('contextmenu', (e: MouseEvent) => {
+			const card = (e.target as HTMLElement).closest('.card-item') as HTMLElement;
+			if (!card || !container.contains(card)) {
+				return;
+			}
+
+			const filePath = card.dataset.filePath;
+			if (!filePath) {
+				return;
+			}
+
+			const file = this.app.vault.getAbstractFileByPath(filePath);
+			if (!(file instanceof TFile)) {
+				return;
+			}
+
+			e.preventDefault();
+			this.contextMenu.show(e, file);
+		});
+
+		this.logger.debug('Event', '이벤트 위임 설정 완료', {
+			container: container.className
+		});
+	}
+
+	/**
+	 * 카드 이벤트 바인딩 (개별 방식 - 하위 호환성 유지)
+	 *
 	 * 카드에 클릭, 호버, 드래그앤드롭, 컨텍스트 메뉴 등의
 	 * 이벤트 리스너를 등록합니다.
-	 * 
+	 *
 	 * @param card - 카드 DOM 요소
 	 * @param file - 파일
 	 * @param onFileOpen - 파일 열기 콜백
+	 *
+	 * @deprecated 이벤트 위임 방식(setupDelegatedEvents)을 사용하세요
 	 */
 	bindCardEvents(
 		card: HTMLElement,
@@ -51,19 +141,19 @@ export class ViewEventHandler {
 		onFileOpen: (file: TFile) => void
 	): void {
 		const dragState = this.dragDropHandler.setupDraggable(card, file);
-		
+
 		card.addEventListener('mouseenter', () => {
 			card.addClass('card-item-hover');
 		});
-		
+
 		card.addEventListener('mouseleave', () => {
 			card.removeClass('card-item-hover');
 		});
-		
+
 		card.addEventListener('click', (e: MouseEvent) => {
 			this.handleCardClick(e, file, dragState, onFileOpen);
 		});
-		
+
 		card.addEventListener('contextmenu', (e: MouseEvent) => {
 			e.preventDefault();
 			this.contextMenu.show(e, file);

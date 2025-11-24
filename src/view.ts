@@ -324,9 +324,12 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		this.registerEvent(
 			this.app.metadataCache.on('changed', async (file) => {
 				if (!(file instanceof TFile)) return;
-				
+
 				this.logger.debug('View', t().debug.view.metadataChangeDetected, { path: file.path });
-				
+
+				// ⭐ Phase 2: 캐시 무효화
+				this.cardFactory.invalidateCache(file);
+
 				// ⭐ resolvedLinks 업데이트 대기 + 디바운싱
 				setTimeout(() => {
 					if (this.debouncedForceRender) {
@@ -344,9 +347,12 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		this.registerEvent(
 			this.app.vault.on('delete', async (file) => {
 				if (!(file instanceof TFile)) return;
-				
+
 				this.logger.debug('View', t().debug.view.fileDeleteDetected, { path: file.path });
-				
+
+				// ⭐ Phase 2: 캐시 무효화
+				this.cardFactory.invalidateCache(file);
+
 				// ⭐ Vault 파일 목록 업데이트 대기 + 디바운싱
 				setTimeout(() => {
 					if (this.debouncedForceRender) {
@@ -372,6 +378,14 @@ export class CardNavigatorView extends ItemView implements ICardView {
 					newPath: file.path
 				});
 
+				// ⭐ Phase 2: 캐시 무효화 (이전 경로와 새 경로 모두)
+				this.cardFactory.invalidateCache(file);
+				// 이전 경로로 캐시된 항목도 삭제
+				const oldFile = this.app.vault.getAbstractFileByPath(oldPath);
+				if (oldFile instanceof TFile) {
+					this.cardFactory.invalidateCache(oldFile);
+				}
+
 				// ⭐ 디바운싱 적용: metadata 이벤트와 합쳐짐
 				if (this.debouncedForceRender) {
 					this.debouncedForceRender().catch(err => {
@@ -388,6 +402,9 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		this.registerEvent(
 			this.app.workspace.on('css-change', async () => {
 				this.logger.debug('View', 'Theme change detected - refreshing cards');
+
+				// ⭐ Phase 2: 테마 변경 시 전체 캐시 무효화 (색상 재계산 필요)
+				this.cardFactory.invalidateCache();
 
 				// 카드 리프레시 (스타일 재적용)
 				if (isValidElement(this.cardsContainer)) {

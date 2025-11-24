@@ -14,7 +14,9 @@ import CardNavigatorPlugin from '../main';
 import type { CardNavigatorView } from '../view';
 import { isValidFile, isDefined } from '../utils/typeGuards';
 import { DebugLogger } from '../utils/DebugLogger';
+import { RenderProfiler } from '../utils/RenderProfiler';
 import { ViewportManager } from './ViewportManager';
+import { IncrementalRenderer } from './IncrementalRenderer';
 import { VIEWPORT } from '../constants';
 import { t } from '../i18n';
 
@@ -45,7 +47,16 @@ export class ViewRenderer {
 
 	/** Viewport 관리자 (viewport 렌더링용) */
 	public viewportManager: ViewportManager | null = null;
-	
+
+	/** 이벤트 위임 설정 여부 */
+	private eventsDelegated = false;
+
+	/** ⭐ 렌더링 성능 프로파일러 (Phase 4.1) */
+	private profiler: RenderProfiler;
+
+	/** ⭐ 증분 렌더러 (Phase 3.1) */
+	private incrementalRenderer: IncrementalRenderer;
+
 	/** 플러그인 설정 */
 	private get settings() {
 		return this.plugin.settingsManager.getSettings();
@@ -53,35 +64,34 @@ export class ViewRenderer {
 	
 	/**
 	 * 렌더링 취소 여부를 확인합니다
-	 * 
+	 *
 	 * @param renderingId - 현재 렌더링 ID
 	 * @param context - 취소 발생 지점 설명
 	 * @returns 취소가 필요하면 true
-	 * 
+	 *
 	 * @remarks
 	 * 빠른 파일 전환 시 이전 렌더링을 취소하여 중복 카드를 방지합니다.
+	 * 취소 시 lastRenderState를 리셋하여 다음 렌더링이 스킵되지 않도록 합니다.
 	 */
 	private shouldCancelRendering(renderingId: number, context: string): boolean {
 		const shouldCancel = renderingId !== this.state.getCurrentRenderingId();
-		
+
 		if (shouldCancel) {
+			// ⭐ 렌더링 취소 시 상태 리셋 (다음 렌더링이 스킵되지 않도록)
+			this.lastRenderState = null;
+
 			this.logger.debug('View', `Render cancelled (${context})`, {
 				currentId: renderingId,
 				latestId: this.state.getCurrentRenderingId()
 			});
 		}
-		
+
 		return shouldCancel;
 	}
 	
 	/** 현재 활성 파일 */
 	private getActiveFile(): TFile | null {
 		return this.app.workspace.getActiveFile();
-	}
-	
-	/** 활성 파일이 유효한지 확인 */
-	private hasValidActiveFile(): boolean {
-		return isValidFile(this.getActiveFile());
 	}
 	
 	/** 활성 파일의 태그 배열 */
@@ -246,6 +256,20 @@ export class ViewRenderer {
 		this.logger = new DebugLogger(() => plugin.settingsManager.getSettings());
 		this.groupingManager = new GroupingManager(app, () => plugin.settingsManager.getSettings());
 		this.groupRenderer = new GroupRenderer();
+
+		// ⭐ RenderProfiler 초기화 (Phase 4.1)
+		this.profiler = new RenderProfiler();
+		// 개발 모드에서만 프로파일러 활성화 (추후 설정으로 제어 가능)
+		if (process.env.NODE_ENV === 'development') {
+			this.profiler.enable();
+		}
+
+		// ⭐ IncrementalRenderer 초기화 (Phase 3.1)
+		this.incrementalRenderer = new IncrementalRenderer(cardFactory, this.logger);
+		// 렌더링 취소 콜백 설정
+		this.incrementalRenderer.setShouldCancelCallback((renderingId, context) => {
+			return this.shouldCancelRendering(renderingId, context);
+		});
 	}
 	
 	/**
@@ -265,8 +289,41 @@ export class ViewRenderer {
 		const currentState = await this.generateStateHash();
 
 		if (currentState === this.lastRenderState) {
-			this.logger.debug('View', 'State unchanged, skipping render');
+			this.logger.debug('View', 'State unchanged, skipping render', {
+				currentState: currentState.substring(0, 50)
+			});
 			return;
+		}
+
+		this.logger.debug('View', 'State changed, will render', {
+			lastState: this.lastRenderState?.substring(0, 50) || 'null',
+			currentState: currentState.substring(0, 50)
+		});
+
+		// ⭐ 스크롤 위치 보존: 활성 파일이 변경되지 않았으면 스크롤 위치 저장
+		const currentActiveFile = this.getActiveFile();
+		const hasActiveFileChanged = this.state.hasFileChanged(currentActiveFile);
+		let scrollTop = 0;
+		if (!hasActiveFileChanged) {
+			scrollTop = container.scrollTop;
+		}
+
+		// ⭐ 상태가 변경되었으므로 이전 콘텐츠를 먼저 제거
+		// 이렇게 하면 폴더 재방문 시 이전 폴더의 카드가 남지 않음
+		container.empty();
+
+		// ⭐ container.empty()가 이벤트 리스너도 제거하므로 플래그 리셋
+		this.eventsDelegated = false;
+
+		// ⭐ 이벤트 위임 설정
+		// CardFactory에서 개별 카드에 이벤트를 바인딩하는 대신
+		// 컨테이너 레벨에서 한 번만 이벤트를 등록하여 성능 향상
+		if (!this.eventsDelegated) {
+			const eventHandler = this.view['eventHandler'];
+			if (eventHandler && typeof eventHandler.setupDelegatedEvents === 'function') {
+				eventHandler.setupDelegatedEvents(container, onFileOpen);
+				this.eventsDelegated = true;
+			}
 		}
 
 		const renderingId = this.state.startRendering();
@@ -286,7 +343,7 @@ export class ViewRenderer {
 	try {
 			// 파일 개수 확인
 			const files = await this.getFilesToDisplay();
-			
+
 			if (this.shouldCancelRendering(renderingId, 'after file list fetch')) {
 				return;
 			}
@@ -307,7 +364,12 @@ export class ViewRenderer {
 			}
 			
 			this.lastRenderState = currentState;
-			
+
+			// ⭐ 스크롤 위치 복원: 활성 파일이 변경되지 않았으면 저장했던 스크롤 위치로 복원
+			if (!hasActiveFileChanged && scrollTop > 0) {
+				container.scrollTop = scrollTop;
+			}
+
 			// 폴더 변경 후 돌아왔을 때 선택된 카드의 스타일이 유지되도록 함
 			if (this.selectionManager.getSelectionCount() > 0) {
 				this.logger.debug('View', t().viewRenderer.comments.selectionRestore, {
@@ -641,23 +703,11 @@ export class ViewRenderer {
 		renderingId: number,
 		files: TFile[]
 	): Promise<void> {
-		if (this.shouldCancelRendering(renderingId, 'before container.empty()')) {
+		if (this.shouldCancelRendering(renderingId, 'before rendering')) {
 			return;
 		}
-		
+
 		const currentActiveFile = this.getActiveFile();
-		const hasActiveFileChanged = this.state.hasFileChanged(currentActiveFile);
-
-		let scrollTop = 0;
-		if (!hasActiveFileChanged) {
-			scrollTop = container.scrollTop;
-		}
-
-		container.empty();
-
-		if (this.shouldCancelRendering(renderingId, 'after container.empty()')) {
-			return;
-		}
 
 		if (files.length === 0) {
 			if (this.shouldCancelRendering(renderingId, 'before empty message')) {
@@ -676,7 +726,13 @@ export class ViewRenderer {
 		// ⭐ 그룹화 및 활성 파일 자동 펼치기
 		const groups = this.prepareGroups(files, currentActiveFile, 'Standard');
 
-		// ⭐ 그룹별로 렌더링
+		// ⭐ 프로파일링 시작 (Phase 4.1)
+		this.profiler.startMeasure('standard', files.length, groups.length);
+
+		// ⭐ DocumentFragment 활용: 모든 그룹을 먼저 생성한 후 한 번에 DOM에 추가
+		const containerFragment = document.createDocumentFragment();
+
+		// 그룹별로 렌더링
 		for (const group of groups) {
 			if (this.shouldCancelRendering(renderingId, 'during group rendering')) {
 				return;
@@ -691,46 +747,72 @@ export class ViewRenderer {
 				continue;
 			}
 
-			// 그룹 섹션 생성
+			// 그룹 섹션 생성 (임시 컨테이너에)
+			const tempGroupContainer = document.createElement('div');
 			const section = this.groupRenderer.createGroupSection(
 				group,
-				container,
+				tempGroupContainer,
 				(groupId, collapsed) => this.onGroupToggle(groupId, collapsed),
 				(groupId) => this.onGroupSelectAll(groupId),
 				currentActiveFile
 			);
 
-			// 그룹이 접혀있으면 카드 렌더링 스킵
-			if (group.collapsed) {
-				continue;
-			}
+			// 그룹이 접혀있지 않으면 카드 렌더링
+			if (!group.collapsed) {
+				// 카드 컨테이너 찾기
+				const cardContainer = this.groupRenderer.findCardContainer(section);
+				if (cardContainer) {
+					// ⭐ 증분 렌더링: 카드가 50개 이상이면 청크 단위로 렌더링 (Phase 3.1)
+					const INCREMENTAL_THRESHOLD = 50;
 
-			// 카드 컨테이너 찾기
-			const cardContainer = this.groupRenderer.findCardContainer(section);
-			if (!cardContainer) {
-				continue;
-			}
+					if (group.files.length >= INCREMENTAL_THRESHOLD) {
+						this.logger.debug('View', 'Using incremental rendering for large group', {
+							groupId: group.id,
+							fileCount: group.files.length
+						});
 
-			// 그룹 내 카드 렌더링
-			const tempContainer = document.createElement('div');
-			for (const file of group.files) {
-				if (this.shouldCancelRendering(renderingId, 'during card creation')) {
-					return;
+						// 증분 렌더링 사용
+						const success = await this.incrementalRenderer.renderInChunks(
+							group.files,
+							cardContainer,
+							currentActiveFile,
+							onFileOpen,
+							undefined, // 진행률 콜백 없음 (추후 추가 가능)
+							renderingId
+						);
+
+						if (!success) {
+							// 렌더링이 취소됨
+							return;
+						}
+					} else {
+						// 기존 방식: DocumentFragment 사용
+						const cardFragment = document.createDocumentFragment();
+						for (const file of group.files) {
+							if (this.shouldCancelRendering(renderingId, 'during card creation')) {
+								return;
+							}
+
+							await this.cardFactory.createCard(
+								file,
+								cardFragment as unknown as HTMLElement,
+								currentActiveFile,
+								onFileOpen
+							);
+						}
+
+						// 카드들을 한 번에 DOM에 추가
+						cardContainer.appendChild(cardFragment);
+					}
 				}
-
-				await this.cardFactory.createCard(
-					file,
-					tempContainer,
-					currentActiveFile,
-					onFileOpen
-				);
 			}
 
-			// 카드들을 한 번에 DOM에 추가
-			while (tempContainer.firstChild) {
-				cardContainer.appendChild(tempContainer.firstChild);
-			}
+			// 그룹 섹션을 컨테이너 fragment에 추가
+			containerFragment.appendChild(section);
 		}
+
+		// ⭐ 모든 그룹을 한 번에 DOM에 추가 (리플로우 최소화)
+		container.appendChild(containerFragment);
 
 		if (this.shouldCancelRendering(renderingId, 'before layout update')) {
 			return;
@@ -755,7 +837,15 @@ export class ViewRenderer {
 			.filter(f => f !== null) as TFile[];
 
 		this.keyboardNav.updateCards(cardElements, visibleFiles);
-		
+
+		// ⭐ Phase 3.5: ViewportLayoutManager에 카드 목록 업데이트
+		if (isDefined(this.layoutManager)) {
+			this.layoutManager.updateViewportCards(cardElements);
+		}
+
+		// ⭐ 프로파일링 종료 (Phase 4.1)
+		this.profiler.endMeasure();
+
 		this.logger.debug('View', 'Standard render completed', {
 			renderingId,
 			fileCount: files.length,
@@ -767,10 +857,6 @@ export class ViewRenderer {
 		if (toolbar) {
 			const totalFiles = this.app.vault.getMarkdownFiles().length;
 			toolbar.updateFileCount(files.length, totalFiles);
-		}
-
-		if (!hasActiveFileChanged) {
-			container.scrollTop = scrollTop;
 		}
 	}
 	
@@ -838,19 +924,11 @@ export class ViewRenderer {
 			this.viewportManager = null;
 		}
 
-		const currentActiveFile = this.getActiveFile();
-		const hasActiveFileChanged = this.state.hasFileChanged(currentActiveFile);
-
-		let scrollTop = 0;
-		if (!hasActiveFileChanged) {
-			scrollTop = container.scrollTop;
-		}
-
-		container.empty();
-
-		if (this.shouldCancelRendering(renderingId, 'after container.empty()')) {
+		if (this.shouldCancelRendering(renderingId, 'before rendering')) {
 			return;
 		}
+
+		const currentActiveFile = this.getActiveFile();
 
 		const files = await this.getFilesToDisplay();
 
@@ -871,12 +949,18 @@ export class ViewRenderer {
 		// ⭐ 그룹화 및 활성 파일 자동 펼치기
 		const groups = this.prepareGroups(files, currentActiveFile, 'Viewport');
 
+		// ⭐ 프로파일링 시작 (Phase 4.1)
+		this.profiler.startMeasure('viewport', files.length, groups.length);
+
 		// 1. 모든 파일에 대한 플레이스홀더 생성 (그룹별로)
 		const placeholders: HTMLElement[] = [];
 		let activeIndex = -1;
 		let currentIndex = 0;
 
-		// ⭐ 그룹별로 렌더링
+		// ⭐ DocumentFragment 활용: 모든 그룹을 먼저 생성한 후 한 번에 DOM에 추가
+		const containerFragment = document.createDocumentFragment();
+
+		// 그룹별로 렌더링
 		for (const group of groups) {
 			if (this.shouldCancelRendering(renderingId, 'during group rendering')) {
 				return;
@@ -891,51 +975,52 @@ export class ViewRenderer {
 				continue;
 			}
 
-			// 그룹 섹션 생성
+			// 그룹 섹션 생성 (임시 컨테이너에)
+			const tempGroupContainer = document.createElement('div');
 			const section = this.groupRenderer.createGroupSection(
 				group,
-				container,
+				tempGroupContainer,
 				(groupId, collapsed) => this.onGroupToggle(groupId, collapsed),
 				(groupId) => this.onGroupSelectAll(groupId),
 				currentActiveFile
 			);
 
-			// 그룹이 접혀있으면 플레이스홀더 생성 스킵
-			if (group.collapsed) {
-				continue;
-			}
+			// 그룹이 접혀있지 않으면 플레이스홀더 생성
+			if (!group.collapsed) {
+				// 카드 컨테이너 찾기
+				const cardContainer = this.groupRenderer.findCardContainer(section);
+				if (cardContainer) {
+					// ⭐ DocumentFragment 사용: 플레이스홀더들을 먼저 fragment에 모아서 한 번에 추가
+					const placeholderFragment = document.createDocumentFragment();
 
-			// 카드 컨테이너 찾기
-			const cardContainer = this.groupRenderer.findCardContainer(section);
-			if (!cardContainer) {
-				continue;
-			}
+					for (const file of group.files) {
+						const isActive = isValidFile(currentActiveFile) && currentActiveFile.path === file.path;
 
-			// 그룹 내 플레이스홀더 생성
-			const tempContainer = document.createElement('div');
+						if (isActive) {
+							activeIndex = currentIndex;
+						}
 
-			for (const file of group.files) {
-				const isActive = isValidFile(currentActiveFile) && currentActiveFile.path === file.path;
+						const placeholder = this.cardFactory.createPlaceholder(
+							file,
+							placeholderFragment as unknown as HTMLElement,
+							isActive
+						);
 
-				if (isActive) {
-					activeIndex = currentIndex;
+						placeholders.push(placeholder);
+						currentIndex++;
+					}
+
+					// 플레이스홀더를 한 번에 DOM에 추가
+					cardContainer.appendChild(placeholderFragment);
 				}
-
-				const placeholder = this.cardFactory.createPlaceholder(
-					file,
-					tempContainer,
-					isActive
-				);
-
-				placeholders.push(placeholder);
-				currentIndex++;
 			}
 
-			// 플레이스홀더를 그룹 컨테이너에 추가
-			while (tempContainer.firstChild) {
-				cardContainer.appendChild(tempContainer.firstChild);
-			}
+			// 그룹 섹션을 컨테이너 fragment에 추가
+			containerFragment.appendChild(section);
 		}
+
+		// ⭐ 모든 그룹을 한 번에 DOM에 추가 (리플로우 최소화)
+		container.appendChild(containerFragment);
 		
 		this.logger.debug('View', 'Placeholders created', {
 			count: placeholders.length,
@@ -995,7 +1080,15 @@ export class ViewRenderer {
 			.filter(f => f !== null) as TFile[];
 
 		this.keyboardNav.updateCards(cardElements, visibleFiles);
-		
+
+		// ⭐ Phase 3.5: ViewportLayoutManager에 카드 목록 업데이트
+		if (isDefined(this.layoutManager)) {
+			this.layoutManager.updateViewportCards(cardElements);
+		}
+
+		// ⭐ 프로파일링 종료 (Phase 4.1)
+		this.profiler.endMeasure();
+
 		this.logger.debug('View', 'Viewport rendering complete', {
 			renderingId,
 			totalCards: files.length,
@@ -1007,10 +1100,6 @@ export class ViewRenderer {
 		if (toolbar) {
 			const totalFiles = this.app.vault.getMarkdownFiles().length;
 			toolbar.updateFileCount(files.length, totalFiles);
-		}
-
-		if (!hasActiveFileChanged) {
-			container.scrollTop = scrollTop;
 		}
 	}
 	
@@ -1216,26 +1305,28 @@ export class ViewRenderer {
 			fileCount: group.files.length
 		});
 
+		// ⭐ 프로파일링 시작 (Phase 4.1)
+		this.profiler.startMeasure('group-expand', group.files.length, 1);
+
 		// 카드 렌더링
 		const currentActiveFile = this.getActiveFile();
 		const onFileOpen = (file: TFile) => {
 			this.view.openFile(file);
 		};
 
-		const tempContainer = document.createElement('div');
+		// ⭐ DocumentFragment 사용: 카드들을 먼저 fragment에 모아서 한 번에 추가
+		const cardFragment = document.createDocumentFragment();
 		for (const file of group.files) {
 			await this.cardFactory.createCard(
 				file,
-				tempContainer,
+				cardFragment as unknown as HTMLElement,
 				currentActiveFile,
 				onFileOpen
 			);
 		}
 
 		// 카드들을 한 번에 DOM에 추가
-		while (tempContainer.firstChild) {
-			cardContainer.appendChild(tempContainer.firstChild);
-		}
+		cardContainer.appendChild(cardFragment);
 
 		// 레이아웃 업데이트
 		if (isDefined(this.layoutManager)) {
@@ -1258,6 +1349,14 @@ export class ViewRenderer {
 			.filter(f => f !== null) as TFile[];
 
 		this.keyboardNav.updateCards(cardElements, visibleFiles);
+
+		// ⭐ Phase 3.5: ViewportLayoutManager에 카드 목록 업데이트
+		if (isDefined(this.layoutManager)) {
+			this.layoutManager.updateViewportCards(cardElements);
+		}
+
+		// ⭐ 프로파일링 종료 (Phase 4.1)
+		this.profiler.endMeasure();
 	}
 
 	/**
@@ -1300,12 +1399,51 @@ export class ViewRenderer {
 	}
 
 	/**
-	 * ViewportManager 정리
+	 * ⭐ ViewportManager 정리 및 그룹 상태 플러시 (Phase 2)
 	 */
 	destroy(): void {
 		if (this.viewportManager) {
 			this.viewportManager.destroy();
 			this.viewportManager = null;
 		}
+
+		// ⭐ 그룹 상태 즉시 저장
+		this.groupingManager.flush();
+	}
+
+	/**
+	 * ⭐ 렌더링 성능 리포트를 콘솔에 출력합니다 (Phase 4.1)
+	 *
+	 * @remarks
+	 * 개발자 콘솔에서 호출 가능:
+	 * app.workspace.getLeavesOfType('card-navigator')[0].view.renderer.printPerformanceReport()
+	 */
+	printPerformanceReport(): void {
+		this.profiler.printReport();
+	}
+
+	/**
+	 * ⭐ 렌더링 성능 리포트를 반환합니다 (Phase 4.1)
+	 */
+	getPerformanceReport() {
+		return this.profiler.exportReport();
+	}
+
+	/**
+	 * ⭐ 프로파일러를 활성화/비활성화합니다 (Phase 4.1)
+	 */
+	enableProfiler(enabled: boolean): void {
+		if (enabled) {
+			this.profiler.enable();
+		} else {
+			this.profiler.disable();
+		}
+	}
+
+	/**
+	 * ⭐ 성능 메트릭을 초기화합니다 (Phase 4.1)
+	 */
+	clearPerformanceMetrics(): void {
+		this.profiler.clearMetrics();
 	}
 }

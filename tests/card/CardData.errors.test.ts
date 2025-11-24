@@ -22,6 +22,7 @@ describe('CardDataExtractor - Error Handling & Edge Cases', () => {
         app = {
             vault: {
                 read: jest.fn(),
+                cachedRead: jest.fn(), // Phase 5.3
                 on: jest.fn(),
                 getAbstractFileByPath: jest.fn()
             },
@@ -62,7 +63,7 @@ describe('CardDataExtractor - Error Handling & Edge Cases', () => {
             // Suppress console.error for this error handling test
             const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
-            (app.vault.read as jest.Mock).mockRejectedValue(new Error('Read error'));
+            (app.vault.cachedRead as jest.Mock).mockRejectedValue(new Error('Read error'));
 
             const content = await extractor.extractFileContent(mockFile);
 
@@ -73,7 +74,7 @@ describe('CardDataExtractor - Error Handling & Edge Cases', () => {
         
         it('should handle very long content correctly', async () => {
             const longContent = 'word '.repeat(10000);
-            (app.vault.read as jest.Mock).mockResolvedValue(longContent);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(longContent);
             
             const content = await extractor.extractFileContent(mockFile);
             
@@ -84,7 +85,7 @@ describe('CardDataExtractor - Error Handling & Edge Cases', () => {
         
         it('should handle content with only frontmatter', async () => {
             const content = '---\ntitle: Test\n---\n';
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile);
             
@@ -93,7 +94,7 @@ describe('CardDataExtractor - Error Handling & Edge Cases', () => {
         
         it('should handle content with malformed frontmatter', async () => {
             const content = '---\ntitle: Test\n---invalid\nActual content here';
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile);
             
@@ -102,7 +103,7 @@ describe('CardDataExtractor - Error Handling & Edge Cases', () => {
         });
         
         it('should handle empty file', async () => {
-            (app.vault.read as jest.Mock).mockResolvedValue('');
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue('');
             
             const content = await extractor.extractFileContent(mockFile);
             
@@ -110,7 +111,7 @@ describe('CardDataExtractor - Error Handling & Edge Cases', () => {
         });
         
         it('should handle file with only whitespace', async () => {
-            (app.vault.read as jest.Mock).mockResolvedValue('   \n\n  \n  ');
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue('   \n\n  \n  ');
             
             const content = await extractor.extractFileContent(mockFile);
             
@@ -119,7 +120,7 @@ describe('CardDataExtractor - Error Handling & Edge Cases', () => {
         
         it('should handle file with only headers', async () => {
             const content = '# Header 1\n\n## Header 2\n\n### Header 3';
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile, undefined, false);
             
@@ -129,7 +130,7 @@ describe('CardDataExtractor - Error Handling & Edge Cases', () => {
         
         it('should handle content with multiple consecutive blank lines', async () => {
             const content = '# Title\n\n\n\nFirst paragraph\n\n\n\nSecond paragraph';
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile);
             
@@ -564,16 +565,17 @@ describe('CardDataExtractor - Error Handling & Edge Cases', () => {
         it('should cache content with different render modes separately', async () => {
             // 여러 줄의 내용으로 테스트 (한 줄이면 plain과 html이 같을 수 있음)
             const fileContent = '# Title\n\nFirst line\nSecond line\nThird line';
-            (app.vault.read as jest.Mock).mockResolvedValue(fileContent);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(fileContent);
             
             // plain 모드로 추출 (공백으로 결합)
             const plain = await extractor.extractFileContent(mockFile, 'plain');
-            
+
             // markdown-html 모드로 추출 (줄바꿈 유지)
             const html = await extractor.extractFileContent(mockFile, 'markdown-html');
-            
-            // 두 번 호출되어야 함 (다른 캐시 키)
-            expect(app.vault.read).toHaveBeenCalledTimes(2);
+
+            // ⭐ Phase 5.3: EnhancedMetadataCache caches raw file content
+            // Different render modes use the same raw content, so only 1 read
+            expect(app.vault.cachedRead).toHaveBeenCalledTimes(1);
             
             // plain은 한 줄, html은 여러 줄
             expect(plain).toContain('First line Second line');
@@ -582,16 +584,17 @@ describe('CardDataExtractor - Error Handling & Edge Cases', () => {
         
         it('should cache content with different includeFirstHeader separately', async () => {
             const fileContent = '# Title\n\nContent';
-            (app.vault.read as jest.Mock).mockResolvedValue(fileContent);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(fileContent);
             
             // includeFirstHeader=false
             await extractor.extractFileContent(mockFile, undefined, false);
-            
+
             // includeFirstHeader=true
             await extractor.extractFileContent(mockFile, undefined, true);
-            
-            // 두 번 호출되어야 함 (다른 캐시 키)
-            expect(app.vault.read).toHaveBeenCalledTimes(2);
+
+            // ⭐ Phase 5.3: EnhancedMetadataCache caches raw file content
+            // Different includeFirstHeader options use the same raw content, so only 1 read
+            expect(app.vault.cachedRead).toHaveBeenCalledTimes(1);
         });
     });
 });

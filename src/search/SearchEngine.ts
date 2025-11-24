@@ -1,6 +1,7 @@
 import { TFile, App } from 'obsidian';
 import { SearchQuery, ParsedQuery, CardNavigatorSettings } from '../types';
 import { SearchParser } from './SearchParser';
+import { PaginatedSearchResult } from './PaginatedSearchResult';
 import { LRUCache } from '../utils/memoize';
 import { DebugLogger } from '../utils/DebugLogger';
 import { t } from '../i18n';
@@ -22,6 +23,9 @@ export class SearchEngine {
     private searchCache: LRUCache<string, TFile[]>;
     private getSettings: () => CardNavigatorSettings;
 
+    /** ⭐ 캐시 엔트리별로 영향받는 파일 경로 추적 */
+    private cacheAffectedFiles = new Map<string, Set<string>>();
+
     constructor(app: App, logger: DebugLogger, getSettings: () => CardNavigatorSettings) {
         this.app = app;
         this.logger = logger;
@@ -30,26 +34,58 @@ export class SearchEngine {
         this.searchCache = new LRUCache<string, TFile[]>(50);
         this.setupCacheInvalidation();
     }
-    
+
     /**
-     * 파일 변경 시 캐시를 무효화합니다
-     * 
+     * ⭐ 파일 변경 시 선택적으로 캐시를 무효화합니다 (성능 최적화)
+     *
      * @remarks
-     * 테스트 환경에서 vault.on이 구현되지 않은 경우 안전하게 처리합니다.
+     * 이전: 모든 변경 시 전체 캐시 삭제
+     * 개선: 변경된 파일을 포함하는 캐시 항목만 삭제
      */
     private setupCacheInvalidation(): void {
         try {
             // vault.on이 존재하는 경우에만 이벤트 리스너 등록
             if (this.app.vault && typeof this.app.vault.on === 'function') {
+                // 파일 생성/삭제/이름 변경 시에는 전체 캐시 무효화 (파일 목록 변경)
                 this.app.vault.on('create', () => this.clearCache());
                 this.app.vault.on('delete', () => this.clearCache());
-                this.app.vault.on('modify', () => this.clearCache());
                 this.app.vault.on('rename', () => this.clearCache());
+
+                // ⭐ 파일 수정 시에는 선택적 캐시 무효화
+                this.app.vault.on('modify', (file) => {
+                    if (file instanceof TFile) {
+                        this.invalidateCacheForFile(file);
+                    }
+                });
             }
         } catch (error) {
             // 테스트 환경이나 특수한 상황에서 이벤트 리스너 등록 실패 시
             // 경고만 출력하고 계속 진행
             this.logger.warn('Search', t().searchEngine.cacheInvalidationFailed, error);
+        }
+    }
+
+    /**
+     * ⭐ 특정 파일과 관련된 캐시만 무효화합니다
+     *
+     * @param file - 변경된 파일
+     */
+    private invalidateCacheForFile(file: TFile): void {
+        let invalidatedCount = 0;
+
+        // 변경된 파일을 포함하는 캐시 항목 찾기
+        for (const [cacheKey, affectedFiles] of this.cacheAffectedFiles.entries()) {
+            if (affectedFiles.has(file.path)) {
+                this.searchCache.delete(cacheKey);
+                this.cacheAffectedFiles.delete(cacheKey);
+                invalidatedCount++;
+            }
+        }
+
+        if (invalidatedCount > 0) {
+            this.logger.debug('Search', `선택적 캐시 무효화: ${invalidatedCount}개 항목 삭제`, {
+                file: file.path
+            });
         }
     }
     
@@ -58,6 +94,7 @@ export class SearchEngine {
      */
     clearCache(): void {
         this.searchCache.clear();
+        this.cacheAffectedFiles.clear();
     }
     
     /**
@@ -101,13 +138,36 @@ export class SearchEngine {
     }
     
     /**
+     * ⭐ 파일을 검색하고 페이지네이션된 결과를 반환합니다 (Phase 3.4)
+     *
+     * @param query - 검색어 또는 고급 검색 쿼리
+     * @param files - 검색할 파일 목록
+     * @param caseSensitive - 대소문자 구분 여부
+     * @param pageSize - 페이지 크기 (기본: 100, 0이면 페이지네이션 사용 안 함)
+     * @returns 페이지네이션된 검색 결과
+     *
+     * @remarks
+     * pageSize > 0이면 PaginatedSearchResult를 반환하여 대량 결과를 효율적으로 처리합니다.
+     * pageSize === 0이면 기존처럼 전체 결과를 한 번에 반환합니다.
+     */
+    async searchPaginated(
+        query: string,
+        files: TFile[],
+        caseSensitive: boolean = false,
+        pageSize: number = 100
+    ): Promise<PaginatedSearchResult> {
+        const results = await this.search(query, files, caseSensitive);
+        return new PaginatedSearchResult(results, pageSize, this.logger);
+    }
+
+    /**
      * 파일을 검색합니다 (비동기)
-     * 
+     *
      * @param query - 검색어 또는 고급 검색 쿼리
      * @param files - 검색할 파일 목록
      * @param caseSensitive - 대소문자 구분 여부
      * @returns 검색 결과
-     * 
+     *
      * @remarks
      * 파일 본문을 직접 읽어서 검색하므로 동기 버전보다 정확하지만 느립니다.
      * 검색 결과는 캐시에 저장되어 재사용됩니다.
@@ -137,20 +197,24 @@ export class SearchEngine {
         if (this.parser.isAdvancedSearch(query)) {
             const results = await this.advancedSearch(query, files, caseSensitive);
             this.searchCache.set(cacheKey, results);
+            // ⭐ 영향받는 파일 경로 저장
+            this.cacheAffectedFiles.set(cacheKey, new Set(results.map(f => f.path)));
             return results;
         }
-        
+
         const searchQuery = caseSensitive ? query : query.toLowerCase();
         const results: TFile[] = [];
-        
+
         for (const file of files) {
             const found = await this.searchInFileAsync(searchQuery, file, caseSensitive);
             if (found) {
                 results.push(file);
             }
         }
-        
+
         this.searchCache.set(cacheKey, results);
+        // ⭐ 영향받는 파일 경로 저장
+        this.cacheAffectedFiles.set(cacheKey, new Set(results.map(f => f.path)));
         return results;
     }
     

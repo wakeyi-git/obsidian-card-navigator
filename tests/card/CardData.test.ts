@@ -15,6 +15,7 @@ describe('CardDataExtractor', () => {
         app = {
             vault: {
                 read: jest.fn(),
+                cachedRead: jest.fn(), // Phase 5.3
                 on: jest.fn(),
                 getAbstractFileByPath: jest.fn()
             },
@@ -131,7 +132,7 @@ title: Test
 
 This is content.`;
             
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile);
             expect(result).toBe('This is content.');
@@ -143,7 +144,7 @@ This is content.`;
 First paragraph.
 Second paragraph.`;
             
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile);
             expect(result).toBe('First paragraph. Second paragraph.');
@@ -154,7 +155,7 @@ Second paragraph.`;
 
 First paragraph.`;
             
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile, undefined, true);
             expect(result).toContain('# Title');
@@ -166,7 +167,7 @@ First paragraph.`;
 
 **Bold** and *italic*`;
             
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile, 'markdown-html');
             expect(result).toContain('**Bold**');
@@ -174,7 +175,7 @@ First paragraph.`;
         });
         
         it('should return empty string for empty content', async () => {
-            (app.vault.read as jest.Mock).mockResolvedValue('');
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue('');
             
             const result = await extractor.extractFileContent(mockFile);
             expect(result).toBe('');
@@ -182,7 +183,7 @@ First paragraph.`;
         
         it('should cache content', async () => {
             const content = 'Test content';
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             // First call
             await extractor.extractFileContent(mockFile);
@@ -191,18 +192,20 @@ First paragraph.`;
             await extractor.extractFileContent(mockFile);
             
             // vault.read should only be called once
-            expect(app.vault.read).toHaveBeenCalledTimes(1);
+            expect(app.vault.cachedRead).toHaveBeenCalledTimes(1);
         });
         
         it('should use separate cache for different render modes', async () => {
             const content = 'Test content';
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
-            
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
+
             await extractor.extractFileContent(mockFile, 'plain');
             await extractor.extractFileContent(mockFile, 'markdown-html');
-            
-            // Should call read twice for different modes
-            expect(app.vault.read).toHaveBeenCalledTimes(2);
+
+            // ⭐ Phase 5.3: EnhancedMetadataCache caches raw file content
+            // Different render modes process the same raw content differently,
+            // so we only need to read the file once
+            expect(app.vault.cachedRead).toHaveBeenCalledTimes(1);
         });
     });
     
@@ -496,7 +499,7 @@ First paragraph.`;
     describe('cache management', () => {
         it('should clear all caches', async () => {
             const content = 'Test content';
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             // Create some cached data
             await extractor.extractFileContent(mockFile);
@@ -507,7 +510,7 @@ First paragraph.`;
             // Next call should read from vault again
             await extractor.extractFileContent(mockFile);
             
-            expect(app.vault.read).toHaveBeenCalledTimes(2);
+            expect(app.vault.cachedRead).toHaveBeenCalledTimes(2);
         });
     });
     
@@ -526,7 +529,7 @@ First paragraph.`;
         
         it('should apply maxLength when appropriate', async () => {
             const content = 'A'.repeat(100);
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractContent(mockFile, 'content', 50);
             expect(result.length).toBeLessThanOrEqual(53); // 50 + '...'

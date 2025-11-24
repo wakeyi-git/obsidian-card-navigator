@@ -10,7 +10,7 @@ import { SaveSearchModal, SavedSearchModal } from './search/SavedSearchModal';
 import { DebugLogger } from './utils/DebugLogger';
 import { ErrorHandler, ErrorSeverity } from './utils/ErrorHandler';
 import { PerformanceMonitor } from './utils/performance';
-import { setLanguage, t, detectLanguageFromLocale, type TranslationKeys } from './i18n';
+import { setLanguage, setLanguageAsync, t, detectLanguageFromLocale, type TranslationKeys } from './i18n';
 import { getMomentLocale } from './utils/locale';
 
 /**
@@ -48,12 +48,12 @@ export default class CardNavigatorPlugin extends Plugin {
 
 	await this.loadSettings();
 
-	// Set language based on settings
+	// ⭐ Phase 4.3: Lazy load language translations
 	const languageSetting = this.settingsManager.getSettings().language;
 	const actualLanguage = languageSetting === 'auto'
 		? detectLanguageFromLocale(getMomentLocale())
 		: languageSetting;
-	setLanguage(actualLanguage);
+	await setLanguageAsync(actualLanguage);
 
 	// ✅ 함수를 전달하여 항상 최신 settings를 참조
 	this.styleManager = new CardStyleManager(() => this.settingsManager.getSettings());
@@ -375,11 +375,11 @@ export default class CardNavigatorPlugin extends Plugin {
 
 			const settings = this.settingsManager.getSettings();
 
-			// Update language if changed
+			// ⭐ Phase 4.3: Update language if changed (async to ensure translation is loaded)
 			const actualLanguage = settings.language === 'auto'
 				? detectLanguageFromLocale(getMomentLocale())
 				: settings.language;
-			setLanguage(actualLanguage);
+			await setLanguageAsync(actualLanguage);
 
 			await this.saveData(settings);
 
@@ -410,11 +410,11 @@ export default class CardNavigatorPlugin extends Plugin {
 
 			const settings = this.settingsManager.getSettings();
 
-			// Update language if changed
+			// ⭐ Phase 4.3: Update language if changed (async to ensure translation is loaded)
 			const actualLanguage = settings.language === 'auto'
 				? detectLanguageFromLocale(getMomentLocale())
 				: settings.language;
-			setLanguage(actualLanguage);
+			await setLanguageAsync(actualLanguage);
 
 			await this.saveData(settings);
 			this.styleManager.applyStyles(settings);

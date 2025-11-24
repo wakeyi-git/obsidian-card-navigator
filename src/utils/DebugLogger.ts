@@ -2,31 +2,32 @@ import { CardNavigatorSettings, DebugCategory } from '../types';
 
 /**
  * 디버그 로거
- * 
+ *
  * 개발 중 디버깅을 위한 구조화된 로깅 시스템입니다.
  * 설정에서 활성화/비활성화 및 카테고리별 필터링이 가능합니다.
- * 
+ *
  * @remarks
- * Production 빌드에서는 자동으로 비활성화되며,
- * 로그 함수 호출 자체가 최적화로 제거됩니다.
- * 
+ * ⭐ Phase 4.4: Production 빌드에서는 esbuild의 drop 옵션으로
+ * console.* 호출이 완전히 제거되어 번들 크기를 줄입니다.
+ *
+ * - Development 빌드: 모든 로그 활성화 (설정에 따라 필터링)
+ * - Production 빌드: console 문 제거 (번들 크기 감소, 성능 향상)
+ * - error() 메서드: 항상 유지 (중요한 오류 추적용)
+ *
  * @example
  * ```typescript
  * const logger = new DebugLogger(() => settingsManager.getSettings());
- * 
- * // 기본 로그
+ *
+ * // 기본 로그 (프로덕션에서 제거됨)
  * logger.debug('View', 'Rendering cards', { count: files.length });
- * 
- * // 성능 측정
+ *
+ * // 성능 측정 (프로덕션에서 제거됨)
  * logger.time('View', 'renderCards');
  * await renderCards();
  * logger.timeEnd('View', 'renderCards');
- * 
- * // 그룹화
- * logger.group('Layout', 'Calculating layout');
- * logger.debug('Layout', 'Grid columns', { columns: 4 });
- * logger.debug('Layout', 'Card size', { width: 200, height: 150 });
- * logger.groupEnd();
+ *
+ * // 오류 로그 (프로덕션에서도 유지됨)
+ * logger.error('View', 'Failed to render', error);
  * ```
  */
 export class DebugLogger {

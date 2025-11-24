@@ -108,7 +108,8 @@ describe('ViewRenderer - Additional Coverage', () => {
         // LayoutManager mock
         layoutManager = {
             updateLayout: jest.fn(),
-            getMode: jest.fn(() => 'vertical')
+            getMode: jest.fn(() => 'vertical'),
+            updateViewportCards: jest.fn() // Phase 3.5
         } as any;
         
         // ViewportManager mock
@@ -183,10 +184,10 @@ describe('ViewRenderer - Additional Coverage', () => {
             
             // Standard rendering for < 100 files
             // activeFile is null when getActiveFile() returns null
-            // With grouping enabled, container is now the group content container
+            // With grouping enabled, container is now DocumentFragment (Phase 1 optimization)
             expect(cardFactory.createCard).toHaveBeenCalledWith(
                 mockFile,
-                expect.any(HTMLElement), // group content container
+                expect.anything(), // DocumentFragment or HTMLElement
                 null,
                 onFileOpen
             );
@@ -369,11 +370,11 @@ describe('ViewRenderer - Additional Coverage', () => {
             sortManager.sort.mockReturnValue(mockFiles);
             
             await renderer.renderCards(container, onFileOpen);
-            
-            // With grouping enabled, container is now the group content container
+
+            // With grouping enabled, container is now DocumentFragment (Phase 1 optimization)
             expect(cardFactory.createCard).toHaveBeenCalledWith(
                 expect.any(Object),
-                expect.any(HTMLElement), // group content container
+                expect.anything(), // DocumentFragment or HTMLElement
                 activeFile,
                 onFileOpen
             );

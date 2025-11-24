@@ -38,6 +38,8 @@ const context = await esbuild.context({
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
 	outfile: "main.js",
+	// ⭐ Phase 4.4: Drop console and debugger statements in production
+	drop: prod ? ["console", "debugger"] : [],
 });
 
 if (prod) {

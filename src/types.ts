@@ -284,6 +284,7 @@ export type DebugCategory =
     | 'DragDrop'
     | 'Settings'
     | 'Grouping'
+    | 'Cache' // Phase 5.3
     | 'Event'
     | 'UI'
     | 'Performance';

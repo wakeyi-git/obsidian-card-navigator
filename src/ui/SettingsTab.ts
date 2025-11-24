@@ -6,7 +6,7 @@ import { ModeSettings } from './settings/ModeSettings';
 import { SortSettings } from './settings/SortSettings';
 import { PresetSettings } from './settings/PresetSettings';
 import { InteractiveCardSettings } from './settings/InteractiveCardSettings';
-import { getAvailableLanguages, getLanguageDisplayName, type LanguageSetting, t } from '../i18n';
+import { getAvailableLanguages, getLanguageDisplayName, getLanguage, setLanguageAsync, type LanguageSetting, t } from '../i18n';
 
 /**
  * 설정 탭 타입
@@ -43,6 +43,9 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
     // 탭 컨테이너들
     private tabContainers: Map<SettingTabType, HTMLElement> = new Map();
 
+    // ⭐ Phase 4.3: Track if rendering is in progress to prevent duplicate renders
+    private isRendering = false;
+
     constructor(app: App, plugin: CardNavigatorPlugin) {
         super(app, plugin);
         this.plugin = plugin;
@@ -57,12 +60,46 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
 
     /**
      * 설정 UI를 표시합니다
+     *
+     * ⭐ Phase 4.3: Ensure translations are loaded before rendering
      */
     display(): void {
         const { containerEl } = this;
+
+        // ⭐ Prevent duplicate rendering if already in progress
+        if (this.isRendering) {
+            return;
+        }
+
         containerEl.empty();
         containerEl.addClass('card-navigator-settings');
 
+        this.isRendering = true;
+
+        // ⭐ Ensure current language translation is loaded before rendering
+        // This prevents crashes when settings tab opens after language change
+        const currentLang = getLanguage();
+        setLanguageAsync(currentLang).then(() => {
+            // Double-check we're still rendering (in case display() was called again)
+            if (!this.isRendering) {
+                return;
+            }
+            this.renderSettingsUI(containerEl);
+        }).catch(error => {
+            console.error('Failed to load translations for settings tab:', error);
+            // Fallback: render anyway (deep fallback Proxy will handle missing keys)
+            if (this.isRendering) {
+                this.renderSettingsUI(containerEl);
+            }
+        }).finally(() => {
+            this.isRendering = false;
+        });
+    }
+
+    /**
+     * 설정 UI를 실제로 렌더링합니다
+     */
+    private renderSettingsUI(containerEl: HTMLElement): void {
         // 탭 버튼 컨테이너
         const tabBar = containerEl.createDiv({ cls: 'setting-tab-bar' });
         this.createTabButtons(tabBar);
@@ -631,6 +668,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                 'Mode': 'mode',
                 'Settings': 'settings',
                 'Grouping': 'grouping',
+                'Cache': 'cache',
                 'Event': 'event',
                 'UI': 'ui',
                 'Performance': 'performance'

@@ -4,6 +4,7 @@ import { LRUCache } from '../utils/memoize';
 import { DebugLogger } from '../utils/DebugLogger';
 import { TIMING, CACHE } from '../constants';
 import { t } from '../i18n';
+import { EnhancedMetadataCache } from './MetadataCache';
 
 /**
  * 파일에서 카드 콘텐츠를 추출합니다
@@ -15,20 +16,26 @@ export class CardDataExtractor {
     private app: App;
     private contentCache: LRUCache<string, string>;
     private logger: DebugLogger;
-    
+
+    /** ⭐ Phase 5.3: 향상된 메타데이터 캐시 */
+    private metadataCache: EnhancedMetadataCache;
+
     /**
      * 파일별 이전 링크 정보를 저장하여 링크 삭제 감지에 사용합니다
      * Map<파일경로, Set<링크타겟경로>>
      */
     private previousLinks = new Map<string, Set<string>>();
-    
+
     constructor(app: App, getSettings: () => CardNavigatorSettings) {
         this.app = app;
         // ✅ 함수를 전달하여 항상 최신 settings를 참조
         this.logger = new DebugLogger(getSettings);
-        
+
         this.contentCache = new LRUCache<string, string>(CACHE.MAX_CONTENT_CACHE_SIZE);
-        
+
+        // ⭐ Phase 5.3: EnhancedMetadataCache 초기화
+        this.metadataCache = new EnhancedMetadataCache(app, getSettings);
+
         this.setupCacheInvalidation();
     }
     
@@ -225,31 +232,31 @@ export class CardDataExtractor {
      */
     private invalidateCache(file: TFile): void {
         const types = this.generateCacheKeyTypes();
-        
+
         types.forEach(type => {
             // 기본 캐시 키 삭제
             const cacheKey = this.generateCacheKey(file, type);
             if (this.contentCache.has(cacheKey)) {
                 this.contentCache.delete(cacheKey);
-                
+
                 this.logger.debug('Card', t().debug.card.cacheDeleted, {
                     file: file.path,
                     type,
                     cacheKey
                 });
             }
-            
+
             // content 타입의 경우 renderMode와 includeFirstHeader 조합별 캐시도 삭제
             if (type === 'content') {
                 const renderModes = ['plain', 'markdown-html'];
                 const headerOptions = [true, false];
-                
+
                 for (const mode of renderModes) {
                     for (const includeHeader of headerOptions) {
                         const customCacheKey = `${file.path}-${file.stat.mtime}-content-${includeHeader ? 'with-header' : 'no-header'}-${mode}`;
                         if (this.contentCache.has(customCacheKey)) {
                             this.contentCache.delete(customCacheKey);
-                            
+
                             this.logger.debug('Card', t().debug.card.customCacheDeleted, {
                                 file: file.path,
                                 customCacheKey
@@ -259,6 +266,9 @@ export class CardDataExtractor {
                 }
             }
         });
+
+        // ⭐ Phase 5.3: EnhancedMetadataCache 무효화
+        this.metadataCache.invalidateFile(file);
     }
     
     /**
@@ -267,6 +277,9 @@ export class CardDataExtractor {
     clearCache(): void {
         this.contentCache.clear();
         this.previousLinks.clear();
+
+        // ⭐ Phase 5.3: EnhancedMetadataCache 초기화
+        this.metadataCache.clear();
     }
     
     /**
@@ -287,8 +300,75 @@ export class CardDataExtractor {
     }
 
     /**
+     * ⭐ 여러 파일의 콘텐츠를 배치로 추출합니다 (성능 최적화)
+     *
+     * @param files - 파일 목록
+     * @param contentType - 추출할 콘텐츠 타입
+     * @param maxLength - 최대 글자 수 (선택)
+     * @param customProperty - 프론트매터 속성 이름 (contentType이 'property'일 때)
+     * @param contentRenderMode - 본문 렌더링 모드 (contentType이 'content'일 때만 사용)
+     * @param includeFirstHeader - 본문 내용 표시 시 첫 번째 헤더 포함 여부 (contentType이 'content'일 때만 사용)
+     * @returns 파일 경로를 키로 하는 추출된 내용 맵
+     *
+     * @remarks
+     * 개별 extractContent를 반복 호출하는 것보다 효율적입니다.
+     * MetadataCache를 한 번만 조회하고, 파일 읽기를 병렬로 처리합니다.
+     */
+    async extractContentBatch(
+        files: TFile[],
+        contentType: CardContentType,
+        maxLength?: number,
+        customProperty?: string,
+        contentRenderMode?: import('../types').RenderMode,
+        includeFirstHeader?: boolean
+    ): Promise<Map<string, string>> {
+        const results = new Map<string, string>();
+
+        // 동기 콘텐츠 타입 (캐시 기반)
+        const syncTypes: CardContentType[] = [
+            'filename', 'file-path', 'first-header', 'tags',
+            'created-date', 'modified-date', 'property'
+        ];
+
+        if (syncTypes.includes(contentType)) {
+            // 동기 처리: 캐시만 사용하므로 빠름
+            for (const file of files) {
+                const content = await this.extractContent(
+                    file,
+                    contentType,
+                    maxLength,
+                    customProperty,
+                    contentRenderMode,
+                    includeFirstHeader
+                );
+                results.set(file.path, content);
+            }
+        } else {
+            // 비동기 처리: 파일 읽기가 필요한 경우 병렬로 처리
+            const promises = files.map(async (file) => {
+                const content = await this.extractContent(
+                    file,
+                    contentType,
+                    maxLength,
+                    customProperty,
+                    contentRenderMode,
+                    includeFirstHeader
+                );
+                return { path: file.path, content };
+            });
+
+            const extracted = await Promise.all(promises);
+            for (const { path, content } of extracted) {
+                results.set(path, content);
+            }
+        }
+
+        return results;
+    }
+
+    /**
      * 콘텐츠 타입에 따라 적절한 내용을 추출합니다
-     * 
+     *
      * @param file - 파일 객체
      * @param contentType - 추출할 콘텐츠 타입
      * @param maxLength - 최대 글자 수 (선택)
@@ -296,7 +376,7 @@ export class CardDataExtractor {
      * @param contentRenderMode - 본문 렌더링 모드 (contentType이 'content'일 때만 사용)
      * @param includeFirstHeader - 본문 내용 표시 시 첫 번째 헤더 포함 여부 (contentType이 'content'일 때만 사용)
      * @returns 추출된 내용
-     * 
+     *
      * @remarks
      * HTML 태그가 포함된 콘텐츠(백링크, 나가는 링크, 태그, markdown-html 모드)는
      * maxLength를 무시하여 HTML 태그가 잘리는 것을 방지합니다.
@@ -453,8 +533,9 @@ export class CardDataExtractor {
                 return cached;
             }
             
-            let content = await this.app.vault.read(file);
-            
+            // ⭐ Phase 5.3: 캐시된 콘텐츠 읽기
+            let content = await this.metadataCache.getContent(file);
+
             // frontmatter 제거 (빈 frontmatter도 포함)
             // ^---\n 로 시작하고 ---\n? 로 끝나는 부분을 제거
             // [\ \S]*?는 비탐욕적 매칭으로 최소한의 내용만 매칭
@@ -866,7 +947,8 @@ export class CardDataExtractor {
                 return cached;
             }
 
-            const content = await this.app.vault.read(file);
+            // ⭐ Phase 5.3: 캐시된 콘텐츠 읽기
+            const content = await this.metadataCache.getContent(file);
             const cache = this.app.metadataCache.getFileCache(file);
 
             // 1. Embedded images ![[image.png]]
@@ -1001,22 +1083,29 @@ export class CardDataExtractor {
      * 첫 번째 이모지 추출
      */
     private async extractFirstEmoji(file: TFile): Promise<string | null> {
-        const content = await this.app.vault.read(file);
-        const emojiRegex = /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/u;
-        const match = content.match(emojiRegex);
+        // ⭐ Phase 5.3: 캐시된 추출 데이터 사용
+        return await this.metadataCache.getExtractedData(
+            file,
+            'first-emoji',
+            async () => {
+                const content = await this.metadataCache.getContent(file);
+                const emojiRegex = /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/u;
+                const match = content.match(emojiRegex);
 
-        if (match) {
-            // 이모지를 큰 텍스트로 표시한 SVG 생성
-            const emoji = match[0];
-            const svg = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
-                    <text x="50%" y="50%" font-size="120" text-anchor="middle" dominant-baseline="central">${emoji}</text>
-                </svg>
-            `.trim();
-            return `data:image/svg+xml;base64,${btoa(svg)}`;
-        }
+                if (match) {
+                    // 이모지를 큰 텍스트로 표시한 SVG 생성
+                    const emoji = match[0];
+                    const svg = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+                            <text x="50%" y="50%" font-size="120" text-anchor="middle" dominant-baseline="central">${emoji}</text>
+                        </svg>
+                    `.trim();
+                    return `data:image/svg+xml;base64,${btoa(svg)}`;
+                }
 
-        return null;
+                return null;
+            }
+        );
     }
 
     /**

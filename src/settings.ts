@@ -1,6 +1,8 @@
 import { App } from 'obsidian';
 import { CardNavigatorSettings, DEFAULT_SETTINGS } from './types';
 import { DebugLogger } from './utils/DebugLogger';
+import { SettingsValidator } from './settings/SettingsValidator';
+import { SettingsMigration } from './settings/SettingsMigration';
 
 /**
  * 플러그인 설정을 관리합니다
@@ -14,9 +16,15 @@ export class SettingsManager {
     private saveCallback: (settings: CardNavigatorSettings) => Promise<void>;
     private logger: DebugLogger;
 
+    /** ⭐ 설정 검증기 (Phase 4.2) */
+    private validator: SettingsValidator;
+
+    /** ⭐ 설정 마이그레이션 (Phase 4.2) */
+    private migration: SettingsMigration;
+
     /**
      * SettingsManager를 생성합니다
-     * 
+     *
      * @param app - Obsidian App 객체
      * @param saveCallback - 설정 저장 콜백 함수
      */
@@ -29,23 +37,64 @@ export class SettingsManager {
         this.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
         // ✅ 함수를 전달하여 항상 최신 settings를 참조
         this.logger = new DebugLogger(() => this.settings);
+
+        // ⭐ Phase 4.2: 검증 및 마이그레이션 초기화
+        this.validator = new SettingsValidator(this.logger);
+        this.migration = new SettingsMigration(this.logger);
     }
 
     /**
-     * 설정을 로드합니다
+     * ⭐ 설정을 로드합니다 (Phase 4.2: 마이그레이션 및 검증 추가)
      *
      * @param data - 로드된 데이터
      *
      * @remarks
-     * 기본 설정과 로드된 데이터를 병합하여
-     * 새로운 설정 항목이 추가되어도 기본값이 적용되도록 합니다.
+     * 1. 설정 마이그레이션 수행 (이전 버전 → 현재 버전)
+     * 2. 기본 설정과 로드된 데이터 병합
+     * 3. 설정 검증 및 자동 수정
      */
     loadSettings(data: Record<string, unknown> | null): void {
-        if (data) {
+        let settingsData = data;
+
+        // ⭐ 1. 마이그레이션 (Phase 4.2)
+        if (settingsData && this.migration.needsMigration(settingsData)) {
+            const { settings: migratedSettings, info } = this.migration.migrate(settingsData);
+            settingsData = migratedSettings as unknown as Record<string, unknown>;
+
+            if (info) {
+                this.logger.debug('Settings', 'Settings migrated', {
+                    fromVersion: info.fromVersion,
+                    toVersion: info.toVersion,
+                    changesCount: info.changedFields.length
+                });
+            }
+        }
+
+        // ⭐ 2. 기본 설정과 병합
+        if (settingsData) {
             const defaultCopy = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-            this.settings = this.deepMerge(defaultCopy, data);
+            this.settings = this.deepMerge(defaultCopy, settingsData);
         } else {
             this.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+        }
+
+        // ⭐ 3. 검증 및 자동 수정 (Phase 4.2)
+        const { settings: validatedSettings, result } = this.validator.validateAndFix(this.settings);
+
+        if (!result.valid) {
+            this.logger.warn('Settings', 'Settings validation found issues', {
+                errorCount: result.errors.length,
+                warningCount: result.warnings.length,
+                errors: result.errors,
+                warnings: result.warnings
+            });
+            this.settings = validatedSettings;
+        }
+
+        if (result.warnings.length > 0) {
+            this.logger.debug('Settings', 'Settings validation warnings', {
+                warnings: result.warnings
+            });
         }
     }
 

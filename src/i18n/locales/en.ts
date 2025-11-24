@@ -465,6 +465,7 @@ export const en = {
 				dragDrop: { label: 'Drag & Drop', description: 'Drag start/end, drop handling' },
 				mode: { label: 'Mode Switch', description: 'Folder/tag/search mode switching' },
 				settings: { label: 'Settings', description: 'Settings load/save, change application' },
+				cache: { label: 'Cache', description: 'Metadata cache, content cache' },
 				grouping: { label: 'Grouping', description: 'Card grouping, group creation, collapse/expand' },
 				event: { label: 'Events', description: 'Click, keyboard, file change events' },
 				ui: { label: 'UI', description: 'Toolbar, context menu, modals' },

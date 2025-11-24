@@ -1,6 +1,7 @@
 import { TFile, App } from 'obsidian';
 import { CardGroup, GroupingSettings, TagGroupMode, DateGroupBasis } from '../types';
 import { DebugLogger } from '../utils/DebugLogger';
+import { GroupStateManager } from './GroupStateManager';
 
 /**
  * 파일을 그룹으로 나누는 관리자
@@ -11,10 +12,14 @@ import { DebugLogger } from '../utils/DebugLogger';
 export class GroupingManager {
     private app: App;
     private logger: DebugLogger;
+    /** ⭐ Phase 2: 그룹 상태 배치 처리 관리자 */
+    private stateManager: GroupStateManager;
 
     constructor(app: App, getSettings: () => import('../types').CardNavigatorSettings) {
         this.app = app;
         this.logger = new DebugLogger(getSettings);
+        this.stateManager = new GroupStateManager();
+        this.stateManager.loadAll(); // ⭐ 초기화 시 일괄 로드
     }
 
     /**
@@ -582,45 +587,48 @@ export class GroupingManager {
     }
 
     /**
-     * localStorage에서 접힌 상태를 복원합니다
+     * ⭐ localStorage에서 접힌 상태를 복원합니다 (Phase 2: 캐시에서 일괄 조회)
      */
     private restoreCollapsedState(groups: CardGroup[]): void {
         groups.forEach(group => {
-            const key = `card-navigator-group-collapsed-${group.id}`;
-            const stored = localStorage.getItem(key);
-            if (stored !== null) {
-                group.collapsed = stored === 'true';
-            }
+            group.collapsed = this.stateManager.getCollapsed(group.id);
         });
     }
 
     /**
-     * 접힌 상태를 localStorage에 저장합니다
+     * ⭐ 접힌 상태를 저장합니다 (Phase 2: 디바운스된 일괄 저장)
      */
     saveCollapsedState(groupId: string, collapsed: boolean): void {
-        const key = `card-navigator-group-collapsed-${groupId}`;
-        localStorage.setItem(key, String(collapsed));
-
+        this.stateManager.setCollapsed(groupId, collapsed);
         this.logger.debug('Grouping', `Saved collapsed state for ${groupId}: ${collapsed}`);
     }
 
     /**
-     * 모든 그룹을 펼칩니다
+     * ⭐ 모든 그룹을 펼칩니다 (Phase 2: 배치 저장)
      */
     expandAllGroups(groups: CardGroup[]): void {
-        groups.forEach(group => {
+        const states = groups.map(group => {
             group.collapsed = false;
-            this.saveCollapsedState(group.id, false);
+            return { groupId: group.id, collapsed: false };
         });
+        this.stateManager.setBatch(states);
     }
 
     /**
-     * 모든 그룹을 접습니다
+     * ⭐ 모든 그룹을 접습니다 (Phase 2: 배치 저장)
      */
     collapseAllGroups(groups: CardGroup[]): void {
-        groups.forEach(group => {
+        const states = groups.map(group => {
             group.collapsed = true;
-            this.saveCollapsedState(group.id, true);
+            return { groupId: group.id, collapsed: true };
         });
+        this.stateManager.setBatch(states);
+    }
+
+    /**
+     * ⭐ 상태 관리자 플러시 (플러그인 종료 시 호출)
+     */
+    flush(): void {
+        this.stateManager.flush();
     }
 }

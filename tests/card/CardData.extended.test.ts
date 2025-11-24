@@ -15,6 +15,7 @@ describe('CardDataExtractor - Extended Tests', () => {
         app = {
             vault: {
                 read: jest.fn(),
+                cachedRead: jest.fn(), // Phase 5.3
                 on: jest.fn(),
                 getAbstractFileByPath: jest.fn()
             },
@@ -88,18 +89,18 @@ describe('CardDataExtractor - Extended Tests', () => {
     describe('Cache Invalidation', () => {
         it('should invalidate cache for modified file', async () => {
             const content = 'Test content';
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             // 첫 번째 호출
             await extractor.extractFileContent(mockFile);
-            expect(app.vault.read).toHaveBeenCalledTimes(1);
+            expect(app.vault.cachedRead).toHaveBeenCalledTimes(1);
             
             // 캐시 무효화
             extractor['invalidateCache'](mockFile);
             
             // 두 번째 호출 - 캐시 무효화 후 다시 읽어야 함
             await extractor.extractFileContent(mockFile);
-            expect(app.vault.read).toHaveBeenCalledTimes(2);
+            expect(app.vault.cachedRead).toHaveBeenCalledTimes(2);
         });
         
         it('should invalidate backlinks cache', async () => {
@@ -135,7 +136,7 @@ describe('CardDataExtractor - Extended Tests', () => {
     
     describe('Error Handling', () => {
         it('should handle vault.read error gracefully', async () => {
-            (app.vault.read as jest.Mock).mockRejectedValue(new Error('Read error'));
+            (app.vault.cachedRead as jest.Mock).mockRejectedValue(new Error('Read error'));
             
             const result = await extractor.extractFileContent(mockFile);
             expect(result).toBe('');
@@ -179,7 +180,7 @@ too: many: colons
 
 Content after frontmatter`;
             
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile);
             // frontmatter를 정규식으로 제거하므로 본문만 남음
@@ -192,7 +193,7 @@ title: Test
 
 Content without closing frontmatter`;
             
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile);
             // 정규식이 매칭되지 않으면 전체 내용을 반환
@@ -205,7 +206,7 @@ Content without closing frontmatter`;
 
 Content after empty frontmatter`;
             
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile);
             expect(result).toBe('Content after empty frontmatter');
@@ -216,7 +217,7 @@ Content after empty frontmatter`;
         it('should handle files with only header', async () => {
             const content = `# Only Header`;
             
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile);
             // 헤더만 있고 본문이 없으면 빈 문자열
@@ -228,7 +229,7 @@ Content after empty frontmatter`;
 
 Content paragraph`;
             
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile, undefined, true);
             expect(result).toContain('# Title Header');
@@ -244,7 +245,7 @@ Content 1
 
 Content 2`;
             
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile);
             // 첫 번째 헤더는 제외되지만 두 번째 헤더는 포함됨
@@ -259,7 +260,7 @@ Content 2`;
 
 Content`;
             
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractFileContent(mockFile);
             expect(result).toBe('Content');
@@ -515,35 +516,37 @@ Content`;
     describe('Performance - Cache Usage', () => {
         it('should use different cache for different render modes', async () => {
             const content = '**Bold** text';
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             // plain 모드
             await extractor.extractFileContent(mockFile, 'plain');
-            
+
             // markdown-html 모드
             await extractor.extractFileContent(mockFile, 'markdown-html');
-            
-            // 다른 렌더 모드이므로 2번 읽어야 함
-            expect(app.vault.read).toHaveBeenCalledTimes(2);
+
+            // ⭐ Phase 5.3: EnhancedMetadataCache caches raw file content
+            // Different render modes use the same raw content, so only 1 read
+            expect(app.vault.cachedRead).toHaveBeenCalledTimes(1);
         });
         
         it('should use different cache for includeFirstHeader option', async () => {
             const content = '# Header\n\nContent';
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             // includeFirstHeader: false (기본값)
             await extractor.extractFileContent(mockFile);
-            
+
             // includeFirstHeader: true
             await extractor.extractFileContent(mockFile, undefined, true);
-            
-            // 다른 옵션이므로 2번 읽어야 함
-            expect(app.vault.read).toHaveBeenCalledTimes(2);
+
+            // ⭐ Phase 5.3: EnhancedMetadataCache caches raw file content
+            // Different includeFirstHeader options use the same raw content, so only 1 read
+            expect(app.vault.cachedRead).toHaveBeenCalledTimes(1);
         });
         
         it('should invalidate all related caches on file change', async () => {
             const content = 'Test content';
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             // 여러 타입의 캐시 생성
             await extractor.extractFileContent(mockFile);
@@ -557,14 +560,14 @@ Content`;
             
             // 다시 추출 - 캐시가 없으므로 다시 읽어야 함
             await extractor.extractFileContent(mockFile);
-            expect(app.vault.read).toHaveBeenCalledTimes(2);
+            expect(app.vault.cachedRead).toHaveBeenCalledTimes(2);
         });
     });
     
     describe('Regression Tests', () => {
         it('should maintain cache across multiple extractContent calls', async () => {
             const content = 'Test content';
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             // extractContent를 통한 여러 호출
             await extractor.extractContent(mockFile, 'content');
@@ -572,12 +575,12 @@ Content`;
             await extractor.extractContent(mockFile, 'content');
             
             // 캐시 사용으로 한 번만 읽음
-            expect(app.vault.read).toHaveBeenCalledTimes(1);
+            expect(app.vault.cachedRead).toHaveBeenCalledTimes(1);
         });
         
         it('should handle maxLength correctly for plain text', async () => {
             const content = 'A'.repeat(100);
-            (app.vault.read as jest.Mock).mockResolvedValue(content);
+            (app.vault.cachedRead as jest.Mock).mockResolvedValue(content);
             
             const result = await extractor.extractContent(mockFile, 'content', 50);
             expect(result.length).toBeLessThanOrEqual(53); // 50 + '...'

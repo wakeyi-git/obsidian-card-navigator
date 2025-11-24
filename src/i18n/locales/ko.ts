@@ -465,6 +465,7 @@ export const ko = {
 				dragDrop: { label: '드래그앤드롭', description: '드래그 시작/종료, 드롭 처리 등' },
 				mode: { label: '모드 전환', description: '폴더/태그/검색 모드 전환 등' },
 				settings: { label: '설정', description: '설정 로드/저장, 변경 사항 적용 등' },
+				cache: { label: '캐시', description: '메타데이터 캐시, 콘텐츠 캐시 등' },
 				event: { label: '이벤트', description: '클릭, 키보드, 파일 변경 이벤트 등' },
 				ui: { label: 'UI 관련', description: '툴바, 컨텍스트 메뉴, 모달 등' },
 				performance: { label: '성능 측정', description: '실행 시간, 메모리 사용량 측정 등' },
