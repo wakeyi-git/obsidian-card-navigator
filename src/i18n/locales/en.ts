@@ -308,6 +308,7 @@ export const en = {
 				name: 'Name',
 				fileCount: 'File Count',
 				latestFile: 'Latest File',
+				hierarchy: 'Hierarchy',
 			},
 			groupSortOrder: 'Group sort order',
 			groupSortOrderDescription: 'Sort groups in ascending or descending order',

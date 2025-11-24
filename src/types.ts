@@ -411,7 +411,8 @@ export type TagGroupMode =
 export type GroupSortCriteria =
     | 'name'          // 그룹명 알파벳 순
     | 'file-count'    // 파일 개수 순
-    | 'latest-file';  // 최신 파일 기준
+    | 'latest-file'   // 최신 파일 기준
+    | 'hierarchy';    // 계층 구조 (폴더 깊이, 태그 계층)
 
 /**
  * 그룹화 설정

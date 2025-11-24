@@ -21,6 +21,10 @@ export const fr = {
 		selectFolder: 'Sélectionner un dossier',
 		selectTag: 'Sélectionner une étiquette',
 		toggleRenderMode: 'Basculer le mode de rendu (Texte ↔ Markdown+HTML)',
+		saveCurrentSearch: 'Sauvegarder la recherche actuelle',
+		manageSavedSearches: 'Gérer les recherches sauvegardées',
+		expandAllGroups: 'Développer tous les groupes',
+		collapseAllGroups: 'Réduire tous les groupes',
 	},
 
 	// UI Messages
@@ -31,6 +35,29 @@ export const fr = {
 			plain: 'Mode de rendu basculé vers : Texte brut',
 			markdownHtml: 'Mode de rendu basculé vers : Markdown + HTML',
 		},
+	},
+
+	// Saved Searches
+	savedSearches: {
+		saveSearch: 'Sauvegarder la recherche actuelle',
+		savedSearches: 'Recherches Sauvegardées',
+		recentSearches: 'Recherches Récentes',
+		favorites: 'Favoris',
+		noSavedSearches: 'Aucune recherche sauvegardée',
+		searchName: 'Nom de la recherche',
+		saveButton: 'Sauvegarder',
+		cancelButton: 'Annuler',
+		deleteButton: 'Supprimer',
+		favoriteButton: 'Favori',
+		unfavoriteButton: 'Retirer des favoris',
+		editButton: 'Modifier',
+		applyButton: 'Appliquer',
+		confirmDelete: (name: string) => `Supprimer la recherche sauvegardée "${name}" ?`,
+		searchSaved: (name: string) => `Recherche "${name}" sauvegardée`,
+		searchDeleted: (name: string) => `Recherche "${name}" supprimée`,
+		searchApplied: (name: string) => `Recherche "${name}" appliquée`,
+		enterSearchName: 'Entrer un nom de recherche',
+		emptyQueryWarning: 'Impossible de sauvegarder une requête de recherche vide',
 	},
 
 	// Error Messages
@@ -71,6 +98,10 @@ export const fr = {
 		interactiveCardSection: {
 			name: 'Paramètres des Cartes Interactives',
 			description: 'Configurer le comportement d\'interaction des cartes',
+		},
+		searchSection: {
+			name: 'Paramètres de Recherche',
+			description: 'Configurer le comportement et les options de recherche',
 		},
 
 		// Language setting
@@ -143,6 +174,24 @@ export const fr = {
 		maxContentLength: {
 			name: 'Longueur Maximale du Contenu',
 			description: 'Nombre maximal de caractères à afficher dans le contenu de carte (0 = sans limite)',
+		},
+
+		// Search settings
+		enableFuzzySearch: {
+			name: 'Activer la Recherche Floue',
+			description: 'Correspondre aux chaînes similaires même si elles ne correspondent pas exactement (ex., "fb" correspond à "foobar")',
+		},
+		fuzzySearchThreshold: {
+			name: 'Seuil de Recherche Floue',
+			description: 'Score de similarité minimum pour la correspondance floue (0-1, plus bas = plus permissif)',
+		},
+		enableSearchHighlight: {
+			name: 'Surbrillance de Recherche',
+			description: 'Surligner les termes de recherche dans les cartes avec un fond jaune',
+		},
+		caseSensitiveSearch: {
+			name: 'Recherche Sensible à la Casse',
+			description: 'Distinguer les majuscules et minuscules dans la recherche',
 		},
 
 		// Mode settings
@@ -220,6 +269,56 @@ export const fr = {
 			name: 'Activer le Glisser-Déposer',
 			description: 'Permettre de déplacer les fichiers en faisant glisser les cartes',
 		},
+		grouping: {
+			title: 'Regroupement',
+			enableGrouping: 'Activer le regroupement',
+			enableGroupingDescription: 'Regrouper les cartes selon divers critères',
+			groupBy: 'Regrouper par',
+			groupByDescription: 'Choisir comment regrouper les cartes',
+			criteria: {
+				folder: 'Dossier',
+				tag: 'Étiquette',
+				dateYear: 'Date (Année)',
+				dateMonth: 'Date (Mois)',
+				dateWeek: 'Date (Semaine)',
+				property: 'Propriété',
+				size: 'Taille de Fichier',
+				firstLetter: 'Première Lettre',
+			},
+			dateBasis: 'Base de date',
+			dateBasisDescription: 'Utiliser la date de création ou de modification',
+			dateBasisOptions: {
+				created: 'Date de Création',
+				modified: 'Date de Modification',
+			},
+			tagMode: 'Mode étiquette',
+			tagModeDescription: 'Regrouper par première étiquette uniquement ou toutes les étiquettes',
+			tagModeOptions: {
+				first: 'Première Étiquette Uniquement',
+				all: 'Toutes les Étiquettes (les fichiers peuvent apparaître dans plusieurs groupes)',
+			},
+			propertyName: 'Nom de propriété',
+			propertyNameDescription: 'Propriété de frontmatter pour regrouper',
+			propertyNamePlaceholder: 'statut',
+			showFullFolderPath: 'Afficher le chemin complet du dossier',
+			showFullFolderPathDescription: 'Afficher le chemin complet du dossier au lieu du nom du dossier uniquement',
+			sortGroupsBy: 'Trier les groupes par',
+			sortGroupsByDescription: 'Comment trier les groupes eux-mêmes',
+			sortGroupsOptions: {
+				name: 'Nom',
+				fileCount: 'Nombre de Fichiers',
+				latestFile: 'Fichier le Plus Récent',
+				hierarchy: 'Hiérarchie',
+			},
+			groupSortOrder: 'Ordre de tri des groupes',
+			groupSortOrderDescription: 'Trier les groupes par ordre croissant ou décroissant',
+			groupSortOrderOptions: {
+				asc: 'Croissant',
+				desc: 'Décroissant',
+			},
+			showPinnedAsGroup: 'Afficher les fichiers épinglés comme groupe séparé',
+			showPinnedAsGroupDescription: 'Lorsque le regroupement est activé, afficher les fichiers épinglés dans un groupe "Épinglés" en haut',
+		},
 	},
 
 	// Toolbar
@@ -244,10 +343,7 @@ export const fr = {
 		modeToggleTagToSpecific: 'Basculer vers le mode étiquette spécifique',
 		modeToggleTagToActive: 'Basculer vers le mode étiquette de fichier actif',
 		clickToSelectFolderTag: 'Cliquer pour sélectionner dossier/étiquette',
-		configureMultiSort: 'Configurer le tri multiniveau',
-		multiSortModalDescription: 'Glissez-déposez pour réorganiser les niveaux de tri. Les fichiers seront triés d\'abord par Niveau 1, puis par Niveau 2, et ainsi de suite.',
-		sortLevel: (level: number) => `Niveau ${level}`,
-		disableMultiSort: 'Désactiver le tri multiniveau',
+		fileCount: (displayed: number, total: number) => `${displayed} / ${total}`,
 		sortOptions: {
 			nameAsc: 'Nom de fichier (A-Z)',
 			nameDesc: 'Nom de fichier (Z-A)',
@@ -259,6 +355,10 @@ export const fr = {
 			sizeAsc: 'Taille de fichier (Plus petit)',
 			multiSort: 'Tri multiniveau',
 		},
+		configureMultiSort: 'Configurer le tri multiniveau',
+		multiSortModalDescription: 'Glissez-déposez pour réorganiser les niveaux de tri. Les fichiers seront triés d\'abord par Niveau 1, puis par Niveau 2, et ainsi de suite.',
+		sortLevel: (level: number) => `Niveau ${level}`,
+		disableMultiSort: 'Désactiver le tri multiniveau',
 		hoverActions: {
 			pin: 'Épingler',
 			star: 'Favori',
@@ -317,9 +417,11 @@ export const fr = {
 	// Settings Tab UI
 	settingsTab: {
 		tabs: {
-			mode: 'Mode et Tri',
+			source: 'Mode & Recherche',
+			grouping: 'Regroupement & Tri',
 			card: 'Paramètres de Carte',
 			layout: 'Mise en Page',
+			interaction: 'Interaction',
 			presets: 'Préréglages',
 			other: 'Autres',
 		},
@@ -372,6 +474,8 @@ export const fr = {
 				dragDrop: { label: 'Glisser-Déposer', description: 'Début/fin de glissement, gestion du dépôt' },
 				mode: { label: 'Changement de Mode', description: 'Changement de mode dossier/étiquette/recherche' },
 				settings: { label: 'Paramètres', description: 'Chargement/sauvegarde des paramètres, application des changements' },
+				cache: { label: 'Cache', description: 'Cache de métadonnées, cache de contenu' },
+				grouping: { label: 'Regroupement', description: 'Regroupement de cartes, création de groupes, réduction/expansion' },
 				event: { label: 'Événements', description: 'Événements de clic, clavier, changement de fichier' },
 				ui: { label: 'Interface', description: 'Barre d\'outils, menu contextuel, fenêtres modales' },
 				performance: { label: 'Performance', description: 'Mesure du temps d\'exécution, utilisation de la mémoire' },
@@ -412,9 +516,9 @@ export const fr = {
 			importPreset: 'Importer un Préréglage',
 			importPresetButton: 'Importer',
 			priorityMode: 'Mode de Priorité',
-			priorityModeDescription: 'Choisir de déterminer automatiquement la priorité entre les préréglages de dossier et d\'étiquette, ou de la configurer manuellement.',
-			manualPriorityType: 'Type de Préréglage Préféré',
-			manualPriorityTypeDescription: 'Lorsque les préréglages de dossier et d\'étiquette correspondent tous les deux, choisir lequel appliquer en premier.',
+			priorityModeDescription: 'Choisir comment déterminer la priorité du mappage de préréglages.',
+			preferredPriorityType: 'Type de Préréglage Préféré',
+			preferredPriorityTypeDescription: 'Lorsque plusieurs préréglages correspondent, choisir quel type prioriser en premier.',
 			addFolderMapping: 'Ajouter un Mappage de Dossier',
 			addFolderMappingDescription: 'Mapper un préréglage à un dossier spécifique',
 			addMappingButton: 'Ajouter un Mappage',
@@ -465,43 +569,93 @@ export const fr = {
 			priorityModeDescription: 'Choisir de déterminer automatiquement la priorité entre les préréglages de dossier et d\'étiquette, ou de la configurer manuellement.',
 			priorityOptions: {
 				auto: 'Auto',
+				semiAuto: 'Semi-Auto',
 				manual: 'Manuel',
 			},
-			priorityRulesTitle: 'Règles de Priorité (Mode Auto)',
-			priorityRulesHtml: `
+			autoModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					En mode auto, la priorité est déterminée par les règles suivantes :
-					<ol style="margin: 8px 0; padding-left: 20px;">
-						<li>Lorsque les préréglages de dossier et d'étiquette correspondent tous les deux, le <strong>plus spécifique</strong> est appliqué</li>
-						<li>Préréglages de dossier : Le sous-dossier a la priorité sur le dossier parent</li>
-						<li>Préréglages d'étiquette : Plus d'étiquettes ont la priorité</li>
-						<li>Lorsque la spécificité est égale, le dossier a la priorité sur l'étiquette</li>
-					</ol>
+					<strong>Mode Auto :</strong> La priorité est déterminée automatiquement en fonction du mode de vue actuel.
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>Mode Dossier :</strong> Les préréglages d'étiquette ont la priorité (les étiquettes sont plus spécifiques)</li>
+						<li><strong>Mode Étiquette :</strong> Les préréglages de dossier ont la priorité (les dossiers sont plus spécifiques)</li>
+					</ul>
+					Au sein du même type, les valeurs de priorité inférieures sont appliquées en premier.
 				</div>
 			`,
-			manualPriorityType: 'Type de Préréglage Préféré',
-			manualPriorityTypeDescription: 'Lorsque les préréglages de dossier et d\'étiquette correspondent tous les deux, choisir lequel appliquer en premier.',
+			semiAutoModeExplanationHtml: `
+				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
+					<strong>Mode Semi-Auto :</strong> Prioriser d'abord le type sélectionné, mais déterminer automatiquement au sein du même type.
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>Entre types :</strong> Le type sélectionné (dossier/étiquette/propriété/date) a toujours la priorité</li>
+						<li><strong>Au sein du type :</strong> Les valeurs de priorité inférieures sont appliquées en premier</li>
+					</ul>
+					Maintient une priorité cohérente quel que soit le mode de vue actuel.
+				</div>
+			`,
 			manualModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					En mode manuel, le type sélectionné est toujours appliqué en premier parmi les préréglages correspondants.
+					<strong>Mode Manuel :</strong> Les préréglages sont appliqués en fonction de l'ordre de la liste de mappage ci-dessous.
 					<ul style="margin: 8px 0; padding-left: 20px;">
-						<li><strong>Dossier en premier :</strong> Toujours appliquer le préréglage de dossier s'il est disponible</li>
-						<li><strong>Étiquette en premier :</strong> Toujours appliquer le préréglage d'étiquette s'il est disponible</li>
+						<li><strong>Premier correspondance gagne :</strong> Vérifié de haut en bas, le premier mappage correspondant est appliqué</li>
+						<li><strong>Glisser pour réorganiser :</strong> Faites glisser les mappages pour ajuster leur priorité</li>
 					</ul>
+					Fournit le contrôle le plus fin sur la priorité.
 				</div>
 			`,
-			mappingPriorityRulesHtml: `
-				<strong>💡 Règles de Priorité de Mappage</strong><br><br>
-				<strong>1. Dossier vs Étiquette :</strong> Déterminé par le paramètre "Mode de Priorité" ci-dessus<br>
-				<strong>2. Au sein du même type :</strong> Les mappages listés plus haut ont la priorité<br><br>
-				<span style="color: var(--text-muted); font-size: 0.9em;">
-				Exemple : Si "Projets" est au-dessus de "Projets/Important" dans la liste des dossiers,<br>
-				"Projets/Important/document.md" utilisera le préréglage "Projets".
-				</span>
-			`,
+			presetMappingsTitle: 'Mappages de Préréglages',
+			presetMappingsDescription: 'Glissez pour réorganiser les mappages. En mode manuel, les mappages sont appliqués de haut en bas (premier correspondance gagne).',
+			noMappingsYet: 'Aucun mappage de préréglage pour le moment. Ajoutez un mappage ci-dessous.',
+			addFolderButton: '+ Dossier',
+			addTagButton: '+ Étiquette',
+			addPropertyButton: '+ Propriété',
+			addDateButton: '+ Date',
+			propertyMappingTitle: 'Ajouter un Mappage de Propriété',
+			propertyName: 'Nom de Propriété',
+			propertyNameDescription: 'Propriété de frontmatter à correspondre',
+			propertyNamePlaceholder: 'statut',
+			propertyValue: 'Valeur de Propriété',
+			propertyValueDescription: 'Valeur à correspondre (correspondance exacte)',
+			propertyValuePlaceholder: 'actif',
+			propertyMappingAdded: 'Mappage de propriété ajouté',
+			enterPropertyNameAndValue: 'Veuillez entrer le nom et la valeur de propriété',
+			dateMappingTitle: 'Ajouter un Mappage de Date',
+			dateCriteria: 'Critère de Date',
+			dateCriteriaDescription: 'Quelle date vérifier',
+			dateCriteriaCreated: 'Date de Création',
+			dateCriteriaModified: 'Date de Modification',
+			dateCriteriaProperty: 'Propriété (frontmatter)',
+			datePropertyName: 'Nom de Propriété',
+			datePropertyNameDescription: 'Propriété de frontmatter contenant la date',
+			datePropertyNamePlaceholder: 'date-échéance',
+			dateType: 'Type de Date',
+			dateTypeDescription: 'Utiliser une date relative (derniers N jours) ou une plage de dates absolue',
+			dateTypeRelative: 'Relative (derniers N jours)',
+			dateTypeAbsolute: 'Absolue (plage de dates)',
+			relativeDays: 'Jours Relatifs',
+			relativeDaysDescription: 'Correspondre aux fichiers des derniers N jours',
+			relativeDaysPlaceholder: '7',
+			dateFrom: 'Date Depuis',
+			dateFromDescription: 'Date de début (AAAA-MM-JJ) ou laisser vide',
+			dateFromPlaceholder: '2024-01-01',
+			dateTo: 'Date Jusqu\'à',
+			dateToDescription: 'Date de fin (AAAA-MM-JJ) ou laisser vide',
+			dateToPlaceholder: '2024-12-31',
+			dateMappingAdded: 'Mappage de date ajouté',
+			enterDatePropertyName: 'Veuillez entrer le nom de propriété',
+			deleteMappingConfirm: (target: string) => `Supprimer le mappage pour "${target}" ?`,
+			editFolderMappingTitle: 'Modifier le Mappage de Dossier',
+			editTagMappingTitle: 'Modifier le Mappage d\'Étiquette',
+			editPropertyMappingTitle: 'Modifier le Mappage de Propriété',
+			editDateMappingTitle: 'Modifier le Mappage de Date',
+			folderMappingUpdated: 'Mappage de dossier mis à jour',
+			tagMappingUpdated: 'Mappage d\'étiquette mis à jour',
+			propertyMappingUpdated: 'Mappage de propriété mis à jour',
+			dateMappingUpdated: 'Mappage de date mis à jour',
 			priorityTypeOptions: {
-				folder: 'Dossier en premier',
-				tag: 'Étiquette en premier',
+				folder: 'Dossier',
+				tag: 'Étiquette',
+				property: 'Propriété',
+				date: 'Date',
 			},
 			folderMappingDivider: 'Préréglages de Dossier',
 			addFolderMapping: 'Ajouter un Mappage de Dossier',
@@ -580,6 +734,39 @@ export const fr = {
 				property: 'Propriété de Frontmatter',
 				backlinks: 'Rétroliens (Fichiers liant vers ce fichier)',
 				outgoingLinks: 'Liens Sortants (Fichiers vers lesquels ce fichier lie)',
+				imageThumbnail: 'Miniature d\'Image',
+			},
+			imageThumbnail: {
+				title: 'Paramètres de Miniature d\'Image',
+				enabled: 'Activer les Miniatures d\'Image',
+				enabledDescription: 'Afficher les miniatures d\'image dans les cartes',
+				size: 'Taille de la Miniature',
+				sizeDescription: 'Sélectionner la taille de la miniature d\'image',
+				sizeSmall: 'Petite (80px)',
+				sizeMedium: 'Moyenne (150px)',
+				sizeLarge: 'Grande (250px)',
+				aspectRatio: 'Rapport d\'Aspect',
+				aspectRatioDescription: 'Sélectionner le rapport d\'aspect de l\'image',
+				aspectRatioSquare: 'Carré (1:1)',
+				aspectRatioOriginal: 'Original',
+				aspectRatio16_9: 'Large (16:9)',
+				aspectRatio4_3: 'Standard (4:3)',
+				fallback: 'Option de Repli',
+				fallbackDescription: 'Sélectionner ce qui doit être affiché lorsqu\'aucune image n\'est disponible',
+				fallbackNone: 'Aucun (Masquer la section)',
+				fallbackIcon: 'Icône de Type de Fichier',
+				fallbackFolderColor: 'Couleur Basée sur le Dossier',
+				fallbackTagColor: 'Couleur Basée sur l\'Étiquette',
+				fallbackEmoji: 'Premier Emoji',
+				allowExternal: 'Autoriser les Images Externes',
+				allowExternalDescription: 'Autoriser l\'affichage d\'images externes depuis des URL http/https',
+				retryCount: 'Nombre de Tentatives',
+				retryCountDescription: 'Nombre de tentatives lorsque le chargement de l\'image échoue',
+				clickAction: 'Action de Clic',
+				clickActionDescription: 'Sélectionner l\'action lors du clic sur l\'image',
+				clickOpenFile: 'Ouvrir le Fichier',
+				clickOpenImage: 'Ouvrir l\'Image dans un Nouvel Onglet',
+				clickNone: 'Aucune Action',
 			},
 			propertyName: 'Nom de Propriété de Frontmatter',
 			propertyNameDescription: 'Entrer le nom de la propriété de frontmatter à afficher. Vous pouvez sélectionner dans l\'autocomplétion ou taper manuellement.',
@@ -599,6 +786,11 @@ export const fr = {
 				isMarkdownHtml
 					? 'Nombre maximal de caractères à afficher. ⚠️ Ce paramètre n\'est pas appliqué en mode de rendu Markdown HTML (pour éviter la troncature des balises HTML)'
 					: 'Nombre maximal de caractères à afficher. Le contenu plus long que cela sera tronqué avec "..."',
+			inheritFromNormal: 'Hériter de l\'État Normal',
+			inheritFromNormalDescription: 'Lorsque activé, utilise le même style que l\'état normal. Utile pour maintenir des styles communs tout en changeant uniquement des propriétés spécifiques',
+			inheritFromNormalContentDescription: 'Lorsque activé, utilise le même contenu que l\'état normal. Utile pour maintenir un contenu commun tout en changeant uniquement des propriétés spécifiques',
+			inheritingFromNormalInfo: 'Hérite des styles de l\'état normal',
+			inheritingFromNormalContentInfo: 'Hérite du contenu de l\'état normal',
 			fontSize: 'Taille de Police',
 			fontSizeDescription: (section: string) => `Taille du texte pour la zone ${section} (px). La valeur par défaut est généralement 14px`,
 			backgroundColor: 'Couleur de Fond',
@@ -662,6 +854,12 @@ export const fr = {
 				size: 'Trier par taille de fichier : le plus petit en premier (croissant) ou le plus grand en premier (décroissant)',
 				property: 'Trier par propriété de frontmatter : trié par valeurs de propriété (nombres, chaînes, dates, etc.)',
 			},
+			enableMultiSort: 'Activer le Tri Multiniveau',
+			enableMultiSortDescription: 'Trier les fichiers par plusieurs critères en séquence. Par exemple : d\'abord par dossier, puis par date de modification, puis par nom.',
+			sortLevels: 'Niveaux de Tri',
+			level: 'Niveau',
+			addLevel: '+ Ajouter un Niveau de Tri',
+			removeLevel: 'Supprimer',
 		},
 		renderingSettings: {
 			renderMode: 'Mode de Rendu',
@@ -706,11 +904,10 @@ export const fr = {
 			},
 		},
 		pinSettings: {
-			title: 'Pin Settings',
-			alwaysShowPinned: 'Always show pinned files',
-			alwaysShowPinnedDescription: 'Show pinned files even when scrolling or changing modes',
+			title: 'Paramètres d\'Épinglage',
+			alwaysShowPinned: 'Toujours afficher les fichiers épinglés',
+			alwaysShowPinnedDescription: 'Afficher les fichiers épinglés même lors du défilement ou du changement de mode',
 		},
-
 		layoutSettings: {
 			minWidth: 'Largeur Minimale de Carte',
 			minWidthDescription: (min: number, max: number) => `Définir la largeur minimale des cartes (${min}-${max}px)`,
@@ -722,6 +919,29 @@ export const fr = {
 			maxHeightDescription: (min: number, max: number) => `Définir la hauteur maximale des cartes (${min}-${max}px). S'applique uniquement en mode vertical.`,
 			cardGap: 'Espacement des Cartes',
 			cardGapDescription: (min: number, max: number) => `Définir l'espacement entre les cartes (${min}-${max}px)`,
+		},
+		performanceSettings: {
+			title: 'Performance',
+			chunkSize: 'Taille de bloc de rendu incrémental',
+			chunkSizeDescription: 'Nombre de cartes à rendre simultanément lors de l\'affichage de nombreuses cartes. Des valeurs plus basses offrent une expérience plus fluide mais un chargement plus lent. Des valeurs plus élevées se chargent plus rapidement mais peuvent causer de brefs gels de l\'interface. (Par défaut : 20)',
+		},
+		cacheStatistics: {
+			title: 'Statistiques du Cache de Recherche',
+			viewNotOpen: 'Ouvrir la vue du Navigateur de Cartes pour voir les statistiques du cache',
+			notAvailable: 'Statistiques du cache non disponibles',
+			totalRequests: 'Requêtes Totales',
+			hitRate: 'Taux de Réussite du Cache',
+			l1Hits: 'Réussites L1 (Chaud)',
+			l2Hits: 'Réussites L2 (Tiède)',
+			l3Hits: 'Réussites L3 (Froid)',
+			misses: 'Échecs du Cache',
+			l1Size: 'Taille du Cache L1',
+			l2Size: 'Taille du Cache L2',
+			totalSize: 'Taille Totale du Cache',
+			clearCache: 'Effacer le Cache de Recherche',
+			clearCacheDescription: 'Effacer tous les résultats de recherche en cache. Cela réinitialisera les statistiques du cache.',
+			clearCacheButton: 'Effacer le Cache',
+			cacheCleared: 'Cache de recherche effacé',
 		},
 	},
 
@@ -917,6 +1137,8 @@ export const fr = {
 		filesSelected: (count: number) => `${count} fichiers sélectionnés`,
 		selectedFiles: (count: number) => `Sélectionnés : ${count} fichiers`,
 		addTag: 'Ajouter une Étiquette',
+		pin: 'Épingler',
+		star: 'Favori',
 		move: 'Déplacer',
 		delete: 'Supprimer',
 		clearSelection: 'Effacer la Sélection',
@@ -926,8 +1148,8 @@ export const fr = {
 		clearSelectionButtonClicked: 'Bouton effacer la sélection cliqué',
 		batchAddTagCalled: 'batchAddTag appelé',
 		addTagModalTitle: 'Ajouter une Étiquette',
-		addTagModalPlaceholder: "Entrer l'étiquette à ajouter (sans #)",
-		tagInputReceived: "Saisie d'étiquette reçue",
+		addTagModalPlaceholder: 'Entrer l\'étiquette à ajouter (sans #)',
+		tagInputReceived: 'Saisie d\'étiquette reçue',
 		tagAddFailed: (filepath: string) => `Échec de l'ajout d'étiquette : ${filepath}`,
 		tagAdded: (count: number, tag: string) => `Étiquette #${tag} ajoutée à ${count} fichiers`,
 		tagAddStart: (filepath: string) => `Début de l'ajout d'étiquette : ${filepath}`,
@@ -942,6 +1164,11 @@ export const fr = {
 		deleteConfirm: (count: number) => `Supprimer ${count} fichiers ?\n\nCette action ne peut pas être annulée.`,
 		deleteFileFailed: (filepath: string) => `Échec de la suppression du fichier : ${filepath}`,
 		filesDeleted: (count: number) => `${count} fichiers supprimés`,
+		filesPinned: (count: number) => `${count} fichiers épinglés`,
+		filesUnpinned: (count: number) => `${count} fichiers désépinglés`,
+		filesStarred: (count: number) => `${count} fichiers marqués comme favoris`,
+		filesUnstarred: (count: number) => `${count} fichiers retirés des favoris`,
+		bookmarksNotAvailable: 'Le plugin Signets n\'est pas disponible',
 	},
 
 	// Filter UI
@@ -965,10 +1192,10 @@ export const fr = {
 	// Search Engine
 	searchEngine: {
 		cacheInvalidationFailed: 'Échec de l\'enregistrement du listener d\'événement d\'invalidation de cache',
-		regexError: "Erreur d'expression régulière",
-		invalidRegexFormat: "Format d'expression régulière invalide. Utiliser le format /motif/ ou /motif/drapeaux.",
+		regexError: 'Erreur d\'expression régulière',
+		invalidRegexFormat: 'Format d\'expression régulière invalide. Utiliser le format /motif/ ou /motif/drapeaux.',
 		regexCreateError: (error: string) => `Erreur de création d'expression régulière : ${error}`,
-		regexSearchError: "Erreur de recherche d'expression régulière",
+		regexSearchError: 'Erreur de recherche d\'expression régulière',
 		lineSearchUnsupported: 'recherche line: non supportée dans searchSync(). Utiliser search() asynchrone.',
 		unsupportedSearchType: (type: string) => `recherche ${type} non supportée dans searchSync(). Utiliser search() asynchrone.`,
 		lineSearchError: 'Erreur de recherche de ligne',

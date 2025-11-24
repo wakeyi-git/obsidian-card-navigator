@@ -21,6 +21,10 @@ export const ja = {
 		selectFolder: 'フォルダを選択',
 		selectTag: 'タグを選択',
 		toggleRenderMode: 'レンダリングモードを切り替え（プレーン ↔ Markdown+HTML）',
+		saveCurrentSearch: '現在の検索を保存',
+		manageSavedSearches: '保存された検索を管理',
+		expandAllGroups: 'すべてのグループを展開',
+		collapseAllGroups: 'すべてのグループを折りたたむ',
 	},
 
 	// UI Messages
@@ -31,6 +35,29 @@ export const ja = {
 			plain: 'レンダリングモードを切り替えました：プレーンテキスト',
 			markdownHtml: 'レンダリングモードを切り替えました：Markdown + HTML',
 		},
+	},
+
+	// Saved Searches
+	savedSearches: {
+		saveSearch: '検索を保存',
+		savedSearches: '保存された検索',
+		recentSearches: '最近の検索',
+		favorites: 'お気に入り',
+		noSavedSearches: '保存された検索はありません',
+		searchName: '検索名',
+		saveButton: '保存',
+		cancelButton: 'キャンセル',
+		deleteButton: '削除',
+		favoriteButton: 'お気に入りに追加',
+		unfavoriteButton: 'お気に入りから削除',
+		editButton: '編集',
+		applyButton: '適用',
+		confirmDelete: (name: string) => `保存された検索「${name}」を削除しますか？`,
+		searchSaved: (name: string) => `検索「${name}」を保存しました`,
+		searchDeleted: (name: string) => `検索「${name}」を削除しました`,
+		searchApplied: (name: string) => `検索「${name}」を適用しました`,
+		enterSearchName: '検索名を入力',
+		emptyQueryWarning: '空の検索クエリは保存できません',
 	},
 
 	// Error Messages
@@ -71,6 +98,10 @@ export const ja = {
 		interactiveCardSection: {
 			name: 'インタラクティブカード設定',
 			description: 'カードの操作動作を設定',
+		},
+		searchSection: {
+			name: '検索設定',
+			description: '検索動作とオプションを設定',
 		},
 
 		// Language setting
@@ -143,6 +174,24 @@ export const ja = {
 		maxContentLength: {
 			name: '最大コンテンツ長',
 			description: 'カードコンテンツに表示する最大文字数（0 = 無制限）',
+		},
+
+		// Search settings
+		enableFuzzySearch: {
+			name: 'ファジー検索を有効化',
+			description: '完全一致しなくても類似文字列を検索（例：「fb」が「foobar」にマッチ）',
+		},
+		fuzzySearchThreshold: {
+			name: 'ファジー検索しきい値',
+			description: 'ファジーマッチングの最小類似度スコア（0-1、低いほど寛容）',
+		},
+		enableSearchHighlight: {
+			name: '検索ハイライト',
+			description: 'カード内の検索語を黄色の背景でハイライト表示',
+		},
+		caseSensitiveSearch: {
+			name: '大文字小文字を区別',
+			description: '検索時に大文字と小文字を区別する',
 		},
 
 		// Mode settings
@@ -220,6 +269,56 @@ export const ja = {
 			name: 'ドラッグ＆ドロップを有効化',
 			description: 'カードをドラッグしてファイルを移動できるようにする',
 		},
+		grouping: {
+			title: 'グループ化',
+			enableGrouping: 'グループ化を有効化',
+			enableGroupingDescription: '様々な基準でカードをグループ化',
+			groupBy: 'グループ化基準',
+			groupByDescription: 'カードのグループ化方法を選択',
+			criteria: {
+				folder: 'フォルダ',
+				tag: 'タグ',
+				dateYear: '日付（年）',
+				dateMonth: '日付（月）',
+				dateWeek: '日付（週）',
+				property: 'プロパティ',
+				size: 'ファイルサイズ',
+				firstLetter: '先頭文字',
+			},
+			dateBasis: '日付基準',
+			dateBasisDescription: '作成日または更新日を使用',
+			dateBasisOptions: {
+				created: '作成日',
+				modified: '更新日',
+			},
+			tagMode: 'タグモード',
+			tagModeDescription: '最初のタグのみまたはすべてのタグでグループ化',
+			tagModeOptions: {
+				first: '最初のタグのみ',
+				all: 'すべてのタグ（ファイルが複数のグループに表示される可能性があります）',
+			},
+			propertyName: 'プロパティ名',
+			propertyNameDescription: 'グループ化に使用するFrontmatterプロパティ',
+			propertyNamePlaceholder: 'status',
+			showFullFolderPath: '完全なフォルダパスを表示',
+			showFullFolderPathDescription: 'フォルダ名だけでなく完全なフォルダパスを表示',
+			sortGroupsBy: 'グループの並び替え基準',
+			sortGroupsByDescription: 'グループ自体の並び替え方法',
+			sortGroupsOptions: {
+				name: '名前',
+				fileCount: 'ファイル数',
+				latestFile: '最新ファイル',
+				hierarchy: '階層構造',
+			},
+			groupSortOrder: 'グループの並び順',
+			groupSortOrderDescription: 'グループを昇順または降順で並び替え',
+			groupSortOrderOptions: {
+				asc: '昇順',
+				desc: '降順',
+			},
+			showPinnedAsGroup: 'ピン留めファイルを別グループとして表示',
+			showPinnedAsGroupDescription: 'グループ化が有効な場合、ピン留めファイルを上部の「ピン留め」グループに表示',
+		},
 	},
 
 	// Toolbar
@@ -244,10 +343,7 @@ export const ja = {
 		modeToggleTagToSpecific: '指定タグモードに切り替え',
 		modeToggleTagToActive: 'アクティブファイルタグモードに切り替え',
 		clickToSelectFolderTag: 'クリックしてフォルダ/タグを選択',
-		configureMultiSort: '多段階ソートを構成',
-		multiSortModalDescription: 'ドラッグアンドドロップでソートレベルを並べ替えます。ファイルは最初にレベル1、次にレベル2などの順にソートされます。',
-		sortLevel: (level: number) => `レベル ${level}`,
-		disableMultiSort: '多段階ソートを無効化',
+		fileCount: (displayed: number, total: number) => `${displayed} / ${total}`,
 		sortOptions: {
 			nameAsc: 'ファイル名（A-Z）',
 			nameDesc: 'ファイル名（Z-A）',
@@ -259,6 +355,10 @@ export const ja = {
 			sizeAsc: 'ファイルサイズ（小さい順）',
 			multiSort: '多段階ソート',
 		},
+		configureMultiSort: '多段階ソートを構成',
+		multiSortModalDescription: 'ドラッグアンドドロップでソートレベルを並べ替えます。ファイルは最初にレベル1、次にレベル2などの順にソートされます。',
+		sortLevel: (level: number) => `レベル ${level}`,
+		disableMultiSort: '多段階ソートを無効化',
 		hoverActions: {
 			pin: 'ピン留め',
 			star: 'お気に入り',
@@ -317,9 +417,11 @@ export const ja = {
 	// Settings Tab UI
 	settingsTab: {
 		tabs: {
-			mode: 'モードと並び替え',
+			source: 'モード・検索',
+			grouping: 'グループ化・並び替え',
 			card: 'カード設定',
 			layout: 'レイアウト',
+			interaction: 'インタラクション',
 			presets: 'プリセット',
 			other: 'その他',
 		},
@@ -372,6 +474,8 @@ export const ja = {
 				dragDrop: { label: 'ドラッグ＆ドロップ', description: 'ドラッグ開始/終了、ドロップ処理' },
 				mode: { label: 'モード切り替え', description: 'フォルダ/タグ/検索モード切り替え' },
 				settings: { label: '設定', description: '設定の読み込み/保存、変更適用' },
+				cache: { label: 'キャッシュ', description: 'メタデータキャッシュ、コンテンツキャッシュ' },
+				grouping: { label: 'グループ化', description: 'カードグループ化、グループ作成、折りたたみ/展開' },
 				event: { label: 'イベント', description: 'クリック、キーボード、ファイル変更イベント' },
 				ui: { label: 'UI', description: 'ツールバー、コンテキストメニュー、モーダル' },
 				performance: { label: 'パフォーマンス', description: '実行時間、メモリ使用量測定' },
@@ -412,9 +516,9 @@ export const ja = {
 			importPreset: 'プリセットをインポート',
 			importPresetButton: 'インポート',
 			priorityMode: '優先度モード',
-			priorityModeDescription: 'フォルダとタグのプリセット間の優先度を自動的に決定するか、手動で設定するかを選択します。',
-			manualPriorityType: '優先するプリセットタイプ',
-			manualPriorityTypeDescription: 'フォルダとタグのプリセットが両方一致する場合、どちらを最初に適用するかを選択します。',
+			priorityModeDescription: 'プリセットマッピングの優先度を決定する方法を選択します。',
+			preferredPriorityType: '優先するプリセットタイプ',
+			preferredPriorityTypeDescription: '複数のプリセットが一致する場合、どのタイプを最初に優先するかを選択します。',
 			addFolderMapping: 'フォルダマッピングを追加',
 			addFolderMappingDescription: 'プリセットを特定のフォルダにマッピング',
 			addMappingButton: 'マッピングを追加',
@@ -465,43 +569,93 @@ export const ja = {
 			priorityModeDescription: 'フォルダとタグのプリセット間の優先度を自動的に決定するか、手動で設定するかを選択します。',
 			priorityOptions: {
 				auto: '自動',
+				semiAuto: '半自動',
 				manual: '手動',
 			},
-			priorityRulesTitle: '優先度ルール（自動モード）',
-			priorityRulesHtml: `
+			autoModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					自動モードでは、優先度は以下のルールで決定されます：
-					<ol style="margin: 8px 0; padding-left: 20px;">
-						<li>フォルダとタグのプリセットが両方一致する場合、<strong>より具体的</strong>なものが適用されます</li>
-						<li>フォルダプリセット：サブフォルダが親フォルダより優先</li>
-						<li>タグプリセット：より多くのタグが優先</li>
-						<li>特異性が同じ場合、フォルダがタグより優先</li>
-					</ol>
+					<strong>自動モード：</strong>現在のビューモードに基づいて優先度を自動的に決定します。
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>フォルダモード：</strong>タグプリセットが優先（タグがより具体的）</li>
+						<li><strong>タグモード：</strong>フォルダプリセットが優先（フォルダがより具体的）</li>
+					</ul>
+					同じタイプ内では、優先度値が低いものが最初に適用されます。
 				</div>
 			`,
-			manualPriorityType: '優先するプリセットタイプ',
-			manualPriorityTypeDescription: 'フォルダとタグのプリセットが両方一致する場合、どちらを最初に適用するかを選択します。',
+			semiAutoModeExplanationHtml: `
+				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
+					<strong>半自動モード：</strong>選択したタイプを最初に優先しますが、同じタイプ内では自動決定します。
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>タイプ間：</strong>選択したタイプ（フォルダ/タグ/プロパティ/日付）が常に優先</li>
+						<li><strong>タイプ内：</strong>優先度値が低いものが最初に適用</li>
+					</ul>
+					現在のビューモードに関係なく一貫した優先度を維持します。
+				</div>
+			`,
 			manualModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					手動モードでは、選択されたタイプが一致したプリセットの中で常に最初に適用されます。
+					<strong>手動モード：</strong>以下のマッピングリストの順序に基づいてプリセットを適用します。
 					<ul style="margin: 8px 0; padding-left: 20px;">
-						<li><strong>フォルダ優先：</strong>利用可能な場合は常にフォルダプリセットを適用</li>
-						<li><strong>タグ優先：</strong>利用可能な場合は常にタグプリセットを適用</li>
+						<li><strong>最初の一致が優先：</strong>上から下にチェックし、最初に一致したマッピングのプリセットを適用</li>
+						<li><strong>ドラッグで並び替え：</strong>マッピングをドラッグして優先度を調整</li>
 					</ul>
+					優先度を最も細かく制御できます。
 				</div>
 			`,
-			mappingPriorityRulesHtml: `
-				<strong>💡 マッピング優先度ルール</strong><br><br>
-				<strong>1. フォルダ vs タグ：</strong>上記の「優先度モード」設定で決定<br>
-				<strong>2. 同じタイプ内：</strong>リストの上位にあるマッピングが優先<br><br>
-				<span style="color: var(--text-muted); font-size: 0.9em;">
-				例：フォルダリストで「Projects」が「Projects/Important」の上にある場合、<br>
-				「Projects/Important/document.md」は「Projects」プリセットを使用します。
-				</span>
-			`,
+			presetMappingsTitle: 'プリセットマッピング',
+			presetMappingsDescription: 'ドラッグしてマッピングを並び替えます。手動モードでは、マッピングは上から下に適用されます（最初の一致が優先）。',
+			noMappingsYet: 'プリセットマッピングがまだありません。以下からマッピングを追加してください。',
+			addFolderButton: '+ フォルダ',
+			addTagButton: '+ タグ',
+			addPropertyButton: '+ プロパティ',
+			addDateButton: '+ 日付',
+			propertyMappingTitle: 'プロパティマッピングを追加',
+			propertyName: 'プロパティ名',
+			propertyNameDescription: '一致させるFrontmatterプロパティ',
+			propertyNamePlaceholder: 'status',
+			propertyValue: 'プロパティ値',
+			propertyValueDescription: '一致させる値（完全一致）',
+			propertyValuePlaceholder: 'active',
+			propertyMappingAdded: 'プロパティマッピングを追加しました',
+			enterPropertyNameAndValue: 'プロパティ名と値の両方を入力してください',
+			dateMappingTitle: '日付マッピングを追加',
+			dateCriteria: '日付基準',
+			dateCriteriaDescription: 'チェックする日付',
+			dateCriteriaCreated: '作成日',
+			dateCriteriaModified: '更新日',
+			dateCriteriaProperty: 'プロパティ（frontmatter）',
+			datePropertyName: 'プロパティ名',
+			datePropertyNameDescription: '日付を含むFrontmatterプロパティ',
+			datePropertyNamePlaceholder: 'due-date',
+			dateType: '日付タイプ',
+			dateTypeDescription: '相対（過去N日間）または絶対日付範囲を使用',
+			dateTypeRelative: '相対（過去N日間）',
+			dateTypeAbsolute: '絶対（日付範囲）',
+			relativeDays: '相対日数',
+			relativeDaysDescription: '過去N日間のファイルに一致',
+			relativeDaysPlaceholder: '7',
+			dateFrom: '開始日',
+			dateFromDescription: '開始日（YYYY-MM-DD）または空白',
+			dateFromPlaceholder: '2024-01-01',
+			dateTo: '終了日',
+			dateToDescription: '終了日（YYYY-MM-DD）または空白',
+			dateToPlaceholder: '2024-12-31',
+			dateMappingAdded: '日付マッピングを追加しました',
+			enterDatePropertyName: 'プロパティ名を入力してください',
+			deleteMappingConfirm: (target: string) => `「${target}」のマッピングを削除しますか？`,
+			editFolderMappingTitle: 'フォルダマッピングを編集',
+			editTagMappingTitle: 'タグマッピングを編集',
+			editPropertyMappingTitle: 'プロパティマッピングを編集',
+			editDateMappingTitle: '日付マッピングを編集',
+			folderMappingUpdated: 'フォルダマッピングを更新しました',
+			tagMappingUpdated: 'タグマッピングを更新しました',
+			propertyMappingUpdated: 'プロパティマッピングを更新しました',
+			dateMappingUpdated: '日付マッピングを更新しました',
 			priorityTypeOptions: {
-				folder: 'フォルダ優先',
-				tag: 'タグ優先',
+				folder: 'フォルダ',
+				tag: 'タグ',
+				property: 'プロパティ',
+				date: '日付',
 			},
 			folderMappingDivider: 'フォルダプリセット',
 			addFolderMapping: 'フォルダマッピングを追加',
@@ -580,6 +734,39 @@ export const ja = {
 				property: 'Frontmatterプロパティ',
 				backlinks: 'バックリンク（このファイルにリンクしているファイル）',
 				outgoingLinks: '外部リンク（このファイルがリンクしているファイル）',
+				imageThumbnail: '画像サムネイル',
+			},
+			imageThumbnail: {
+				title: '画像サムネイル設定',
+				enabled: '画像サムネイルを有効化',
+				enabledDescription: 'カードに画像サムネイルを表示',
+				size: 'サムネイルサイズ',
+				sizeDescription: '画像サムネイルのサイズを選択',
+				sizeSmall: '小（80px）',
+				sizeMedium: '中（150px）',
+				sizeLarge: '大（250px）',
+				aspectRatio: 'アスペクト比',
+				aspectRatioDescription: '画像のアスペクト比を選択',
+				aspectRatioSquare: '正方形（1:1）',
+				aspectRatioOriginal: 'オリジナル',
+				aspectRatio16_9: 'ワイド（16:9）',
+				aspectRatio4_3: '標準（4:3）',
+				fallback: 'フォールバックオプション',
+				fallbackDescription: '画像が利用できないときに表示するもの',
+				fallbackNone: 'なし（セクションを非表示）',
+				fallbackIcon: 'ファイルタイプアイコン',
+				fallbackFolderColor: 'フォルダベースの色',
+				fallbackTagColor: 'タグベースの色',
+				fallbackEmoji: '最初の絵文字',
+				allowExternal: '外部画像を許可',
+				allowExternalDescription: 'http/https URLからの外部画像の表示を許可',
+				retryCount: 'リトライ回数',
+				retryCountDescription: '画像読み込み失敗時のリトライ回数',
+				clickAction: 'クリック動作',
+				clickActionDescription: '画像クリック時の動作を選択',
+				clickOpenFile: 'ファイルを開く',
+				clickOpenImage: '画像を新しいタブで開く',
+				clickNone: '動作なし',
 			},
 			propertyName: 'Frontmatterプロパティ名',
 			propertyNameDescription: '表示するfrontmatterプロパティ名を入力します。オートコンプリートから選択するか、手動で入力できます。',
@@ -599,6 +786,11 @@ export const ja = {
 				isMarkdownHtml
 					? '表示する最大文字数。⚠️ この設定はMarkdown HTMLレンダリングモードでは適用されません（HTMLタグの切り捨てを防ぐため）'
 					: '表示する最大文字数。これより長い内容は「...」で切り捨てられます',
+			inheritFromNormal: '通常状態から継承',
+			inheritFromNormalDescription: '有効にすると、通常状態と同じスタイルを使用します。特定のプロパティのみを変更しながら共通のスタイルを維持するのに便利です',
+			inheritFromNormalContentDescription: '有効にすると、通常状態と同じコンテンツを使用します。特定のプロパティのみを変更しながら共通のコンテンツを維持するのに便利です',
+			inheritingFromNormalInfo: '通常状態からスタイルを継承中',
+			inheritingFromNormalContentInfo: '通常状態からコンテンツを継承中',
 			fontSize: 'フォントサイズ',
 			fontSizeDescription: (section: string) => `${section}エリアのテキストサイズ（px）。デフォルトは通常14pxです`,
 			backgroundColor: '背景色',
@@ -662,6 +854,12 @@ export const ja = {
 				size: 'ファイルサイズで並び替え：最小が最初（昇順）または最大が最初（降順）',
 				property: 'frontmatterプロパティで並び替え：プロパティ値で並び替え（数値、文字列、日付など）',
 			},
+			enableMultiSort: '多段階ソートを有効化',
+			enableMultiSortDescription: '複数の基準で順次ファイルを並び替えます。例：最初にフォルダ、次に更新日、次に名前。',
+			sortLevels: 'ソートレベル',
+			level: 'レベル',
+			addLevel: '+ ソートレベルを追加',
+			removeLevel: '削除',
 		},
 		renderingSettings: {
 			renderMode: 'レンダリングモード',
@@ -706,11 +904,10 @@ export const ja = {
 			},
 		},
 		pinSettings: {
-			title: 'Pin Settings',
-			alwaysShowPinned: 'Always show pinned files',
-			alwaysShowPinnedDescription: 'Show pinned files even when scrolling or changing modes',
+			title: 'ピン設定',
+			alwaysShowPinned: 'ピン留めファイルを常に表示',
+			alwaysShowPinnedDescription: 'スクロールやモード変更時にもピン留めファイルを表示',
 		},
-
 		layoutSettings: {
 			minWidth: 'カード最小幅',
 			minWidthDescription: (min: number, max: number) => `カードの最小幅を設定（${min}-${max}px）`,
@@ -722,6 +919,29 @@ export const ja = {
 			maxHeightDescription: (min: number, max: number) => `カードの最大高さを設定（${min}-${max}px）。垂直モードでのみ適用されます。`,
 			cardGap: 'カード間隔',
 			cardGapDescription: (min: number, max: number) => `カード間の間隔を設定（${min}-${max}px）`,
+		},
+		performanceSettings: {
+			title: 'パフォーマンス',
+			chunkSize: '段階的レンダリングチャンクサイズ',
+			chunkSizeDescription: '多くのカードを表示する際に一度にレンダリングするカード数。値が小さいほどスムーズですが読み込みが遅くなります。値が大きいほど高速ですが、一時的なUI凍結が発生する可能性があります。（デフォルト：20）',
+		},
+		cacheStatistics: {
+			title: '検索キャッシュ統計',
+			viewNotOpen: 'キャッシュ統計を表示するにはカードナビゲータービューを開いてください',
+			notAvailable: 'キャッシュ統計が利用できません',
+			totalRequests: '総リクエスト数',
+			hitRate: 'キャッシュヒット率',
+			l1Hits: 'L1ヒット（ホット）',
+			l2Hits: 'L2ヒット（ウォーム）',
+			l3Hits: 'L3ヒット（コールド）',
+			misses: 'キャッシュミス',
+			l1Size: 'L1キャッシュサイズ',
+			l2Size: 'L2キャッシュサイズ',
+			totalSize: '総キャッシュサイズ',
+			clearCache: '検索キャッシュをクリア',
+			clearCacheDescription: 'すべてのキャッシュされた検索結果をクリアします。キャッシュ統計がリセットされます。',
+			clearCacheButton: 'キャッシュをクリア',
+			cacheCleared: '検索キャッシュをクリアしました',
 		},
 	},
 

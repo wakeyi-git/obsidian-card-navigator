@@ -1,3 +1,41 @@
+## [1.5.3] - 2025-11-25
+
+### Added
+
+#### Hierarchy Group Sorting
+- **Folder/Tag Hierarchy Sorting**: Added new 'Hierarchy' option for group sorting
+  - When grouping by folder: Sorts groups by folder depth (parent folders first)
+    - Root folder appears first
+    - Shallower folders appear before deeper ones
+    - Same-depth folders sorted alphabetically
+  - When grouping by tag: Sorts groups by tag hierarchy (parent tags first)
+    - Detects parent/child relationships (e.g., `#project`, `#project/frontend`)
+    - Shallower tags appear before deeper ones
+    - Same-depth tags sorted alphabetically
+    - Untagged group always appears last
+  - Supports ascending/descending order
+  - Available in: Settings → Grouping → Sort groups by → Hierarchy
+  - Related files: [GroupingManager.ts](src/grouping/GroupingManager.ts), [types.ts](src/types.ts), [SettingsTab.ts](src/ui/SettingsTab.ts)
+
+### Improved
+
+#### Internationalization
+- Added 'Hierarchy' translation to all supported languages:
+  - Korean (한국어): '계층 구조'
+  - English: 'Hierarchy'
+  - Japanese (日本語): '階層構造'
+  - French (Français): 'Hiérarchie'
+  - German (Deutsch): 'Hierarchie'
+  - Chinese (中文): '层次结构'
+  - Spanish (Español): 'Jerarquía'
+  - Related files: All locale files in [src/i18n/locales/](src/i18n/locales/)
+
+### Technical Details
+- Implemented `compareFolderHierarchy()` for folder depth-based comparison
+- Implemented `compareTagHierarchy()` for tag hierarchy-based comparison
+- Extended `GroupSortCriteria` type with 'hierarchy' option
+- Fixed Spanish locale inconsistency in group sorting options
+
 ## [1.5.2] - 2025-11-24
 
 ### Fixed

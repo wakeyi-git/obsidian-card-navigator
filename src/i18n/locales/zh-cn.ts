@@ -21,6 +21,10 @@ export const zhCN = {
 		selectFolder: '选择文件夹',
 		selectTag: '选择标签',
 		toggleRenderMode: '切换渲染模式（纯文本 ↔ Markdown+HTML）',
+		saveCurrentSearch: '保存当前搜索',
+		manageSavedSearches: '管理已保存的搜索',
+		expandAllGroups: '展开所有组',
+		collapseAllGroups: '折叠所有组',
 	},
 
 	// UI Messages
@@ -31,6 +35,29 @@ export const zhCN = {
 			plain: '渲染模式已切换到：纯文本',
 			markdownHtml: '渲染模式已切换到：Markdown + HTML',
 		},
+	},
+
+	// Saved Searches
+	savedSearches: {
+		saveSearch: '保存搜索',
+		savedSearches: '已保存的搜索',
+		recentSearches: '最近的搜索',
+		favorites: '收藏',
+		noSavedSearches: '没有已保存的搜索',
+		searchName: '搜索名称',
+		saveButton: '保存',
+		cancelButton: '取消',
+		deleteButton: '删除',
+		favoriteButton: '添加到收藏',
+		unfavoriteButton: '从收藏中移除',
+		editButton: '编辑',
+		applyButton: '应用',
+		confirmDelete: (name: string) => `删除已保存的搜索"${name}"？`,
+		searchSaved: (name: string) => `搜索"${name}"已保存`,
+		searchDeleted: (name: string) => `搜索"${name}"已删除`,
+		searchApplied: (name: string) => `搜索"${name}"已应用`,
+		enterSearchName: '输入搜索名称',
+		emptyQueryWarning: '无法保存空搜索查询',
 	},
 
 	// Error Messages
@@ -71,6 +98,10 @@ export const zhCN = {
 		interactiveCardSection: {
 			name: '交互式卡片设置',
 			description: '配置卡片交互行为',
+		},
+		searchSection: {
+			name: '搜索设置',
+			description: '配置搜索行为和选项',
 		},
 
 		// Language setting
@@ -143,6 +174,24 @@ export const zhCN = {
 		maxContentLength: {
 			name: '最大内容长度',
 			description: '卡片内容中显示的最大字符数（0 = 无限制）',
+		},
+
+		// Search settings
+		enableFuzzySearch: {
+			name: '启用模糊搜索',
+			description: '即使不完全匹配也能匹配相似字符串（例如，"fb"匹配"foobar"）',
+		},
+		fuzzySearchThreshold: {
+			name: '模糊搜索阈值',
+			description: '模糊匹配的最小相似度分数（0-1，越低越宽松）',
+		},
+		enableSearchHighlight: {
+			name: '搜索高亮',
+			description: '用黄色背景高亮显示卡片中的搜索词',
+		},
+		caseSensitiveSearch: {
+			name: '区分大小写',
+			description: '搜索时区分大小写',
 		},
 
 		// Mode settings
@@ -220,6 +269,56 @@ export const zhCN = {
 			name: '启用拖放',
 			description: '允许通过拖动卡片移动文件',
 		},
+		grouping: {
+			title: '分组',
+			enableGrouping: '启用分组',
+			enableGroupingDescription: '按各种标准对卡片进行分组',
+			groupBy: '分组依据',
+			groupByDescription: '选择卡片分组方式',
+			criteria: {
+				folder: '文件夹',
+				tag: '标签',
+				dateYear: '日期（年）',
+				dateMonth: '日期（月）',
+				dateWeek: '日期（周）',
+				property: '属性',
+				size: '文件大小',
+				firstLetter: '首字母',
+			},
+			dateBasis: '日期基准',
+			dateBasisDescription: '使用创建日期或修改日期',
+			dateBasisOptions: {
+				created: '创建日期',
+				modified: '修改日期',
+			},
+			tagMode: '标签模式',
+			tagModeDescription: '仅按第一个标签或所有标签分组',
+			tagModeOptions: {
+				first: '仅第一个标签',
+				all: '所有标签（文件可能出现在多个组中）',
+			},
+			propertyName: '属性名称',
+			propertyNameDescription: '用于分组的 Frontmatter 属性',
+			propertyNamePlaceholder: 'status',
+			showFullFolderPath: '显示完整文件夹路径',
+			showFullFolderPathDescription: '显示完整文件夹路径而不仅仅是文件夹名称',
+			sortGroupsBy: '组排序依据',
+			sortGroupsByDescription: '组本身的排序方式',
+			sortGroupsOptions: {
+				name: '名称',
+				fileCount: '文件数',
+				latestFile: '最新文件',
+				hierarchy: '层次结构',
+			},
+			groupSortOrder: '组排序顺序',
+			groupSortOrderDescription: '以升序或降序对组进行排序',
+			groupSortOrderOptions: {
+				asc: '升序',
+				desc: '降序',
+			},
+			showPinnedAsGroup: '将置顶文件显示为单独的组',
+			showPinnedAsGroupDescription: '启用分组时，在顶部的"置顶"组中显示置顶文件',
+		},
 	},
 
 	// Toolbar
@@ -244,10 +343,7 @@ export const zhCN = {
 		modeToggleTagToSpecific: '切换到指定标签模式',
 		modeToggleTagToActive: '切换到活动文件标签模式',
 		clickToSelectFolderTag: '点击选择文件夹/标签',
-		configureMultiSort: '配置多级排序',
-		multiSortModalDescription: '拖放以重新排列排序级别。文件将首先按级别 1 排序，然后按级别 2 排序，依此类推。',
-		sortLevel: (level: number) => `级别 ${level}`,
-		disableMultiSort: '禁用多级排序',
+		fileCount: (displayed: number, total: number) => `${displayed} / ${total}`,
 		sortOptions: {
 			nameAsc: '文件名（A-Z）',
 			nameDesc: '文件名（Z-A）',
@@ -259,6 +355,10 @@ export const zhCN = {
 			sizeAsc: '文件大小（最小）',
 			multiSort: '多级排序',
 		},
+		configureMultiSort: '配置多级排序',
+		multiSortModalDescription: '拖放以重新排列排序级别。文件将首先按级别 1 排序，然后按级别 2 排序，依此类推。',
+		sortLevel: (level: number) => `级别 ${level}`,
+		disableMultiSort: '禁用多级排序',
 		hoverActions: {
 			pin: '固定',
 			star: '收藏',
@@ -317,9 +417,11 @@ export const zhCN = {
 	// Settings Tab UI
 	settingsTab: {
 		tabs: {
-			mode: '模式和排序',
+			source: '模式与搜索',
+			grouping: '分组与排序',
 			card: '卡片设置',
 			layout: '布局',
+			interaction: '交互',
 			presets: '预设',
 			other: '其他',
 		},
@@ -372,6 +474,8 @@ export const zhCN = {
 				dragDrop: { label: '拖放', description: '拖动开始/结束、放置处理' },
 				mode: { label: '模式切换', description: '文件夹/标签/搜索模式切换' },
 				settings: { label: '设置', description: '设置加载/保存、更改应用' },
+				cache: { label: '缓存', description: '元数据缓存、内容缓存' },
+				grouping: { label: '分组', description: '卡片分组、组创建、折叠/展开' },
 				event: { label: '事件', description: '点击、键盘、文件更改事件' },
 				ui: { label: 'UI', description: '工具栏、上下文菜单、模态框' },
 				performance: { label: '性能', description: '执行时间、内存使用测量' },
@@ -412,9 +516,9 @@ export const zhCN = {
 			importPreset: '导入预设',
 			importPresetButton: '导入',
 			priorityMode: '优先级模式',
-			priorityModeDescription: '选择是自动确定文件夹和标签预设之间的优先级，还是手动设置。',
-			manualPriorityType: '首选预设类型',
-			manualPriorityTypeDescription: '当文件夹和标签预设都匹配时，选择首先应用哪个。',
+			priorityModeDescription: '选择如何确定预设映射优先级。',
+			preferredPriorityType: '首选预设类型',
+			preferredPriorityTypeDescription: '当多个预设匹配时，选择首先优先考虑哪种类型。',
 			addFolderMapping: '添加文件夹映射',
 			addFolderMappingDescription: '将预设映射到特定文件夹',
 			addMappingButton: '添加映射',
@@ -465,43 +569,93 @@ export const zhCN = {
 			priorityModeDescription: '选择是自动确定文件夹和标签预设之间的优先级，还是手动设置。',
 			priorityOptions: {
 				auto: '自动',
+				semiAuto: '半自动',
 				manual: '手动',
 			},
-			priorityRulesTitle: '优先级规则（自动模式）',
-			priorityRulesHtml: `
+			autoModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					在自动模式下，优先级由以下规则确定：
-					<ol style="margin: 8px 0; padding-left: 20px;">
-						<li>当文件夹和标签预设都匹配时，应用<strong>更具体</strong>的预设</li>
-						<li>文件夹预设：子文件夹优先于父文件夹</li>
-						<li>标签预设：更多标签优先</li>
-						<li>当特定性相同时，文件夹优先于标签</li>
-					</ol>
+					<strong>自动模式：</strong>根据当前视图模式自动确定优先级。
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>文件夹模式：</strong>标签预设优先（标签更具体）</li>
+						<li><strong>标签模式：</strong>文件夹预设优先（文件夹更具体）</li>
+					</ul>
+					在同一类型中，优先级值较低的先应用。
 				</div>
 			`,
-			manualPriorityType: '首选预设类型',
-			manualPriorityTypeDescription: '当文件夹和标签预设都匹配时，选择首先应用哪个。',
+			semiAutoModeExplanationHtml: `
+				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
+					<strong>半自动模式：</strong>首先优先考虑选定的类型，但在同一类型中自动确定。
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>类型之间：</strong>选定的类型（文件夹/标签/属性/日期）始终优先</li>
+						<li><strong>类型内部：</strong>优先级值较低的先应用</li>
+					</ul>
+					无论当前视图模式如何，都保持一致的优先级。
+				</div>
+			`,
 			manualModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					在手动模式下，所选类型始终在匹配的预设中首先应用。
+					<strong>手动模式：</strong>根据下面映射列表的顺序应用预设。
 					<ul style="margin: 8px 0; padding-left: 20px;">
-						<li><strong>文件夹优先：</strong>如果可用，始终应用文件夹预设</li>
-						<li><strong>标签优先：</strong>如果可用，始终应用标签预设</li>
+						<li><strong>第一个匹配优先：</strong>从上到下检查，应用第一个匹配的映射的预设</li>
+						<li><strong>拖动重新排序：</strong>拖动映射以调整其优先级</li>
 					</ul>
+					提供对优先级的最精细控制。
 				</div>
 			`,
-			mappingPriorityRulesHtml: `
-				<strong>💡 映射优先级规则</strong><br><br>
-				<strong>1. 文件夹与标签：</strong>由上面的"优先级模式"设置确定<br>
-				<strong>2. 在同一类型内：</strong>列表中较高的映射具有优先级<br><br>
-				<span style="color: var(--text-muted); font-size: 0.9em;">
-				示例：如果"Projects"在文件夹列表中位于"Projects/Important"上方，<br>
-				"Projects/Important/document.md"将使用"Projects"预设。
-				</span>
-			`,
+			presetMappingsTitle: '预设映射',
+			presetMappingsDescription: '拖动以重新排序映射。在手动模式下，映射从上到下应用（第一个匹配优先）。',
+			noMappingsYet: '还没有预设映射。在下面添加映射。',
+			addFolderButton: '+ 文件夹',
+			addTagButton: '+ 标签',
+			addPropertyButton: '+ 属性',
+			addDateButton: '+ 日期',
+			propertyMappingTitle: '添加属性映射',
+			propertyName: '属性名称',
+			propertyNameDescription: '要匹配的 Frontmatter 属性',
+			propertyNamePlaceholder: 'status',
+			propertyValue: '属性值',
+			propertyValueDescription: '要匹配的值（精确匹配）',
+			propertyValuePlaceholder: 'active',
+			propertyMappingAdded: '属性映射已添加',
+			enterPropertyNameAndValue: '请输入属性名称和值',
+			dateMappingTitle: '添加日期映射',
+			dateCriteria: '日期标准',
+			dateCriteriaDescription: '要检查的日期',
+			dateCriteriaCreated: '创建日期',
+			dateCriteriaModified: '修改日期',
+			dateCriteriaProperty: '属性（frontmatter）',
+			datePropertyName: '属性名称',
+			datePropertyNameDescription: '包含日期的 Frontmatter 属性',
+			datePropertyNamePlaceholder: 'due-date',
+			dateType: '日期类型',
+			dateTypeDescription: '使用相对（最近 N 天）或绝对日期范围',
+			dateTypeRelative: '相对（最近 N 天）',
+			dateTypeAbsolute: '绝对（日期范围）',
+			relativeDays: '相对天数',
+			relativeDaysDescription: '匹配最近 N 天的文件',
+			relativeDaysPlaceholder: '7',
+			dateFrom: '开始日期',
+			dateFromDescription: '开始日期（YYYY-MM-DD）或留空',
+			dateFromPlaceholder: '2024-01-01',
+			dateTo: '结束日期',
+			dateToDescription: '结束日期（YYYY-MM-DD）或留空',
+			dateToPlaceholder: '2024-12-31',
+			dateMappingAdded: '日期映射已添加',
+			enterDatePropertyName: '请输入属性名称',
+			deleteMappingConfirm: (target: string) => `删除"${target}"的映射？`,
+			editFolderMappingTitle: '编辑文件夹映射',
+			editTagMappingTitle: '编辑标签映射',
+			editPropertyMappingTitle: '编辑属性映射',
+			editDateMappingTitle: '编辑日期映射',
+			folderMappingUpdated: '文件夹映射已更新',
+			tagMappingUpdated: '标签映射已更新',
+			propertyMappingUpdated: '属性映射已更新',
+			dateMappingUpdated: '日期映射已更新',
 			priorityTypeOptions: {
-				folder: '文件夹优先',
-				tag: '标签优先',
+				folder: '文件夹',
+				tag: '标签',
+				property: '属性',
+				date: '日期',
 			},
 			folderMappingDivider: '文件夹预设',
 			addFolderMapping: '添加文件夹映射',
@@ -580,6 +734,39 @@ export const zhCN = {
 				property: 'Frontmatter 属性',
 				backlinks: '反向链接（链接到此文件的文件）',
 				outgoingLinks: '外向链接（此文件链接到的文件）',
+				imageThumbnail: '图像缩略图',
+			},
+			imageThumbnail: {
+				title: '图像缩略图设置',
+				enabled: '启用图像缩略图',
+				enabledDescription: '在卡片中显示图像缩略图',
+				size: '缩略图大小',
+				sizeDescription: '选择图像缩略图的大小',
+				sizeSmall: '小（80px）',
+				sizeMedium: '中（150px）',
+				sizeLarge: '大（250px）',
+				aspectRatio: '宽高比',
+				aspectRatioDescription: '选择图像的宽高比',
+				aspectRatioSquare: '正方形（1:1）',
+				aspectRatioOriginal: '原始',
+				aspectRatio16_9: '宽屏（16:9）',
+				aspectRatio4_3: '标准（4:3）',
+				fallback: '后备选项',
+				fallbackDescription: '选择当没有图像可用时显示的内容',
+				fallbackNone: '无（隐藏部分）',
+				fallbackIcon: '文件类型图标',
+				fallbackFolderColor: '基于文件夹的颜色',
+				fallbackTagColor: '基于标签的颜色',
+				fallbackEmoji: '第一个表情符号',
+				allowExternal: '允许外部图像',
+				allowExternalDescription: '允许显示来自 http/https URL 的外部图像',
+				retryCount: '重试次数',
+				retryCountDescription: '图像加载失败时的重试次数',
+				clickAction: '点击操作',
+				clickActionDescription: '选择点击图像时的操作',
+				clickOpenFile: '打开文件',
+				clickOpenImage: '在新标签页中打开图像',
+				clickNone: '无操作',
 			},
 			propertyName: 'Frontmatter 属性名称',
 			propertyNameDescription: '输入要显示的 frontmatter 属性名称。您可以从自动完成中选择或手动输入。',
@@ -599,6 +786,11 @@ export const zhCN = {
 				isMarkdownHtml
 					? '要显示的最大字符数。⚠️ 此设置在 Markdown HTML 渲染模式下不适用（以防止 HTML 标记截断）'
 					: '要显示的最大字符数。超过此长度的内容将用"..."截断',
+			inheritFromNormal: '从普通状态继承',
+			inheritFromNormalDescription: '启用后，使用与普通状态相同的样式。在更改特定属性的同时保持通用样式很有用',
+			inheritFromNormalContentDescription: '启用后，使用与普通状态相同的内容。在更改特定属性的同时保持通用内容很有用',
+			inheritingFromNormalInfo: '从普通状态继承样式',
+			inheritingFromNormalContentInfo: '从普通状态继承内容',
 			fontSize: '字体大小',
 			fontSizeDescription: (section: string) => `${section}区域的文本大小（px）。默认值通常为 14px`,
 			backgroundColor: '背景颜色',
@@ -662,6 +854,12 @@ export const zhCN = {
 				size: '按文件大小排序：最小优先（升序）或最大优先（降序）',
 				property: '按 frontmatter 属性排序：按属性值排序（数字、字符串、日期等）',
 			},
+			enableMultiSort: '启用多级排序',
+			enableMultiSortDescription: '按多个标准依次对文件进行排序。例如：首先按文件夹，然后按修改日期，然后按名称。',
+			sortLevels: '排序级别',
+			level: '级别',
+			addLevel: '+ 添加排序级别',
+			removeLevel: '删除',
 		},
 		renderingSettings: {
 			renderMode: '渲染模式',
@@ -706,11 +904,10 @@ export const zhCN = {
 			},
 		},
 		pinSettings: {
-			title: 'Pin Settings',
-			alwaysShowPinned: 'Always show pinned files',
-			alwaysShowPinnedDescription: 'Show pinned files even when scrolling or changing modes',
+			title: '固定设置',
+			alwaysShowPinned: '始终显示置顶文件',
+			alwaysShowPinnedDescription: '即使滚动或更改模式也显示置顶文件',
 		},
-
 		layoutSettings: {
 			minWidth: '卡片最小宽度',
 			minWidthDescription: (min: number, max: number) => `设置卡片的最小宽度（${min}-${max}px）`,
@@ -722,6 +919,29 @@ export const zhCN = {
 			maxHeightDescription: (min: number, max: number) => `设置卡片的最大高度（${min}-${max}px）。仅在垂直模式下应用。`,
 			cardGap: '卡片间隙',
 			cardGapDescription: (min: number, max: number) => `设置卡片之间的间隙（${min}-${max}px）`,
+		},
+		performanceSettings: {
+			title: '性能',
+			chunkSize: '增量渲染块大小',
+			chunkSizeDescription: '显示大量卡片时一次渲染的卡片数。值越小体验越流畅但加载越慢。值越大加载越快但可能导致短暂的 UI 冻结。（默认：20）',
+		},
+		cacheStatistics: {
+			title: '搜索缓存统计',
+			viewNotOpen: '打开卡片导航器视图以查看缓存统计',
+			notAvailable: '缓存统计不可用',
+			totalRequests: '总请求数',
+			hitRate: '缓存命中率',
+			l1Hits: 'L1 命中（热）',
+			l2Hits: 'L2 命中（温）',
+			l3Hits: 'L3 命中（冷）',
+			misses: '缓存未命中',
+			l1Size: 'L1 缓存大小',
+			l2Size: 'L2 缓存大小',
+			totalSize: '总缓存大小',
+			clearCache: '清除搜索缓存',
+			clearCacheDescription: '清除所有缓存的搜索结果。这将重置缓存统计。',
+			clearCacheButton: '清除缓存',
+			cacheCleared: '搜索缓存已清除',
 		},
 	},
 

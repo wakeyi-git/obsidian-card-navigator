@@ -21,6 +21,10 @@ export const de = {
 		selectFolder: 'Ordner auswählen',
 		selectTag: 'Tag auswählen',
 		toggleRenderMode: 'Render-Modus umschalten (Text ↔ Markdown+HTML)',
+		saveCurrentSearch: 'Aktuelle Suche speichern',
+		manageSavedSearches: 'Gespeicherte Suchen verwalten',
+		expandAllGroups: 'Alle Gruppen erweitern',
+		collapseAllGroups: 'Alle Gruppen einklappen',
 	},
 
 	// UI Messages
@@ -31,6 +35,29 @@ export const de = {
 			plain: 'Render-Modus gewechselt zu: Klartext',
 			markdownHtml: 'Render-Modus gewechselt zu: Markdown + HTML',
 		},
+	},
+
+	// Saved Searches
+	savedSearches: {
+		saveSearch: 'Aktuelle Suche speichern',
+		savedSearches: 'Gespeicherte Suchen',
+		recentSearches: 'Letzte Suchen',
+		favorites: 'Favoriten',
+		noSavedSearches: 'Keine gespeicherten Suchen',
+		searchName: 'Suchname',
+		saveButton: 'Speichern',
+		cancelButton: 'Abbrechen',
+		deleteButton: 'Löschen',
+		favoriteButton: 'Favorit',
+		unfavoriteButton: 'Favorit entfernen',
+		editButton: 'Bearbeiten',
+		applyButton: 'Anwenden',
+		confirmDelete: (name: string) => `Gespeicherte Suche "${name}" löschen?`,
+		searchSaved: (name: string) => `Suche "${name}" gespeichert`,
+		searchDeleted: (name: string) => `Suche "${name}" gelöscht`,
+		searchApplied: (name: string) => `Suche "${name}" angewendet`,
+		enterSearchName: 'Suchnamen eingeben',
+		emptyQueryWarning: 'Leere Suchanfrage kann nicht gespeichert werden',
 	},
 
 	// Error Messages
@@ -71,6 +98,10 @@ export const de = {
 		interactiveCardSection: {
 			name: 'Interaktive Karten-Einstellungen',
 			description: 'Karten-Interaktionsverhalten konfigurieren',
+		},
+		searchSection: {
+			name: 'Such-Einstellungen',
+			description: 'Suchverhalten und -optionen konfigurieren',
 		},
 
 		// Language setting
@@ -143,6 +174,24 @@ export const de = {
 		maxContentLength: {
 			name: 'Maximale Inhaltslänge',
 			description: 'Maximale Anzahl von Zeichen zur Anzeige im Karteninhalt (0 = unbegrenzt)',
+		},
+
+		// Search settings
+		enableFuzzySearch: {
+			name: 'Fuzzy-Suche aktivieren',
+			description: 'Ähnliche Zeichenketten auch bei nicht exakter Übereinstimmung finden (z.B. "fb" findet "foobar")',
+		},
+		fuzzySearchThreshold: {
+			name: 'Fuzzy-Such-Schwellenwert',
+			description: 'Minimale Ähnlichkeitsbewertung für Fuzzy-Übereinstimmung (0-1, niedriger = toleranter)',
+		},
+		enableSearchHighlight: {
+			name: 'Such-Hervorhebung',
+			description: 'Suchbegriffe in Karten mit gelbem Hintergrund hervorheben',
+		},
+		caseSensitiveSearch: {
+			name: 'Groß-/Kleinschreibung beachten',
+			description: 'Zwischen Groß- und Kleinbuchstaben bei der Suche unterscheiden',
 		},
 
 		// Mode settings
@@ -220,6 +269,56 @@ export const de = {
 			name: 'Drag & Drop aktivieren',
 			description: 'Dateien durch Ziehen von Karten verschieben können',
 		},
+		grouping: {
+			title: 'Gruppierung',
+			enableGrouping: 'Gruppierung aktivieren',
+			enableGroupingDescription: 'Karten nach verschiedenen Kriterien gruppieren',
+			groupBy: 'Gruppieren nach',
+			groupByDescription: 'Wählen Sie, wie Karten gruppiert werden sollen',
+			criteria: {
+				folder: 'Ordner',
+				tag: 'Tag',
+				dateYear: 'Datum (Jahr)',
+				dateMonth: 'Datum (Monat)',
+				dateWeek: 'Datum (Woche)',
+				property: 'Eigenschaft',
+				size: 'Dateigröße',
+				firstLetter: 'Erster Buchstabe',
+			},
+			dateBasis: 'Datums-Basis',
+			dateBasisDescription: 'Erstellungsdatum oder Änderungsdatum verwenden',
+			dateBasisOptions: {
+				created: 'Erstellungsdatum',
+				modified: 'Änderungsdatum',
+			},
+			tagMode: 'Tag-Modus',
+			tagModeDescription: 'Nur nach erstem Tag oder nach allen Tags gruppieren',
+			tagModeOptions: {
+				first: 'Nur erstes Tag',
+				all: 'Alle Tags (Dateien können in mehreren Gruppen erscheinen)',
+			},
+			propertyName: 'Eigenschaftsname',
+			propertyNameDescription: 'Frontmatter-Eigenschaft zur Gruppierung',
+			propertyNamePlaceholder: 'status',
+			showFullFolderPath: 'Vollständigen Ordnerpfad anzeigen',
+			showFullFolderPathDescription: 'Vollständigen Ordnerpfad anstatt nur des Ordnernamens anzeigen',
+			sortGroupsBy: 'Gruppen sortieren nach',
+			sortGroupsByDescription: 'Wie die Gruppen selbst sortiert werden sollen',
+			sortGroupsOptions: {
+				name: 'Name',
+				fileCount: 'Dateianzahl',
+				latestFile: 'Neueste Datei',
+				hierarchy: 'Hierarchie',
+			},
+			groupSortOrder: 'Gruppen-Sortierreihenfolge',
+			groupSortOrderDescription: 'Gruppen in aufsteigender oder absteigender Reihenfolge sortieren',
+			groupSortOrderOptions: {
+				asc: 'Aufsteigend',
+				desc: 'Absteigend',
+			},
+			showPinnedAsGroup: 'Angeheftete Dateien als separate Gruppe anzeigen',
+			showPinnedAsGroupDescription: 'Bei aktivierter Gruppierung angeheftete Dateien in einer "Angeheftet"-Gruppe oben anzeigen',
+		},
 	},
 
 	// Toolbar
@@ -244,10 +343,7 @@ export const de = {
 		modeToggleTagToSpecific: 'Zu spezifischem Tag-Modus wechseln',
 		modeToggleTagToActive: 'Zu aktivem Datei-Tag-Modus wechseln',
 		clickToSelectFolderTag: 'Klicken, um Ordner/Tag auszuwählen',
-		configureMultiSort: 'Mehrstufige Sortierung konfigurieren',
-		multiSortModalDescription: 'Ziehen und Ablegen, um die Sortierebenen neu anzuordnen. Dateien werden zuerst nach Ebene 1, dann nach Ebene 2 usw. sortiert.',
-		sortLevel: (level: number) => `Ebene ${level}`,
-		disableMultiSort: 'Mehrstufige Sortierung deaktivieren',
+		fileCount: (displayed: number, total: number) => `${displayed} / ${total}`,
 		sortOptions: {
 			nameAsc: 'Dateiname (A-Z)',
 			nameDesc: 'Dateiname (Z-A)',
@@ -259,6 +355,10 @@ export const de = {
 			sizeAsc: 'Dateigröße (Kleinste)',
 			multiSort: 'Mehrstufige Sortierung',
 		},
+		configureMultiSort: 'Mehrstufige Sortierung konfigurieren',
+		multiSortModalDescription: 'Ziehen und Ablegen, um die Sortierebenen neu anzuordnen. Dateien werden zuerst nach Ebene 1, dann nach Ebene 2 usw. sortiert.',
+		sortLevel: (level: number) => `Ebene ${level}`,
+		disableMultiSort: 'Mehrstufige Sortierung deaktivieren',
 		hoverActions: {
 			pin: 'Anheften',
 			star: 'Favorit',
@@ -317,9 +417,11 @@ export const de = {
 	// Settings Tab UI
 	settingsTab: {
 		tabs: {
-			mode: 'Modus & Sortierung',
+			source: 'Modus & Suche',
+			grouping: 'Gruppierung & Sortierung',
 			card: 'Karten-Einstellungen',
 			layout: 'Layout',
+			interaction: 'Interaktion',
 			presets: 'Voreinstellungen',
 			other: 'Sonstiges',
 		},
@@ -372,6 +474,8 @@ export const de = {
 				dragDrop: { label: 'Drag & Drop', description: 'Zieh-Start/Ende, Drop-Behandlung' },
 				mode: { label: 'Modus-Wechsel', description: 'Ordner-/Tag-/Such-Modus-Wechsel' },
 				settings: { label: 'Einstellungen', description: 'Einstellungen laden/speichern, Änderungen anwenden' },
+				cache: { label: 'Cache', description: 'Metadaten-Cache, Inhalts-Cache' },
+				grouping: { label: 'Gruppierung', description: 'Karten-Gruppierung, Gruppen-Erstellung, Einklappen/Erweitern' },
 				event: { label: 'Ereignisse', description: 'Klick-, Tastatur-, Dateiänderungs-Ereignisse' },
 				ui: { label: 'UI', description: 'Symbolleiste, Kontextmenü, Modale' },
 				performance: { label: 'Leistung', description: 'Ausführungszeit-, Speichernutzungs-Messung' },
@@ -412,9 +516,9 @@ export const de = {
 			importPreset: 'Voreinstellung importieren',
 			importPresetButton: 'Importieren',
 			priorityMode: 'Prioritäts-Modus',
-			priorityModeDescription: 'Wählen Sie, ob die Priorität zwischen Ordner- und Tag-Voreinstellungen automatisch bestimmt oder manuell festgelegt werden soll.',
-			manualPriorityType: 'Bevorzugter Voreinstellungs-Typ',
-			manualPriorityTypeDescription: 'Wenn sowohl Ordner- als auch Tag-Voreinstellungen übereinstimmen, wählen Sie, welche zuerst angewendet werden soll.',
+			priorityModeDescription: 'Wählen Sie, wie die Priorität der Voreinstellungs-Zuordnung bestimmt werden soll.',
+			preferredPriorityType: 'Bevorzugter Voreinstellungs-Typ',
+			preferredPriorityTypeDescription: 'Wenn mehrere Voreinstellungen übereinstimmen, wählen Sie, welchen Typ zuerst zu priorisieren ist.',
 			addFolderMapping: 'Ordner-Zuordnung hinzufügen',
 			addFolderMappingDescription: 'Voreinstellung einem bestimmten Ordner zuordnen',
 			addMappingButton: 'Zuordnung hinzufügen',
@@ -465,43 +569,93 @@ export const de = {
 			priorityModeDescription: 'Wählen Sie, ob die Priorität zwischen Ordner- und Tag-Voreinstellungen automatisch bestimmt oder manuell festgelegt werden soll.',
 			priorityOptions: {
 				auto: 'Auto',
+				semiAuto: 'Halbautomatisch',
 				manual: 'Manuell',
 			},
-			priorityRulesTitle: 'Prioritäts-Regeln (Auto-Modus)',
-			priorityRulesHtml: `
+			autoModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					Im Auto-Modus wird die Priorität durch folgende Regeln bestimmt:
-					<ol style="margin: 8px 0; padding-left: 20px;">
-						<li>Wenn sowohl Ordner- als auch Tag-Voreinstellungen übereinstimmen, wird die <strong>spezifischere</strong> angewendet</li>
-						<li>Ordner-Voreinstellungen: Unterordner hat Vorrang vor übergeordnetem Ordner</li>
-						<li>Tag-Voreinstellungen: Mehr Tags haben Vorrang</li>
-						<li>Wenn die Spezifität gleich ist, hat der Ordner Vorrang vor dem Tag</li>
-					</ol>
+					<strong>Auto-Modus:</strong> Priorität wird automatisch basierend auf dem aktuellen Ansichtsmodus bestimmt.
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>Ordner-Modus:</strong> Tag-Voreinstellungen haben Vorrang (Tags sind spezifischer)</li>
+						<li><strong>Tag-Modus:</strong> Ordner-Voreinstellungen haben Vorrang (Ordner sind spezifischer)</li>
+					</ul>
+					Innerhalb desselben Typs werden niedrigere Prioritätswerte zuerst angewendet.
 				</div>
 			`,
-			manualPriorityType: 'Bevorzugter Voreinstellungs-Typ',
-			manualPriorityTypeDescription: 'Wenn sowohl Ordner- als auch Tag-Voreinstellungen übereinstimmen, wählen Sie, welche zuerst angewendet werden soll.',
+			semiAutoModeExplanationHtml: `
+				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
+					<strong>Halbautomatischer Modus:</strong> Priorisieren Sie zuerst den ausgewählten Typ, aber bestimmen Sie automatisch innerhalb desselben Typs.
+					<ul style="margin: 8px 0; padding-left: 20px;">
+						<li><strong>Zwischen Typen:</strong> Der ausgewählte Typ (Ordner/Tag/Eigenschaft/Datum) hat immer Vorrang</li>
+						<li><strong>Innerhalb des Typs:</strong> Niedrigere Prioritätswerte werden zuerst angewendet</li>
+					</ul>
+					Behält konsistente Priorität unabhängig vom aktuellen Ansichtsmodus bei.
+				</div>
+			`,
 			manualModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					Im manuellen Modus wird der ausgewählte Typ immer zuerst unter den übereinstimmenden Voreinstellungen angewendet.
+					<strong>Manueller Modus:</strong> Voreinstellungen werden basierend auf der Reihenfolge der Zuordnungsliste unten angewendet.
 					<ul style="margin: 8px 0; padding-left: 20px;">
-						<li><strong>Ordner zuerst:</strong> Immer Ordner-Voreinstellung anwenden, falls verfügbar</li>
-						<li><strong>Tag zuerst:</strong> Immer Tag-Voreinstellung anwenden, falls verfügbar</li>
+						<li><strong>Erste Übereinstimmung gewinnt:</strong> Von oben nach unten geprüft, die erste übereinstimmende Zuordnung wird angewendet</li>
+						<li><strong>Ziehen zum Neuanordnen:</strong> Ziehen Sie Zuordnungen, um ihre Priorität anzupassen</li>
 					</ul>
+					Bietet die feinste Kontrolle über die Priorität.
 				</div>
 			`,
-			mappingPriorityRulesHtml: `
-				<strong>💡 Zuordnungs-Prioritäts-Regeln</strong><br><br>
-				<strong>1. Ordner vs Tag:</strong> Bestimmt durch "Prioritäts-Modus"-Einstellung oben<br>
-				<strong>2. Innerhalb desselben Typs:</strong> Höher gelistete Zuordnungen haben Vorrang<br><br>
-				<span style="color: var(--text-muted); font-size: 0.9em;">
-				Beispiel: Wenn "Projekte" in der Ordnerliste über "Projekte/Wichtig" steht,<br>
-				wird "Projekte/Wichtig/dokument.md" die "Projekte"-Voreinstellung verwenden.
-				</span>
-			`,
+			presetMappingsTitle: 'Voreinstellungs-Zuordnungen',
+			presetMappingsDescription: 'Ziehen Sie, um Zuordnungen neu anzuordnen. Im manuellen Modus werden Zuordnungen von oben nach unten angewendet (erste Übereinstimmung gewinnt).',
+			noMappingsYet: 'Noch keine Voreinstellungs-Zuordnungen. Fügen Sie unten eine Zuordnung hinzu.',
+			addFolderButton: '+ Ordner',
+			addTagButton: '+ Tag',
+			addPropertyButton: '+ Eigenschaft',
+			addDateButton: '+ Datum',
+			propertyMappingTitle: 'Eigenschaften-Zuordnung hinzufügen',
+			propertyName: 'Eigenschaftsname',
+			propertyNameDescription: 'Frontmatter-Eigenschaft zum Abgleichen',
+			propertyNamePlaceholder: 'status',
+			propertyValue: 'Eigenschaftswert',
+			propertyValueDescription: 'Wert zum Abgleichen (exakte Übereinstimmung)',
+			propertyValuePlaceholder: 'aktiv',
+			propertyMappingAdded: 'Eigenschaften-Zuordnung hinzugefügt',
+			enterPropertyNameAndValue: 'Bitte sowohl Eigenschaftsname als auch Wert eingeben',
+			dateMappingTitle: 'Datums-Zuordnung hinzufügen',
+			dateCriteria: 'Datums-Kriterium',
+			dateCriteriaDescription: 'Welches Datum zu prüfen ist',
+			dateCriteriaCreated: 'Erstellungsdatum',
+			dateCriteriaModified: 'Änderungsdatum',
+			dateCriteriaProperty: 'Eigenschaft (Frontmatter)',
+			datePropertyName: 'Eigenschaftsname',
+			datePropertyNameDescription: 'Frontmatter-Eigenschaft, die das Datum enthält',
+			datePropertyNamePlaceholder: 'fälligkeitsdatum',
+			dateType: 'Datumstyp',
+			dateTypeDescription: 'Relativ (letzte N Tage) oder absoluten Datumsbereich verwenden',
+			dateTypeRelative: 'Relativ (letzte N Tage)',
+			dateTypeAbsolute: 'Absolut (Datumsbereich)',
+			relativeDays: 'Relative Tage',
+			relativeDaysDescription: 'Dateien der letzten N Tage abgleichen',
+			relativeDaysPlaceholder: '7',
+			dateFrom: 'Datum von',
+			dateFromDescription: 'Startdatum (JJJJ-MM-TT) oder leer lassen',
+			dateFromPlaceholder: '2024-01-01',
+			dateTo: 'Datum bis',
+			dateToDescription: 'Enddatum (JJJJ-MM-TT) oder leer lassen',
+			dateToPlaceholder: '2024-12-31',
+			dateMappingAdded: 'Datums-Zuordnung hinzugefügt',
+			enterDatePropertyName: 'Bitte Eigenschaftsname eingeben',
+			deleteMappingConfirm: (target: string) => `Zuordnung für "${target}" löschen?`,
+			editFolderMappingTitle: 'Ordner-Zuordnung bearbeiten',
+			editTagMappingTitle: 'Tag-Zuordnung bearbeiten',
+			editPropertyMappingTitle: 'Eigenschaften-Zuordnung bearbeiten',
+			editDateMappingTitle: 'Datums-Zuordnung bearbeiten',
+			folderMappingUpdated: 'Ordner-Zuordnung aktualisiert',
+			tagMappingUpdated: 'Tag-Zuordnung aktualisiert',
+			propertyMappingUpdated: 'Eigenschaften-Zuordnung aktualisiert',
+			dateMappingUpdated: 'Datums-Zuordnung aktualisiert',
 			priorityTypeOptions: {
-				folder: 'Ordner zuerst',
-				tag: 'Tag zuerst',
+				folder: 'Ordner',
+				tag: 'Tag',
+				property: 'Eigenschaft',
+				date: 'Datum',
 			},
 			folderMappingDivider: 'Ordner-Voreinstellungen',
 			addFolderMapping: 'Ordner-Zuordnung hinzufügen',
@@ -580,6 +734,39 @@ export const de = {
 				property: 'Frontmatter-Eigenschaft',
 				backlinks: 'Rückverweise (Dateien, die auf diese Datei verweisen)',
 				outgoingLinks: 'Ausgehende Links (Dateien, auf die diese Datei verweist)',
+				imageThumbnail: 'Bild-Miniaturansicht',
+			},
+			imageThumbnail: {
+				title: 'Bild-Miniaturansicht-Einstellungen',
+				enabled: 'Bild-Miniaturansicht aktivieren',
+				enabledDescription: 'Bild-Miniaturansichten in Karten anzeigen',
+				size: 'Miniaturansicht-Größe',
+				sizeDescription: 'Wählen Sie die Größe der Bild-Miniaturansicht',
+				sizeSmall: 'Klein (80px)',
+				sizeMedium: 'Mittel (150px)',
+				sizeLarge: 'Groß (250px)',
+				aspectRatio: 'Seitenverhältnis',
+				aspectRatioDescription: 'Wählen Sie das Seitenverhältnis des Bildes',
+				aspectRatioSquare: 'Quadratisch (1:1)',
+				aspectRatioOriginal: 'Original',
+				aspectRatio16_9: 'Breit (16:9)',
+				aspectRatio4_3: 'Standard (4:3)',
+				fallback: 'Fallback-Option',
+				fallbackDescription: 'Wählen Sie, was angezeigt werden soll, wenn kein Bild verfügbar ist',
+				fallbackNone: 'Keine (Abschnitt ausblenden)',
+				fallbackIcon: 'Dateityp-Symbol',
+				fallbackFolderColor: 'Ordner-basierte Farbe',
+				fallbackTagColor: 'Tag-basierte Farbe',
+				fallbackEmoji: 'Erstes Emoji',
+				allowExternal: 'Externe Bilder erlauben',
+				allowExternalDescription: 'Anzeige externer Bilder von http/https-URLs erlauben',
+				retryCount: 'Wiederholungsversuche',
+				retryCountDescription: 'Anzahl der Wiederholungen bei fehlgeschlagenem Bildladen',
+				clickAction: 'Klick-Aktion',
+				clickActionDescription: 'Wählen Sie die Aktion beim Klicken auf das Bild',
+				clickOpenFile: 'Datei öffnen',
+				clickOpenImage: 'Bild in neuem Tab öffnen',
+				clickNone: 'Keine Aktion',
 			},
 			propertyName: 'Frontmatter-Eigenschafts-Name',
 			propertyNameDescription: 'Geben Sie den Namen der anzuzeigenden Frontmatter-Eigenschaft ein. Sie können aus der Autovervollständigung auswählen oder manuell eingeben.',
@@ -599,6 +786,11 @@ export const de = {
 				isMarkdownHtml
 					? 'Maximale Anzahl anzuzeigender Zeichen. ⚠️ Diese Einstellung wird im Markdown HTML-Rendering-Modus nicht angewendet (um HTML-Tag-Abschneidung zu verhindern)'
 					: 'Maximale Anzahl anzuzeigender Zeichen. Längerer Inhalt wird mit "..." abgeschnitten',
+			inheritFromNormal: 'Von Normalzustand erben',
+			inheritFromNormalDescription: 'Wenn aktiviert, wird derselbe Stil wie im Normalzustand verwendet. Nützlich, um gemeinsame Stile beizubehalten, während nur bestimmte Eigenschaften geändert werden',
+			inheritFromNormalContentDescription: 'Wenn aktiviert, wird derselbe Inhalt wie im Normalzustand verwendet. Nützlich, um gemeinsamen Inhalt beizubehalten, während nur bestimmte Eigenschaften geändert werden',
+			inheritingFromNormalInfo: 'Stile vom Normalzustand erben',
+			inheritingFromNormalContentInfo: 'Inhalt vom Normalzustand erben',
 			fontSize: 'Schriftgröße',
 			fontSizeDescription: (section: string) => `Textgröße für den ${section}-Bereich (px). Standard ist normalerweise 14px`,
 			backgroundColor: 'Hintergrundfarbe',
@@ -662,9 +854,15 @@ export const de = {
 				size: 'Nach Dateigröße sortieren: kleinste zuerst (aufsteigend) oder größte zuerst (absteigend)',
 				property: 'Nach Frontmatter-Eigenschaft sortieren: sortiert nach Eigenschaftswerten (Zahlen, Zeichenketten, Daten usw.)',
 			},
+			enableMultiSort: 'Mehrstufige Sortierung aktivieren',
+			enableMultiSortDescription: 'Dateien nach mehreren Kriterien nacheinander sortieren. Zum Beispiel: erst nach Ordner, dann nach Änderungsdatum, dann nach Name.',
+			sortLevels: 'Sortierebenen',
+			level: 'Ebene',
+			addLevel: '+ Sortierebene hinzufügen',
+			removeLevel: 'Entfernen',
 		},
 		renderingSettings: {
-			renderMode: 'Render-Modus',
+			renderMode: 'Rendering-Modus',
 			renderModeDescription: 'Wählen Sie, ob Karteninhalt als Klartext angezeigt oder als Markdown gerendert werden soll',
 		},
 		modeSettings: {
@@ -706,9 +904,9 @@ export const de = {
 			},
 		},
 		pinSettings: {
-			title: 'Pin Settings',
-			alwaysShowPinned: 'Always show pinned files',
-			alwaysShowPinnedDescription: 'Show pinned files even when scrolling or changing modes',
+			title: 'Anheften-Einstellungen',
+			alwaysShowPinned: 'Angeheftete Dateien immer anzeigen',
+			alwaysShowPinnedDescription: 'Angeheftete Dateien auch beim Scrollen oder Moduswechsel anzeigen',
 		},
 		layoutSettings: {
 			minWidth: 'Karten-Mindestbreite',
@@ -721,6 +919,29 @@ export const de = {
 			maxHeightDescription: (min: number, max: number) => `Legen Sie die Maximalhöhe von Karten fest (${min}-${max}px). Gilt nur im vertikalen Modus.`,
 			cardGap: 'Kartenabstand',
 			cardGapDescription: (min: number, max: number) => `Legen Sie den Abstand zwischen Karten fest (${min}-${max}px)`,
+		},
+		performanceSettings: {
+			title: 'Leistung',
+			chunkSize: 'Inkrementelle Rendering-Blockgröße',
+			chunkSizeDescription: 'Anzahl der auf einmal zu rendernden Karten beim Anzeigen vieler Karten. Niedrigere Werte bieten eine geschmeidigere Erfahrung, aber langsameres Laden. Höhere Werte laden schneller, können aber kurze UI-Einfrierungen verursachen. (Standard: 20)',
+		},
+		cacheStatistics: {
+			title: 'Such-Cache-Statistiken',
+			viewNotOpen: 'Öffnen Sie die Karten-Navigator-Ansicht, um Cache-Statistiken anzuzeigen',
+			notAvailable: 'Cache-Statistiken nicht verfügbar',
+			totalRequests: 'Anfragen gesamt',
+			hitRate: 'Cache-Trefferquote',
+			l1Hits: 'L1-Treffer (Heiß)',
+			l2Hits: 'L2-Treffer (Warm)',
+			l3Hits: 'L3-Treffer (Kalt)',
+			misses: 'Cache-Fehltreffer',
+			l1Size: 'L1-Cache-Größe',
+			l2Size: 'L2-Cache-Größe',
+			totalSize: 'Cache-Größe gesamt',
+			clearCache: 'Such-Cache löschen',
+			clearCacheDescription: 'Alle zwischengespeicherten Suchergebnisse löschen. Dies setzt die Cache-Statistiken zurück.',
+			clearCacheButton: 'Cache löschen',
+			cacheCleared: 'Such-Cache gelöscht',
 		},
 	},
 
@@ -916,6 +1137,8 @@ export const de = {
 		filesSelected: (count: number) => `${count} Dateien ausgewählt`,
 		selectedFiles: (count: number) => `Ausgewählt: ${count} Dateien`,
 		addTag: 'Tag hinzufügen',
+		pin: 'Anheften',
+		star: 'Favorit',
 		move: 'Verschieben',
 		delete: 'Löschen',
 		clearSelection: 'Auswahl löschen',
@@ -941,6 +1164,11 @@ export const de = {
 		deleteConfirm: (count: number) => `${count} Dateien löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`,
 		deleteFileFailed: (filepath: string) => `Fehler beim Löschen der Datei: ${filepath}`,
 		filesDeleted: (count: number) => `${count} Dateien gelöscht`,
+		filesPinned: (count: number) => `${count} Dateien angeheftet`,
+		filesUnpinned: (count: number) => `${count} Dateien gelöst`,
+		filesStarred: (count: number) => `${count} Dateien als Favorit markiert`,
+		filesUnstarred: (count: number) => `Favorit von ${count} Dateien entfernt`,
+		bookmarksNotAvailable: 'Lesezeichen-Plugin ist nicht verfügbar',
 	},
 
 	// Filter UI

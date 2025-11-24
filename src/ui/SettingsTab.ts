@@ -495,6 +495,7 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                 .addOption('name', t.settings.grouping.sortGroupsOptions.name)
                 .addOption('file-count', t.settings.grouping.sortGroupsOptions.fileCount)
                 .addOption('latest-file', t.settings.grouping.sortGroupsOptions.latestFile)
+                .addOption('hierarchy', t.settings.grouping.sortGroupsOptions.hierarchy)
                 .setValue(this.plugin.settings.grouping.groupSort)
                 .onChange(async (value: import('../types').GroupSortCriteria) => {
                     this.plugin.settings.grouping.groupSort = value;

@@ -594,9 +594,95 @@ export class GroupingManager {
                     comparison = latestA - latestB;
                     break;
                 }
+                case 'hierarchy':
+                    comparison = this.compareByHierarchy(a, b, settings.criteria);
+                    break;
             }
 
             return settings.groupSortOrder === 'asc' ? comparison : -comparison;
+        });
+    }
+
+    /**
+     * 계층 구조에 따라 그룹을 비교합니다
+     */
+    private compareByHierarchy(a: CardGroup, b: CardGroup, criteria: string): number {
+        if (criteria === 'folder') {
+            return this.compareFolderHierarchy(a, b);
+        } else if (criteria === 'tag') {
+            return this.compareTagHierarchy(a, b);
+        }
+        // 다른 기준에서는 이름으로 폴백
+        return String(a.sortKey).localeCompare(String(b.sortKey), undefined, {
+            sensitivity: 'base',
+            numeric: true
+        });
+    }
+
+    /**
+     * 폴더 계층 구조로 비교합니다 (상위 폴더가 먼저)
+     */
+    private compareFolderHierarchy(a: CardGroup, b: CardGroup): number {
+        // folder-{path} 형식에서 경로 추출
+        const pathA = a.id.replace('folder-', '');
+        const pathB = b.id.replace('folder-', '');
+
+        // 루트 폴더 처리
+        if (pathA === '/') return -1;
+        if (pathB === '/') return 1;
+
+        // 경로를 /로 분할하여 깊이 계산
+        const depthA = pathA.split('/').filter(p => p).length;
+        const depthB = pathB.split('/').filter(p => p).length;
+
+        // 깊이가 다르면 얕은 것이 먼저 (상위 폴더가 먼저)
+        if (depthA !== depthB) {
+            return depthA - depthB;
+        }
+
+        // 깊이가 같으면 경로를 알파벳순으로 비교
+        return pathA.localeCompare(pathB, undefined, {
+            sensitivity: 'base',
+            numeric: true
+        });
+    }
+
+    /**
+     * 태그 계층 구조로 비교합니다 (상위 태그가 먼저)
+     * 예: #project, #project/frontend, #project/backend
+     */
+    private compareTagHierarchy(a: CardGroup, b: CardGroup): number {
+        // tag-{tagname} 형식에서 태그 이름 추출
+        const tagA = a.name.replace('#', '');
+        const tagB = b.name.replace('#', '');
+
+        // Untagged는 항상 마지막
+        if (tagA === 'Untagged') return 1;
+        if (tagB === 'Untagged') return -1;
+
+        // /로 분할하여 계층 깊이 계산
+        const depthA = tagA.split('/').length;
+        const depthB = tagB.split('/').length;
+
+        // 한 태그가 다른 태그의 접두사인지 확인
+        if (tagB.startsWith(tagA + '/')) {
+            // B가 A의 하위 태그 -> A가 먼저
+            return -1;
+        }
+        if (tagA.startsWith(tagB + '/')) {
+            // A가 B의 하위 태그 -> B가 먼저
+            return 1;
+        }
+
+        // 깊이가 다르면 얕은 것이 먼저 (상위 태그가 먼저)
+        if (depthA !== depthB) {
+            return depthA - depthB;
+        }
+
+        // 깊이가 같고 상하위 관계가 아니면 알파벳순
+        return tagA.localeCompare(tagB, undefined, {
+            sensitivity: 'base',
+            numeric: true
         });
     }
 

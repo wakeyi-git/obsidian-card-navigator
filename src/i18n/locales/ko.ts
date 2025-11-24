@@ -308,6 +308,7 @@ export const ko = {
 				name: '이름',
 				fileCount: '파일 개수',
 				latestFile: '최근 파일',
+				hierarchy: '계층 구조',
 			},
 			groupSortOrder: '그룹 정렬 순서',
 			groupSortOrderDescription: '그룹을 오름차순 또는 내림차순으로 정렬합니다',

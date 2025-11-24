@@ -21,6 +21,33 @@ export const es = {
 		selectFolder: 'Seleccionar carpeta',
 		selectTag: 'Seleccionar etiqueta',
 		toggleRenderMode: 'Alternar modo de renderizado (Texto ↔ Markdown+HTML)',
+		saveCurrentSearch: 'Guardar búsqueda actual',
+		manageSavedSearches: 'Administrar búsquedas guardadas',
+		expandAllGroups: 'Expandir todos los grupos',
+		collapseAllGroups: 'Contraer todos los grupos',
+	},
+
+	// Saved Searches
+	savedSearches: {
+		saveSearch: 'Guardar búsqueda actual',
+		savedSearches: 'Búsquedas Guardadas',
+		recentSearches: 'Búsquedas Recientes',
+		favorites: 'Favoritos',
+		noSavedSearches: 'No hay búsquedas guardadas',
+		searchName: 'Nombre de búsqueda',
+		saveButton: 'Guardar',
+		cancelButton: 'Cancelar',
+		deleteButton: 'Eliminar',
+		favoriteButton: 'Favorito',
+		unfavoriteButton: 'Quitar de favoritos',
+		editButton: 'Editar',
+		applyButton: 'Aplicar',
+		confirmDelete: (name: string) => `¿Eliminar búsqueda guardada "${name}"?`,
+		searchSaved: (name: string) => `Búsqueda "${name}" guardada`,
+		searchDeleted: (name: string) => `Búsqueda "${name}" eliminada`,
+		searchApplied: (name: string) => `Búsqueda "${name}" aplicada`,
+		enterSearchName: 'Ingrese un nombre de búsqueda',
+		emptyQueryWarning: 'No se puede guardar una consulta de búsqueda vacía',
 	},
 
 	// UI Messages
@@ -60,6 +87,10 @@ export const es = {
 			name: 'Configuración de Modo',
 			description: 'Configurar modos de carpeta, etiqueta y búsqueda',
 		},
+		searchSection: {
+			name: 'Configuración de Búsqueda',
+			description: 'Configurar opciones de búsqueda y comportamiento',
+		},
 		sortSection: {
 			name: 'Configuración de Ordenamiento',
 			description: 'Configurar opciones de ordenamiento predeterminadas',
@@ -87,6 +118,24 @@ export const es = {
 		debugCategories: {
 			name: 'Categorías de Depuración',
 			description: 'Seleccionar qué categorías registrar',
+		},
+
+		// Search settings
+		enableFuzzySearch: {
+			name: 'Habilitar Búsqueda Difusa',
+			description: 'Coincidir cadenas similares incluso si no coinciden exactamente (ej., "fb" coincide con "foobar")',
+		},
+		fuzzySearchThreshold: {
+			name: 'Umbral de Búsqueda Difusa',
+			description: 'Puntuación mínima de similitud para coincidencia difusa (0-1, menor = más permisivo)',
+		},
+		enableSearchHighlight: {
+			name: 'Resaltado de Búsqueda',
+			description: 'Resaltar términos de búsqueda en tarjetas con fondo amarillo',
+		},
+		caseSensitiveSearch: {
+			name: 'Búsqueda Sensible a Mayúsculas',
+			description: 'Distinguir entre mayúsculas y minúsculas en la búsqueda',
 		},
 
 		// Layout settings
@@ -143,6 +192,66 @@ export const es = {
 		maxContentLength: {
 			name: 'Longitud Máxima de Contenido',
 			description: 'Número máximo de caracteres a mostrar en contenido de tarjeta (0 = sin límite)',
+		},
+
+		// Grouping settings
+		grouping: {
+			title: 'Agrupación',
+			enableGrouping: 'Habilitar Agrupación',
+			enableGroupingDescription: 'Agrupar tarjetas según varios criterios',
+			groupBy: 'Agrupar por',
+			groupByDescription: 'Elegir cómo agrupar las tarjetas',
+			criteria: {
+				folder: 'Carpeta',
+				tag: 'Etiqueta',
+				dateYear: 'Fecha (Año)',
+				dateMonth: 'Fecha (Mes)',
+				dateWeek: 'Fecha (Semana)',
+				property: 'Propiedad',
+				size: 'Tamaño de Archivo',
+				firstLetter: 'Primera Letra',
+			},
+			dateBasis: 'Base de Fecha',
+			dateBasisDescription: 'Usar fecha de creación o modificación',
+			dateBasisOptions: {
+				created: 'Fecha de Creación',
+				modified: 'Fecha de Modificación',
+			},
+			propertyName: 'Nombre de Propiedad',
+			propertyNameDescription: 'Nombre de propiedad de frontmatter para agrupar',
+			propertyNamePlaceholder: 'ej., categoría, estado',
+			showGroupHeaders: 'Mostrar Encabezados de Grupo',
+			showGroupHeadersDescription: 'Mostrar encabezado para cada grupo',
+			collapsibleGroups: 'Grupos Contraíbles',
+			collapsibleGroupsDescription: 'Permitir expandir/contraer grupos',
+			defaultGroupState: 'Estado Predeterminado de Grupo',
+			defaultGroupStateDescription: 'Grupos expandidos o contraídos por defecto',
+			defaultGroupStateOptions: {
+				expanded: 'Expandido',
+				collapsed: 'Contraído',
+			},
+			sortGroupsBy: 'Ordenar Grupos Por',
+			sortGroupsByDescription: 'Cómo ordenar los grupos mismos',
+			sortGroupsOptions: {
+				name: 'Nombre',
+				fileCount: 'Número de Archivos',
+				latestFile: 'Archivo Más Reciente',
+				hierarchy: 'Jerarquía',
+			},
+			groupSortOrder: 'Orden de Ordenamiento de Grupo',
+			groupSortOrderDescription: 'Dirección de ordenamiento de grupo',
+			groupSortOrderOptions: {
+				asc: 'Ascendente',
+				desc: 'Descendente',
+			},
+			customGroups: 'Grupos Personalizados',
+			customGroupsDescription: 'Definir grupos personalizados para agrupar tarjetas',
+			addCustomGroup: 'Agregar Grupo Personalizado',
+			customGroupName: 'Nombre de Grupo',
+			customGroupNamePlaceholder: 'ej., Importante',
+			customGroupCondition: 'Condición',
+			customGroupConditionDescription: 'Criterios de coincidencia (ej., tag:importante)',
+			deleteCustomGroup: 'Eliminar Grupo',
 		},
 
 		// Mode settings
@@ -248,6 +357,7 @@ export const es = {
 		multiSortModalDescription: 'Arrastre y suelte para reordenar los niveles de ordenamiento. Los archivos se ordenarán primero por Nivel 1, luego por Nivel 2, y así sucesivamente.',
 		sortLevel: (level: number) => `Nivel ${level}`,
 		disableMultiSort: 'Desactivar ordenamiento multinivel',
+		fileCount: (count: number) => `${count} ${count === 1 ? 'archivo' : 'archivos'}`,
 		sortOptions: {
 			nameAsc: 'Nombre de archivo (A-Z)',
 			nameDesc: 'Nombre de archivo (Z-A)',
@@ -318,8 +428,10 @@ export const es = {
 	settingsTab: {
 		tabs: {
 			mode: 'Modo y Ordenamiento',
+			search: 'Búsqueda',
 			card: 'Configuración de Tarjetas',
 			layout: 'Diseño',
+			grouping: 'Agrupación',
 			presets: 'Presets',
 			other: 'Otros',
 		},
@@ -372,6 +484,8 @@ export const es = {
 				dragDrop: { label: 'Arrastrar y Soltar', description: 'Inicio/fin de arrastre, manejo de soltar' },
 				mode: { label: 'Cambio de Modo', description: 'Cambio de modo carpeta/etiqueta/búsqueda' },
 				settings: { label: 'Configuración', description: 'Carga/guardado de configuración, aplicación de cambios' },
+				cache: { label: 'Caché', description: 'Operaciones de caché, invalidación, estadísticas' },
+				grouping: { label: 'Agrupación', description: 'Operaciones de agrupación, expansión/contracción' },
 				event: { label: 'Eventos', description: 'Eventos de clic, teclado, cambio de archivo' },
 				ui: { label: 'UI', description: 'Barra de herramientas, menú contextual, modales' },
 				performance: { label: 'Rendimiento', description: 'Medición de tiempo de ejecución, uso de memoria' },
@@ -465,12 +579,12 @@ export const es = {
 			priorityModeDescription: 'Elija si determinar automáticamente la prioridad entre presets de carpeta y etiqueta, o configurarla manualmente.',
 			priorityOptions: {
 				auto: 'Auto',
+				semiAuto: 'Semi-Auto',
 				manual: 'Manual',
 			},
-			priorityRulesTitle: 'Reglas de Prioridad (Modo Auto)',
-			priorityRulesHtml: `
+			autoModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					En modo auto, la prioridad se determina por las siguientes reglas:
+					<strong>Modo Auto:</strong> La prioridad se determina automáticamente según las siguientes reglas:
 					<ol style="margin: 8px 0; padding-left: 20px;">
 						<li>Cuando coinciden tanto presets de carpeta como de etiqueta, se aplica el <strong>más específico</strong></li>
 						<li>Presets de carpeta: La subcarpeta tiene prioridad sobre la carpeta padre</li>
@@ -479,11 +593,19 @@ export const es = {
 					</ol>
 				</div>
 			`,
-			manualPriorityType: 'Tipo de Preset Preferido',
-			manualPriorityTypeDescription: 'Cuando coinciden tanto presets de carpeta como de etiqueta, elija cuál aplicar primero.',
+			semiAutoModeExplanationHtml: `
+				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
+					<strong>Modo Semi-Auto:</strong> Priorizar primero el tipo seleccionado, luego aplicar reglas auto dentro del mismo tipo.
+					<ol style="margin: 8px 0; padding-left: 20px;">
+						<li>El tipo de preset seleccionado (carpeta/etiqueta) tiene prioridad absoluta</li>
+						<li>Si existen múltiples coincidencias del tipo seleccionado, se aplican las reglas auto</li>
+						<li>Si no hay coincidencia del tipo seleccionado, se intenta con el otro tipo</li>
+					</ol>
+				</div>
+			`,
 			manualModeExplanationHtml: `
 				<div style="font-size: 0.9em; line-height: 1.5; color: var(--text-muted);">
-					En modo manual, el tipo seleccionado siempre se aplica primero entre los presets coincidentes.
+					<strong>Modo Manual:</strong> El tipo seleccionado siempre se aplica primero entre los presets coincidentes.
 					<ul style="margin: 8px 0; padding-left: 20px;">
 						<li><strong>Carpeta primero:</strong> Siempre aplicar preset de carpeta si está disponible</li>
 						<li><strong>Etiqueta primero:</strong> Siempre aplicar preset de etiqueta si está disponible</li>
@@ -499,10 +621,34 @@ export const es = {
 				"Proyectos/Importante/documento.md" usará el preset "Proyectos".
 				</span>
 			`,
+			manualPriorityType: 'Tipo de Preset Preferido',
+			manualPriorityTypeDescription: 'Cuando coinciden tanto presets de carpeta como de etiqueta, elija cuál aplicar primero.',
 			priorityTypeOptions: {
 				folder: 'Carpeta primero',
 				tag: 'Etiqueta primero',
 			},
+			propertyMappingTitle: 'Agregar Mapeo de Propiedad',
+			propertyName: 'Nombre de Propiedad',
+			propertyNameDescription: 'Propiedad de frontmatter a coincidir',
+			propertyNamePlaceholder: 'estado',
+			propertyValue: 'Valor de Propiedad',
+			propertyValueDescription: 'Valor a coincidir (coincidencia exacta)',
+			propertyValuePlaceholder: 'activo',
+			propertyMappingAdded: 'Mapeo de propiedad agregado',
+			enterPropertyNameAndValue: 'Por favor ingrese el nombre y valor de propiedad',
+			dateMappingTitle: 'Agregar Mapeo de Fecha',
+			dateType: 'Tipo de Fecha',
+			dateTypeDescription: 'Tipo de fecha a usar para la coincidencia',
+			dateTypeOptions: {
+				created: 'Fecha de Creación',
+				modified: 'Fecha de Modificación',
+			},
+			dateRangeStart: 'Fecha de Inicio',
+			dateRangeStartDescription: 'Fecha de inicio del rango (incluido)',
+			dateRangeEnd: 'Fecha de Fin',
+			dateRangeEndDescription: 'Fecha de fin del rango (incluido)',
+			dateMappingAdded: 'Mapeo de fecha agregado',
+			enterDateRange: 'Por favor ingrese el rango de fechas',
 			folderMappingDivider: 'Presets de Carpeta',
 			addFolderMapping: 'Agregar Mapeo de Carpeta',
 			folderMappingModalTitle: 'Agregar Mapeo de Preset de Carpeta',
@@ -525,6 +671,12 @@ export const es = {
 			tagDescription: 'Ingrese la etiqueta a la que mapear el preset (sin #)',
 			tagPlaceholder: 'ej., importante',
 			mappingTag: 'Etiqueta:',
+			propertyMappingDivider: 'Presets de Propiedad',
+			addPropertyMapping: 'Agregar Mapeo de Propiedad',
+			mappingProperty: 'Propiedad:',
+			dateMappingDivider: 'Presets de Fecha',
+			addDateMapping: 'Agregar Mapeo de Fecha',
+			mappingDateRange: 'Rango de Fecha:',
 			noPresets: '(Sin presets)',
 			rootFolder: '(Carpeta raíz)',
 			root: '(Raíz)',
@@ -662,6 +814,12 @@ export const es = {
 				size: 'Ordenar por tamaño de archivo: más pequeño primero (ascendente) o más grande primero (descendente)',
 				property: 'Ordenar por propiedad de frontmatter: ordenado por valores de propiedad (números, cadenas, fechas, etc.)',
 			},
+			enableMultiSort: 'Habilitar Ordenamiento Multinivel',
+			enableMultiSortDescription: 'Ordenar archivos por múltiples criterios en secuencia. Por ejemplo, primero por fecha de modificación, luego por nombre de archivo.',
+			sortLevels: 'Niveles de Ordenamiento',
+			level: 'Nivel',
+			addLevel: '+ Agregar Nivel de Ordenamiento',
+			removeLevel: 'Eliminar',
 		},
 		renderingSettings: {
 			renderMode: 'Modo de Renderizado',
@@ -706,9 +864,44 @@ export const es = {
 			},
 		},
 		pinSettings: {
-			title: 'Pin Settings',
-			alwaysShowPinned: 'Always show pinned files',
-			alwaysShowPinnedDescription: 'Show pinned files even when scrolling or changing modes',
+			title: 'Configuración de Fijado',
+			alwaysShowPinned: 'Mostrar siempre archivos fijados',
+			alwaysShowPinnedDescription: 'Mostrar archivos fijados incluso al desplazarse o cambiar de modo',
+		},
+		imageThumbnail: {
+			title: 'Configuración de Miniatura de Imagen',
+			enabled: 'Habilitar Miniaturas de Imagen',
+			enabledDescription: 'Mostrar miniaturas de imagen en las tarjetas',
+			size: 'Tamaño de Miniatura',
+			sizeDescription: 'Seleccionar el tamaño de la miniatura de imagen',
+			sizeSmall: 'Pequeña (80px)',
+			sizeMedium: 'Media (150px)',
+			sizeLarge: 'Grande (250px)',
+			aspectRatio: 'Relación de Aspecto',
+			aspectRatioDescription: 'Seleccionar la relación de aspecto de la imagen',
+			aspectRatioSquare: 'Cuadrada (1:1)',
+			aspectRatioOriginal: 'Original',
+			aspectRatio16_9: 'Ancha (16:9)',
+			aspectRatio4_3: 'Estándar (4:3)',
+			position: 'Posición de Imagen',
+			positionDescription: 'Dónde mostrar la miniatura de imagen en la tarjeta',
+			positionTop: 'Superior (encima del contenido)',
+			positionBottom: 'Inferior (debajo del contenido)',
+			positionLeft: 'Izquierda (al lado del contenido)',
+			positionRight: 'Derecha (al lado del contenido)',
+			showImageName: 'Mostrar Nombre de Imagen',
+			showImageNameDescription: 'Mostrar el nombre del archivo de imagen debajo de la miniatura',
+			fallbackIcon: 'Icono de Respaldo',
+			fallbackIconDescription: 'Mostrar un icono cuando no hay imagen disponible',
+			fallbackIconNone: 'Ninguno',
+			fallbackIconDefault: 'Icono Predeterminado',
+			priority: 'Prioridad de Fuente de Imagen',
+			priorityDescription: 'Elegir qué fuente de imagen usar primero',
+			priorityFrontmatter: 'Propiedad de Frontmatter Primero',
+			priorityFirstImage: 'Primera Imagen en Contenido Primero',
+			frontmatterProperty: 'Propiedad de Frontmatter para Imagen',
+			frontmatterPropertyDescription: 'Nombre de propiedad de frontmatter que contiene la ruta de imagen (ej., cover, banner)',
+			frontmatterPropertyPlaceholder: 'ej., cover, banner, image',
 		},
 
 		layoutSettings: {
@@ -722,6 +915,32 @@ export const es = {
 			maxHeightDescription: (min: number, max: number) => `Establecer la altura máxima de las tarjetas (${min}-${max}px). Solo se aplica en modo vertical.`,
 			cardGap: 'Espacio entre Tarjetas',
 			cardGapDescription: (min: number, max: number) => `Establecer el espacio entre tarjetas (${min}-${max}px)`,
+		},
+
+		performanceSettings: {
+			title: 'Rendimiento',
+			chunkSize: 'Tamaño de bloque de renderizado incremental',
+			chunkSizeDescription: 'Número de tarjetas a renderizar simultáneamente. Valores más bajos mejoran la capacidad de respuesta inicial, valores más altos mejoran el rendimiento de renderizado general.',
+		},
+
+		cacheStatistics: {
+			title: 'Estadísticas del Caché de Búsqueda',
+			viewNotOpen: 'Abrir la vista del Navegador de Tarjetas para ver las estadísticas del caché',
+			notAvailable: 'Estadísticas del caché no disponibles',
+			totalRequests: 'Solicitudes Totales',
+			hitRate: 'Tasa de Aciertos del Caché',
+			l1Hits: 'Aciertos L1 (Caliente)',
+			l2Hits: 'Aciertos L2 (Tibio)',
+			l3Hits: 'Aciertos L3 (Frío)',
+			misses: 'Fallos',
+			avgSearchTime: 'Tiempo Promedio de Búsqueda',
+			l1Size: 'Tamaño del Caché L1',
+			l2Size: 'Tamaño del Caché L2',
+			l3Size: 'Tamaño del Caché L3',
+			clearCache: 'Limpiar Caché',
+			clearCacheDescription: 'Limpiar todos los cachés de búsqueda. Útil si los resultados de búsqueda parecen desactualizados.',
+			clearCacheButton: 'Limpiar Caché',
+			cacheCleared: 'Caché de búsqueda limpiado',
 		},
 	},
 
@@ -920,6 +1139,8 @@ export const es = {
 		move: 'Mover',
 		delete: 'Eliminar',
 		clearSelection: 'Limpiar Selección',
+		pin: 'Fijar',
+		star: 'Favorito',
 		addTagButtonClicked: 'Botón agregar etiqueta clicado',
 		moveButtonClicked: 'Botón mover clicado',
 		deleteButtonClicked: 'Botón eliminar clicado',
@@ -942,6 +1163,11 @@ export const es = {
 		deleteConfirm: (count: number) => `¿Eliminar ${count} archivos?\n\nEsta acción no se puede deshacer.`,
 		deleteFileFailed: (filepath: string) => `Error al eliminar archivo: ${filepath}`,
 		filesDeleted: (count: number) => `${count} archivos eliminados`,
+		filesPinned: (count: number) => `${count} archivos fijados`,
+		filesUnpinned: (count: number) => `${count} archivos desfijados`,
+		filesStarred: (count: number) => `${count} archivos marcados como favoritos`,
+		filesUnstarred: (count: number) => `${count} archivos desmarcados como favoritos`,
+		bookmarksNotAvailable: 'El plugin de Marcadores no está disponible',
 	},
 
 	// Filter UI
