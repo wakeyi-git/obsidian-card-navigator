@@ -38,6 +38,10 @@ export class SearchEngine {
      * @remarks
      * 이전: 모든 변경 시 전체 캐시 삭제
      * 개선: 변경된 파일을 포함하는 캐시 항목만 삭제
+     *
+     * vault.on('modify') 대신 metadataCache.on('changed')를 사용하는 이유:
+     * - metadataCache 이벤트가 파싱 완료 후 발생하여 태그, 링크 등 메타데이터가 업데이트된 시점과 일치
+     * - ColdCache(L3)가 metadataCache에 의존하므로, 메타데이터 업데이트 후 캐시 무효화가 필요
      */
     private setupCacheInvalidation(): void {
         try {
@@ -47,9 +51,12 @@ export class SearchEngine {
                 this.app.vault.on('create', () => this.clearCache());
                 this.app.vault.on('delete', () => this.clearCache());
                 this.app.vault.on('rename', () => this.clearCache());
+            }
 
-                // ⭐ 파일 수정 시에는 선택적 캐시 무효화
-                this.app.vault.on('modify', (file) => {
+            // ⭐ 파일 메타데이터 변경 시 선택적 캐시 무효화
+            // metadataCache.on('changed')는 파싱 완료 후 발생하므로 태그/링크 검색에 안전
+            if (this.app.metadataCache && typeof this.app.metadataCache.on === 'function') {
+                this.app.metadataCache.on('changed', (file) => {
                     if (file instanceof TFile) {
                         this.invalidateCacheForFile(file);
                     }

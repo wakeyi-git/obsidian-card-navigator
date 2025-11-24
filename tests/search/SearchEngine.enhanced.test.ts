@@ -19,6 +19,7 @@ const mockLogger = {
 
 // Mock App
 let vaultEventHandlers: { [key: string]: Function } = {};
+let metadataCacheEventHandlers: { [key: string]: Function } = {};
 const mockApp = {
     vault: {
         on: jest.fn((event: string, handler: Function) => {
@@ -29,7 +30,10 @@ const mockApp = {
     },
     metadataCache: {
         getFileCache: jest.fn(),
-        getBacklinksForFile: jest.fn()
+        getBacklinksForFile: jest.fn(),
+        on: jest.fn((event: string, handler: Function) => {
+            metadataCacheEventHandlers[event] = handler;
+        })
     }
 } as unknown as App;
 
@@ -70,6 +74,7 @@ describe('SearchEngine - Enhanced Features', () => {
 
     beforeEach(() => {
         vaultEventHandlers = {};
+        metadataCacheEventHandlers = {};
         searchEngine = new SearchEngine(mockApp, mockLogger, () => ({ enableFuzzySearch: false, fuzzySearchThreshold: 0.3 } as any));
         jest.clearAllMocks();
 

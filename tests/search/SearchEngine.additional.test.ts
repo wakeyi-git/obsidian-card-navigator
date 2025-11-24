@@ -25,7 +25,8 @@ const mockApp = {
         read: jest.fn()
     },
     metadataCache: {
-        getFileCache: jest.fn()
+        getFileCache: jest.fn(),
+        on: jest.fn()
     }
 } as unknown as App;
 
