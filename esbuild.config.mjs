@@ -37,6 +37,7 @@ const context = await esbuild.context({
 	logLevel: "info",
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
+	minify: prod,
 	outfile: "main.js",
 	// ⭐ Phase 4.4: Drop console and debugger statements in production
 	drop: prod ? ["console", "debugger"] : [],
