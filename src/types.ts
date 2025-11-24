@@ -172,9 +172,15 @@ export interface ImageThumbnailSettings {
 /**
  * 카드 섹션 설정
  */
-export interface CardSectionSettings {
-    /** 섹션 표시 여부 */
-    enabled: boolean;
+/**
+ * 섹션 내용 설정
+ *
+ * @remarks
+ * 상태별로 다른 내용 설정을 가질 수 있습니다.
+ */
+export interface CardSectionContentSettings {
+    /** 일반 상태에서 상속 여부 (활성/포커스 상태에서만 사용) */
+    inheritFromNormal?: boolean;
     /** 표시할 콘텐츠 타입 */
     contentType: CardContentType;
     /** 프론트매터 속성 이름 (contentType이 'property'일 때 사용) */
@@ -192,6 +198,17 @@ export interface CardSectionSettings {
     includeFirstHeader?: boolean;
     /** 이미지 섬네일 설정 (contentType이 'image-thumbnail'일 때만 사용) */
     imageThumbnail?: ImageThumbnailSettings;
+}
+
+export interface CardSectionSettings {
+    /** 섹션 표시 여부 */
+    enabled: boolean;
+    /** 일반 상태 내용 설정 */
+    normalContent: CardSectionContentSettings;
+    /** 활성 상태 내용 설정 */
+    activeContent: CardSectionContentSettings;
+    /** 포커스 상태 내용 설정 */
+    focusedContent: CardSectionContentSettings;
     /** 일반 상태 스타일 */
     normalStyle: CardSectionStyleSettings;
     /** 활성 상태 스타일 */
@@ -810,10 +827,26 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
     enablePresets: true,
     header: {
         enabled: true,
-        contentType: 'filename',
-        maxLength: 100,
-        contentRenderMode: 'plain',
-        includeFirstHeader: false,
+        normalContent: {
+            contentType: 'filename',
+            maxLength: 100,
+            contentRenderMode: 'plain',
+            includeFirstHeader: false
+        },
+        activeContent: {
+            inheritFromNormal: true,
+            contentType: 'filename',
+            maxLength: 100,
+            contentRenderMode: 'plain',
+            includeFirstHeader: false
+        },
+        focusedContent: {
+            inheritFromNormal: true,
+            contentType: 'filename',
+            maxLength: 100,
+            contentRenderMode: 'plain',
+            includeFirstHeader: false
+        },
         normalStyle: {
             fontSize: 14,
             backgroundColor: 'var(--background-primary-alt)',
@@ -822,7 +855,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             borderRadius: 0
         },
         activeStyle: {
-            inheritFromNormal: true, // 기본적으로 일반 상태에서 상속
+            inheritFromNormal: true,
             fontSize: 14,
             backgroundColor: 'var(--background-primary-alt)',
             borderColor: 'transparent',
@@ -830,7 +863,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             borderRadius: 0
         },
         focusedStyle: {
-            inheritFromNormal: true, // 기본적으로 일반 상태에서 상속
+            inheritFromNormal: true,
             fontSize: 14,
             backgroundColor: 'var(--background-primary-alt)',
             borderColor: 'transparent',
@@ -840,10 +873,26 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
     },
     body: {
         enabled: true,
-        contentType: 'content',
-        maxLength: 200,
-        contentRenderMode: 'plain',
-        includeFirstHeader: false,
+        normalContent: {
+            contentType: 'content',
+            maxLength: 200,
+            contentRenderMode: 'plain',
+            includeFirstHeader: false
+        },
+        activeContent: {
+            inheritFromNormal: true,
+            contentType: 'content',
+            maxLength: 200,
+            contentRenderMode: 'plain',
+            includeFirstHeader: false
+        },
+        focusedContent: {
+            inheritFromNormal: true,
+            contentType: 'content',
+            maxLength: 200,
+            contentRenderMode: 'plain',
+            includeFirstHeader: false
+        },
         normalStyle: {
             fontSize: 13,
             backgroundColor: 'var(--background-primary)',
@@ -852,7 +901,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             borderRadius: 0
         },
         activeStyle: {
-            inheritFromNormal: true, // 기본적으로 일반 상태에서 상속
+            inheritFromNormal: true,
             fontSize: 13,
             backgroundColor: 'var(--background-primary)',
             borderColor: 'transparent',
@@ -860,7 +909,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             borderRadius: 0
         },
         focusedStyle: {
-            inheritFromNormal: true, // 기본적으로 일반 상태에서 상속
+            inheritFromNormal: true,
             fontSize: 13,
             backgroundColor: 'var(--background-primary)',
             borderColor: 'transparent',
@@ -870,10 +919,26 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
     },
     footer: {
         enabled: true,
-        contentType: 'tags',
-        maxLength: 50,
-        contentRenderMode: 'plain',
-        includeFirstHeader: false,
+        normalContent: {
+            contentType: 'tags',
+            maxLength: 50,
+            contentRenderMode: 'plain',
+            includeFirstHeader: false
+        },
+        activeContent: {
+            inheritFromNormal: true,
+            contentType: 'tags',
+            maxLength: 50,
+            contentRenderMode: 'plain',
+            includeFirstHeader: false
+        },
+        focusedContent: {
+            inheritFromNormal: true,
+            contentType: 'tags',
+            maxLength: 50,
+            contentRenderMode: 'plain',
+            includeFirstHeader: false
+        },
         normalStyle: {
             fontSize: 12,
             backgroundColor: 'var(--background-primary-alt)',
@@ -882,7 +947,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             borderRadius: 0
         },
         activeStyle: {
-            inheritFromNormal: true, // 기본적으로 일반 상태에서 상속
+            inheritFromNormal: true,
             fontSize: 12,
             backgroundColor: 'var(--background-primary-alt)',
             borderColor: 'transparent',
@@ -890,7 +955,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             borderRadius: 0
         },
         focusedStyle: {
-            inheritFromNormal: true, // 기본적으로 일반 상태에서 상속
+            inheritFromNormal: true,
             fontSize: 12,
             backgroundColor: 'var(--background-primary-alt)',
             borderColor: 'transparent',

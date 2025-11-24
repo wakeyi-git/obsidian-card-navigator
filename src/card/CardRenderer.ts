@@ -98,9 +98,9 @@ export class CardRenderer {
             this.addHoverActions(cardEl, data.file);
         }
 
-        const headerRenderMode = data.cardSettings.header.contentRenderMode || data.cardSettings.renderMode;
-        const bodyRenderMode = data.cardSettings.body.contentRenderMode || data.cardSettings.renderMode;
-        const footerRenderMode = data.cardSettings.footer.contentRenderMode || data.cardSettings.renderMode;
+        const headerRenderMode = data.cardSettings.header.normalContent.contentRenderMode || data.cardSettings.renderMode;
+        const bodyRenderMode = data.cardSettings.body.normalContent.contentRenderMode || data.cardSettings.renderMode;
+        const footerRenderMode = data.cardSettings.footer.normalContent.contentRenderMode || data.cardSettings.renderMode;
 
         // Modified Strategy A: CSS가 섹션 스타일을 자동으로 처리
         if (data.header.visible) {
@@ -266,18 +266,8 @@ export class CardRenderer {
                 this.logger.debug('Card', t().debug.card.tagNoName(index));
                 return;
             }
-            
-            span.style.cursor = 'pointer';
-            span.style.color = 'var(--text-accent)';
-            span.style.textDecoration = 'none';
-            
-            span.addEventListener('mouseenter', () => {
-                span.style.textDecoration = 'underline';
-            });
-            
-            span.addEventListener('mouseleave', () => {
-                span.style.textDecoration = 'none';
-            });
+
+            // 스타일은 CSS에서 처리 (인라인 스타일 제거하여 다크 모드 지원 개선)
             
             span.addEventListener('click', async (e: MouseEvent) => {
                 e.preventDefault();
@@ -402,10 +392,10 @@ export class CardRenderer {
         sectionSettings: import('../types').CardSectionSettings
     ): Promise<HTMLElement> {
         // 이미지 섬네일 타입인 경우 이미지 렌더링
-        if (sectionSettings.contentType === 'image-thumbnail' && sectionSettings.imageThumbnail) {
+        if (sectionSettings.normalContent.contentType === 'image-thumbnail' && sectionSettings.normalContent.imageThumbnail) {
             return await this.renderImageThumbnail(
                 file,
-                sectionSettings.imageThumbnail,
+                sectionSettings.normalContent.imageThumbnail,
                 className
             );
         }

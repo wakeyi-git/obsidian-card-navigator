@@ -202,33 +202,33 @@ export class CardFactory {
 		const headerContent = cardSettings.header.enabled
 			? await this.extractor.extractContent(
 				file,
-				cardSettings.header.contentType,
-				cardSettings.header.maxLength,
-				cardSettings.header.customProperty,
-				cardSettings.header.contentRenderMode,
-				cardSettings.header.includeFirstHeader
+				cardSettings.header.normalContent.contentType,
+				cardSettings.header.normalContent.maxLength,
+				cardSettings.header.normalContent.customProperty,
+				cardSettings.header.normalContent.contentRenderMode,
+				cardSettings.header.normalContent.includeFirstHeader
 			)
 			: '';
-		
+
 		const bodyContent = cardSettings.body.enabled
 			? await this.extractor.extractContent(
 				file,
-				cardSettings.body.contentType,
-				cardSettings.body.maxLength,
-				cardSettings.body.customProperty,
-				cardSettings.body.contentRenderMode,
-				cardSettings.body.includeFirstHeader
+				cardSettings.body.normalContent.contentType,
+				cardSettings.body.normalContent.maxLength,
+				cardSettings.body.normalContent.customProperty,
+				cardSettings.body.normalContent.contentRenderMode,
+				cardSettings.body.normalContent.includeFirstHeader
 			)
 			: '';
-		
+
 		const footerContent = cardSettings.footer.enabled
 			? await this.extractor.extractContent(
 				file,
-				cardSettings.footer.contentType,
-				cardSettings.footer.maxLength,
-				cardSettings.footer.customProperty,
-				cardSettings.footer.contentRenderMode,
-				cardSettings.footer.includeFirstHeader
+				cardSettings.footer.normalContent.contentType,
+				cardSettings.footer.normalContent.maxLength,
+				cardSettings.footer.normalContent.customProperty,
+				cardSettings.footer.normalContent.contentRenderMode,
+				cardSettings.footer.normalContent.includeFirstHeader
 			)
 			: '';
 		

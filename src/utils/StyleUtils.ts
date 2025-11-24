@@ -12,12 +12,26 @@ export class StyleUtils {
      * @returns '#000000' for light backgrounds, '#ffffff' for dark backgrounds
      */
     static getContrastColor(backgroundColor: string): string {
+        // Handle transparent background - use theme's default text color
+        if (backgroundColor === 'transparent' || backgroundColor === 'rgba(0, 0, 0, 0)' || backgroundColor === 'rgba(0,0,0,0)') {
+            // Return empty string to let CSS use fallback (--text-normal)
+            const computedStyle = getComputedStyle(document.body);
+            const textNormal = computedStyle.getPropertyValue('--text-normal').trim();
+            return textNormal || 'var(--text-normal)';
+        }
+
         // Handle CSS variables
         if (backgroundColor.startsWith('var(')) {
             const computedStyle = getComputedStyle(document.body);
             const varName = backgroundColor.match(/var\(--([^)]+)\)/)?.[1];
             if (varName) {
                 backgroundColor = computedStyle.getPropertyValue(`--${varName}`).trim();
+
+                // Check again if resolved value is transparent
+                if (backgroundColor === 'transparent' || backgroundColor === 'rgba(0, 0, 0, 0)' || backgroundColor === 'rgba(0,0,0,0)' || backgroundColor === '') {
+                    const textNormal = computedStyle.getPropertyValue('--text-normal').trim();
+                    return textNormal || 'var(--text-normal)';
+                }
             }
         }
 
@@ -43,12 +57,24 @@ export class StyleUtils {
                 r = parseInt(matches[0]);
                 g = parseInt(matches[1]);
                 b = parseInt(matches[2]);
+
+                // Check if alpha is 0 (transparent)
+                if (matches.length >= 4 && parseInt(matches[3]) === 0) {
+                    const computedStyle = getComputedStyle(document.body);
+                    const textNormal = computedStyle.getPropertyValue('--text-normal').trim();
+                    return textNormal || 'var(--text-normal)';
+                }
             } else {
-                return '#000000';
+                // Unknown RGB format, use theme default
+                const computedStyle = getComputedStyle(document.body);
+                const textNormal = computedStyle.getPropertyValue('--text-normal').trim();
+                return textNormal || 'var(--text-normal)';
             }
         } else {
-            // Unknown format, default to black
-            return '#000000';
+            // Unknown format, use theme default
+            const computedStyle = getComputedStyle(document.body);
+            const textNormal = computedStyle.getPropertyValue('--text-normal').trim();
+            return textNormal || 'var(--text-normal)';
         }
 
         // Calculate relative luminance (WCAG formula)
@@ -227,6 +253,85 @@ export class StyleUtils {
                 card.style.setProperty('--card-footer-border-color-focused', cardSettings.footer.focusedStyle.borderColor);
                 card.style.setProperty('--card-footer-border-width-focused', `${cardSettings.footer.focusedStyle.borderWidth}px`);
                 card.style.setProperty('--card-footer-border-radius-focused', `${cardSettings.footer.focusedStyle.borderRadius}px`);
+            }
+        }
+    }
+
+    /**
+     * Updates text color CSS variables for existing cards based on current theme
+     * Call this when theme changes to recalculate contrast colors
+     *
+     * @param card - The card HTML element to update
+     * @param cardSettings - Card style settings
+     *
+     * @remarks
+     * This only updates text color properties, leaving other styles unchanged.
+     * Useful for theme switching without full card re-render.
+     */
+    static updateTextColorsForTheme(card: HTMLElement, cardSettings: CardSettings): void {
+        // Update header text colors
+        if (cardSettings.header) {
+            const headerBgNormal = card.style.getPropertyValue('--card-header-bg-normal');
+            if (headerBgNormal) {
+                card.style.setProperty('--card-header-text-color-normal', this.getContrastColor(headerBgNormal));
+            }
+
+            if (!cardSettings.header.activeStyle.inheritFromNormal) {
+                const headerBgActive = card.style.getPropertyValue('--card-header-bg-active');
+                if (headerBgActive) {
+                    card.style.setProperty('--card-header-text-color-active', this.getContrastColor(headerBgActive));
+                }
+            }
+
+            if (!cardSettings.header.focusedStyle.inheritFromNormal) {
+                const headerBgFocused = card.style.getPropertyValue('--card-header-bg-focused');
+                if (headerBgFocused) {
+                    card.style.setProperty('--card-header-text-color-focused', this.getContrastColor(headerBgFocused));
+                }
+            }
+        }
+
+        // Update body text colors
+        if (cardSettings.body) {
+            const bodyBgNormal = card.style.getPropertyValue('--card-body-bg-normal');
+            if (bodyBgNormal) {
+                card.style.setProperty('--card-body-text-color-normal', this.getContrastColor(bodyBgNormal));
+            }
+
+            if (!cardSettings.body.activeStyle.inheritFromNormal) {
+                const bodyBgActive = card.style.getPropertyValue('--card-body-bg-active');
+                if (bodyBgActive) {
+                    card.style.setProperty('--card-body-text-color-active', this.getContrastColor(bodyBgActive));
+                }
+            }
+
+            if (!cardSettings.body.focusedStyle.inheritFromNormal) {
+                const bodyBgFocused = card.style.getPropertyValue('--card-body-bg-focused');
+                if (bodyBgFocused) {
+                    card.style.setProperty('--card-body-text-color-focused', this.getContrastColor(bodyBgFocused));
+                }
+            }
+        }
+
+        // Update footer text colors
+        if (cardSettings.footer) {
+            const footerBgNormal = card.style.getPropertyValue('--card-footer-bg-normal');
+            if (footerBgNormal) {
+                card.style.setProperty('--card-footer-text-color-normal', this.getContrastColor(footerBgNormal));
+            }
+
+            if (!cardSettings.footer.activeStyle.inheritFromNormal) {
+                const footerBgActive = card.style.getPropertyValue('--card-footer-bg-active');
+                if (footerBgActive) {
+                    card.style.setProperty('--card-footer-text-color-active', this.getContrastColor(footerBgActive));
+                }
+            }
+
+            if (!cardSettings.footer.focusedStyle.inheritFromNormal) {
+                const footerBgFocused = card.style.getPropertyValue('--card-footer-bg-focused');
+                if (footerBgFocused) {
+                    card.style.setProperty('--card-footer-text-color-focused', this.getContrastColor(footerBgFocused));
+                }
             }
         }
     }

@@ -4,6 +4,7 @@ import { CardDataExtractor } from './card/CardData';
 import CardNavigatorPlugin from './main';
 import { isValidElement, isValidFile, isDefined } from './utils/typeGuards';
 import { DebugLogger } from './utils/DebugLogger';
+import { StyleUtils } from './utils/StyleUtils';
 import { ViewStateManager } from './view/ViewStateManager';
 import { ViewEventHandler } from './view/ViewEventHandler';
 import { CardFactory } from './view/CardFactory';
@@ -409,18 +410,31 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		// Obsidian 테마가 변경되면 카드의 색상을 즉시 업데이트합니다
 		this.registerEvent(
 			this.app.workspace.on('css-change', async () => {
-				this.logger.debug('View', 'Theme change detected - refreshing cards');
+				this.logger.debug('View', 'Theme change detected - updating card colors');
 
-				// ⭐ Phase 2: 테마 변경 시 전체 캐시 무효화 (색상 재계산 필요)
-				this.cardFactory.invalidateCache();
-
-				// 카드 리프레시 (스타일 재적용)
+				// ⭐ 기존 카드들의 텍스트 색상 CSS 변수 즉시 업데이트
 				if (isValidElement(this.cardsContainer)) {
-					await this.viewRenderer.forceRender(
-						this.cardsContainer,
-						(f) => this.openFile(f)
-					);
+					const cardElements = this.cardsContainer.querySelectorAll('.card-item');
+					// 현재 설정으로 CardSettings 구성
+					const cardSettings = {
+						header: this.settings.header,
+						body: this.settings.body,
+						footer: this.settings.footer,
+						renderMode: this.settings.renderMode,
+						normalCardStyle: this.settings.normalCardStyle,
+						activeCardStyle: this.settings.activeCardStyle,
+						focusedCardStyle: this.settings.focusedCardStyle
+					};
+
+					cardElements.forEach((cardEl) => {
+						const htmlCardEl = cardEl as HTMLElement;
+						// 텍스트 색상만 재계산하여 업데이트 (빠른 테마 전환)
+						StyleUtils.updateTextColorsForTheme(htmlCardEl, cardSettings);
+					});
 				}
+
+				// ⭐ 캐시는 무효화하여 다음 렌더링 시 새로운 색상 사용
+				this.cardFactory.invalidateCache();
 			})
 		);
 
@@ -614,13 +628,16 @@ export class CardNavigatorView extends ItemView implements ICardView {
 	 * 본문(body) 렌더링 모드만 토글합니다.
 	 */
 	public async toggleRenderMode(): Promise<void> {
-		const currentMode = this.plugin.settings.body.contentRenderMode || 'plain';
+		const currentMode = this.plugin.settings.body.normalContent.contentRenderMode || 'plain';
 		const newMode = currentMode === 'plain' ? 'markdown-html' : 'plain';
 
 		this.plugin.settingsManager.updateSettings({
 			body: {
 				...this.plugin.settings.body,
-				contentRenderMode: newMode
+				normalContent: {
+					...this.plugin.settings.body.normalContent,
+					contentRenderMode: newMode
+				}
 			}
 		});
 

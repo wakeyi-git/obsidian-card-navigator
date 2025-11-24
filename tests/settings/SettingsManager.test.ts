@@ -274,15 +274,17 @@ describe('SettingsManager', () => {
             await settingsManager.updateSettings({
                 header: {
                     enabled: true,
-                    contentType: 'filename',
-                    maxLength: 150
+                    normalContent: {
+                        contentType: 'filename',
+                        maxLength: 150
+                    }
                 } as any
             });
 
             const settings = settingsManager.getSettings();
             expect(settings.header.enabled).toBe(true);
-            expect(settings.header.contentType).toBe('filename');
-            expect(settings.header.maxLength).toBe(150);
+            expect(settings.header.normalContent.contentType).toBe('filename');
+            expect(settings.header.normalContent.maxLength).toBe(150);
         });
     });
 

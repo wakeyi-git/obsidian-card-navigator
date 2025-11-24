@@ -1,7 +1,7 @@
 import { Setting, Notice, setIcon } from 'obsidian';
 import CardNavigatorPlugin from '../../main';
 import { BaseSettings } from './BaseSettings';
-import { CardSettings, CardSectionSettings, CardStyleSettings, CardSectionStyleSettings, DEFAULT_SETTINGS } from '../../types';
+import { CardSettings, CardSectionSettings, CardStyleSettings, CardSectionStyleSettings, CardSectionContentSettings, DEFAULT_SETTINGS } from '../../types';
 import { debounce } from '../../utils/debounce';
 import { DebugLogger } from '../../utils/DebugLogger';
 import { StyleUtils } from '../../utils/StyleUtils';
@@ -173,6 +173,34 @@ export class InteractiveCardSettings extends BaseSettings {
             focusedStyle[property] = value as never;
         }
     }
+
+    /**
+     * 일반 상태 섹션 내용 설정 변경 시 상속 중인 활성/포커스 내용 설정을 자동 업데이트합니다
+     *
+     * @param section - 섹션 타입 ('header' | 'body' | 'footer')
+     * @param property - 변경된 속성 이름
+     * @param value - 새로운 값
+     */
+    private updateInheritingSectionContents(
+        section: 'header' | 'body' | 'footer',
+        property: keyof CardSectionContentSettings,
+        value: unknown
+    ): void {
+        const sectionSettings = this.plugin.settings[section];
+
+        // activeContent와 focusedContent는 DEFAULT_SETTINGS로 이미 초기화되어 있음
+        // 추가 초기화 불필요
+
+        // 활성 상태가 상속 중이면 업데이트
+        if (sectionSettings.activeContent.inheritFromNormal) {
+            sectionSettings.activeContent[property] = value as never;
+        }
+
+        // 포커스 상태가 상속 중이면 업데이트
+        if (sectionSettings.focusedContent.inheritFromNormal) {
+            sectionSettings.focusedContent[property] = value as never;
+        }
+    }
     
     /**
      * 컴포넌트를 정리하고 메모리 누수를 방지합니다
@@ -212,7 +240,7 @@ export class InteractiveCardSettings extends BaseSettings {
         
         this.plugin.app.workspace.on('active-leaf-change', () => {
             this.loadCurrentFileProperties();
-            if (this.previewCard && this.plugin.settings[this.selectedSection].contentType === 'property') {
+            if (this.previewCard && this.plugin.settings[this.selectedSection].normalContent.contentType === 'property') {
                 this.refreshPreviewCard();
             }
         });
@@ -621,7 +649,7 @@ export class InteractiveCardSettings extends BaseSettings {
         const settings = this.plugin.settings[section];
         const sampleContent = t().settingsTab.cardSettings.sampleContent;
 
-        switch (settings.contentType) {
+        switch (settings.normalContent.contentType) {
             case 'filename':
                 return sampleContent.filename;
             case 'file-path':
@@ -637,12 +665,12 @@ export class InteractiveCardSettings extends BaseSettings {
             case 'modified-date':
                 return sampleContent.modifiedDate;
             case 'property':
-                if (settings.customProperty) {
-                    const realValue = this.currentFileProperties.get(settings.customProperty);
+                if (settings.normalContent.customProperty) {
+                    const realValue = this.currentFileProperties.get(settings.normalContent.customProperty);
                     if (realValue) {
-                        return sampleContent.propertyWithName(settings.customProperty, realValue);
+                        return sampleContent.propertyWithName(settings.normalContent.customProperty, realValue);
                     } else {
-                        return sampleContent.propertyNotFound(settings.customProperty);
+                        return sampleContent.propertyNotFound(settings.normalContent.customProperty);
                     }
                 }
                 return sampleContent.property;
@@ -912,6 +940,46 @@ export class InteractiveCardSettings extends BaseSettings {
                 })
             );
 
+        // 활성/포커스 상태에서만 내용 상속 토글 표시
+        const currentContent = this.getCurrentSectionContent();
+        if (this.selectedState !== 'normal') {
+            new Setting(container)
+                .setName(t().settingsTab.cardSettings.inheritFromNormal)
+                .setDesc(t().settingsTab.cardSettings.inheritFromNormalContentDescription)
+                .addToggle(toggle => toggle
+                    .setValue(currentContent.inheritFromNormal || false)
+                    .onChange(async (value) => {
+                        currentContent.inheritFromNormal = value;
+
+                        // 상속 활성화 시: 일반 상태의 값을 현재 상태로 복사
+                        if (value) {
+                            const normalContent = sectionSettings.normalContent;
+                            currentContent.contentType = normalContent.contentType;
+                            currentContent.maxLength = normalContent.maxLength;
+                            currentContent.contentRenderMode = normalContent.contentRenderMode;
+                            currentContent.includeFirstHeader = normalContent.includeFirstHeader;
+                            currentContent.customProperty = normalContent.customProperty;
+                            currentContent.imageThumbnail = normalContent.imageThumbnail;
+                        }
+                        // 상속 비활성화 시: 현재 저장된 값 유지 (사용자가 수정 가능)
+
+                        await this.plugin.saveSettings();
+                        this.updateSectionSettings(); // UI 다시 렌더링
+                        this.refreshPreviewCard();
+                    })
+                );
+
+            // 상속 모드일 때는 다른 설정 비활성화
+            if (currentContent.inheritFromNormal) {
+                const inheritInfo = container.createDiv({ cls: 'setting-item-description' });
+                inheritInfo.setText(`ℹ️ ${t().settingsTab.cardSettings.inheritingFromNormalContentInfo}`);
+                inheritInfo.style.marginBottom = '12px';
+                inheritInfo.style.fontStyle = 'italic';
+                inheritInfo.style.color = 'var(--text-muted)';
+                return; // 상속 모드에서는 나머지 설정 숨김
+            }
+        }
+
         new Setting(container)
             .setName(t().settingsTab.cardSettings.displayContent)
             .setDesc(t().settingsTab.cardSettings.displayContentDescription)
@@ -927,14 +995,14 @@ export class InteractiveCardSettings extends BaseSettings {
                 .addOption('backlinks', t().settingsTab.cardSettings.contentType.backlinks)
                 .addOption('outgoing-links', t().settingsTab.cardSettings.contentType.outgoingLinks)
                 .addOption('image-thumbnail', t().settingsTab.cardSettings.contentType.imageThumbnail)
-                .setValue(sectionSettings.contentType)
+                .setValue(sectionSettings.normalContent.contentType)
                 .onChange(async (value) => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    sectionSettings.contentType = value as any;
+                    sectionSettings.normalContent.contentType = value as any;
 
                     // 이미지 섬네일 선택 시 기본 설정 생성
-                    if (value === 'image-thumbnail' && !sectionSettings.imageThumbnail) {
-                        sectionSettings.imageThumbnail = {
+                    if (value === 'image-thumbnail' && !sectionSettings.normalContent.imageThumbnail) {
+                        sectionSettings.normalContent.imageThumbnail = {
                             enabled: true,
                             size: 'medium',
                             aspectRatio: 'square',
@@ -943,6 +1011,11 @@ export class InteractiveCardSettings extends BaseSettings {
                             retryCount: 2,
                             clickAction: 'open-file'
                         };
+                    }
+
+                    // 일반 상태 변경 시 상속 중인 활성/포커스 상태도 자동 업데이트
+                    if (this.selectedState === 'normal') {
+                        this.updateInheritingSectionContents(this.selectedSection, 'contentType', value);
                     }
 
                     await this.plugin.saveSettings();
@@ -955,15 +1028,21 @@ export class InteractiveCardSettings extends BaseSettings {
                 .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                 .onClick(async () => {
                     const defaultSettings = this.getDefaultSectionSettings();
-                    sectionSettings.contentType = defaultSettings.contentType;
+                    sectionSettings.normalContent.contentType = defaultSettings.normalContent.contentType;
+
+                    // 일반 상태 변경 시 상속 중인 활성/포커스 상태도 자동 업데이트
+                    if (this.selectedState === 'normal') {
+                        this.updateInheritingSectionContents(this.selectedSection, 'contentType', defaultSettings.normalContent.contentType);
+                    }
+
                     await this.plugin.saveSettings();
                     this.updateSectionSettings();
                     this.refreshPreviewCard();
                     new Notice(t().notices.interactiveCard.displayContentReset);
                 })
             );
-        
-        if (sectionSettings.contentType === 'property') {
+
+        if (sectionSettings.normalContent.contentType === 'property') {
             const datalistId = `frontmatter-properties-${this.selectedSection}`;
             let datalist = container.querySelector(`#${datalistId}`);
             
@@ -980,9 +1059,15 @@ export class InteractiveCardSettings extends BaseSettings {
                 .addText(text => {
                     const inputEl = text
                         .setPlaceholder(t().settingsTab.cardSettings.propertyNamePlaceholder)
-                        .setValue(sectionSettings.customProperty || '')
+                        .setValue(sectionSettings.normalContent.customProperty || '')
                         .onChange((value) => {
-                            sectionSettings.customProperty = value;
+                            sectionSettings.normalContent.customProperty = value;
+
+                            // 일반 상태 변경 시 상속 중인 활성/포커스 상태도 자동 업데이트
+                            if (this.selectedState === 'normal') {
+                                this.updateInheritingSectionContents(this.selectedSection, 'customProperty', value);
+                            }
+
                             this.debouncedSave();
                             this.refreshPreviewCard();
                         })
@@ -996,7 +1081,13 @@ export class InteractiveCardSettings extends BaseSettings {
                     .setIcon('reset')
                     .setTooltip(t().settingsTab.cardSettings.clearPropertyName)
                     .onClick(async () => {
-                        sectionSettings.customProperty = undefined;
+                        sectionSettings.normalContent.customProperty = undefined;
+
+                        // 일반 상태 변경 시 상속 중인 활성/포커스 상태도 자동 업데이트
+                        if (this.selectedState === 'normal') {
+                            this.updateInheritingSectionContents(this.selectedSection, 'customProperty', undefined);
+                        }
+
                         await this.plugin.saveSettings();
                         this.updateSectionSettings();
                         this.refreshPreviewCard();
@@ -1006,18 +1097,24 @@ export class InteractiveCardSettings extends BaseSettings {
         }
 
         // 이미지 섬네일 설정
-        if (sectionSettings.contentType === 'image-thumbnail') {
+        if (sectionSettings.normalContent.contentType === 'image-thumbnail') {
             this.addImageThumbnailSettings(container, sectionSettings);
         }
 
-        if (sectionSettings.contentType === 'content') {
+        if (sectionSettings.normalContent.contentType === 'content') {
             new Setting(container)
                 .setName(t().settingsTab.cardSettings.includeFirstHeader)
                 .setDesc(t().settingsTab.cardSettings.includeFirstHeaderDescription)
                 .addToggle(toggle => toggle
-                    .setValue(sectionSettings.includeFirstHeader || false)
+                    .setValue(sectionSettings.normalContent.includeFirstHeader || false)
                     .onChange(async (value) => {
-                        sectionSettings.includeFirstHeader = value;
+                        sectionSettings.normalContent.includeFirstHeader = value;
+
+                        // 일반 상태 변경 시 상속 중인 활성/포커스 상태도 자동 업데이트
+                        if (this.selectedState === 'normal') {
+                            this.updateInheritingSectionContents(this.selectedSection, 'includeFirstHeader', value);
+                        }
+
                         await this.plugin.saveSettings();
                         this.refreshPreviewCard();
                     })
@@ -1026,7 +1123,13 @@ export class InteractiveCardSettings extends BaseSettings {
                     .setIcon('reset')
                     .setTooltip(t().settingsTab.cardSettings.includeFirstHeaderReset)
                     .onClick(async () => {
-                        sectionSettings.includeFirstHeader = false;
+                        sectionSettings.normalContent.includeFirstHeader = false;
+
+                        // 일반 상태 변경 시 상속 중인 활성/포커스 상태도 자동 업데이트
+                        if (this.selectedState === 'normal') {
+                            this.updateInheritingSectionContents(this.selectedSection, 'includeFirstHeader', false);
+                        }
+
                         await this.plugin.saveSettings();
                         this.updateSectionSettings();
                         this.refreshPreviewCard();
@@ -1040,9 +1143,15 @@ export class InteractiveCardSettings extends BaseSettings {
                 .addDropdown(dropdown => dropdown
                     .addOption('plain', t().settingsTab.cardSettings.renderModeOptions.plain)
                     .addOption('markdown-html', t().settingsTab.cardSettings.renderModeOptions.markdownHtml)
-                    .setValue(sectionSettings.contentRenderMode || 'plain')
+                    .setValue(sectionSettings.normalContent.contentRenderMode || 'plain')
                     .onChange(async (value) => {
-                        sectionSettings.contentRenderMode = value as 'plain' | 'markdown-html';
+                        sectionSettings.normalContent.contentRenderMode = value as 'plain' | 'markdown-html';
+
+                        // 일반 상태 변경 시 상속 중인 활성/포커스 상태도 자동 업데이트
+                        if (this.selectedState === 'normal') {
+                            this.updateInheritingSectionContents(this.selectedSection, 'contentRenderMode', value);
+                        }
+
                         await this.plugin.saveSettings();
                         this.refreshPreviewCard();
                         this.updateSectionSettings();
@@ -1052,7 +1161,13 @@ export class InteractiveCardSettings extends BaseSettings {
                     .setIcon('reset')
                     .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                     .onClick(async () => {
-                        sectionSettings.contentRenderMode = 'plain';
+                        sectionSettings.normalContent.contentRenderMode = 'plain';
+
+                        // 일반 상태 변경 시 상속 중인 활성/포커스 상태도 자동 업데이트
+                        if (this.selectedState === 'normal') {
+                            this.updateInheritingSectionContents(this.selectedSection, 'contentRenderMode', 'plain');
+                        }
+
                         await this.plugin.saveSettings();
                         this.updateSectionSettings();
                         this.refreshPreviewCard();
@@ -1061,18 +1176,24 @@ export class InteractiveCardSettings extends BaseSettings {
                 );
         }
 
-        const isMarkdownHtml = sectionSettings.contentType === 'content' && sectionSettings.contentRenderMode === 'markdown-html';
+        const isMarkdownHtml = sectionSettings.normalContent.contentType === 'content' && sectionSettings.normalContent.contentRenderMode === 'markdown-html';
         const maxLengthDesc = t().settingsTab.cardSettings.maxLengthDescription(isMarkdownHtml);
 
         new Setting(container)
             .setName(t().settingsTab.cardSettings.maxLength)
             .setDesc(maxLengthDesc)
             .addText(text => text
-                .setValue(String(sectionSettings.maxLength || 100))
+                .setValue(String(sectionSettings.normalContent.maxLength || 100))
                 .onChange((value) => {
                     const num = parseInt(value);
                     if (!isNaN(num) && num > 0) {
-                        sectionSettings.maxLength = num;
+                        sectionSettings.normalContent.maxLength = num;
+
+                        // 일반 상태 변경 시 상속 중인 활성/포커스 상태도 자동 업데이트
+                        if (this.selectedState === 'normal') {
+                            this.updateInheritingSectionContents(this.selectedSection, 'maxLength', num);
+                        }
+
                         this.debouncedSave();
                         this.refreshPreviewCard();
                     }
@@ -1083,7 +1204,13 @@ export class InteractiveCardSettings extends BaseSettings {
                 .setTooltip(t().settingsTab.cardSettings.resetToDefault)
                 .onClick(async () => {
                     const defaultSettings = this.getDefaultSectionSettings();
-                    sectionSettings.maxLength = defaultSettings.maxLength;
+                    sectionSettings.normalContent.maxLength = defaultSettings.normalContent.maxLength;
+
+                    // 일반 상태 변경 시 상속 중인 활성/포커스 상태도 자동 업데이트
+                    if (this.selectedState === 'normal') {
+                        this.updateInheritingSectionContents(this.selectedSection, 'maxLength', defaultSettings.normalContent.maxLength);
+                    }
+
                     await this.plugin.saveSettings();
                     this.updateSectionSettings();
                     this.refreshPreviewCard();
@@ -1340,6 +1467,21 @@ export class InteractiveCardSettings extends BaseSettings {
     }
 
     /**
+     * 현재 선택된 섹션의 현재 상태 내용 설정을 반환합니다
+     */
+    private getCurrentSectionContent(): CardSectionContentSettings {
+        const sectionSettings = this.plugin.settings[this.selectedSection];
+        switch (this.selectedState) {
+            case 'active':
+                return sectionSettings.activeContent;
+            case 'focused':
+                return sectionSettings.focusedContent;
+            default:
+                return sectionSettings.normalContent;
+        }
+    }
+
+    /**
      * 미리 보기 카드를 새로고침합니다
      */
     private refreshPreviewCard(): void {
@@ -1479,8 +1621,8 @@ export class InteractiveCardSettings extends BaseSettings {
         container: HTMLElement,
         sectionSettings: import('../../types').CardSectionSettings
     ): void {
-        if (!sectionSettings.imageThumbnail) {
-            sectionSettings.imageThumbnail = {
+        if (!sectionSettings.normalContent.imageThumbnail) {
+            sectionSettings.normalContent.imageThumbnail = {
                 enabled: true,
                 size: 'medium',
                 aspectRatio: 'square',
@@ -1491,7 +1633,7 @@ export class InteractiveCardSettings extends BaseSettings {
             };
         }
 
-        const imgSettings = sectionSettings.imageThumbnail;
+        const imgSettings = sectionSettings.normalContent.imageThumbnail;
 
         // 활성화 토글
         new Setting(container)

@@ -386,6 +386,10 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.grouping.enabled)
                 .onChange(async (value) => {
                     this.plugin.settings.grouping.enabled = value;
+                    // 그룹화를 활성화하면서 기준이 'none'이면 기본값으로 'folder' 설정
+                    if (value && this.plugin.settings.grouping.criteria === 'none') {
+                        this.plugin.settings.grouping.criteria = 'folder';
+                    }
                     await this.plugin.saveSettings();
                     await this.plugin.refreshView();
                     this.display();

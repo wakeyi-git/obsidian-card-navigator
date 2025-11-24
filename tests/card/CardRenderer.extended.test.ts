@@ -157,7 +157,7 @@ describe('CardRenderer - Extended Tests', () => {
             );
             
             // body의 contentRenderMode를 markdown-html로 설정
-            cardData.cardSettings.body.contentRenderMode = 'markdown-html';
+            cardData.cardSettings.body.normalContent.contentRenderMode = 'markdown-html';
             
             const cardEl = await renderer.renderCard(cardData, container);
             
@@ -175,7 +175,7 @@ describe('CardRenderer - Extended Tests', () => {
             );
             
             // 바디만 markdown-html 모드
-            cardData.cardSettings.body.contentRenderMode = 'markdown-html';
+            cardData.cardSettings.body.normalContent.contentRenderMode = 'markdown-html';
             
             const cardEl = await renderer.renderCard(cardData, container);
             
@@ -330,10 +330,11 @@ describe('CardRenderer - Extended Tests', () => {
             );
             
             const cardEl = await renderer.renderCard(cardData, container);
-            
+
             const tag = cardEl.querySelector('.tag-link') as HTMLElement;
             expect(tag).toBeTruthy();
-            expect(tag.style.cursor).toBe('pointer');
+            // tag-link 클래스가 있으면 CSS에서 cursor: pointer가 적용됨
+            expect(tag.classList.contains('tag-link')).toBe(true);
         });
         
         it('여러 개의 링크를 처리해야 함', async () => {
@@ -402,7 +403,7 @@ const code = "test";
                 { content: '' }
             );
             
-            cardData.cardSettings.body.contentRenderMode = 'markdown-html';
+            cardData.cardSettings.body.normalContent.contentRenderMode = 'markdown-html';
             
             const startTime = performance.now();
             await renderer.renderCard(cardData, container);

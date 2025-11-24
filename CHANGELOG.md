@@ -9,10 +9,18 @@
   - Eliminated race condition between card display and markdown rendering completion
   - Related files: [CardRenderer.ts](src/card/CardRenderer.ts)
 
+#### Grouping Feature
+- **Initial Grouping Activation**: Fixed grouping not working immediately on first enable
+  - When grouping is enabled for the first time (no data.json), automatically sets default criteria to 'folder'
+  - Users no longer need to manually change grouping criteria to see groups
+  - Grouping now works immediately upon activation
+  - Related files: [SettingsTab.ts](src/ui/SettingsTab.ts)
+
 ### Technical Details
 - Changed from `requestAnimationFrame` async scheduling to proper `await` for markdown rendering
 - Ensures markdown rendering completes before cards are added to DOM
 - Particularly improves rendering stability for content-heavy notes with media and embeds
+- Auto-initializes grouping criteria when enabling grouping with default 'none' value
 
 ## [1.5.1] - 2025-11-24
 

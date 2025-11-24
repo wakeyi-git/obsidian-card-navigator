@@ -1112,6 +1112,7 @@
 .setting-tab-button .setting-tab-icon svg {
 	width: 16px;
 	height: 16px;
+	color: inherit;
 }
 
 /* 탭 버튼 텍스트 */
@@ -1126,11 +1127,16 @@
 }
 
 .card-navigator-settings .setting-tab-button.is-active {
-	color: var(--interactive-accent);
+	color: var(--text-normal);
 	background: transparent;
 	font-weight: 600;
-	border-bottom: 2px solid var(--interactive-accent) !important;
+	border-bottom: 2px solid var(--interactive-accent);
 	box-shadow: none;
+}
+
+.card-navigator-settings .setting-tab-button.is-active .setting-tab-icon,
+.card-navigator-settings .setting-tab-button.is-active .setting-tab-label {
+	color: var(--text-normal);
 }
 
 .setting-tab-button:focus {
@@ -2596,6 +2602,63 @@ button:focus-visible {
 	white-space: nowrap;
 }
 
+/* 섹션별 태그 색상 - 배경색에 따라 자동 조정 */
+.card-header .tag-link {
+	color: var(--card-header-text-color-normal, var(--text-normal));
+	background: color-mix(in srgb, var(--card-header-text-color-normal, var(--text-normal)) 10%, transparent);
+	border-color: color-mix(in srgb, var(--card-header-text-color-normal, var(--text-normal)) 20%, transparent);
+}
+
+.card-body .tag-link {
+	color: var(--card-body-text-color-normal, var(--text-normal));
+	background: color-mix(in srgb, var(--card-body-text-color-normal, var(--text-normal)) 10%, transparent);
+	border-color: color-mix(in srgb, var(--card-body-text-color-normal, var(--text-normal)) 20%, transparent);
+}
+
+.card-footer .tag-link {
+	color: var(--card-footer-text-color-normal, var(--text-normal));
+	background: color-mix(in srgb, var(--card-footer-text-color-normal, var(--text-normal)) 10%, transparent);
+	border-color: color-mix(in srgb, var(--card-footer-text-color-normal, var(--text-normal)) 20%, transparent);
+}
+
+/* 활성 상태 섹션의 태그 색상 */
+.card-item.is-active .card-header .tag-link {
+	color: var(--card-header-text-color-active, var(--card-header-text-color-normal, var(--text-normal)));
+	background: color-mix(in srgb, var(--card-header-text-color-active, var(--card-header-text-color-normal, var(--text-normal))) 10%, transparent);
+	border-color: color-mix(in srgb, var(--card-header-text-color-active, var(--card-header-text-color-normal, var(--text-normal))) 20%, transparent);
+}
+
+.card-item.is-active .card-body .tag-link {
+	color: var(--card-body-text-color-active, var(--card-body-text-color-normal, var(--text-normal)));
+	background: color-mix(in srgb, var(--card-body-text-color-active, var(--card-body-text-color-normal, var(--text-normal))) 10%, transparent);
+	border-color: color-mix(in srgb, var(--card-body-text-color-active, var(--card-body-text-color-normal, var(--text-normal))) 20%, transparent);
+}
+
+.card-item.is-active .card-footer .tag-link {
+	color: var(--card-footer-text-color-active, var(--card-footer-text-color-normal, var(--text-normal)));
+	background: color-mix(in srgb, var(--card-footer-text-color-active, var(--card-footer-text-color-normal, var(--text-normal))) 10%, transparent);
+	border-color: color-mix(in srgb, var(--card-footer-text-color-active, var(--card-footer-text-color-normal, var(--text-normal))) 20%, transparent);
+}
+
+/* 포커스 상태 섹션의 태그 색상 */
+.card-item.is-focused .card-header .tag-link {
+	color: var(--card-header-text-color-focused, var(--card-header-text-color-normal, var(--text-normal)));
+	background: color-mix(in srgb, var(--card-header-text-color-focused, var(--card-header-text-color-normal, var(--text-normal))) 10%, transparent);
+	border-color: color-mix(in srgb, var(--card-header-text-color-focused, var(--card-header-text-color-normal, var(--text-normal))) 20%, transparent);
+}
+
+.card-item.is-focused .card-body .tag-link {
+	color: var(--card-body-text-color-focused, var(--card-body-text-color-normal, var(--text-normal)));
+	background: color-mix(in srgb, var(--card-body-text-color-focused, var(--card-body-text-color-normal, var(--text-normal))) 10%, transparent);
+	border-color: color-mix(in srgb, var(--card-body-text-color-focused, var(--card-body-text-color-normal, var(--text-normal))) 20%, transparent);
+}
+
+.card-item.is-focused .card-footer .tag-link {
+	color: var(--card-footer-text-color-focused, var(--card-footer-text-color-normal, var(--text-normal)));
+	background: color-mix(in srgb, var(--card-footer-text-color-focused, var(--card-footer-text-color-normal, var(--text-normal))) 10%, transparent);
+	border-color: color-mix(in srgb, var(--card-footer-text-color-focused, var(--card-footer-text-color-normal, var(--text-normal))) 20%, transparent);
+}
+
 /* 태그 호버 효과 */
 .card-navigator-cards .tag-link:hover {
 	background: var(--tag-background-hover);
@@ -2603,6 +2666,22 @@ button:focus-visible {
 	color: var(--text-accent);
 	transform: translateY(-1px);
 	box-shadow: 0 2px 4px var(--cn-shadow-md);
+}
+
+/* 섹션별 태그 호버 효과 - 배경색 조금 더 밝게 */
+.card-header .tag-link:hover {
+	background: color-mix(in srgb, var(--card-header-text-color-normal, var(--text-normal)) 20%, transparent);
+	border-color: color-mix(in srgb, var(--card-header-text-color-normal, var(--text-normal)) 30%, transparent);
+}
+
+.card-body .tag-link:hover {
+	background: color-mix(in srgb, var(--card-body-text-color-normal, var(--text-normal)) 20%, transparent);
+	border-color: color-mix(in srgb, var(--card-body-text-color-normal, var(--text-normal)) 30%, transparent);
+}
+
+.card-footer .tag-link:hover {
+	background: color-mix(in srgb, var(--card-footer-text-color-normal, var(--text-normal)) 20%, transparent);
+	border-color: color-mix(in srgb, var(--card-footer-text-color-normal, var(--text-normal)) 30%, transparent);
 }
 
 /* 태그 클릭 효과 */
@@ -3224,9 +3303,14 @@ button:focus-visible {
 	border-color: var(--interactive-accent);
 }
 
+.multi-sort-edit-btn,
 .multi-sort-delete-btn {
 	flex-shrink: 0;
 	margin-left: 4px;
+}
+
+.multi-sort-edit-btn:hover {
+	color: var(--interactive-accent);
 }
 
 .multi-sort-delete-btn:hover {

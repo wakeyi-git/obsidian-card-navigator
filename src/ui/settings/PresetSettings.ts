@@ -766,6 +766,16 @@ export class PresetSettings extends BaseSettings {
             text: `→ ${presetName}`
         });
 
+        // Edit button
+        const editBtn = mappingEl.createEl('div', {
+            cls: 'clickable-icon multi-sort-edit-btn',
+            attr: { 'aria-label': 'Edit mapping' }
+        });
+        setIcon(editBtn, 'pencil');
+        editBtn.addEventListener('click', () => {
+            this.showEditMappingModal(mapping);
+        });
+
         // Delete button
         const deleteBtn = mappingEl.createEl('div', {
             cls: 'clickable-icon multi-sort-delete-btn',
@@ -905,6 +915,36 @@ export class PresetSettings extends BaseSettings {
             );
 
         modal.open();
+
+        // Enter 키로 확인
+        modal.contentEl.addEventListener('keydown', async (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+
+                if (!propertyName || !propertyValue) {
+                    new Notice(t().settingsTab.presetSettings.enterPropertyNameAndValue);
+                    return;
+                }
+
+                if (!selectedPresetId) {
+                    new Notice(t().notices.presets.selectPreset);
+                    return;
+                }
+
+                const mapping: PresetMapping = {
+                    type: 'property',
+                    target: propertyName,
+                    propertyValue: propertyValue,
+                    presetId: selectedPresetId,
+                    priority: 0
+                };
+
+                await this.plugin.presetManager.addMapping(mapping);
+                modal.close();
+                this.plugin.settingsTab.display();
+                new Notice(t().settingsTab.presetSettings.propertyMappingAdded);
+            }
+        });
     }
 
     /**
@@ -1066,6 +1106,41 @@ export class PresetSettings extends BaseSettings {
             );
 
         modal.open();
+
+        // Enter 키로 확인
+        modal.contentEl.addEventListener('keydown', async (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+
+                if (!selectedPresetId) {
+                    new Notice(t().notices.presets.selectPreset);
+                    return;
+                }
+
+                if (dateCriteria === 'property' && !datePropertyName) {
+                    new Notice(t().settingsTab.presetSettings.enterDatePropertyName);
+                    return;
+                }
+
+                const mapping: PresetMapping = {
+                    type: 'date',
+                    target: dateCriteria === 'property' ? datePropertyName : dateCriteria,
+                    dateCriteria,
+                    datePropertyName: dateCriteria === 'property' ? datePropertyName : undefined,
+                    useRelativeDate,
+                    relativeDays: useRelativeDate ? relativeDays : undefined,
+                    dateFrom: !useRelativeDate ? dateFrom : undefined,
+                    dateTo: !useRelativeDate ? dateTo : undefined,
+                    presetId: selectedPresetId,
+                    priority: 0
+                };
+
+                await this.plugin.presetManager.addMapping(mapping);
+                modal.close();
+                this.plugin.settingsTab.display();
+                new Notice(t().settingsTab.presetSettings.dateMappingAdded);
+            }
+        });
     }
 
     /**
@@ -1323,6 +1398,36 @@ export class PresetSettings extends BaseSettings {
             );
 
         modal.open();
+
+        // Enter 키로 확인
+        modal.contentEl.addEventListener('keydown', async (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+
+                if (!selectedPresetId) {
+                    new Notice(t().notices.presets.selectPreset);
+                    return;
+                }
+
+                try {
+                    await this.addFolderMappingToManager(
+                        selectedFolder,
+                        selectedPresetId,
+                        includeSubfolders
+                    );
+
+                    modal.close();
+                    this.plugin.settingsTab.display();
+                } catch (error) {
+                    this.errorHandler.handle(
+                        error,
+                        ErrorSeverity.ERROR,
+                        { category: 'Preset', action: 'add folder mapping' },
+                        t().notices.presets.folderMappingAddFailed
+                    );
+                }
+            }
+        });
     }
 
     /**
@@ -1409,6 +1514,40 @@ export class PresetSettings extends BaseSettings {
             );
 
         modal.open();
+
+        // Enter 키로 확인
+        modal.contentEl.addEventListener('keydown', async (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+
+                if (!tagName) {
+                    new Notice(t().notices.presets.enterTag);
+                    return;
+                }
+
+                if (!selectedPresetId) {
+                    new Notice(t().notices.presets.selectPreset);
+                    return;
+                }
+
+                try {
+                    await this.addTagMappingToManager(
+                        tagName,
+                        selectedPresetId
+                    );
+
+                    modal.close();
+                    this.plugin.settingsTab.display();
+                } catch (error) {
+                    this.errorHandler.handle(
+                        error,
+                        ErrorSeverity.ERROR,
+                        { category: 'Preset', action: 'add tag mapping' },
+                        t().notices.presets.tagMappingAddFailed
+                    );
+                }
+            }
+        });
     }
 
     /**
@@ -1580,5 +1719,680 @@ export class PresetSettings extends BaseSettings {
                 t().notices.presets.priorityChangeFailed
             );
         }
+    }
+
+    /**
+     * 매핑 편집 모달을 표시합니다
+     */
+    private showEditMappingModal(mapping: PresetMapping): void {
+        switch (mapping.type) {
+            case 'folder':
+                this.showEditFolderMappingModal(mapping);
+                break;
+            case 'tag':
+                this.showEditTagMappingModal(mapping);
+                break;
+            case 'property':
+                this.showEditPropertyMappingModal(mapping);
+                break;
+            case 'date':
+                this.showEditDateMappingModal(mapping);
+                break;
+        }
+    }
+
+    /**
+     * 폴더 매핑 편집 모달을 표시합니다
+     */
+    private showEditFolderMappingModal(mapping: PresetMapping): void {
+        const modal = new Modal(this.plugin.app);
+        modal.titleEl.setText(t().settingsTab.presetSettings.editFolderMappingTitle);
+
+        let selectedFolder = mapping.target || '';
+        let selectedPresetId = mapping.presetId;
+        let includeSubfolders = mapping.includeSubfolders || false;
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presets.selectFolder)
+            .setDesc(t().settingsTab.presets.selectFolderDescription)
+            .addDropdown(dropdown => {
+                dropdown.addOption('', t().settingsTab.presetSettings.rootFolder);
+
+                const folders = this.getAllFolders();
+                folders.forEach(folder => {
+                    dropdown.addOption(folder.path, folder.path);
+                });
+
+                dropdown.setValue(selectedFolder);
+                dropdown.onChange(value => {
+                    selectedFolder = value;
+                });
+            });
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presets.selectPreset)
+            .setDesc(t().settingsTab.presets.selectPresetDescription)
+            .addDropdown(dropdown => {
+                const presets = this.plugin.presetManager.getAllPresets();
+
+                if (presets.length === 0) {
+                    dropdown.addOption('', t().settingsTab.presetSettings.noPresets);
+                    dropdown.setDisabled(true);
+                } else {
+                    presets.forEach((preset: Preset) => {
+                        dropdown.addOption(preset.id, preset.name);
+                    });
+
+                    dropdown.setValue(selectedPresetId);
+                    dropdown.onChange(value => {
+                        selectedPresetId = value;
+                    });
+                }
+            });
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presets.includeSubfolders)
+            .setDesc(t().settingsTab.presets.includeSubfoldersDescription)
+            .addToggle(toggle => toggle
+                .setValue(includeSubfolders)
+                .onChange(value => {
+                    includeSubfolders = value;
+                })
+            );
+
+        new Setting(modal.contentEl)
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.cancel)
+                .onClick(() => {
+                    modal.close();
+                })
+            )
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.confirm)
+                .setCta()
+                .onClick(async () => {
+                    if (!selectedPresetId) {
+                        new Notice(t().notices.presets.selectPreset);
+                        return;
+                    }
+
+                    try {
+                        if (mapping.id) {
+                            await this.plugin.presetManager.removeMapping(mapping.id);
+                        }
+
+                        const updatedMapping: PresetMapping = {
+                            type: 'folder',
+                            target: selectedFolder,
+                            presetId: selectedPresetId,
+                            priority: mapping.priority,
+                            includeSubfolders
+                        };
+
+                        await this.plugin.presetManager.addMapping(updatedMapping);
+                        modal.close();
+                        this.plugin.settingsTab.display();
+                        new Notice(t().settingsTab.presetSettings.folderMappingUpdated);
+                    } catch (error) {
+                        this.errorHandler.handle(
+                            error,
+                            ErrorSeverity.ERROR,
+                            { category: 'Preset', action: 'edit folder mapping' },
+                            'Failed to update folder mapping'
+                        );
+                    }
+                })
+            );
+
+        modal.open();
+
+        // Enter 키로 확인
+        modal.contentEl.addEventListener('keydown', async (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+
+                if (!selectedPresetId) {
+                    new Notice(t().notices.presets.selectPreset);
+                    return;
+                }
+
+                try {
+                    if (mapping.id) {
+                        await this.plugin.presetManager.removeMapping(mapping.id);
+                    }
+
+                    const updatedMapping: PresetMapping = {
+                        type: 'folder',
+                        target: selectedFolder,
+                        presetId: selectedPresetId,
+                        priority: mapping.priority,
+                        includeSubfolders
+                    };
+
+                    await this.plugin.presetManager.addMapping(updatedMapping);
+                    modal.close();
+                    this.plugin.settingsTab.display();
+                    new Notice(t().settingsTab.presetSettings.folderMappingUpdated);
+                } catch (error) {
+                    this.errorHandler.handle(
+                        error,
+                        ErrorSeverity.ERROR,
+                        { category: 'Preset', action: 'edit folder mapping' },
+                        'Failed to update folder mapping'
+                    );
+                }
+            }
+        });
+    }
+
+    /**
+     * 태그 매핑 편집 모달을 표시합니다
+     */
+    private showEditTagMappingModal(mapping: PresetMapping): void {
+        const modal = new Modal(this.plugin.app);
+        modal.titleEl.setText(t().settingsTab.presetSettings.editTagMappingTitle);
+
+        let tagName = mapping.target || '';
+        let selectedPresetId = mapping.presetId;
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presets.tagLabel)
+            .setDesc(t().settingsTab.presets.tagDescription)
+            .addText(text => {
+                text
+                    .setPlaceholder(t().settingsTab.presetSettings.tagPlaceholder)
+                    .setValue(tagName)
+                    .onChange(value => {
+                        tagName = value.replace(/^#+/, '');
+                    });
+            });
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presets.selectPreset)
+            .setDesc(t().settingsTab.presets.selectPresetDescription)
+            .addDropdown(dropdown => {
+                const presets = this.plugin.presetManager.getAllPresets();
+
+                if (presets.length === 0) {
+                    dropdown.addOption('', t().settingsTab.presetSettings.noPresets);
+                    dropdown.setDisabled(true);
+                } else {
+                    presets.forEach((preset: Preset) => {
+                        dropdown.addOption(preset.id, preset.name);
+                    });
+
+                    dropdown.setValue(selectedPresetId);
+                    dropdown.onChange(value => {
+                        selectedPresetId = value;
+                    });
+                }
+            });
+
+        new Setting(modal.contentEl)
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.cancel)
+                .onClick(() => {
+                    modal.close();
+                })
+            )
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.confirm)
+                .setCta()
+                .onClick(async () => {
+                    if (!tagName) {
+                        new Notice(t().notices.presets.enterTag);
+                        return;
+                    }
+
+                    if (!selectedPresetId) {
+                        new Notice(t().notices.presets.selectPreset);
+                        return;
+                    }
+
+                    try {
+                        if (mapping.id) {
+                            await this.plugin.presetManager.removeMapping(mapping.id);
+                        }
+
+                        const updatedMapping: PresetMapping = {
+                            type: 'tag',
+                            target: tagName,
+                            presetId: selectedPresetId,
+                            priority: mapping.priority
+                        };
+
+                        await this.plugin.presetManager.addMapping(updatedMapping);
+                        modal.close();
+                        this.plugin.settingsTab.display();
+                        new Notice(t().settingsTab.presetSettings.tagMappingUpdated);
+                    } catch (error) {
+                        this.errorHandler.handle(
+                            error,
+                            ErrorSeverity.ERROR,
+                            { category: 'Preset', action: 'edit tag mapping' },
+                            'Failed to update tag mapping'
+                        );
+                    }
+                })
+            );
+
+        modal.open();
+
+        // Enter 키로 확인
+        modal.contentEl.addEventListener('keydown', async (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+
+                if (!tagName) {
+                    new Notice(t().notices.presets.enterTag);
+                    return;
+                }
+
+                if (!selectedPresetId) {
+                    new Notice(t().notices.presets.selectPreset);
+                    return;
+                }
+
+                try {
+                    if (mapping.id) {
+                        await this.plugin.presetManager.removeMapping(mapping.id);
+                    }
+
+                    const updatedMapping: PresetMapping = {
+                        type: 'tag',
+                        target: tagName,
+                        presetId: selectedPresetId,
+                        priority: mapping.priority
+                    };
+
+                    await this.plugin.presetManager.addMapping(updatedMapping);
+                    modal.close();
+                    this.plugin.settingsTab.display();
+                    new Notice(t().settingsTab.presetSettings.tagMappingUpdated);
+                } catch (error) {
+                    this.errorHandler.handle(
+                        error,
+                        ErrorSeverity.ERROR,
+                        { category: 'Preset', action: 'edit tag mapping' },
+                        'Failed to update tag mapping'
+                    );
+                }
+            }
+        });
+    }
+
+    /**
+     * Property 매핑 편집 모달을 표시합니다
+     */
+    private showEditPropertyMappingModal(mapping: PresetMapping): void {
+        const modal = new Modal(this.plugin.app);
+        modal.titleEl.setText(t().settingsTab.presetSettings.editPropertyMappingTitle);
+
+        let propertyName = mapping.target || '';
+        let propertyValue = mapping.propertyValue || '';
+        let selectedPresetId = mapping.presetId;
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presetSettings.propertyName)
+            .setDesc(t().settingsTab.presetSettings.propertyNameDescription)
+            .addText(text => {
+                text
+                    .setPlaceholder(t().settingsTab.presetSettings.propertyNamePlaceholder)
+                    .setValue(propertyName)
+                    .onChange(value => {
+                        propertyName = value;
+                    });
+            });
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presetSettings.propertyValue)
+            .setDesc(t().settingsTab.presetSettings.propertyValueDescription)
+            .addText(text => {
+                text
+                    .setPlaceholder(t().settingsTab.presetSettings.propertyValuePlaceholder)
+                    .setValue(propertyValue)
+                    .onChange(value => {
+                        propertyValue = value;
+                    });
+            });
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presets.selectPreset)
+            .setDesc(t().settingsTab.presets.selectPresetDescription)
+            .addDropdown(dropdown => {
+                const presets = this.plugin.presetManager.getAllPresets();
+
+                if (presets.length === 0) {
+                    dropdown.addOption('', t().settingsTab.presetSettings.noPresets);
+                    dropdown.setDisabled(true);
+                } else {
+                    presets.forEach((preset: Preset) => {
+                        dropdown.addOption(preset.id, preset.name);
+                    });
+
+                    dropdown.setValue(selectedPresetId);
+                    dropdown.onChange(value => {
+                        selectedPresetId = value;
+                    });
+                }
+            });
+
+        new Setting(modal.contentEl)
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.cancel)
+                .onClick(() => {
+                    modal.close();
+                })
+            )
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.confirm)
+                .setCta()
+                .onClick(async () => {
+                    if (!propertyName || !propertyValue) {
+                        new Notice(t().settingsTab.presetSettings.enterPropertyNameAndValue);
+                        return;
+                    }
+
+                    if (!selectedPresetId) {
+                        new Notice(t().notices.presets.selectPreset);
+                        return;
+                    }
+
+                    try {
+                        if (mapping.id) {
+                            await this.plugin.presetManager.removeMapping(mapping.id);
+                        }
+
+                        const updatedMapping: PresetMapping = {
+                            type: 'property',
+                            target: propertyName,
+                            propertyValue: propertyValue,
+                            presetId: selectedPresetId,
+                            priority: mapping.priority
+                        };
+
+                        await this.plugin.presetManager.addMapping(updatedMapping);
+                        modal.close();
+                        this.plugin.settingsTab.display();
+                        new Notice(t().settingsTab.presetSettings.propertyMappingUpdated);
+                    } catch (error) {
+                        this.errorHandler.handle(
+                            error,
+                            ErrorSeverity.ERROR,
+                            { category: 'Preset', action: 'edit property mapping' },
+                            'Failed to update property mapping'
+                        );
+                    }
+                })
+            );
+
+        modal.open();
+
+        // Enter 키로 확인
+        modal.contentEl.addEventListener('keydown', async (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+
+                if (!propertyName || !propertyValue) {
+                    new Notice(t().settingsTab.presetSettings.enterPropertyNameAndValue);
+                    return;
+                }
+
+                if (!selectedPresetId) {
+                    new Notice(t().notices.presets.selectPreset);
+                    return;
+                }
+
+                try {
+                    if (mapping.id) {
+                        await this.plugin.presetManager.removeMapping(mapping.id);
+                    }
+
+                    const updatedMapping: PresetMapping = {
+                        type: 'property',
+                        target: propertyName,
+                        propertyValue: propertyValue,
+                        presetId: selectedPresetId,
+                        priority: mapping.priority
+                    };
+
+                    await this.plugin.presetManager.addMapping(updatedMapping);
+                    modal.close();
+                    this.plugin.settingsTab.display();
+                    new Notice(t().settingsTab.presetSettings.propertyMappingUpdated);
+                } catch (error) {
+                    this.errorHandler.handle(
+                        error,
+                        ErrorSeverity.ERROR,
+                        { category: 'Preset', action: 'edit property mapping' },
+                        'Failed to update property mapping'
+                    );
+                }
+            }
+        });
+    }
+
+    /**
+     * Date 매핑 편집 모달을 표시합니다
+     */
+    private showEditDateMappingModal(mapping: PresetMapping): void {
+        const modal = new Modal(this.plugin.app);
+        modal.titleEl.setText(t().settingsTab.presetSettings.editDateMappingTitle);
+
+        let dateCriteria: 'created-date' | 'modified-date' | 'property' = mapping.dateCriteria || 'created-date';
+        let datePropertyName = mapping.datePropertyName || '';
+        let useRelativeDate = mapping.useRelativeDate !== undefined ? mapping.useRelativeDate : true;
+        let relativeDays = mapping.relativeDays || 7;
+        let dateFrom = mapping.dateFrom || '';
+        let dateTo = mapping.dateTo || '';
+        let selectedPresetId = mapping.presetId;
+
+        const renderDateInputs = (container: HTMLElement) => {
+            container.empty();
+
+            if (useRelativeDate) {
+                new Setting(container)
+                    .setName(t().settingsTab.presetSettings.relativeDays)
+                    .setDesc(t().settingsTab.presetSettings.relativeDaysDescription)
+                    .addText(text => text
+                        .setPlaceholder(t().settingsTab.presetSettings.relativeDaysPlaceholder)
+                        .setValue(String(relativeDays))
+                        .onChange(value => {
+                            relativeDays = parseInt(value) || 7;
+                        })
+                    );
+            } else {
+                new Setting(container)
+                    .setName(t().settingsTab.presetSettings.dateFrom)
+                    .setDesc(t().settingsTab.presetSettings.dateFromDescription)
+                    .addText(text => text
+                        .setPlaceholder(t().settingsTab.presetSettings.dateFromPlaceholder)
+                        .setValue(dateFrom)
+                        .onChange(value => {
+                            dateFrom = value;
+                        })
+                    );
+
+                new Setting(container)
+                    .setName(t().settingsTab.presetSettings.dateTo)
+                    .setDesc(t().settingsTab.presetSettings.dateToDescription)
+                    .addText(text => text
+                        .setPlaceholder(t().settingsTab.presetSettings.dateToPlaceholder)
+                        .setValue(dateTo)
+                        .onChange(value => {
+                            dateTo = value;
+                        })
+                    );
+            }
+        };
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presetSettings.dateCriteria)
+            .setDesc(t().settingsTab.presetSettings.dateCriteriaDescription)
+            .addDropdown(dropdown => dropdown
+                .addOption('created-date', t().settingsTab.presetSettings.dateCriteriaCreated)
+                .addOption('modified-date', t().settingsTab.presetSettings.dateCriteriaModified)
+                .addOption('property', t().settingsTab.presetSettings.dateCriteriaProperty)
+                .setValue(dateCriteria)
+                .onChange((value: 'created-date' | 'modified-date' | 'property') => {
+                    dateCriteria = value;
+                    propertyContainer.style.display = value === 'property' ? 'block' : 'none';
+                })
+            );
+
+        const propertyContainer = modal.contentEl.createDiv();
+        propertyContainer.style.display = dateCriteria === 'property' ? 'block' : 'none';
+
+        new Setting(propertyContainer)
+            .setName(t().settingsTab.presetSettings.datePropertyName)
+            .setDesc(t().settingsTab.presetSettings.datePropertyNameDescription)
+            .addText(text => text
+                .setPlaceholder(t().settingsTab.presetSettings.datePropertyNamePlaceholder)
+                .setValue(datePropertyName)
+                .onChange(value => {
+                    datePropertyName = value;
+                })
+            );
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presetSettings.dateType)
+            .setDesc(t().settingsTab.presetSettings.dateTypeDescription)
+            .addDropdown(dropdown => dropdown
+                .addOption('relative', t().settingsTab.presetSettings.dateTypeRelative)
+                .addOption('absolute', t().settingsTab.presetSettings.dateTypeAbsolute)
+                .setValue(useRelativeDate ? 'relative' : 'absolute')
+                .onChange(value => {
+                    useRelativeDate = value === 'relative';
+                    renderDateInputs(dateInputContainer);
+                })
+            );
+
+        const dateInputContainer = modal.contentEl.createDiv();
+        renderDateInputs(dateInputContainer);
+
+        new Setting(modal.contentEl)
+            .setName(t().settingsTab.presets.selectPreset)
+            .setDesc(t().settingsTab.presets.selectPresetDescription)
+            .addDropdown(dropdown => {
+                const presets = this.plugin.presetManager.getAllPresets();
+
+                if (presets.length === 0) {
+                    dropdown.addOption('', t().settingsTab.presetSettings.noPresets);
+                    dropdown.setDisabled(true);
+                } else {
+                    presets.forEach((preset: Preset) => {
+                        dropdown.addOption(preset.id, preset.name);
+                    });
+
+                    dropdown.setValue(selectedPresetId);
+                    dropdown.onChange(value => {
+                        selectedPresetId = value;
+                    });
+                }
+            });
+
+        new Setting(modal.contentEl)
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.cancel)
+                .onClick(() => {
+                    modal.close();
+                })
+            )
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.confirm)
+                .setCta()
+                .onClick(async () => {
+                    if (!selectedPresetId) {
+                        new Notice(t().notices.presets.selectPreset);
+                        return;
+                    }
+
+                    if (dateCriteria === 'property' && !datePropertyName) {
+                        new Notice(t().settingsTab.presetSettings.enterDatePropertyName);
+                        return;
+                    }
+
+                    try {
+                        if (mapping.id) {
+                            await this.plugin.presetManager.removeMapping(mapping.id);
+                        }
+
+                        const updatedMapping: PresetMapping = {
+                            type: 'date',
+                            target: dateCriteria === 'property' ? datePropertyName : dateCriteria,
+                            dateCriteria,
+                            datePropertyName: dateCriteria === 'property' ? datePropertyName : undefined,
+                            useRelativeDate,
+                            relativeDays: useRelativeDate ? relativeDays : undefined,
+                            dateFrom: !useRelativeDate ? dateFrom : undefined,
+                            dateTo: !useRelativeDate ? dateTo : undefined,
+                            presetId: selectedPresetId,
+                            priority: mapping.priority
+                        };
+
+                        await this.plugin.presetManager.addMapping(updatedMapping);
+                        modal.close();
+                        this.plugin.settingsTab.display();
+                        new Notice(t().settingsTab.presetSettings.dateMappingUpdated);
+                    } catch (error) {
+                        this.errorHandler.handle(
+                            error,
+                            ErrorSeverity.ERROR,
+                            { category: 'Preset', action: 'edit date mapping' },
+                            'Failed to update date mapping'
+                        );
+                    }
+                })
+            );
+
+        modal.open();
+
+        // Enter 키로 확인
+        modal.contentEl.addEventListener('keydown', async (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+
+                if (!selectedPresetId) {
+                    new Notice(t().notices.presets.selectPreset);
+                    return;
+                }
+
+                if (dateCriteria === 'property' && !datePropertyName) {
+                    new Notice(t().settingsTab.presetSettings.enterDatePropertyName);
+                    return;
+                }
+
+                try {
+                    if (mapping.id) {
+                        await this.plugin.presetManager.removeMapping(mapping.id);
+                    }
+
+                    const updatedMapping: PresetMapping = {
+                        type: 'date',
+                        target: dateCriteria === 'property' ? datePropertyName : dateCriteria,
+                        dateCriteria,
+                        datePropertyName: dateCriteria === 'property' ? datePropertyName : undefined,
+                        useRelativeDate,
+                        relativeDays: useRelativeDate ? relativeDays : undefined,
+                        dateFrom: !useRelativeDate ? dateFrom : undefined,
+                        dateTo: !useRelativeDate ? dateTo : undefined,
+                        presetId: selectedPresetId,
+                        priority: mapping.priority
+                    };
+
+                    await this.plugin.presetManager.addMapping(updatedMapping);
+                    modal.close();
+                    this.plugin.settingsTab.display();
+                    new Notice(t().settingsTab.presetSettings.dateMappingUpdated);
+                } catch (error) {
+                    this.errorHandler.handle(
+                        error,
+                        ErrorSeverity.ERROR,
+                        { category: 'Preset', action: 'edit date mapping' },
+                        'Failed to update date mapping'
+                    );
+                }
+            }
+        });
     }
 }

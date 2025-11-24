@@ -18,10 +18,26 @@ export function createMockSettings(overrides?: Partial<CardNavigatorSettings>): 
         enablePresets: false,
         header: {
             enabled: true,
-            contentType: 'filename',
-            maxLength: 50,
-            contentRenderMode: 'plain' as RenderMode,
-            includeFirstHeader: false,
+            normalContent: {
+                contentType: 'filename',
+                maxLength: 50,
+                contentRenderMode: 'plain' as RenderMode,
+                includeFirstHeader: false
+            },
+            activeContent: {
+                inheritFromNormal: true,
+                contentType: 'filename',
+                maxLength: 50,
+                contentRenderMode: 'plain' as RenderMode,
+                includeFirstHeader: false
+            },
+            focusedContent: {
+                inheritFromNormal: true,
+                contentType: 'filename',
+                maxLength: 50,
+                contentRenderMode: 'plain' as RenderMode,
+                includeFirstHeader: false
+            },
             normalStyle: {
                 fontSize: 14,
                 backgroundColor: 'transparent',
@@ -46,10 +62,26 @@ export function createMockSettings(overrides?: Partial<CardNavigatorSettings>): 
         },
         body: {
             enabled: true,
-            contentType: 'content',
-            maxLength: 200,
-            contentRenderMode: 'plain' as RenderMode,
-            includeFirstHeader: false,
+            normalContent: {
+                contentType: 'content',
+                maxLength: 200,
+                contentRenderMode: 'plain' as RenderMode,
+                includeFirstHeader: false
+            },
+            activeContent: {
+                inheritFromNormal: true,
+                contentType: 'content',
+                maxLength: 200,
+                contentRenderMode: 'plain' as RenderMode,
+                includeFirstHeader: false
+            },
+            focusedContent: {
+                inheritFromNormal: true,
+                contentType: 'content',
+                maxLength: 200,
+                contentRenderMode: 'plain' as RenderMode,
+                includeFirstHeader: false
+            },
             normalStyle: {
                 fontSize: 12,
                 backgroundColor: 'transparent',
@@ -74,9 +106,23 @@ export function createMockSettings(overrides?: Partial<CardNavigatorSettings>): 
         },
         footer: {
             enabled: true,
-            contentType: 'modified-date',
-            contentRenderMode: 'plain' as RenderMode,
-            includeFirstHeader: false,
+            normalContent: {
+                contentType: 'modified-date',
+                contentRenderMode: 'plain' as RenderMode,
+                includeFirstHeader: false
+            },
+            activeContent: {
+                inheritFromNormal: true,
+                contentType: 'modified-date',
+                contentRenderMode: 'plain' as RenderMode,
+                includeFirstHeader: false
+            },
+            focusedContent: {
+                inheritFromNormal: true,
+                contentType: 'modified-date',
+                contentRenderMode: 'plain' as RenderMode,
+                includeFirstHeader: false
+            },
             normalStyle: {
                 fontSize: 10,
                 backgroundColor: 'transparent',

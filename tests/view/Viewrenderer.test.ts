@@ -119,10 +119,26 @@ describe('ViewRenderer', () => {
 			renderMode: 'plain',
 			header: {
 				enabled: true,
-				contentType: 'filename',
-				maxLength: 100,
-				contentRenderMode: 'plain',
-				includeFirstHeader: false,
+				normalContent: {
+					contentType: 'filename',
+					maxLength: 100,
+					contentRenderMode: 'plain',
+					includeFirstHeader: false
+				},
+				activeContent: {
+					inheritFromNormal: true,
+					contentType: 'filename',
+					maxLength: 100,
+					contentRenderMode: 'plain',
+					includeFirstHeader: false
+				},
+				focusedContent: {
+					inheritFromNormal: true,
+					contentType: 'filename',
+					maxLength: 100,
+					contentRenderMode: 'plain',
+					includeFirstHeader: false
+				},
 				normalStyle: {
 					fontSize: 14,
 					backgroundColor: 'var(--background-primary-alt)',
@@ -147,10 +163,26 @@ describe('ViewRenderer', () => {
 			},
 			body: {
 				enabled: true,
-				contentType: 'content',
-				maxLength: 200,
-				contentRenderMode: 'plain',
-				includeFirstHeader: false,
+				normalContent: {
+					contentType: 'content',
+					maxLength: 200,
+					contentRenderMode: 'plain',
+					includeFirstHeader: false
+				},
+				activeContent: {
+					inheritFromNormal: true,
+					contentType: 'content',
+					maxLength: 200,
+					contentRenderMode: 'plain',
+					includeFirstHeader: false
+				},
+				focusedContent: {
+					inheritFromNormal: true,
+					contentType: 'content',
+					maxLength: 200,
+					contentRenderMode: 'plain',
+					includeFirstHeader: false
+				},
 				normalStyle: {
 					fontSize: 13,
 					backgroundColor: 'var(--background-primary)',
@@ -175,10 +207,26 @@ describe('ViewRenderer', () => {
 			},
 			footer: {
 				enabled: true,
-				contentType: 'tags',
-				maxLength: 50,
-				contentRenderMode: 'plain',
-				includeFirstHeader: false,
+				normalContent: {
+					contentType: 'tags',
+					maxLength: 50,
+					contentRenderMode: 'plain',
+					includeFirstHeader: false
+				},
+				activeContent: {
+					inheritFromNormal: true,
+					contentType: 'tags',
+					maxLength: 50,
+					contentRenderMode: 'plain',
+					includeFirstHeader: false
+				},
+				focusedContent: {
+					inheritFromNormal: true,
+					contentType: 'tags',
+					maxLength: 50,
+					contentRenderMode: 'plain',
+					includeFirstHeader: false
+				},
 				normalStyle: {
 					fontSize: 12,
 					backgroundColor: 'var(--background-primary-alt)',
