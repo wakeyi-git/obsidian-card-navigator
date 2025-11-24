@@ -15,17 +15,21 @@ import { SearchQuery, ParsedQuery } from '../types';
 export class SearchParser {
     /**
      * 검색 쿼리를 파싱합니다
-     * 
+     *
      * @param query - 검색 쿼리 문자열
      * @returns 파싱된 ParsedQuery 트리
-     * 
+     *
      * @remarks
      * - Boolean 연산자가 없으면 단순 SearchQuery 배열을 AND로 연결한 트리를 반환
      * - 연산자 우선순위: () > NOT > AND > OR
      * - 공백은 AND 연산자로 처리
+     * - Trailing/leading 공백은 자동으로 제거됨
      */
     parse(query: string): ParsedQuery {
-        if (!query || query.trim() === '') {
+        // 먼저 leading/trailing 공백 제거
+        query = query.trim();
+
+        if (!query || query === '') {
             return {
                 type: 'search',
                 search: { type: 'text', value: '' }

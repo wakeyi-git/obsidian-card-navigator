@@ -492,4 +492,29 @@ describe('SearchParser', () => {
             expect(result[1]).toMatchObject({ type: 'path', value: 'Archive' });
         });
     });
+
+    describe('Trailing space handling', () => {
+        it('should handle trailing spaces in search queries', () => {
+            // tag:영구메모 뒤에 스페이스가 있어도 결과가 사라지지 않아야 함
+            const result1 = parser.parse('tag:영구메모');
+            const result2 = parser.parse('tag:영구메모 ');
+
+            // 두 결과가 동일해야 함 (trailing space 무시)
+            expect(result1).toEqual(result2);
+        });
+
+        it('should handle multiple trailing spaces', () => {
+            const result1 = parser.parse('tag:test');
+            const result2 = parser.parse('tag:test   ');
+
+            expect(result1).toEqual(result2);
+        });
+
+        it('should not treat trailing space as AND operator', () => {
+            const result = parser.parse('tag:test ');
+
+            // AND 연산자가 아니어야 함 (단일 검색)
+            expect(result.type).toBe('search');
+        });
+    });
 });
