@@ -323,10 +323,12 @@ export class ContextBar {
             return;
         }
 
-        // 현재 그룹명 업데이트 (마지막 세그먼트)
+        // 현재 그룹명 업데이트 (전체 경로 표시)
         const currentSegment = segments[segments.length - 1];
         if (this.currentGroupName) {
-            this.currentGroupName.textContent = currentSegment.name;
+            // 모든 세그먼트의 이름을 " / "로 연결하여 전체 경로 표시
+            const fullPathDisplay = segments.map(s => s.name).join(' / ');
+            this.currentGroupName.textContent = fullPathDisplay;
         }
 
         // 아이콘 업데이트

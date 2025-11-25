@@ -120,10 +120,11 @@ describe('Toolbar - Extended Tests', () => {
 
             const modeDisplay = container.querySelector('.toolbar-mode-display');
             expect(modeDisplay).toBeTruthy();
-            expect(modeDisplay?.textContent).toContain('TestFolder');
+            // 툴바에는 모드명만 표시 (실제 폴더명은 Context Bar에서 표시)
+            expect(modeDisplay?.textContent).toContain('Folder');
         });
-        
-        it('활성 폴더 모드일 때 현재 폴더가 표시되어야 함', () => {
+
+        it('활성 폴더 모드일 때 모드명이 표시되어야 함', () => {
             const mockFile = {
                 parent: {
                     name: 'CurrentFolder'
@@ -208,7 +209,7 @@ describe('Toolbar - Extended Tests', () => {
             toolbar.render(container);
             
             const modeDisplay = container.querySelector('.toolbar-mode-display');
-            // 활성 파일 태그 모드에서는 기본 "Tag" 텍스트가 표시됨 (실제 태그는 런타임에 결정)
+            // 툴바에는 모드명만 표시 (실제 태그명은 Context Bar에서 표시)
             expect(modeDisplay?.textContent).toContain('Tag');
         });
     });

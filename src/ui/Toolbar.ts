@@ -590,8 +590,10 @@ export class Toolbar {
 	/**
 	 * 현재 모드 표시 업데이트
 	 *
-	 * 폴더 모드: 📁 Folder 또는 📁 지정된폴더명
-	 * 태그 모드: # Tag 또는 # 지정된태그명
+	 * 폴더 모드: 📁 Folder
+	 * 태그 모드: # Tag
+	 *
+	 * 실제 폴더/태그명은 Context Bar에서 표시합니다.
 	 */
 	public updateModeDisplay(): void {
 		if (!this.fileCountElement) return;
@@ -611,16 +613,10 @@ export class Toolbar {
 			});
 			setIcon(iconEl, 'folder');
 
-			// 폴더명 또는 "Folder"
-			let displayName: string = t().toolbar.folderMode || 'Folder';
-			if (!settings.folderMode.useActiveFolder && settings.folderMode.specifiedFolder) {
-				// 지정된 폴더명 (경로에서 마지막 부분만)
-				const parts = settings.folderMode.specifiedFolder.split('/');
-				displayName = parts[parts.length - 1] || '/';
-			}
+			// 모드명 표시
 			this.fileCountElement.createEl('span', {
 				cls: 'toolbar-mode-name',
-				text: displayName
+				text: t().toolbar.folderMode || 'Folder'
 			});
 		} else {
 			// 태그 아이콘
@@ -629,15 +625,10 @@ export class Toolbar {
 			});
 			setIcon(iconEl, 'hash');
 
-			// 태그명 또는 "Tag"
-			let displayName: string = t().toolbar.tagMode || 'Tag';
-			if (!settings.tagMode.useActiveFileTags && settings.tagMode.specifiedTags.length > 0) {
-				// 첫 번째 지정된 태그명 (# 제거)
-				displayName = settings.tagMode.specifiedTags[0].replace(/^#/, '');
-			}
+			// 모드명 표시
 			this.fileCountElement.createEl('span', {
 				cls: 'toolbar-mode-name',
-				text: displayName
+				text: t().toolbar.tagMode || 'Tag'
 			});
 		}
 	}

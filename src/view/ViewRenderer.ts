@@ -20,7 +20,7 @@ import { IncrementalRenderer } from './IncrementalRenderer';
 import { ProgressBar } from '../ui/ProgressBar';
 import { VIEWPORT } from '../constants';
 import { t } from '../i18n';
-import type { RenderState, RenderChanges, CardGroup } from '../types';
+import type { RenderState, RenderChanges, CardGroup, NavigatorMode } from '../types';
 import type { PathSegment } from '../ui/ContextBar';
 
 /**
@@ -320,7 +320,6 @@ export class ViewRenderer {
 		const currentMode = this.settings.currentMode;
 
 		// 현재 모드에 따른 Context Bar 경로 설정
-		let displayName = '';
 		let fullPath = '';
 		let icon = 'folder';
 		let activeGroupId = '';
@@ -329,15 +328,10 @@ export class ViewRenderer {
 			icon = 'folder';
 			if (this.settings.folderMode.useActiveFolder) {
 				const activeFile = this.getActiveFile();
-				const folderPath = activeFile?.parent?.path || '';
-				displayName = activeFile?.parent?.name || 'Root';
-				fullPath = folderPath;
+				fullPath = activeFile?.parent?.path || '';
 			} else if (this.settings.folderMode.specifiedFolder) {
 				fullPath = this.settings.folderMode.specifiedFolder;
-				const parts = fullPath.split('/');
-				displayName = parts[parts.length - 1] || 'Root';
 			} else {
-				displayName = 'Root';
 				fullPath = '';
 			}
 			activeGroupId = `folder-${fullPath}`;
@@ -369,38 +363,89 @@ export class ViewRenderer {
 					if (tags.length > 0) {
 						// # 제거하여 getAllTags()의 tag.tag와 일치시킴
 						fullPath = tags[0].replace('#', '');
-						displayName = fullPath;
 					} else {
-						displayName = 'No tags';
 						fullPath = '';
 					}
 				} else {
-					displayName = 'No active file';
 					fullPath = '';
 				}
 			} else if (this.settings.tagMode.specifiedTags.length > 0) {
 				// # 제거하여 getAllTags()의 tag.tag와 일치시킴
 				fullPath = this.settings.tagMode.specifiedTags[0].replace('#', '');
-				displayName = fullPath;
 			} else {
-				displayName = 'No tags';
 				fullPath = '';
 			}
 			activeGroupId = `tag-${fullPath}`;
 		}
 
-		// Context Bar 경로 업데이트
-		const segments: PathSegment[] = [{
-			name: displayName,
-			fullPath: activeGroupId,
-			level: 0,
-			icon
-		}];
+		// Context Bar 경로 업데이트 - 전체 경로를 세그먼트로 분리
+		const segments = this.buildPathSegmentsFromPath(fullPath, currentMode, icon);
 
 		this.view.updateContextBarPath(segments);
 
 		// 그룹 목록 업데이트 (현재 활성 그룹 표시)
 		this.updateContextBarGroupList(activeGroupId);
+	}
+
+	/**
+	 * 경로 문자열에서 PathSegment 배열을 생성합니다
+	 *
+	 * @param path - 경로 문자열 (폴더 경로 또는 태그 경로)
+	 * @param mode - 현재 모드 ('folder', 'tag', 또는 'search')
+	 * @param icon - 표시할 아이콘
+	 */
+	private buildPathSegmentsFromPath(path: string, mode: NavigatorMode, icon: string): PathSegment[] {
+		const segments: PathSegment[] = [];
+
+		// search 모드는 경로 분리 없이 단순 표시
+		if (mode === 'search') {
+			segments.push({
+				name: path || 'Search',
+				fullPath: `search-${path}`,
+				level: 0,
+				icon
+			});
+			return segments;
+		}
+
+		const prefix = mode === 'folder' ? 'folder-' : 'tag-';
+
+		if (!path || path === '') {
+			// 빈 경로는 Root 또는 No tags로 표시
+			segments.push({
+				name: mode === 'folder' ? 'Root' : 'No tags',
+				fullPath: prefix,
+				level: 0,
+				icon
+			});
+			return segments;
+		}
+
+		// 경로에 구분자가 있으면 분리
+		if (path.includes('/')) {
+			const pathParts = path.split('/');
+			let currentPath = prefix;
+
+			pathParts.forEach((part, index) => {
+				currentPath += (index > 0 ? '/' : '') + part;
+				segments.push({
+					name: part || 'Root',
+					fullPath: currentPath,
+					level: index,
+					icon: index === 0 ? icon : undefined
+				});
+			});
+		} else {
+			// 단일 세그먼트
+			segments.push({
+				name: path || (mode === 'folder' ? 'Root' : path),
+				fullPath: prefix + path,
+				level: 0,
+				icon
+			});
+		}
+
+		return segments;
 	}
 
 	/**
@@ -581,6 +626,21 @@ export class ViewRenderer {
 				currentPath += (index > 0 ? '/' : '') + part;
 				segments.push({
 					name: part || 'Root',
+					fullPath: currentPath,
+					level: index,
+					icon: index === 0 ? icon : undefined
+				});
+			});
+		} else if (currentMode === 'tag' && group.id.includes('/')) {
+			// 태그 모드에서 중첩 태그 경로를 세그먼트로 분리
+			const tagPath = group.id.replace('tag-', '');
+			const pathParts = tagPath.split('/');
+			let currentPath = 'tag-';
+
+			pathParts.forEach((part, index) => {
+				currentPath += (index > 0 ? '/' : '') + part;
+				segments.push({
+					name: part,
 					fullPath: currentPath,
 					level: index,
 					icon: index === 0 ? icon : undefined
