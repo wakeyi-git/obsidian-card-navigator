@@ -590,8 +590,8 @@ export class Toolbar {
 	/**
 	 * 현재 모드 표시 업데이트
 	 *
-	 * 폴더 모드: 📁 Folder
-	 * 태그 모드: # Tag
+	 * 폴더 모드: 📁 Folder(Active) 또는 📁 Folder(Specified)
+	 * 태그 모드: # Tag(Active) 또는 # Tag(Specified)
 	 *
 	 * 실제 폴더/태그명은 Context Bar에서 표시합니다.
 	 */
@@ -613,10 +613,14 @@ export class Toolbar {
 			});
 			setIcon(iconEl, 'folder');
 
-			// 모드명 표시
+			// 모드명 + 옵션 표시
+			const modeName = t().toolbar.folderMode || 'Folder';
+			const optionName = settings.folderMode.useActiveFolder
+				? (t().toolbar.modeOptionActive || 'Active')
+				: (t().toolbar.modeOptionSpecified || 'Specified');
 			this.fileCountElement.createEl('span', {
 				cls: 'toolbar-mode-name',
-				text: t().toolbar.folderMode || 'Folder'
+				text: `${modeName}(${optionName})`
 			});
 		} else {
 			// 태그 아이콘
@@ -625,10 +629,14 @@ export class Toolbar {
 			});
 			setIcon(iconEl, 'hash');
 
-			// 모드명 표시
+			// 모드명 + 옵션 표시
+			const modeName = t().toolbar.tagMode || 'Tag';
+			const optionName = settings.tagMode.useActiveFileTags
+				? (t().toolbar.modeOptionActive || 'Active')
+				: (t().toolbar.modeOptionSpecified || 'Specified');
 			this.fileCountElement.createEl('span', {
 				cls: 'toolbar-mode-name',
-				text: t().toolbar.tagMode || 'Tag'
+				text: `${modeName}(${optionName})`
 			});
 		}
 	}

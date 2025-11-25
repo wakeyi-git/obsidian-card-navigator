@@ -292,6 +292,8 @@ export const de = {
 				modified: 'Änderungsdatum',
 			},
 			tagMode: 'Tag-Modus',
+		modeOptionActive: 'Active',
+		modeOptionSpecified: 'Specified',
 			tagModeDescription: 'Nur nach erstem Tag oder nach allen Tags gruppieren',
 			tagModeOptions: {
 				first: 'Nur erstes Tag',
@@ -352,6 +354,8 @@ export const de = {
 		pinHide: 'Angeheftete Dateien aus anderen Gruppen ausblenden',
 		folderMode: 'Ordner',
 		tagMode: 'Tag',
+		modeOptionActive: 'Active',
+		modeOptionSpecified: 'Specified',
 		sortOptions: {
 			nameAsc: 'Dateiname (A-Z)',
 			nameDesc: 'Dateiname (Z-A)',

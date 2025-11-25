@@ -292,6 +292,8 @@ export const zhCN = {
 				modified: '修改日期',
 			},
 			tagMode: '标签模式',
+		modeOptionActive: 'Active',
+		modeOptionSpecified: 'Specified',
 			tagModeDescription: '仅按第一个标签或所有标签分组',
 			tagModeOptions: {
 				first: '仅第一个标签',
@@ -352,6 +354,8 @@ export const zhCN = {
 		pinHide: '从其他组隐藏置顶文件',
 		folderMode: '文件夹',
 		tagMode: '标签',
+		modeOptionActive: 'Active',
+		modeOptionSpecified: 'Specified',
 		sortOptions: {
 			nameAsc: '文件名（A-Z）',
 			nameDesc: '文件名（Z-A）',

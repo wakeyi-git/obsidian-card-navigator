@@ -292,6 +292,8 @@ export const fr = {
 				modified: 'Date de Modification',
 			},
 			tagMode: 'Mode étiquette',
+		modeOptionActive: 'Active',
+		modeOptionSpecified: 'Specified',
 			tagModeDescription: 'Regrouper par première étiquette uniquement ou toutes les étiquettes',
 			tagModeOptions: {
 				first: 'Première Étiquette Uniquement',
@@ -352,6 +354,8 @@ export const fr = {
 		pinHide: 'Masquer les fichiers épinglés des autres groupes',
 		folderMode: 'Dossier',
 		tagMode: 'Étiquette',
+		modeOptionActive: 'Active',
+		modeOptionSpecified: 'Specified',
 		sortOptions: {
 			nameAsc: 'Nom de fichier (A-Z)',
 			nameDesc: 'Nom de fichier (Z-A)',

@@ -218,6 +218,8 @@ export const es = {
 				modified: 'Fecha de Modificación',
 			},
 			tagMode: 'Modo de Etiqueta',
+		modeOptionActive: 'Active',
+		modeOptionSpecified: 'Specified',
 			tagModeDescription: 'Agrupar solo por la primera etiqueta o todas las etiquetas',
 			tagModeOptions: {
 				first: 'Solo Primera Etiqueta',
@@ -372,6 +374,8 @@ export const es = {
 		pinHide: 'Ocultar archivos fijados de otros grupos',
 		folderMode: 'Carpeta',
 		tagMode: 'Etiqueta',
+		modeOptionActive: 'Active',
+		modeOptionSpecified: 'Specified',
 		sortOptions: {
 			nameAsc: 'Nombre de archivo (A-Z)',
 			nameDesc: 'Nombre de archivo (Z-A)',

@@ -352,6 +352,8 @@ export const en = {
 		pinHide: 'Hide pinned files from other groups',
 		folderMode: 'Folder',
 		tagMode: 'Tag',
+		modeOptionActive: 'Active',
+		modeOptionSpecified: 'Specified',
 		sortOptions: {
 			nameAsc: 'Filename (A-Z)',
 			nameDesc: 'Filename (Z-A)',

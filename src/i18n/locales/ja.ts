@@ -292,6 +292,8 @@ export const ja = {
 				modified: '更新日',
 			},
 			tagMode: 'タグモード',
+		modeOptionActive: 'Active',
+		modeOptionSpecified: 'Specified',
 			tagModeDescription: '最初のタグのみまたはすべてのタグでグループ化',
 			tagModeOptions: {
 				first: '最初のタグのみ',
@@ -352,6 +354,8 @@ export const ja = {
 		pinHide: '他のグループからピン留めファイルを非表示',
 		folderMode: 'フォルダ',
 		tagMode: 'タグ',
+		modeOptionActive: 'Active',
+		modeOptionSpecified: 'Specified',
 		sortOptions: {
 			nameAsc: 'ファイル名（A-Z）',
 			nameDesc: 'ファイル名（Z-A）',

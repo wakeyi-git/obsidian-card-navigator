@@ -352,6 +352,8 @@ export const ko = {
 		pinHide: '고정 파일 다른 그룹에서 숨김',
 		folderMode: '폴더',
 		tagMode: '태그',
+		modeOptionActive: '활성',
+		modeOptionSpecified: '지정',
 		sortOptions: {
 			nameAsc: '파일명 (A-Z)',
 			nameDesc: '파일명 (Z-A)',
