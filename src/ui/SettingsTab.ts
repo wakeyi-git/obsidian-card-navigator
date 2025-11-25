@@ -295,7 +295,10 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         const otherTab = container.createDiv({ cls: 'setting-tab-pane' });
         this.addLanguageSettings(otherTab);
         this.addPerformanceSettings(otherTab);
-        this.addDebugSettings(otherTab);
+        // ⭐ 디버그 설정은 개발 모드에서만 표시
+        if (process.env.NODE_ENV !== 'production') {
+            this.addDebugSettings(otherTab);
+        }
         this.addResetButton(otherTab);
         this.tabContainers.set('other', otherTab);
     }

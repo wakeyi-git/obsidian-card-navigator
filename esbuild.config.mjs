@@ -35,12 +35,16 @@ const context = await esbuild.context({
 	format: "cjs",
 	target: "es2018",
 	logLevel: "info",
-	sourcemap: prod ? false : "inline",
+	sourcemap: prod ? false : "external",
 	treeShaking: true,
 	minify: prod,
 	outfile: "main.js",
 	// ⭐ Phase 4.4: Drop console and debugger statements in production
 	drop: prod ? ["console", "debugger"] : [],
+	// ⭐ Define build-time constants
+	define: {
+		"process.env.NODE_ENV": prod ? '"production"' : '"development"',
+	},
 });
 
 if (prod) {
