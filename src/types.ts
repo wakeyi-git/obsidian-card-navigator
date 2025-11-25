@@ -442,20 +442,40 @@ export interface GroupingSettings {
 
 /**
  * 카드 그룹 (렌더링용 데이터 구조)
+ *
+ * @remarks
+ * Phase 3: 계층 구조 필드 추가
+ * - level: 계층 깊이 (0 = 루트)
+ * - parentId: 부모 그룹 ID
+ * - children: 자식 그룹 배열
+ * - fullPath: 전체 경로 (폴더/태그)
+ * - totalFileCount: 하위 포함 총 파일 수
  */
 export interface CardGroup {
-    /** 그룹 고유 ID (접기 상태 저장용) */
+    /** 그룹 고유 ID (접기 상태 저장용, 예: "folder-path/to/folder") */
     id: string;
-    /** 그룹명 (화면 표시용) */
+    /** 그룹명 (화면 표시용, 예: "folder") */
     name: string;
-    /** 그룹 아이콘 (이모지) */
+    /** 전체 경로 (예: "path/to/folder" 또는 "project/frontend") */
+    fullPath: string;
+    /** 그룹 아이콘 (lucide icon name) */
     icon: string;
-    /** 그룹에 속한 파일 목록 */
+    /** 그룹에 속한 파일 목록 (직계 파일만) */
     files: TFile[];
     /** 접힌 상태 */
     collapsed: boolean;
     /** 정렬 키 (그룹 정렬에 사용) */
     sortKey: string | number;
+
+    // === 계층 구조 필드 (Phase 3) ===
+    /** 계층 깊이 (0 = 루트 레벨) */
+    level: number;
+    /** 부모 그룹 ID (null = 최상위) */
+    parentId: string | null;
+    /** 자식 그룹 배열 */
+    children: CardGroup[];
+    /** 모든 하위 그룹 포함 총 파일 수 */
+    totalFileCount: number;
 }
 
 /**

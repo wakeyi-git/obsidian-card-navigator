@@ -339,7 +339,8 @@ describe('CardNavigatorView', () => {
                 removeEventListener: mockContainerEl.removeEventListener,
                 setAttribute: mockContainerEl.setAttribute,
                 getAttribute: mockContainerEl.getAttribute,
-                removeAttribute: mockContainerEl.removeAttribute
+                removeAttribute: mockContainerEl.removeAttribute,
+                querySelector: jest.fn(() => null)
             },
             writable: true
         });
@@ -451,17 +452,17 @@ describe('CardNavigatorView', () => {
         
         it('refresh - 툴바가 업데이트되어야 함', async () => {
             await view.onOpen();
-            
+
             // toolbar mock 설정
             const mockToolbar = {
                 updateModeDisplay: jest.fn(),
                 updateModeToggleIcon: jest.fn()
             };
             (view as any).toolbar = mockToolbar;
-            
+
             await view.refresh();
-            
-            expect(mockToolbar.updateModeDisplay).toHaveBeenCalled();
+
+            // refresh()는 updateModeToggleIcon만 호출함
             expect(mockToolbar.updateModeToggleIcon).toHaveBeenCalled();
         });
     });

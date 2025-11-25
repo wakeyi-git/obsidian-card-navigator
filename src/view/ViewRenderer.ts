@@ -20,7 +20,8 @@ import { IncrementalRenderer } from './IncrementalRenderer';
 import { ProgressBar } from '../ui/ProgressBar';
 import { VIEWPORT } from '../constants';
 import { t } from '../i18n';
-import type { RenderState, RenderChanges } from '../types';
+import type { RenderState, RenderChanges, CardGroup } from '../types';
+import type { PathSegment } from '../ui/ContextBar';
 
 /**
  * 뷰 렌더링을 담당합니다
@@ -285,6 +286,317 @@ export class ViewRenderer {
 
 		// ⭐ Section 13.1: ProgressBar 초기화
 		this.progressBar = new ProgressBar(this.view.containerEl);
+
+		// ⭐ 스크롤 이벤트 핸들러 (Context Bar 업데이트용) - 디바운스 적용
+		this.scrollHandler = this.debounce(() => {
+			this.updateContextBarOnScroll();
+		}, 100);
+	}
+
+	/** ⭐ 스크롤 핸들러 참조 (정리용) */
+	private scrollHandler: (() => void) | null = null;
+
+	/** ⭐ 현재 렌더링된 그룹 목록 (Context Bar 업데이트용) */
+	private currentGroups: CardGroup[] = [];
+
+	/**
+	 * 간단한 디바운스 유틸리티
+	 */
+	private debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
+		let timeoutId: ReturnType<typeof setTimeout> | null = null;
+		return ((...args: unknown[]) => {
+			if (timeoutId) clearTimeout(timeoutId);
+			timeoutId = setTimeout(() => fn(...args), delay);
+		}) as T;
+	}
+
+	/**
+	 * Context Bar를 초기화합니다 (렌더링 완료 후 호출)
+	 *
+	 * Context Bar는 그룹화 여부와 관계없이 항상 표시되며,
+	 * 현재 모드(폴더/태그)에 따라 전체 목록을 드롭다운에 표시합니다.
+	 */
+	private initializeContextBar(): void {
+		const currentMode = this.settings.currentMode;
+
+		// 현재 모드에 따른 Context Bar 경로 설정
+		let displayName = '';
+		let fullPath = '';
+		let icon = 'folder';
+		let activeGroupId = '';
+
+		if (currentMode === 'folder') {
+			icon = 'folder';
+			if (this.settings.folderMode.useActiveFolder) {
+				const activeFile = this.getActiveFile();
+				const folderPath = activeFile?.parent?.path || '';
+				displayName = activeFile?.parent?.name || 'Root';
+				fullPath = folderPath;
+			} else if (this.settings.folderMode.specifiedFolder) {
+				fullPath = this.settings.folderMode.specifiedFolder;
+				const parts = fullPath.split('/');
+				displayName = parts[parts.length - 1] || 'Root';
+			} else {
+				displayName = 'Root';
+				fullPath = '';
+			}
+			activeGroupId = `folder-${fullPath}`;
+		} else {
+			icon = 'hash';
+			if (this.settings.tagMode.useActiveFileTags) {
+				const activeFile = this.getActiveFile();
+				if (activeFile) {
+					const cache = this.app.metadataCache.getFileCache(activeFile);
+					const tags: string[] = [];
+
+					// frontmatter 태그 수집
+					if (cache?.frontmatter?.tags) {
+						const fmTags = cache.frontmatter.tags;
+						if (Array.isArray(fmTags)) {
+							tags.push(...fmTags
+								.filter((t): t is string => typeof t === 'string' && t.length > 0)
+								.map((t: string) => t.startsWith('#') ? t : `#${t}`));
+						} else if (typeof fmTags === 'string' && fmTags.length > 0) {
+							tags.push(fmTags.startsWith('#') ? fmTags : `#${fmTags}`);
+						}
+					}
+
+					// 인라인 태그 수집
+					if (cache?.tags) {
+						tags.push(...cache.tags.map(t => t.tag));
+					}
+
+					if (tags.length > 0) {
+						// # 제거하여 getAllTags()의 tag.tag와 일치시킴
+						fullPath = tags[0].replace('#', '');
+						displayName = fullPath;
+					} else {
+						displayName = 'No tags';
+						fullPath = '';
+					}
+				} else {
+					displayName = 'No active file';
+					fullPath = '';
+				}
+			} else if (this.settings.tagMode.specifiedTags.length > 0) {
+				// # 제거하여 getAllTags()의 tag.tag와 일치시킴
+				fullPath = this.settings.tagMode.specifiedTags[0].replace('#', '');
+				displayName = fullPath;
+			} else {
+				displayName = 'No tags';
+				fullPath = '';
+			}
+			activeGroupId = `tag-${fullPath}`;
+		}
+
+		// Context Bar 경로 업데이트
+		const segments: PathSegment[] = [{
+			name: displayName,
+			fullPath: activeGroupId,
+			level: 0,
+			icon
+		}];
+
+		this.view.updateContextBarPath(segments);
+
+		// 그룹 목록 업데이트 (현재 활성 그룹 표시)
+		this.updateContextBarGroupList(activeGroupId);
+	}
+
+	/**
+	 * 스크롤 시 Context Bar를 업데이트합니다
+	 *
+	 * 그룹화가 활성화된 경우에만 스크롤에 따라 현재 그룹을 업데이트합니다.
+	 * Context Bar 헤더는 항상 currentMode(폴더/태그)에 따른 정보를 표시합니다.
+	 */
+	private updateContextBarOnScroll(): void {
+		// 그룹화가 비활성화된 경우 스크롤 이벤트 무시
+		if (!this.settings.grouping.enabled) return;
+
+		const container = this.view.containerEl.querySelector('.card-navigator-cards');
+		if (!container) return;
+
+		// 현재 보이는 그룹 찾기
+		const visibleGroup = this.findVisibleGroup(container as HTMLElement);
+
+		if (visibleGroup) {
+			const currentMode = this.settings.currentMode;
+			const groupingCriteria = this.settings.grouping.criteria;
+
+			// grouping.criteria가 currentMode와 일치하는 경우에만 그룹 정보를 사용
+			// 그렇지 않으면 currentMode에 따른 기본 정보 유지
+			if ((currentMode === 'folder' && groupingCriteria === 'folder') ||
+				(currentMode === 'tag' && groupingCriteria === 'tag')) {
+				// 그룹화 기준이 모드와 일치하면 그룹 정보 사용
+				const segments = this.buildPathSegments(visibleGroup);
+				this.view.updateContextBarPath(segments);
+				this.updateContextBarGroupList(visibleGroup.id);
+			} else {
+				// 그룹화 기준이 모드와 다르면 모드에 따른 기본 정보 유지
+				// (initializeContextBar에서 설정한 값 유지)
+				// 드롭다운 그룹 목록만 업데이트 (활성 그룹 표시용)
+				this.updateContextBarGroupList(visibleGroup.id);
+			}
+		}
+	}
+
+	/**
+	 * Context Bar의 활성 그룹을 업데이트합니다 (외부에서 호출 가능)
+	 *
+	 * @param activeGroupId - 활성화할 그룹 ID
+	 */
+	public updateContextBarActiveGroup(activeGroupId: string): void {
+		this.updateContextBarGroupList(activeGroupId);
+	}
+
+	/**
+	 * Context Bar 그룹 목록을 업데이트합니다
+	 * 현재 모드(폴더/태그)에 따라 전체 목록을 표시합니다
+	 */
+	private updateContextBarGroupList(activeGroupId?: string): void {
+		const currentMode = this.settings.currentMode;
+
+		this.logger.debug('View', 'Context bar updating group list', {
+			currentMode,
+			activeGroupId
+		});
+
+		// 현재 모드에 따라 전체 목록 가져오기
+		if (currentMode === 'folder') {
+			const allFolders = this.groupingManager.getAllFolders();
+			this.logger.debug('View', 'Context bar folder list retrieved', {
+				count: allFolders.length
+			});
+			const groupListItems = allFolders.map(folder => ({
+				id: `folder-${folder.path}`,
+				name: folder.name,
+				icon: 'folder',
+				fileCount: folder.fileCount,
+				isActive: `folder-${folder.path}` === activeGroupId,
+				level: folder.level,
+				hasChildren: folder.hasChildren,
+				parentId: folder.parentId ?? undefined
+			}));
+			this.view.updateContextBarGroupList(groupListItems, activeGroupId);
+		} else if (currentMode === 'tag') {
+			const allTags = this.groupingManager.getAllTags();
+			this.logger.debug('View', 'Context bar tag list retrieved', {
+				count: allTags.length,
+				tags: allTags.slice(0, 5).map(t => t.tag)
+			});
+			const groupListItems = allTags.map(tag => ({
+				id: `tag-${tag.tag}`,
+				name: tag.name,
+				icon: 'hash',
+				fileCount: tag.fileCount,
+				isActive: `tag-${tag.tag}` === activeGroupId,
+				level: tag.level,
+				hasChildren: tag.hasChildren,
+				parentId: tag.parentId ?? undefined
+			}));
+			this.view.updateContextBarGroupList(groupListItems, activeGroupId);
+		} else {
+			// 다른 모드는 현재 표시된 그룹만 표시
+			const groupListItems = this.buildFlatGroupList(activeGroupId);
+			this.view.updateContextBarGroupList(groupListItems, activeGroupId);
+		}
+	}
+
+	/**
+	 * 플랫한 그룹 목록을 생성합니다 (폴더/태그 외의 그룹화 기준용)
+	 *
+	 * 아이콘은 currentMode(폴더/태그 모드)에 따라 결정됩니다.
+	 */
+	private buildFlatGroupList(activeGroupId?: string): { id: string; name: string; icon: string; fileCount: number; isActive: boolean; level: number }[] {
+		const currentMode = this.settings.currentMode;
+
+		// currentMode에 따른 아이콘 결정 (그룹화 기준과 독립)
+		const icon = currentMode === 'tag' ? 'hash' : 'folder';
+
+		// 현재 그룹을 오름차순 정렬
+		const sorted = [...this.currentGroups].sort((a, b) => a.name.localeCompare(b.name));
+
+		return sorted.map(group => ({
+			id: group.id,
+			name: group.name,
+			icon: group.icon || icon,
+			fileCount: group.files.length,
+			isActive: group.id === activeGroupId,
+			level: 0
+		}));
+	}
+
+	/**
+	 * 현재 뷰포트에 보이는 그룹을 찾습니다
+	 */
+	private findVisibleGroup(container: HTMLElement): CardGroup | null {
+		const groupSections = this.groupRenderer.findAllGroupSections(container);
+		if (groupSections.length === 0) return null;
+
+		const containerRect = container.getBoundingClientRect();
+		const containerTop = containerRect.top;
+
+		// 스크롤 위치에 가장 가까운 그룹 찾기
+		for (const section of groupSections) {
+			const sectionRect = section.getBoundingClientRect();
+
+			// 섹션의 상단이 컨테이너 상단 근처에 있으면 해당 그룹
+			if (sectionRect.top <= containerTop + 50 && sectionRect.bottom > containerTop) {
+				const groupId = section.dataset.groupId;
+				if (groupId) {
+					return this.currentGroups.find(g => g.id === groupId) || null;
+				}
+			}
+		}
+
+		// 첫 번째 보이는 그룹 반환
+		const firstSection = groupSections[0];
+		const firstGroupId = firstSection?.dataset.groupId;
+		if (firstGroupId) {
+			return this.currentGroups.find(g => g.id === firstGroupId) || null;
+		}
+
+		return null;
+	}
+
+	/**
+	 * 그룹 정보로 경로 세그먼트를 생성합니다
+	 *
+	 * 아이콘은 currentMode(폴더/태그 모드)에 따라 결정됩니다.
+	 * 그룹화 기준(grouping.criteria)과는 독립적입니다.
+	 */
+	private buildPathSegments(group: CardGroup): PathSegment[] {
+		const segments: PathSegment[] = [];
+		const currentMode = this.settings.currentMode;
+
+		// currentMode에 따른 아이콘 결정 (그룹화 기준과 독립)
+		const icon = currentMode === 'tag' ? 'hash' : 'folder';
+
+		// 폴더 모드에서 경로를 세그먼트로 분리
+		if (currentMode === 'folder' && group.id.includes('/')) {
+			const pathParts = group.id.replace('folder-', '').split('/');
+			let currentPath = 'folder-';
+
+			pathParts.forEach((part, index) => {
+				currentPath += (index > 0 ? '/' : '') + part;
+				segments.push({
+					name: part || 'Root',
+					fullPath: currentPath,
+					level: index,
+					icon: index === 0 ? icon : undefined
+				});
+			});
+		} else {
+			// 단일 세그먼트
+			segments.push({
+				name: group.name,
+				fullPath: group.id,
+				level: 0,
+				icon
+			});
+		}
+
+		return segments;
 	}
 	
 	/**
@@ -749,22 +1061,49 @@ export class ViewRenderer {
 		context: string
 	): import('../types').CardGroup[] {
 		// 그룹화 (핀된 파일 정보 전달)
-		const groups = this.groupingManager.groupFiles(files, this.settings.grouping, this.settings.pinnedFiles);
+		let groups = this.groupingManager.groupFiles(files, this.settings.grouping, this.settings.pinnedFiles);
+
+		// ⭐ Phase 4: 계층 구조 정렬이면 계층 구조로 변환 후 플랫화
+		const isHierarchyMode = this.settings.grouping.groupSort === 'hierarchy' &&
+			(this.settings.grouping.criteria === 'folder' || this.settings.grouping.criteria === 'tag');
+
+		if (isHierarchyMode) {
+			// 계층 구조로 변환
+			const hierarchicalGroups = this.groupingManager.buildHierarchy(groups);
+
+			// 활성 파일이 있으면 해당 그룹의 조상들을 자동으로 펼침
+			if (currentActiveFile) {
+				const activeGroupId = this.findGroupIdForFile(groups, currentActiveFile);
+				if (activeGroupId) {
+					this.groupingManager.expandAncestors(activeGroupId, groups);
+				}
+			}
+
+			// 플랫 배열로 변환 (렌더링용)
+			groups = this.groupingManager.flattenHierarchy(hierarchicalGroups, false);
+
+			this.logger.debug('View', `${context}: Hierarchical groups flattened`, {
+				originalCount: hierarchicalGroups.length,
+				flattenedCount: groups.length
+			});
+		}
 
 		this.logger.debug('View', `${context}: Groups created`, {
 			groupCount: groups.length,
+			isHierarchyMode,
 			groups: groups.map(g => ({
 				id: g.id,
 				name: g.name,
 				fileCount: g.files.length,
 				collapsed: g.collapsed,
-				icon: g.icon
+				icon: g.icon,
+				level: g.level
 			}))
 		});
 
 		// 활성 파일이 포함된 그룹 자동 펼치기
 		// 렌더링 시점에 활성 파일이 접힌 그룹에 있으면 자동으로 펼쳐서 사용자에게 보여줌
-		if (currentActiveFile) {
+		if (currentActiveFile && !isHierarchyMode) {
 			groups.forEach((group) => {
 				const hasActiveFile = group.files.some((file) => file.path === currentActiveFile.path);
 				if (hasActiveFile && group.collapsed) {
@@ -788,6 +1127,22 @@ export class ViewRenderer {
 		});
 
 		return groups;
+	}
+
+	/**
+	 * 파일이 속한 그룹 ID를 찾습니다
+	 *
+	 * @param groups - 그룹 배열
+	 * @param file - 찾을 파일
+	 * @returns 그룹 ID 또는 null
+	 */
+	private findGroupIdForFile(groups: CardGroup[], file: TFile): string | null {
+		for (const group of groups) {
+			if (group.files.some(f => f.path === file.path)) {
+				return group.id;
+			}
+		}
+		return null;
 	}
 	
 	/**
@@ -915,6 +1270,9 @@ export class ViewRenderer {
 				cls: 'card-navigator-empty',
 				text: 'No files to display'
 			});
+
+			// ⭐ 파일이 없어도 Context Bar는 업데이트 (모드 전환 시 필요)
+			this.initializeContextBar();
 			return;
 		}
 
@@ -923,8 +1281,15 @@ export class ViewRenderer {
 		// ⭐ 그룹화 및 활성 파일 자동 펼치기
 		const groups = this.prepareGroups(files, currentActiveFile, 'Standard');
 
+		// ⭐ 현재 그룹 저장 (Context Bar 업데이트용)
+		this.currentGroups = groups;
+
 		// ⭐ 프로파일링 시작 (Phase 4.1)
 		this.profiler.startMeasure('standard', files.length, groups.length);
+
+		// ⭐ Phase 4: 계층 구조 모드 확인
+		const isHierarchyMode = this.settings.grouping.groupSort === 'hierarchy' &&
+			(this.settings.grouping.criteria === 'folder' || this.settings.grouping.criteria === 'tag');
 
 		// ⭐ DocumentFragment 활용: 모든 그룹을 먼저 생성한 후 한 번에 DOM에 추가
 		const containerFragment = document.createDocumentFragment();
@@ -935,8 +1300,10 @@ export class ViewRenderer {
 				return;
 			}
 
-			// 빈 그룹은 스킵 (파일이 없는 그룹)
-			if (group.files.length === 0) {
+			// ⭐ Phase 4: 계층 구조에서는 자식만 있고 파일이 없는 그룹도 헤더 표시
+			// 플랫 모드에서는 빈 그룹 스킵
+			const hasChildren = group.children && group.children.length > 0;
+			if (group.files.length === 0 && !hasChildren) {
 				this.logger.debug('View', 'Skipping empty group', {
 					groupId: group.id,
 					groupName: group.name
@@ -944,15 +1311,23 @@ export class ViewRenderer {
 				continue;
 			}
 
-			// 그룹 섹션 생성 (임시 컨테이너에)
+			// ⭐ Phase 4: 계층 구조 모드일 때 다른 렌더러 사용
 			const tempGroupContainer = document.createElement('div');
-			const section = this.groupRenderer.createGroupSection(
-				group,
-				tempGroupContainer,
-				(groupId, collapsed) => this.onGroupToggle(groupId, collapsed),
-				(groupId) => this.onGroupSelectAll(groupId),
-				currentActiveFile
-			);
+			const section = isHierarchyMode
+				? this.groupRenderer.createHierarchicalGroupSection(
+					group,
+					tempGroupContainer,
+					(groupId, collapsed) => this.onHierarchicalGroupToggle(groupId, collapsed, container),
+					(groupId) => this.onGroupSelectAll(groupId),
+					currentActiveFile
+				)
+				: this.groupRenderer.createGroupSection(
+					group,
+					tempGroupContainer,
+					(groupId, collapsed) => this.onGroupToggle(groupId, collapsed),
+					(groupId) => this.onGroupSelectAll(groupId),
+					currentActiveFile
+				);
 
 			// 그룹이 접혀있지 않으면 카드 렌더링
 			if (!group.collapsed) {
@@ -1090,8 +1465,19 @@ export class ViewRenderer {
 			const totalFiles = this.app.vault.getMarkdownFiles().length;
 			toolbar.updateFileCount(files.length, totalFiles);
 		}
+
+		// ⭐ Context Bar 초기 업데이트 (항상 표시)
+		// Context Bar는 그룹화 여부와 관계없이 항상 표시되어야 함
+		this.initializeContextBar();
+
+		// 그룹화가 활성화된 경우 스크롤 이벤트 리스너 등록
+		if (this.settings.grouping.enabled && groups.length > 0) {
+			if (this.scrollHandler) {
+				container.addEventListener('scroll', this.scrollHandler);
+			}
+		}
 	}
-	
+
 	/**
 	 * 파일이 현재 뷰 범위에 있는지 확인합니다
 	 * 
@@ -1173,6 +1559,9 @@ export class ViewRenderer {
 				cls: 'card-navigator-empty',
 				text: 'No files to display'
 			});
+
+			// ⭐ 파일이 없어도 Context Bar는 업데이트 (모드 전환 시 필요)
+			this.initializeContextBar();
 			return;
 		}
 
@@ -1180,6 +1569,9 @@ export class ViewRenderer {
 
 		// ⭐ 그룹화 및 활성 파일 자동 펼치기
 		const groups = this.prepareGroups(files, currentActiveFile, 'Viewport');
+
+		// ⭐ 현재 그룹 저장 (Context Bar 업데이트용)
+		this.currentGroups = groups;
 
 		// ⭐ 프로파일링 시작 (Phase 4.1)
 		this.profiler.startMeasure('viewport', files.length, groups.length);
@@ -1350,8 +1742,19 @@ export class ViewRenderer {
 			const totalFiles = this.app.vault.getMarkdownFiles().length;
 			toolbar.updateFileCount(files.length, totalFiles);
 		}
+
+		// ⭐ Context Bar 초기 업데이트 (항상 표시)
+		// Context Bar는 그룹화 여부와 관계없이 항상 표시되어야 함
+		this.initializeContextBar();
+
+		// 그룹화가 활성화된 경우 스크롤 이벤트 리스너 등록
+		if (this.settings.grouping.enabled && groups.length > 0) {
+			if (this.scrollHandler) {
+				container.addEventListener('scroll', this.scrollHandler);
+			}
+		}
 	}
-	
+
 	/**
 	 * 초기에 활성 카드 주변 카드들을 강제 렌더링
 	 *
@@ -1514,6 +1917,52 @@ export class ViewRenderer {
 	}
 
 	/**
+	 * ⭐ Phase 4: 계층 구조 그룹 토글 핸들러
+	 *
+	 * @remarks
+	 * 부모 그룹이 접히면 자식 그룹들도 함께 숨깁니다.
+	 *
+	 * @param groupId - 그룹 ID
+	 * @param collapsed - 접힌 상태
+	 * @param container - 카드 컨테이너 (자식 그룹 처리용)
+	 */
+	private async onHierarchicalGroupToggle(
+		groupId: string,
+		collapsed: boolean,
+		container: HTMLElement
+	): Promise<void> {
+		// 상태 저장
+		this.groupingManager.saveCollapsedState(groupId, collapsed);
+
+		// UI 업데이트
+		const section = this.groupRenderer.findGroupSection(
+			this.view.containerEl,
+			groupId
+		);
+
+		if (section) {
+			// 계층 구조 토글 (자식 그룹도 함께 처리)
+			this.groupRenderer.toggleHierarchicalGroup(section, collapsed, container);
+
+			this.logger.debug('View', 'Hierarchical group toggled', {
+				groupId,
+				collapsed,
+				sectionFound: !!section
+			});
+
+			// 펼쳐질 때 카드가 렌더링되지 않았으면 렌더링
+			if (!collapsed) {
+				await this.renderGroupCards(section, groupId);
+			}
+		} else {
+			this.logger.debug('View', 'Hierarchical group section not found for toggle', {
+				groupId,
+				collapsed
+			});
+		}
+	}
+
+	/**
 	 * 그룹 내 카드를 렌더링합니다 (지연 렌더링용)
 	 *
 	 * @param section - 그룹 섹션
@@ -1655,6 +2104,18 @@ export class ViewRenderer {
 			this.viewportManager.destroy();
 			this.viewportManager = null;
 		}
+
+		// ⭐ 스크롤 이벤트 리스너 정리
+		if (this.scrollHandler) {
+			const container = this.view.containerEl.querySelector('.card-navigator-cards');
+			if (container) {
+				container.removeEventListener('scroll', this.scrollHandler);
+			}
+			this.scrollHandler = null;
+		}
+
+		// ⭐ 현재 그룹 목록 초기화
+		this.currentGroups = [];
 
 		// ⭐ 그룹 상태 즉시 저장
 		this.groupingManager.flush();

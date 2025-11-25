@@ -21,6 +21,7 @@ import { Toolbar } from './ui/Toolbar';
 import { DragDropHandler } from './utils/DragDropHandler';
 import { CardContextMenu } from './ui/ContextMenu';
 import { SelectionManager } from './selection/SelectionManager';
+import { ContextBar, PathSegment, GroupListItem } from './ui/ContextBar';
 import { TIMING } from './constants';
 import { ICardView } from './interfaces/ICardView';
 import { debounceAsync } from './utils/debounce';
@@ -90,6 +91,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 	private dragDropHandler: DragDropHandler;
 	private contextMenu: CardContextMenu;
 	public selectionManager: SelectionManager;
+	private contextBar: ContextBar | null = null;
 
 	// ⭐ 디바운스된 렌더링 함수 (중복 렌더링 방지)
 	private debouncedForceRender: (() => Promise<void>) | null = null;
@@ -213,13 +215,17 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		if (this.toolbar) {
 			this.toolbar.setSearchInputContainer(this.searchInputContainer);
 		}
-		
+
 		this.searchInput.onInput((query) => {
 			this.state.setSearchQuery(query);
 			if (this.cardsContainer) {
 				this.renderCards(this.cardsContainer);
 			}
 		});
+
+		// Context Bar 초기화 (그룹화 활성화 시에만 표시)
+		this.contextBar = new ContextBar(container);
+		this.contextBar.render((groupId: string) => this.onContextBarGroupSelect(groupId));
 
 		this.cardsContainer = container.createEl('div', {
 			cls: 'card-navigator-cards'
@@ -313,7 +319,6 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				}
 				
 				if (isDefined(this.toolbar)) {
-					this.toolbar.updateModeDisplay();
 					this.toolbar.updateModeToggleIcon();
 				}
 				
@@ -495,6 +500,11 @@ export class CardNavigatorView extends ItemView implements ICardView {
 			this.toolbar.destroy();
 			this.toolbar = null;
 		}
+
+		if (isDefined(this.contextBar)) {
+			this.contextBar.destroy();
+			this.contextBar = null;
+		}
 	}
 
 	/**
@@ -514,7 +524,6 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		}
 		
 		if (isDefined(this.toolbar)) {
-			this.toolbar.updateModeDisplay();
 			this.toolbar.updateModeToggleIcon();
 		}
 		
@@ -759,6 +768,137 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				this.viewRenderer.groupingManager.saveCollapsedState(groupId, true);
 			}
 		});
+	}
+
+	/**
+	 * Context Bar에 접근할 수 있는 getter
+	 */
+	public getContextBar(): ContextBar | null {
+		return this.contextBar;
+	}
+
+	/**
+	 * Context Bar 경로를 업데이트합니다
+	 *
+	 * @param segments - 경로 세그먼트 배열
+	 */
+	public updateContextBarPath(segments: PathSegment[]): void {
+		if (this.contextBar) {
+			// Context Bar는 항상 표시 (그룹화 설정과 독립)
+			this.contextBar.update(segments);
+		}
+	}
+
+	/**
+	 * Context Bar 그룹 목록을 업데이트합니다
+	 *
+	 * @param groups - 그룹 목록
+	 * @param activeGroupId - 현재 활성 그룹 ID
+	 */
+	public updateContextBarGroupList(groups: GroupListItem[], activeGroupId?: string): void {
+		if (this.contextBar) {
+			this.contextBar.updateGroupList(groups, activeGroupId);
+		}
+	}
+
+	/**
+	 * Context Bar 그룹 선택 핸들러
+	 *
+	 * @param groupId - 선택된 그룹 ID
+	 */
+	private async onContextBarGroupSelect(groupId: string): Promise<void> {
+		this.logger.debug('View', 'Context bar group selected', { groupId });
+
+		// Context Bar 활성 상태 업데이트 (선택된 그룹을 활성으로 표시)
+		this.viewRenderer.updateContextBarActiveGroup(groupId);
+
+		// 그룹 ID에서 폴더/태그 경로 추출
+		if (groupId.startsWith('folder-')) {
+			// 폴더 선택: 해당 폴더를 지정된 폴더로 설정하고 뷰 새로고침
+			const folderPath = groupId.replace('folder-', '');
+
+			this.logger.debug('View', 'Switching to specified folder', { folderPath });
+
+			// 폴더 모드로 전환하고 지정된 폴더 설정
+			this.plugin.settingsManager.updateSettings({
+				currentMode: 'folder',
+				folderMode: {
+					...this.settings.folderMode,
+					useActiveFolder: false,
+					specifiedFolder: folderPath
+				}
+			});
+
+			await this.plugin.saveSettings();
+
+			// 뷰 새로고침
+			if (this.cardsContainer) {
+				await this.viewRenderer.forceRender(
+					this.cardsContainer,
+					(f) => this.openFile(f)
+				);
+			}
+
+			// Toolbar 아이콘 업데이트
+			if (this.toolbar) {
+				this.toolbar.updateModeToggleIcon();
+			}
+
+			return;
+		} else if (groupId.startsWith('tag-')) {
+			// 태그 선택: 해당 태그를 지정된 태그로 설정하고 뷰 새로고침
+			const tagPath = groupId.replace('tag-', '');
+
+			this.logger.debug('View', 'Switching to specified tag', { tagPath });
+
+			// 태그 모드로 전환하고 지정된 태그 설정
+			this.plugin.settingsManager.updateSettings({
+				currentMode: 'tag',
+				tagMode: {
+					...this.settings.tagMode,
+					useActiveFileTags: false,
+					specifiedTags: [tagPath]
+				}
+			});
+
+			await this.plugin.saveSettings();
+
+			// 뷰 새로고침
+			if (this.cardsContainer) {
+				await this.viewRenderer.forceRender(
+					this.cardsContainer,
+					(f) => this.openFile(f)
+				);
+			}
+
+			// Toolbar 아이콘 업데이트
+			if (this.toolbar) {
+				this.toolbar.updateModeToggleIcon();
+			}
+
+			return;
+		}
+
+		// 기존 그룹화 기준 (날짜, 속성 등): 해당 그룹 섹션으로 스크롤
+		const section = this.viewRenderer.groupRenderer.findGroupSection(
+			this.containerEl,
+			groupId
+		);
+
+		if (section) {
+			// 접힌 상태라면 펼치기
+			if (section.hasClass('is-collapsed')) {
+				this.viewRenderer.groupRenderer.toggleGroup(section, false);
+				this.viewRenderer.groupingManager.saveCollapsedState(groupId, false);
+			}
+
+			// 스크롤
+			section.scrollIntoView({
+				behavior: 'smooth',
+				block: 'start'
+			});
+		}
+		// 섹션이 없는 경우 (중간 폴더 등): Context Bar만 업데이트됨
 	}
 
 }

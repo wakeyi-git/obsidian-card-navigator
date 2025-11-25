@@ -344,6 +344,14 @@ export const zhCN = {
 		modeToggleTagToActive: '切换到活动文件标签模式',
 		clickToSelectFolderTag: '点击选择文件夹/标签',
 		fileCount: (displayed: number, total: number) => `${displayed} / ${total}`,
+		groupingToggle: '切换分组',
+		groupingEnable: '启用分组',
+		groupingDisable: '禁用分组',
+		pinToggle: '切换置顶文件可见性',
+		pinShow: '始终显示置顶文件',
+		pinHide: '从其他组隐藏置顶文件',
+		folderMode: '文件夹',
+		tagMode: '标签',
 		sortOptions: {
 			nameAsc: '文件名（A-Z）',
 			nameDesc: '文件名（Z-A）',
@@ -1295,3 +1303,5 @@ export const zhCN = {
 		currentFilePropertiesLoaded: '当前文件属性已加载',
 	},
 } as const;
+
+export type TranslationKeys = typeof zhCN;

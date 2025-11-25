@@ -359,7 +359,12 @@ describe('ViewRenderer', () => {
 			plugin: mockPlugin,
 			getToolbar: jest.fn(() => ({
 				updateFileCount: jest.fn()
-			}))
+			})),
+			updateContextBarPath: jest.fn(),
+			updateContextBarGroupList: jest.fn(),
+			containerEl: {
+				querySelector: jest.fn(() => null)
+			}
 		};
 		
 		// Mock CardFactory

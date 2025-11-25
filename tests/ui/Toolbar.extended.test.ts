@@ -150,7 +150,8 @@ describe('Toolbar - Extended Tests', () => {
             toolbar.render(container);
             
             const modeDisplay = container.querySelector('.toolbar-mode-display');
-            expect(modeDisplay?.textContent).toContain('CurrentFolder');
+            // 활성 폴더 모드에서는 기본 "Folder" 텍스트가 표시됨 (실제 폴더명은 런타임에 결정)
+            expect(modeDisplay?.textContent).toContain('Folder');
         });
     });
     
@@ -207,7 +208,8 @@ describe('Toolbar - Extended Tests', () => {
             toolbar.render(container);
             
             const modeDisplay = container.querySelector('.toolbar-mode-display');
-            expect(modeDisplay?.textContent).toContain('#tag1');
+            // 활성 파일 태그 모드에서는 기본 "Tag" 텍스트가 표시됨 (실제 태그는 런타임에 결정)
+            expect(modeDisplay?.textContent).toContain('Tag');
         });
     });
     
@@ -286,19 +288,27 @@ describe('Toolbar - Extended Tests', () => {
     });
     
     describe('업데이트 메서드', () => {
-        it('updateModeDisplay를 호출할 수 있어야 함', () => {
-            toolbar.render(container);
-            
-            expect(() => {
-                toolbar.updateModeDisplay();
-            }).not.toThrow();
-        });
-        
         it('updateModeToggleIcon을 호출할 수 있어야 함', () => {
             toolbar.render(container);
-            
+
             expect(() => {
                 toolbar.updateModeToggleIcon();
+            }).not.toThrow();
+        });
+
+        it('updateGroupingButton을 호출할 수 있어야 함', () => {
+            toolbar.render(container);
+
+            expect(() => {
+                toolbar.updateGroupingButton();
+            }).not.toThrow();
+        });
+
+        it('updatePinButton을 호출할 수 있어야 함', () => {
+            toolbar.render(container);
+
+            expect(() => {
+                toolbar.updatePinButton();
             }).not.toThrow();
         });
     });
@@ -367,11 +377,11 @@ describe('Toolbar - Extended Tests', () => {
             });
         });
         
-        it('모드 표시가 클릭 가능해야 함', () => {
+        it('모드 표시가 렌더링되어야 함', () => {
             toolbar.render(container);
-            
+
             const modeDisplay = container.querySelector('.toolbar-mode-display');
-            expect(modeDisplay?.classList.contains('clickable')).toBe(true);
+            expect(modeDisplay).toBeTruthy();
         });
     });
 });

@@ -70,7 +70,9 @@ describe('ViewRenderer - Additional Coverage', () => {
             plugin: mockPlugin,
             getToolbar: jest.fn(() => ({
                 updateFileCount: jest.fn()
-            }))
+            })),
+            updateContextBarPath: jest.fn(),
+            updateContextBarGroupList: jest.fn()
         };
         
         // Settings

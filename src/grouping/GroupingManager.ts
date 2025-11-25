@@ -48,10 +48,15 @@ export class GroupingManager {
             return [{
                 id: 'all',
                 name: '',
+                fullPath: '',
                 icon: '',
                 files: files,
                 collapsed: false,
-                sortKey: 'all'
+                sortKey: 'all',
+                level: 0,
+                parentId: null,
+                children: [],
+                totalFileCount: files.length
             }];
         }
 
@@ -104,10 +109,15 @@ export class GroupingManager {
             const pinnedGroup: CardGroup = {
                 id: 'pinned',
                 name: 'Pinned',
+                fullPath: '',
                 icon: 'pin',
                 files: pinnedFileObjects,
                 collapsed: false,
-                sortKey: '000-pinned' // 항상 맨 앞에 오도록
+                sortKey: '000-pinned', // 항상 맨 앞에 오도록
+                level: 0,
+                parentId: null,
+                children: [],
+                totalFileCount: pinnedFileObjects.length
             };
             groups.unshift(pinnedGroup);
 
@@ -143,17 +153,32 @@ export class GroupingManager {
         const groups: CardGroup[] = [];
 
         for (const [folderPath, folderFiles] of folderMap.entries()) {
+            const parts = folderPath === '/' ? [] : folderPath.split('/').filter(p => p);
             const folderName = folderPath === '/'
                 ? 'Root'
-                : (hierarchical ? folderPath : folderPath.split('/').pop() || folderPath);
+                : (hierarchical ? folderPath : parts[parts.length - 1] || folderPath);
+            const level = folderPath === '/' ? 0 : parts.length - 1;
+
+            // 부모 경로 계산
+            let parentPath: string | null = null;
+            if (parts.length > 1) {
+                parentPath = parts.slice(0, -1).join('/');
+            } else if (parts.length === 1) {
+                parentPath = '/';
+            }
 
             groups.push({
                 id: `folder-${folderPath}`,
                 name: folderName,
+                fullPath: folderPath,
                 icon: 'folder',
                 files: folderFiles,
                 collapsed: false,
-                sortKey: folderName
+                sortKey: folderName,
+                level,
+                parentId: parentPath ? `folder-${parentPath}` : null,
+                children: [],
+                totalFileCount: folderFiles.length
             });
         }
 
@@ -243,14 +268,27 @@ export class GroupingManager {
 
         for (const [tag, tagFiles] of tagMap.entries()) {
             const isUntagged = tag === '__untagged__';
+            const parts = tag.split('/');
+            const level = isUntagged ? 0 : parts.length - 1;
+
+            // 부모 태그 계산
+            let parentTag: string | null = null;
+            if (!isUntagged && parts.length > 1) {
+                parentTag = parts.slice(0, -1).join('/');
+            }
 
             groups.push({
                 id: `tag-${tag}`,
-                name: isUntagged ? 'Untagged' : `#${tag}`,
+                name: isUntagged ? 'Untagged' : tag,
+                fullPath: tag,
                 icon: 'tag',
                 files: tagFiles,
                 collapsed: false,
-                sortKey: isUntagged ? 'zzz-untagged' : tag
+                sortKey: isUntagged ? 'zzz-untagged' : tag,
+                level,
+                parentId: parentTag ? `tag-${parentTag}` : null,
+                children: [],
+                totalFileCount: tagFiles.length
             });
         }
 
@@ -280,10 +318,15 @@ export class GroupingManager {
             groups.push({
                 id: `year-${year}`,
                 name: `${year}`,
+                fullPath: `${year}`,
                 icon: 'calendar',
                 files: yearFiles,
                 collapsed: false,
-                sortKey: year
+                sortKey: year,
+                level: 0,
+                parentId: null,
+                children: [],
+                totalFileCount: yearFiles.length
             });
         }
 
@@ -319,10 +362,15 @@ export class GroupingManager {
             groups.push({
                 id: `month-${monthKey}`,
                 name: monthName,
+                fullPath: monthKey,
                 icon: 'calendar',
                 files: monthFiles,
                 collapsed: false,
-                sortKey: monthKey
+                sortKey: monthKey,
+                level: 0,
+                parentId: null,
+                children: [],
+                totalFileCount: monthFiles.length
             });
         }
 
@@ -354,10 +402,15 @@ export class GroupingManager {
             groups.push({
                 id: `week-${weekKey}`,
                 name: weekKey.replace('-W', ' Week '),
+                fullPath: weekKey,
                 icon: 'calendar',
                 files: weekFiles,
                 collapsed: false,
-                sortKey: weekKey
+                sortKey: weekKey,
+                level: 0,
+                parentId: null,
+                children: [],
+                totalFileCount: weekFiles.length
             });
         }
 
@@ -384,10 +437,15 @@ export class GroupingManager {
             return [{
                 id: 'all',
                 name: 'All Files (No Property Specified)',
+                fullPath: '',
                 icon: 'file-text',
                 files: files,
                 collapsed: false,
-                sortKey: 'all'
+                sortKey: 'all',
+                level: 0,
+                parentId: null,
+                children: [],
+                totalFileCount: files.length
             }];
         }
 
@@ -433,10 +491,15 @@ export class GroupingManager {
             groups.push({
                 id: `property-${propertyName}-${propValue}`,
                 name: isNoProperty ? `No ${propertyName}` : propValue,
+                fullPath: propValue,
                 icon: isNoProperty ? 'help-circle' : 'file-text',
                 files: propFiles,
                 collapsed: false,
-                sortKey: isNoProperty ? 'zzz-no-property' : propValue
+                sortKey: isNoProperty ? 'zzz-no-property' : propValue,
+                level: 0,
+                parentId: null,
+                children: [],
+                totalFileCount: propFiles.length
             });
         }
 
@@ -471,10 +534,15 @@ export class GroupingManager {
             groups.push({
                 id: 'size-small',
                 name: 'Small (< 10KB)',
+                fullPath: 'small',
                 icon: 'file',
                 files: sizeGroups.small,
                 collapsed: false,
-                sortKey: 1
+                sortKey: 1,
+                level: 0,
+                parentId: null,
+                children: [],
+                totalFileCount: sizeGroups.small.length
             });
         }
 
@@ -482,10 +550,15 @@ export class GroupingManager {
             groups.push({
                 id: 'size-medium',
                 name: 'Medium (10-100KB)',
+                fullPath: 'medium',
                 icon: 'file-text',
                 files: sizeGroups.medium,
                 collapsed: false,
-                sortKey: 2
+                sortKey: 2,
+                level: 0,
+                parentId: null,
+                children: [],
+                totalFileCount: sizeGroups.medium.length
             });
         }
 
@@ -493,10 +566,15 @@ export class GroupingManager {
             groups.push({
                 id: 'size-large',
                 name: 'Large (> 100KB)',
+                fullPath: 'large',
                 icon: 'files',
                 files: sizeGroups.large,
                 collapsed: false,
-                sortKey: 3
+                sortKey: 3,
+                level: 0,
+                parentId: null,
+                children: [],
+                totalFileCount: sizeGroups.large.length
             });
         }
 
@@ -536,10 +614,15 @@ export class GroupingManager {
             groups.push({
                 id: `letter-${letter}`,
                 name: letter === '0-9' ? '0-9' : letter === 'Other' ? 'Other' : letter,
+                fullPath: letter,
                 icon: letter === '0-9' ? 'hash' : letter === 'Other' ? 'asterisk' : 'type',
                 files: letterFiles,
                 collapsed: false,
-                sortKey: letter === '0-9' ? '000' : letter === 'Other' ? 'zzz' : letter
+                sortKey: letter === '0-9' ? '000' : letter === 'Other' ? 'zzz' : letter,
+                level: 0,
+                parentId: null,
+                children: [],
+                totalFileCount: letterFiles.length
             });
         }
 
@@ -730,5 +813,316 @@ export class GroupingManager {
      */
     flush(): void {
         this.stateManager.flush();
+    }
+
+    /**
+     * 볼트의 전체 폴더 목록을 계층 구조로 반환합니다
+     *
+     * @returns 폴더 경로와 마크다운 파일 수를 포함한 배열
+     */
+    getAllFolders(): { path: string; name: string; fileCount: number; level: number; hasChildren: boolean; parentId: string | null }[] {
+        const folderMap = new Map<string, number>();
+        const allFolderPaths = new Set<string>();
+
+        // 모든 마크다운 파일의 폴더를 수집
+        const markdownFiles = this.app.vault.getMarkdownFiles();
+        for (const file of markdownFiles) {
+            const folderPath = file.parent?.path || '/';
+            folderMap.set(folderPath, (folderMap.get(folderPath) || 0) + 1);
+            allFolderPaths.add(folderPath);
+
+            // 중간 폴더들도 모두 추가 (계층 구조 유지를 위해)
+            if (folderPath !== '/') {
+                const parts = folderPath.split('/');
+                for (let i = 1; i < parts.length; i++) {
+                    const intermediatePath = parts.slice(0, i).join('/');
+                    if (intermediatePath && !allFolderPaths.has(intermediatePath)) {
+                        allFolderPaths.add(intermediatePath);
+                        if (!folderMap.has(intermediatePath)) {
+                            folderMap.set(intermediatePath, 0);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 폴더 목록을 배열로 변환하고 정렬
+        const folders: { path: string; name: string; fileCount: number; level: number; hasChildren: boolean; parentId: string | null }[] = [];
+
+        for (const [folderPath, fileCount] of folderMap.entries()) {
+            const parts = folderPath === '/' ? [] : folderPath.split('/').filter(p => p);
+            const name = folderPath === '/' ? 'Root' : parts[parts.length - 1] || folderPath;
+            const level = parts.length > 0 ? parts.length - 1 : 0;
+
+            // 부모 경로 계산
+            let parentPath: string | null = null;
+            if (parts.length > 1) {
+                parentPath = parts.slice(0, -1).join('/');
+            } else if (parts.length === 1) {
+                parentPath = '/';
+            }
+
+            // 자식이 있는지 확인 (직접 자식만 체크)
+            const hasChildren = Array.from(allFolderPaths).some(p => {
+                if (p === folderPath) return false;
+                if (folderPath === '/') {
+                    // 루트의 자식: 단일 세그먼트 폴더
+                    const pParts = p.split('/').filter(s => s);
+                    return pParts.length === 1;
+                }
+                // 직접 자식인지 확인 (현재 경로 + 1 레벨만)
+                return p.startsWith(folderPath + '/') && p.split('/').length === folderPath.split('/').length + 1;
+            });
+
+            folders.push({
+                path: folderPath,
+                name,
+                fileCount,
+                level,
+                hasChildren,
+                parentId: parentPath ? `folder-${parentPath}` : null
+            });
+        }
+
+        // 경로별로 오름차순 정렬
+        folders.sort((a, b) => a.path.localeCompare(b.path));
+
+        return folders;
+    }
+
+    /**
+     * 볼트의 전체 태그 목록을 계층 구조로 반환합니다
+     *
+     * @returns 태그와 사용 횟수를 포함한 배열
+     */
+    getAllTags(): { tag: string; name: string; fileCount: number; level: number; hasChildren: boolean; parentId: string | null }[] {
+        const tagMap = new Map<string, Set<string>>();
+        const allTagPaths = new Set<string>();
+
+        // 모든 마크다운 파일의 태그를 수집
+        const markdownFiles = this.app.vault.getMarkdownFiles();
+        for (const file of markdownFiles) {
+            const cache = this.app.metadataCache.getFileCache(file);
+            if (!cache) continue;
+
+            const tags: string[] = [];
+
+            // frontmatter 태그
+            if (cache.frontmatter?.tags) {
+                const fmTags = cache.frontmatter.tags;
+                if (Array.isArray(fmTags)) {
+                    // null, undefined, 빈 문자열 필터링
+                    tags.push(...fmTags
+                        .filter((t): t is string => typeof t === 'string' && t.length > 0)
+                        .map((t: string) => t.startsWith('#') ? t.slice(1) : t));
+                } else if (typeof fmTags === 'string' && fmTags.length > 0) {
+                    tags.push(fmTags.startsWith('#') ? fmTags.slice(1) : fmTags);
+                }
+            }
+
+            // 인라인 태그
+            if (cache.tags) {
+                tags.push(...cache.tags.map(t => t.tag.slice(1))); // # 제거
+            }
+
+            // 태그별 파일 수 집계 및 중간 태그 추가
+            for (const tag of tags) {
+                if (!tagMap.has(tag)) {
+                    tagMap.set(tag, new Set());
+                }
+                tagMap.get(tag)!.add(file.path);
+                allTagPaths.add(tag);
+
+                // 중간 태그들도 모두 추가 (계층 구조 유지를 위해)
+                const parts = tag.split('/');
+                for (let i = 1; i < parts.length; i++) {
+                    const intermediateTag = parts.slice(0, i).join('/');
+                    if (intermediateTag && !allTagPaths.has(intermediateTag)) {
+                        allTagPaths.add(intermediateTag);
+                        if (!tagMap.has(intermediateTag)) {
+                            tagMap.set(intermediateTag, new Set());
+                        }
+                    }
+                }
+            }
+        }
+
+        // 태그 목록을 배열로 변환하고 정렬
+        const tagsArray: { tag: string; name: string; fileCount: number; level: number; hasChildren: boolean; parentId: string | null }[] = [];
+
+        for (const [tag, files] of tagMap.entries()) {
+            const parts = tag.split('/');
+            const name = parts[parts.length - 1];
+            const level = parts.length - 1;
+
+            // 부모 태그 계산
+            let parentTag: string | null = null;
+            if (parts.length > 1) {
+                parentTag = parts.slice(0, -1).join('/');
+            }
+
+            // 자식이 있는지 확인 (직접 자식만 체크)
+            const hasChildren = Array.from(allTagPaths).some(t => {
+                if (t === tag) return false;
+                // 직접 자식인지 확인 (현재 태그 + 1 레벨만)
+                return t.startsWith(tag + '/') && t.split('/').length === tag.split('/').length + 1;
+            });
+
+            tagsArray.push({
+                tag,
+                name,
+                fileCount: files.size,
+                level,
+                hasChildren,
+                parentId: parentTag ? `tag-${parentTag}` : null
+            });
+        }
+
+        // 태그별로 오름차순 정렬
+        tagsArray.sort((a, b) => a.tag.localeCompare(b.tag));
+
+        return tagsArray;
+    }
+
+    /**
+     * 플랫 그룹 목록을 계층 구조로 변환합니다
+     *
+     * @remarks
+     * Phase 3: 폴더나 태그 그룹을 트리 구조로 변환합니다.
+     * - parentId를 기반으로 부모-자식 관계를 설정
+     * - children 배열에 자식 그룹을 추가
+     * - totalFileCount를 재귀적으로 계산
+     *
+     * @param groups - 플랫 그룹 배열
+     * @returns 계층 구조를 가진 루트 그룹 배열
+     */
+    buildHierarchy(groups: CardGroup[]): CardGroup[] {
+        // 그룹 ID -> 그룹 맵 생성
+        const groupMap = new Map<string, CardGroup>();
+        for (const group of groups) {
+            // children 배열 초기화
+            group.children = [];
+            groupMap.set(group.id, group);
+        }
+
+        // 루트 그룹들 (parentId가 null이거나 부모가 존재하지 않는 그룹)
+        const rootGroups: CardGroup[] = [];
+
+        // 부모-자식 관계 설정
+        for (const group of groups) {
+            if (group.parentId === null) {
+                // 루트 그룹
+                rootGroups.push(group);
+            } else {
+                const parent = groupMap.get(group.parentId);
+                if (parent) {
+                    // 부모가 있으면 자식으로 추가
+                    parent.children.push(group);
+                } else {
+                    // 부모가 없으면 루트로 처리 (중간 폴더가 없는 경우)
+                    rootGroups.push(group);
+                }
+            }
+        }
+
+        // totalFileCount 재귀 계산
+        this.calculateTotalFileCounts(rootGroups);
+
+        this.logger.debug('Grouping', `Built hierarchy: ${rootGroups.length} root groups from ${groups.length} total groups`);
+
+        return rootGroups;
+    }
+
+    /**
+     * 계층 구조의 totalFileCount를 재귀적으로 계산합니다
+     *
+     * @param groups - 계층화된 그룹 배열
+     * @returns 이 레벨의 모든 파일 수 합계
+     */
+    private calculateTotalFileCounts(groups: CardGroup[]): number {
+        let total = 0;
+
+        for (const group of groups) {
+            // 자식 그룹의 파일 수 계산
+            const childrenTotal = this.calculateTotalFileCounts(group.children);
+            // 직접 파일 수 + 자식 파일 수
+            group.totalFileCount = group.files.length + childrenTotal;
+            total += group.totalFileCount;
+        }
+
+        return total;
+    }
+
+    /**
+     * 계층 구조를 플랫 배열로 펼칩니다 (렌더링용)
+     *
+     * @remarks
+     * Phase 4에서 사용될 메서드입니다.
+     * 트리 구조를 깊이 우선 순회하여 플랫 배열로 반환합니다.
+     * 접힌 그룹의 자식은 포함하지 않습니다.
+     *
+     * @param groups - 계층화된 그룹 배열
+     * @param includeCollapsed - 접힌 그룹의 자식도 포함할지 여부
+     * @returns 깊이 우선 순회된 플랫 그룹 배열
+     */
+    flattenHierarchy(groups: CardGroup[], includeCollapsed: boolean = false): CardGroup[] {
+        const result: CardGroup[] = [];
+
+        const traverse = (groupList: CardGroup[]) => {
+            for (const group of groupList) {
+                result.push(group);
+
+                // 자식이 있고, 펼쳐져 있거나 includeCollapsed가 true인 경우
+                if (group.children.length > 0 && (!group.collapsed || includeCollapsed)) {
+                    traverse(group.children);
+                }
+            }
+        };
+
+        traverse(groups);
+        return result;
+    }
+
+    /**
+     * 특정 그룹의 모든 조상 그룹을 펼칩니다
+     *
+     * @remarks
+     * 활성 파일이 속한 그룹을 자동으로 펼칠 때 사용합니다.
+     *
+     * @param groupId - 대상 그룹 ID
+     * @param groups - 모든 그룹 배열
+     */
+    expandAncestors(groupId: string, groups: CardGroup[]): void {
+        const groupMap = new Map<string, CardGroup>();
+        for (const group of groups) {
+            groupMap.set(group.id, group);
+        }
+
+        const targetGroup = groupMap.get(groupId);
+        if (!targetGroup) return;
+
+        // 부모를 따라 올라가면서 모두 펼침
+        let currentId = targetGroup.parentId;
+        const expandedIds: string[] = [];
+
+        while (currentId) {
+            const parent = groupMap.get(currentId);
+            if (parent) {
+                if (parent.collapsed) {
+                    parent.collapsed = false;
+                    expandedIds.push(parent.id);
+                }
+                currentId = parent.parentId;
+            } else {
+                break;
+            }
+        }
+
+        // 배치 저장
+        if (expandedIds.length > 0) {
+            const states = expandedIds.map(id => ({ groupId: id, collapsed: false }));
+            this.stateManager.setBatch(states);
+            this.logger.debug('Grouping', `Expanded ${expandedIds.length} ancestor groups for ${groupId}`);
+        }
     }
 }

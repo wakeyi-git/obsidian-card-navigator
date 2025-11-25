@@ -6,10 +6,19 @@ import { GroupStateManager } from './GroupStateManager';
  * 그룹 섹션 헤더를 렌더링합니다
  *
  * 그룹 섹션의 UI 요소를 생성하고 관리합니다.
+ *
+ * @remarks
+ * Phase 4: 계층 구조 렌더링 지원 추가
+ * - createHierarchicalGroupSection: 중첩된 그룹 렌더링
+ * - level에 따른 들여쓰기
+ * - 자식 그룹 토글 (부모 접힘 시 자식도 숨김)
  */
 export class GroupRenderer {
     private isHorizontalMode: boolean = false;
     private stateManager: GroupStateManager | null = null;
+
+    /** 계층 구조 들여쓰기 단위 (px) - Phase 5: 12px로 축소 */
+    private static readonly INDENT_SIZE = 12;
 
     /**
      * 가로 모드 설정
@@ -80,27 +89,39 @@ export class GroupRenderer {
      * @param group - 그룹 데이터
      * @param onToggle - 접기/펼치기 콜백
      * @param onSelectAll - 전체 선택 콜백
+     * @param showHierarchy - 계층 구조 표시 여부 (Phase 4)
      * @returns 생성된 헤더 요소
      */
     private createGroupHeader(
         group: CardGroup,
         onToggle: (groupId: string, collapsed: boolean) => void,
-        onSelectAll: (groupId: string) => void
+        onSelectAll: (groupId: string) => void,
+        showHierarchy: boolean = false
     ): HTMLElement {
         const header = document.createElement('div');
         header.className = 'card-group-header';
 
-        // 토글 아이콘 - 가로 모드에 따라 다른 아이콘 사용
+        // ⭐ Phase 4: 계층 구조 들여쓰기 적용
+        if (showHierarchy && group.level > 0) {
+            header.style.paddingLeft = `${group.level * GroupRenderer.INDENT_SIZE + 8}px`;
+            header.classList.add('card-group-header-nested');
+            header.dataset.level = String(group.level);
+        }
+
+        // 토글 아이콘
         const toggleIcon = header.createEl('div', {
             cls: 'card-group-toggle-icon'
         });
 
-        if (this.isHorizontalMode) {
-            // 가로 모드: chevron-down (펼침) / chevron-right (접힘)
+        // ⭐ Phase 4: 자식이 있는 경우에만 토글 아이콘 표시
+        const hasChildren = group.children && group.children.length > 0;
+        const hasFiles = group.files.length > 0;
+
+        if (hasChildren || hasFiles) {
             setIcon(toggleIcon, group.collapsed ? 'chevron-right' : 'chevron-down');
         } else {
-            // 세로 모드: chevron-down (펼침) / chevron-right (접힘)
-            setIcon(toggleIcon, group.collapsed ? 'chevron-right' : 'chevron-down');
+            // 자식도 파일도 없는 경우 아이콘 숨김
+            toggleIcon.style.visibility = 'hidden';
         }
 
         // 그룹 아이콘 (lucide 아이콘)
@@ -117,10 +138,14 @@ export class GroupRenderer {
             text: group.name
         });
 
-        // 파일 개수
+        // ⭐ Phase 4: 파일 개수 표시 (계층 구조에서는 totalFileCount 사용 가능)
+        const displayCount = showHierarchy && group.totalFileCount !== undefined
+            ? group.totalFileCount
+            : group.files.length;
+
         header.createEl('span', {
             cls: 'card-group-count',
-            text: `(${group.files.length})`
+            text: `(${displayCount})`
         });
 
         // 액션 버튼 컨테이너
@@ -221,5 +246,198 @@ export class GroupRenderer {
         if (countEl) {
             countEl.textContent = `(${count})`;
         }
+    }
+
+    // ========== Phase 4: 계층 구조 렌더링 메서드 ==========
+
+    /**
+     * 계층 구조 그룹 섹션을 생성합니다
+     *
+     * @remarks
+     * Phase 4: 중첩된 그룹을 재귀적으로 렌더링합니다.
+     * - level에 따른 들여쓰기 적용
+     * - totalFileCount 표시
+     * - 부모 접힘 시 자식도 숨김
+     *
+     * @param group - 그룹 데이터 (계층 구조 포함)
+     * @param container - 그룹을 추가할 컨테이너
+     * @param onToggle - 접기/펼치기 콜백
+     * @param onSelectAll - 전체 선택 콜백
+     * @param activeFile - 현재 활성 파일
+     * @returns 생성된 섹션 요소
+     */
+    createHierarchicalGroupSection(
+        group: CardGroup,
+        container: HTMLElement,
+        onToggle: (groupId: string, collapsed: boolean) => void,
+        onSelectAll: (groupId: string) => void,
+        activeFile?: { path: string } | null
+    ): HTMLElement {
+        const section = container.createEl('div', {
+            cls: 'card-group-section card-group-hierarchical'
+        });
+        section.dataset.groupId = group.id;
+        section.dataset.level = String(group.level);
+
+        if (group.parentId) {
+            section.dataset.parentId = group.parentId;
+        }
+
+        // 접힌 그룹에 활성 파일이 포함되어 있으면 시각적 표시 추가
+        const hasActiveFile = this.checkHasActiveFile(group, activeFile);
+
+        if (group.collapsed) {
+            section.addClass('is-collapsed');
+            if (hasActiveFile) {
+                section.addClass('has-active-card');
+            }
+        }
+
+        // 섹션 헤더 (이름이 비어있으면 헤더 숨김)
+        if (group.name) {
+            const header = this.createGroupHeader(group, onToggle, onSelectAll, true);
+            section.appendChild(header);
+        }
+
+        // 카드 컨테이너 (직계 파일용)
+        const cardContainer = section.createEl('div', {
+            cls: 'card-group-content'
+        });
+        cardContainer.dataset.groupId = group.id;
+
+        // ⭐ Phase 4: 자식 그룹 컨테이너
+        if (group.children && group.children.length > 0) {
+            const childrenContainer = section.createEl('div', {
+                cls: 'card-group-children'
+            });
+            childrenContainer.dataset.parentId = group.id;
+
+            // 부모가 접히면 자식 컨테이너도 숨김
+            if (group.collapsed) {
+                childrenContainer.style.display = 'none';
+            }
+        }
+
+        return section;
+    }
+
+    /**
+     * 그룹(및 하위 그룹)에 활성 파일이 포함되어 있는지 확인합니다
+     *
+     * @param group - 그룹 데이터
+     * @param activeFile - 활성 파일
+     * @returns 활성 파일 포함 여부
+     */
+    private checkHasActiveFile(
+        group: CardGroup,
+        activeFile?: { path: string } | null
+    ): boolean {
+        if (!activeFile) return false;
+
+        // 직계 파일 확인
+        if (group.files.some(file => file.path === activeFile.path)) {
+            return true;
+        }
+
+        // 자식 그룹 재귀 확인
+        if (group.children) {
+            for (const child of group.children) {
+                if (this.checkHasActiveFile(child, activeFile)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 계층 구조 그룹을 토글합니다
+     *
+     * @remarks
+     * Phase 4: 부모 그룹 접힘 시 자식 그룹도 함께 숨깁니다.
+     *
+     * @param section - 그룹 섹션 요소
+     * @param collapsed - 접힌 상태
+     * @param container - 전체 컨테이너 (자식 그룹 처리용)
+     */
+    toggleHierarchicalGroup(
+        section: HTMLElement,
+        collapsed: boolean,
+        container: HTMLElement
+    ): void {
+        // 기본 토글 동작
+        this.toggleGroup(section, collapsed);
+
+        const groupId = section.dataset.groupId;
+        if (!groupId) return;
+
+        // 자식 그룹 컨테이너 토글
+        const childrenContainer = section.querySelector('.card-group-children') as HTMLElement;
+        if (childrenContainer) {
+            childrenContainer.style.display = collapsed ? 'none' : '';
+        }
+
+        // 자식 그룹 섹션들도 토글 (재귀적으로)
+        const childSections = container.querySelectorAll(
+            `.card-group-section[data-parent-id="${groupId}"]`
+        ) as NodeListOf<HTMLElement>;
+
+        childSections.forEach(childSection => {
+            if (collapsed) {
+                childSection.style.display = 'none';
+            } else {
+                childSection.style.display = '';
+                // 자식이 자체적으로 접혀있으면 그 상태 유지
+                const childId = childSection.dataset.groupId;
+                if (childId && this.stateManager?.getCollapsed(childId)) {
+                    // 자식의 자식들은 여전히 숨김
+                    this.hideDescendants(childSection, container);
+                }
+            }
+        });
+    }
+
+    /**
+     * 특정 그룹의 모든 후손 그룹을 숨깁니다
+     *
+     * @param section - 부모 섹션
+     * @param container - 전체 컨테이너
+     */
+    private hideDescendants(section: HTMLElement, container: HTMLElement): void {
+        const groupId = section.dataset.groupId;
+        if (!groupId) return;
+
+        const descendants = container.querySelectorAll(
+            `.card-group-section[data-parent-id="${groupId}"]`
+        ) as NodeListOf<HTMLElement>;
+
+        descendants.forEach(descendant => {
+            descendant.style.display = 'none';
+            this.hideDescendants(descendant, container);
+        });
+    }
+
+    /**
+     * 자식 그룹 컨테이너를 찾습니다
+     *
+     * @param section - 그룹 섹션 요소
+     * @returns 자식 그룹 컨테이너 또는 null
+     */
+    findChildrenContainer(section: HTMLElement): HTMLElement | null {
+        return section.querySelector('.card-group-children') as HTMLElement | null;
+    }
+
+    /**
+     * 특정 그룹의 모든 자식 섹션을 찾습니다
+     *
+     * @param container - 전체 컨테이너
+     * @param parentId - 부모 그룹 ID
+     * @returns 자식 섹션 배열
+     */
+    findChildSections(container: HTMLElement, parentId: string): HTMLElement[] {
+        return Array.from(
+            container.querySelectorAll(`.card-group-section[data-parent-id="${parentId}"]`)
+        ) as HTMLElement[];
     }
 }

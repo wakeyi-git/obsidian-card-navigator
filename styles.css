@@ -51,13 +51,14 @@
 	padding: 0 10px;
 	/* ⭐ 버그 수정 (2025-11-20): 하단 패딩 추가로 상태 표시줄 영역 확보 */
 	padding-bottom: 20px;
+	margin-bottom: 20px;
 	/* ⭐ 테마 변경 시 배경색 전환 효과 */
 	transition: background-color 0.2s ease;
 }
 
 /* 헤더 섹션 */
 .card-navigator-header {
-	margin-bottom: 10px;
+	/* margin-bottom: 10px; */
 	/* padding-bottom: 10px; */
 	border-bottom: 1px solid var(--background-modifier-border);
 }
@@ -107,6 +108,7 @@
 }
 
 /* 모드 표시 아이콘 */
+.toolbar-mode-display .toolbar-mode-icon,
 .toolbar-mode-display .mode-display-icon {
 	display: flex;
 	align-items: center;
@@ -115,12 +117,14 @@
 	color: var(--text-muted);
 }
 
+.toolbar-mode-display .toolbar-mode-icon svg,
 .toolbar-mode-display .mode-display-icon svg {
-	width: 16px;
-	height: 16px;
+	width: 14px;
+	height: 14px;
 }
 
 /* 모드 표시 텍스트 */
+.toolbar-mode-display .toolbar-mode-name,
 .toolbar-mode-display .mode-display-text {
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -272,6 +276,7 @@
 /* 카드 컨테이너 (그리드 레이아웃) */
 .card-navigator-cards {
 	display: grid;
+	margin-bottom: 10px;
 	/* ⭐ 리팩토링 2025-11-23: CSS 변수 기반 그리드 레이아웃 */
 	/* JavaScript는 --grid-columns/--grid-rows 변수만 업데이트 */
 	gap: 10px;
@@ -279,7 +284,7 @@
 	/* ⭐ Phase 3: flex 버그 방지 - min-height: 0으로 스크롤 활성화 */
 	min-height: 0;
 	/* ⭐ Phase 3: CSS 변수 기본값 설정 */
-	padding: 0 2px 0 10px;
+	padding: 0 2px 10px 10px;
 	--card-min-width: 150px;
 	--card-min-height: 100px;
 	--card-max-width: 400px;
@@ -3501,6 +3506,204 @@ button:focus-visible {
 }
 
 /* =============================================================================
+   ⭐ Context Bar - 드롭다운 그룹 선택 바
+   ============================================================================= */
+
+/* Context Bar 컨테이너 */
+.card-navigator-context-bar {
+	position: relative;
+	padding: var(--size-2-2) var(--size-4-2);
+	background: var(--background-secondary);
+	border-bottom: 1px solid var(--background-modifier-border);
+	font-size: var(--font-ui-small);
+}
+
+/* 숨김 상태 */
+.card-navigator-context-bar.hidden {
+	display: none;
+}
+
+/* 클릭 가능한 영역 */
+.context-bar-clickable {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+	padding: var(--size-2-1) var(--size-2-2);
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	transition: background-color 0.15s;
+	user-select: none;
+}
+
+.context-bar-clickable:hover {
+	background: var(--background-modifier-hover);
+}
+
+/* 드롭다운 열린 상태 */
+.card-navigator-context-bar.dropdown-open .context-bar-clickable {
+	background: var(--background-modifier-hover);
+}
+
+/* 아이콘 */
+.context-bar-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	color: var(--text-muted);
+}
+
+.context-bar-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* 현재 그룹명 */
+.context-bar-current-name {
+	flex: 1;
+	color: var(--text-normal);
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* 드롭다운 화살표 */
+.context-bar-arrow {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	color: var(--text-muted);
+	transition: transform 0.15s ease;
+}
+
+.context-bar-arrow svg {
+	width: 12px;
+	height: 12px;
+}
+
+/* 드롭다운 열린 상태 화살표 회전 */
+.card-navigator-context-bar.dropdown-open .context-bar-arrow {
+	transform: rotate(180deg);
+}
+
+/* 드롭다운 컨테이너 */
+.context-bar-dropdown {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	max-height: 300px;
+	overflow-y: auto;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-top: none;
+	border-radius: 0 0 var(--radius-s) var(--radius-s);
+	box-shadow: 0 4px 12px var(--cn-shadow-md);
+	z-index: 100;
+}
+
+.context-bar-dropdown.hidden {
+	display: none;
+}
+
+/* 드롭다운 빈 상태 */
+.context-bar-dropdown-empty {
+	padding: var(--size-4-3);
+	color: var(--text-muted);
+	text-align: center;
+	font-style: italic;
+}
+
+/* 드롭다운 아이템 */
+.context-bar-dropdown-item {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+	padding: var(--size-2-2) var(--size-4-2);
+	cursor: pointer;
+	transition: background-color 0.15s;
+}
+
+.context-bar-dropdown-item:hover {
+	background: var(--background-modifier-hover);
+}
+
+/* 활성 그룹 아이템 */
+.context-bar-dropdown-item.is-active {
+	background: var(--background-modifier-active-hover);
+	color: var(--text-accent);
+}
+
+.context-bar-dropdown-item.is-active .dropdown-item-icon {
+	color: var(--text-accent);
+}
+
+/* 드롭다운 아이템 아이콘 */
+.dropdown-item-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	color: var(--text-muted);
+}
+
+.dropdown-item-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* 드롭다운 아이템 이름 */
+.dropdown-item-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* 드롭다운 아이템 파일 개수 */
+.dropdown-item-count {
+	flex-shrink: 0;
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+}
+
+/* 드롭다운 아이템 토글 아이콘 */
+.dropdown-item-toggle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	color: var(--text-muted);
+	cursor: pointer;
+	border-radius: var(--radius-s);
+	transition: background-color 0.15s, color 0.15s;
+}
+
+.dropdown-item-toggle:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.dropdown-item-toggle svg {
+	width: 12px;
+	height: 12px;
+}
+
+/* 자식이 없는 경우 토글 아이콘 숨김 (공간 유지) */
+.dropdown-item-toggle.no-children {
+	visibility: hidden;
+}
+
+/* 접힌 상태의 아이템 스타일 */
+.context-bar-dropdown-item.is-collapsed .dropdown-item-toggle {
+	color: var(--text-muted);
+}
+
+/* =============================================================================
    ⭐ Card Grouping / Section Styles
    ============================================================================= */
 
@@ -3520,7 +3723,7 @@ button:focus-visible {
 
 /* 그룹 섹션 - 기본 세로 모드 */
 .card-group-section {
-	margin-bottom: var(--size-4-4);
+	margin-top: var(--size-2-2);
 }
 
 /* ⭐ 가로 모드: 그룹 섹션을 가로로 배치 */
@@ -3534,17 +3737,20 @@ button:focus-visible {
 	height: 100%;
 }
 
-/* 그룹 헤더 - 기본 세로 모드 */
+/* 그룹 헤더 - 기본 세로 모드 (컴팩트 디자인) */
 .card-group-header {
 	display: flex;
 	align-items: center;
-	gap: var(--size-4-2);
-	padding: var(--size-4-2) var(--size-4-4);
-	background-color: var(--background-secondary);
+	gap: var(--size-2-3);
+	padding: var(--size-2-2) var(--size-2-3);
+	background-color: transparent;
 	border-radius: var(--radius-s);
 	cursor: pointer;
-	transition: background-color 0.2s;
+	transition: background-color 0.15s;
 	user-select: none;
+	min-height: 24px;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 /* ⭐ 가로 모드: 그룹 헤더를 세로로 배치 */
@@ -3561,24 +3767,24 @@ button:focus-visible {
 }
 
 .card-group-header:hover {
-	background-color: var(--background-secondary-alt);
+	background-color: var(--background-modifier-hover);
 }
 
 /* 토글 아이콘 */
 .card-group-toggle-icon {
 	flex-shrink: 0;
-	color: var(--text-muted);
-	transition: transform 0.2s;
+	color: var(--text-faint);
+	transition: transform 0.15s ease;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 16px;
-	height: 16px;
+	width: 14px;
+	height: 14px;
 }
 
 .card-group-toggle-icon svg {
-	width: 16px;
-	height: 16px;
+	width: 12px;
+	height: 12px;
 }
 
 /* 그룹 아이콘 */
@@ -3591,31 +3797,36 @@ button:focus-visible {
 }
 
 .card-group-icon svg {
-	width: 16px;
-	height: 16px;
+	width: 14px;
+	height: 14px;
 }
 
 /* 그룹명 */
 .card-group-name {
 	flex: 1;
-	font-weight: 600;
+	font-weight: 500;
 	color: var(--text-normal);
-	font-size: 0.95em;
+	font-size: var(--font-ui-small);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* ⭐ 가로 모드: 그룹명을 세로로 배치 */
 .card-navigator-cards.horizontal-mode .card-group-name {
 	writing-mode: vertical-lr;
 	text-orientation: mixed;
-	flex: 0;
+	flex: 1;
 	white-space: nowrap;
+	overflow: visible;
+	text-overflow: clip;
 }
 
 /* 파일 개수 */
 .card-group-count {
-	color: var(--text-muted);
-	font-size: 0.85em;
-	font-weight: 500;
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+	font-weight: 400;
 }
 
 /* ⭐ 가로 모드: 파일 개수를 세로로 배치 */
@@ -3628,9 +3839,9 @@ button:focus-visible {
 /* 액션 버튼 컨테이너 */
 .card-group-actions {
 	display: flex;
-	gap: var(--size-4-1);
+	gap: var(--size-2-1);
 	opacity: 0;
-	transition: opacity 0.2s;
+	transition: opacity 0.15s;
 }
 
 /* ⭐ 가로 모드: 액션 버튼을 세로로 배치 */
@@ -3644,10 +3855,10 @@ button:focus-visible {
 
 /* 액션 버튼 */
 .card-group-action-btn {
-	padding: var(--size-4-1);
+	padding: var(--size-2-1);
 	border-radius: var(--radius-s);
-	color: var(--text-muted);
-	transition: background-color 0.2s, color 0.2s;
+	color: var(--text-faint);
+	transition: background-color 0.15s, color 0.15s;
 }
 
 .card-group-action-btn:hover {
@@ -3656,13 +3867,13 @@ button:focus-visible {
 }
 
 .card-group-action-btn svg {
-	width: 14px;
-	height: 14px;
+	width: 12px;
+	height: 12px;
 }
 
 /* 카드 컨테이너 - 기본 세로 모드 */
 .card-group-content {
-	margin-top: var(--size-4-2);
+	padding-top: var(--size-2-2);
 	display: grid;
 	gap: var(--card-gap);
 	transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
@@ -3742,13 +3953,11 @@ button:focus-visible {
 
 /* ⭐ 접힌 그룹에 활성 카드가 있을 때 시각적 표시 */
 .card-group-section.is-collapsed.has-active-card .card-group-header {
-	border-left: 3px solid var(--interactive-accent);
-	background-color: var(--background-modifier-hover);
+	border-left: 2px solid var(--interactive-accent);
 }
 
 .card-group-section.is-collapsed.has-active-card .card-group-name {
 	color: var(--interactive-accent);
-	font-weight: 600;
 }
 
 .card-group-section.is-collapsed.has-active-card .card-group-toggle-icon {
@@ -3758,27 +3967,103 @@ button:focus-visible {
 /* 가로 모드: 접힌 그룹에 활성 카드가 있을 때 */
 .card-navigator-cards.horizontal-mode .card-group-section.is-collapsed.has-active-card .card-group-header {
 	border-left: none;
-	border-top: 3px solid var(--interactive-accent);
+	border-top: 2px solid var(--interactive-accent);
 }
 
-/* 다크 모드 최적화 */
-.theme-dark .card-group-header {
-	background-color: var(--background-secondary);
+/* 다크/라이트 모드 - 배경 제거로 통일된 스타일 */
+
+/* =============================================================================
+   Phase 4 & 5: 계층 구조 그룹 스타일 (최적화)
+   ============================================================================= */
+
+/* 계층 구조 그룹 섹션 */
+.card-group-section.card-group-hierarchical {
+	position: relative;
 }
 
-.theme-dark .card-group-header:hover {
-	background-color: var(--background-modifier-hover);
+/* 계층 구조 헤더 - 중첩된 그룹 (Phase 5: 컴팩트 스타일) */
+.card-group-header.card-group-header-nested {
+	/* 들여쓰기는 JS에서 동적으로 적용 (12px per level) */
+	border-left: 1px solid var(--background-modifier-border);
+	margin-left: 4px;
+	padding-top: 4px;
+	padding-bottom: 4px;
+	min-height: auto;
 }
 
-/* 라이트 모드 최적화 */
-.theme-light .card-group-header {
-	background-color: var(--background-secondary);
-	border: 1px solid var(--background-modifier-border);
+/* 레벨별 시각적 구분 - 폰트 크기 및 투명도 */
+.card-group-header[data-level="1"] {
+	opacity: 0.97;
 }
 
-.theme-light .card-group-header:hover {
-	background-color: var(--background-secondary-alt);
-	border-color: var(--background-modifier-border-hover);
+.card-group-header[data-level="2"] {
+	opacity: 0.94;
+	font-size: 0.95em;
+}
+
+.card-group-header[data-level="3"] {
+	opacity: 0.91;
+	font-size: 0.92em;
+}
+
+.card-group-header[data-level="4"] {
+	opacity: 0.88;
+	font-size: 0.9em;
+}
+
+/* 자식 그룹 컨테이너 */
+.card-group-children {
+	margin-left: 0;
+}
+
+/* 계층 구조에서 접힌 그룹의 자식 컨테이너 */
+.card-group-section.is-collapsed .card-group-children {
+	display: none;
+}
+
+/* 계층 구조 헤더 호버 시 강조 */
+.card-group-header.card-group-header-nested:hover {
+	border-left-color: var(--interactive-accent);
+	border-left-width: 2px;
+}
+
+/* 계층 구조에서 토글 아이콘 위치 조정 */
+.card-group-hierarchical .card-group-toggle-icon {
+	flex-shrink: 0;
+}
+
+/* 계층 구조에서 그룹명 - flex: 1로 나머지 영역 채움 */
+.card-group-hierarchical .card-group-name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* 계층 구조에서 활성 카드가 있는 접힌 그룹 */
+.card-group-hierarchical.is-collapsed.has-active-card .card-group-header {
+	border-left-color: var(--interactive-accent);
+	border-left-width: 2px;
+}
+
+/* 가로 모드에서 계층 구조 */
+.card-navigator-cards.horizontal-mode .card-group-header.card-group-header-nested {
+	border-left: none;
+	border-top: 1px solid var(--background-modifier-border);
+	margin-left: 0;
+	margin-top: 2px;
+	/* 가로 모드에서는 들여쓰기 대신 상단 패딩 사용 */
+	padding-left: 6px !important;
+}
+
+.card-navigator-cards.horizontal-mode .card-group-header.card-group-header-nested:hover {
+	border-top-color: var(--interactive-accent);
+}
+
+/* 가로 모드에서 자식 그룹 컨테이너 */
+.card-navigator-cards.horizontal-mode .card-group-children {
+	margin-top: 0;
 }
 
 /* =============================================================================

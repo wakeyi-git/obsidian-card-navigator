@@ -344,6 +344,14 @@ export const de = {
 		modeToggleTagToActive: 'Zu aktivem Datei-Tag-Modus wechseln',
 		clickToSelectFolderTag: 'Klicken, um Ordner/Tag auszuwählen',
 		fileCount: (displayed: number, total: number) => `${displayed} / ${total}`,
+		groupingToggle: 'Gruppierung umschalten',
+		groupingEnable: 'Gruppierung aktivieren',
+		groupingDisable: 'Gruppierung deaktivieren',
+		pinToggle: 'Sichtbarkeit angehefteter Dateien umschalten',
+		pinShow: 'Angeheftete Dateien immer anzeigen',
+		pinHide: 'Angeheftete Dateien aus anderen Gruppen ausblenden',
+		folderMode: 'Ordner',
+		tagMode: 'Tag',
 		sortOptions: {
 			nameAsc: 'Dateiname (A-Z)',
 			nameDesc: 'Dateiname (Z-A)',
@@ -1295,3 +1303,5 @@ export const de = {
 		currentFilePropertiesLoaded: 'Aktuelle Datei-Eigenschaften geladen',
 	},
 } as const;
+
+export type TranslationKeys = typeof de;

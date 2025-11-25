@@ -344,6 +344,14 @@ export const fr = {
 		modeToggleTagToActive: 'Basculer vers le mode étiquette de fichier actif',
 		clickToSelectFolderTag: 'Cliquer pour sélectionner dossier/étiquette',
 		fileCount: (displayed: number, total: number) => `${displayed} / ${total}`,
+		groupingToggle: 'Basculer le regroupement',
+		groupingEnable: 'Activer le regroupement',
+		groupingDisable: 'Désactiver le regroupement',
+		pinToggle: 'Basculer la visibilité des fichiers épinglés',
+		pinShow: 'Toujours afficher les fichiers épinglés',
+		pinHide: 'Masquer les fichiers épinglés des autres groupes',
+		folderMode: 'Dossier',
+		tagMode: 'Étiquette',
 		sortOptions: {
 			nameAsc: 'Nom de fichier (A-Z)',
 			nameDesc: 'Nom de fichier (Z-A)',
@@ -1295,3 +1303,5 @@ export const fr = {
 		currentFilePropertiesLoaded: 'Propriétés du fichier actuel chargées',
 	},
 } as const;
+
+export type TranslationKeys = typeof fr;

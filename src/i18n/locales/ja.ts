@@ -344,6 +344,14 @@ export const ja = {
 		modeToggleTagToActive: 'アクティブファイルタグモードに切り替え',
 		clickToSelectFolderTag: 'クリックしてフォルダ/タグを選択',
 		fileCount: (displayed: number, total: number) => `${displayed} / ${total}`,
+		groupingToggle: 'グループ化を切り替え',
+		groupingEnable: 'グループ化を有効化',
+		groupingDisable: 'グループ化を無効化',
+		pinToggle: 'ピン留めファイルの表示を切り替え',
+		pinShow: 'ピン留めファイルを常に表示',
+		pinHide: '他のグループからピン留めファイルを非表示',
+		folderMode: 'フォルダ',
+		tagMode: 'タグ',
 		sortOptions: {
 			nameAsc: 'ファイル名（A-Z）',
 			nameDesc: 'ファイル名（Z-A）',
@@ -1295,3 +1303,5 @@ export const ja = {
 		currentFilePropertiesLoaded: '現在のファイルプロパティを読み込みました',
 	},
 } as const;
+
+export type TranslationKeys = typeof ja;
