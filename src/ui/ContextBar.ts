@@ -50,9 +50,11 @@ export class ContextBar {
     private barElement: HTMLElement | null = null;
     private currentGroupName: HTMLElement | null = null;
     private dropdownContainer: HTMLElement | null = null;
+    private collapseToggleIcon: HTMLElement | null = null;
     private currentPath: PathSegment[] = [];
     private groupList: GroupListItem[] = [];
     private isDropdownOpen: boolean = false;
+    private isAllCollapsed: boolean = false;
     private onGroupSelect: ((groupId: string) => void) | null = null;
     private outsideClickHandler: ((e: MouseEvent) => void) | null = null;
     /** 접힌 그룹 ID 세트 (드롭다운 내 계층 접기용) */
@@ -102,6 +104,17 @@ export class ContextBar {
         clickableArea.addEventListener('click', (e) => {
             e.stopPropagation();
             this.toggleDropdown();
+        });
+
+        // 모두 접기/펼치기 토글 아이콘 (오른쪽)
+        this.collapseToggleIcon = bar.createEl('span', {
+            cls: 'context-bar-collapse-toggle clickable-icon hidden',
+            attr: { 'aria-label': 'Toggle collapse all' }
+        });
+        setIcon(this.collapseToggleIcon, 'chevrons-down-up');
+        this.collapseToggleIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleCollapseAll();
         });
 
         // 드롭다운 컨테이너
@@ -181,6 +194,43 @@ export class ContextBar {
     }
 
     /**
+     * 자식이 있는 그룹이 존재하는지 확인합니다
+     */
+    private hasAnyGroupWithChildren(): boolean {
+        return this.groupList.some(g => g.hasChildren);
+    }
+
+    /**
+     * 모든 그룹의 접기/펼치기를 토글합니다
+     */
+    private toggleCollapseAll(): void {
+        if (this.isAllCollapsed) {
+            // 모두 펼치기
+            this.collapsedGroups.clear();
+            this.isAllCollapsed = false;
+        } else {
+            // 모두 접기
+            this.groupList.forEach(group => {
+                if (group.hasChildren) {
+                    this.collapsedGroups.add(group.id);
+                }
+            });
+            this.isAllCollapsed = true;
+        }
+        this.updateCollapseToggleIcon();
+        this.renderDropdownContent();
+    }
+
+    /**
+     * 접기/펼치기 토글 아이콘을 업데이트합니다
+     */
+    private updateCollapseToggleIcon(): void {
+        if (!this.collapseToggleIcon) return;
+        this.collapseToggleIcon.empty();
+        setIcon(this.collapseToggleIcon, this.isAllCollapsed ? 'chevrons-down-up' : 'chevrons-up-down');
+    }
+
+    /**
      * 드롭다운 내용을 렌더링합니다
      */
     private renderDropdownContent(): void {
@@ -196,6 +246,11 @@ export class ContextBar {
             return;
         }
 
+        // 그룹 목록 컨테이너
+        const listContainer = this.dropdownContainer.createEl('div', {
+            cls: 'context-bar-dropdown-list'
+        });
+
         // 그룹 목록 렌더링
         this.groupList.forEach(group => {
             const level = group.level || 0;
@@ -207,7 +262,7 @@ export class ContextBar {
                 return;
             }
 
-            const item = this.dropdownContainer!.createEl('div', {
+            const item = listContainer.createEl('div', {
                 cls: `context-bar-dropdown-item${group.isActive ? ' is-active' : ''}${isCollapsed ? ' is-collapsed' : ''}`,
                 attr: { 'data-level': String(level) }
             });
@@ -304,9 +359,25 @@ export class ContextBar {
             isActive: g.id === activeGroupId
         }));
 
+        // 토글 버튼 표시 상태 업데이트 (계층 구조가 있는 경우에만 표시)
+        this.updateToggleButtonsVisibility();
+
         // 드롭다운이 열려있으면 내용 갱신
         if (this.isDropdownOpen) {
             this.renderDropdownContent();
+        }
+    }
+
+    /**
+     * 토글 아이콘의 표시 상태를 업데이트합니다
+     */
+    private updateToggleButtonsVisibility(): void {
+        if (!this.collapseToggleIcon) return;
+
+        if (this.hasAnyGroupWithChildren()) {
+            this.collapseToggleIcon.removeClass('hidden');
+        } else {
+            this.collapseToggleIcon.addClass('hidden');
         }
     }
 
@@ -397,6 +468,7 @@ export class ContextBar {
         this.barElement = null;
         this.currentGroupName = null;
         this.dropdownContainer = null;
+        this.collapseToggleIcon = null;
         this.currentPath = [];
         this.groupList = [];
         this.collapsedGroups.clear();

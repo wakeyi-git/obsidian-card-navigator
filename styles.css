@@ -3512,6 +3512,8 @@ button:focus-visible {
 /* Context Bar 컨테이너 */
 .card-navigator-context-bar {
 	position: relative;
+	display: flex;
+	align-items: center;
 	padding: var(--size-2-2) var(--size-4-2);
 	background: var(--background-secondary);
 	border-bottom: 1px solid var(--background-modifier-border);
@@ -3525,6 +3527,7 @@ button:focus-visible {
 
 /* 클릭 가능한 영역 */
 .context-bar-clickable {
+	flex: 1;
 	display: flex;
 	align-items: center;
 	gap: var(--size-2-2);
@@ -3533,6 +3536,7 @@ button:focus-visible {
 	cursor: pointer;
 	transition: background-color 0.15s;
 	user-select: none;
+	min-width: 0;
 }
 
 .context-bar-clickable:hover {
@@ -3701,6 +3705,37 @@ button:focus-visible {
 /* 접힌 상태의 아이템 스타일 */
 .context-bar-dropdown-item.is-collapsed .dropdown-item-toggle {
 	color: var(--text-muted);
+}
+
+/* 컨텍스트 바 접기/펼치기 토글 아이콘 */
+.context-bar-collapse-toggle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	padding: var(--size-2-1);
+	color: var(--text-muted);
+	cursor: pointer;
+	transition: color 0.15s;
+}
+
+.context-bar-collapse-toggle:hover {
+	color: var(--text-normal);
+}
+
+.context-bar-collapse-toggle.hidden {
+	display: none;
+}
+
+.context-bar-collapse-toggle svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* 드롭다운 목록 컨테이너 */
+.context-bar-dropdown-list {
+	max-height: 300px;
+	overflow-y: auto;
 }
 
 /* =============================================================================

@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile, Notice } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFile, TFolder, Notice } from 'obsidian';
 import { CardRenderer } from './card/CardRenderer';
 import { CardDataExtractor } from './card/CardData';
 import CardNavigatorPlugin from './main';
@@ -814,24 +814,40 @@ export class CardNavigatorView extends ItemView implements ICardView {
 
 		// 그룹 ID에서 폴더/태그 경로 추출
 		if (groupId.startsWith('folder-')) {
-			// 폴더 선택: 해당 폴더를 지정된 폴더로 설정하고 뷰 새로고침
+			// 폴더 선택: 해당 폴더로 이동 (모드 옵션 유지)
 			const folderPath = groupId.replace('folder-', '');
 
-			this.logger.debug('View', 'Switching to specified folder', { folderPath });
+			this.logger.debug('View', 'Navigating to folder', { folderPath });
 
-			// 폴더 모드로 전환하고 지정된 폴더 설정
+			// specifiedFolder 업데이트 (지정 폴더 모드에서 사용)
 			this.plugin.settingsManager.updateSettings({
 				currentMode: 'folder',
 				folderMode: {
 					...this.settings.folderMode,
-					useActiveFolder: false,
 					specifiedFolder: folderPath
 				}
 			});
 
 			await this.plugin.saveSettings();
 
-			// 뷰 새로고침
+			// 활성 폴더 모드인 경우: 해당 폴더의 파일을 열어서 활성 폴더 변경
+			if (this.settings.folderMode.useActiveFolder) {
+				const folder = this.app.vault.getAbstractFileByPath(folderPath);
+				if (folder instanceof TFolder) {
+					// 폴더 내 첫 번째 마크다운 파일 찾기 (재귀적으로 하위 폴더도 검색)
+					const firstFile = this.findFirstMarkdownFileRecursively(folder);
+					if (firstFile) {
+						// 파일 열기 전 렌더 상태 초기화 (강제 재렌더링 유도)
+						this.viewRenderer.resetRenderState();
+						await this.openFile(firstFile);
+						return;
+					}
+				}
+				// 폴더와 하위 폴더에 파일이 없으면 지정 폴더 모드로 표시
+				// (뷰 새로고침으로 specifiedFolder 사용)
+			}
+
+			// 지정 폴더 모드이거나 파일이 없는 경우: 뷰 새로고침
 			if (this.cardsContainer) {
 				await this.viewRenderer.forceRender(
 					this.cardsContainer,
@@ -846,24 +862,41 @@ export class CardNavigatorView extends ItemView implements ICardView {
 
 			return;
 		} else if (groupId.startsWith('tag-')) {
-			// 태그 선택: 해당 태그를 지정된 태그로 설정하고 뷰 새로고침
+			// 태그 선택: 해당 태그로 이동 (모드 옵션 유지)
 			const tagPath = groupId.replace('tag-', '');
 
-			this.logger.debug('View', 'Switching to specified tag', { tagPath });
+			this.logger.debug('View', 'Navigating to tag', { tagPath });
 
-			// 태그 모드로 전환하고 지정된 태그 설정
+			// specifiedTags 업데이트 (지정 태그 모드에서 사용)
 			this.plugin.settingsManager.updateSettings({
 				currentMode: 'tag',
 				tagMode: {
 					...this.settings.tagMode,
-					useActiveFileTags: false,
 					specifiedTags: [tagPath]
 				}
 			});
 
 			await this.plugin.saveSettings();
 
-			// 뷰 새로고침
+			// 활성 파일 태그 모드인 경우: 해당 태그가 있는 파일을 열어서 활성 태그 변경
+			if (this.settings.tagMode.useActiveFileTags) {
+				const filesWithTag = this.app.vault.getMarkdownFiles().filter(file => {
+					const cache = this.app.metadataCache.getFileCache(file);
+					const tags = cache?.tags?.map(t => t.tag) || [];
+					const frontmatterTags = cache?.frontmatter?.tags || [];
+					const allTags = [...tags, ...frontmatterTags.map((t: string) => `#${t}`)];
+					return allTags.some(t => t === `#${tagPath}` || t === tagPath);
+				});
+				if (filesWithTag.length > 0) {
+					// 파일 열기 전 렌더 상태 초기화 (강제 재렌더링 유도)
+					this.viewRenderer.resetRenderState();
+					await this.openFile(filesWithTag[0]);
+					return;
+				}
+				// 태그를 가진 파일이 없으면 지정 태그 모드로 표시
+			}
+
+			// 지정 태그 모드이거나 파일이 없는 경우: 뷰 새로고침
 			if (this.cardsContainer) {
 				await this.viewRenderer.forceRender(
 					this.cardsContainer,
@@ -899,6 +932,40 @@ export class CardNavigatorView extends ItemView implements ICardView {
 			});
 		}
 		// 섹션이 없는 경우 (중간 폴더 등): Context Bar만 업데이트됨
+	}
+
+	/**
+	 * 폴더 내에서 첫 번째 마크다운 파일을 재귀적으로 찾습니다
+	 * (플러그인 정렬 설정에 따라 정렬)
+	 *
+	 * @param folder - 검색할 폴더
+	 * @returns 첫 번째 마크다운 파일 또는 null
+	 */
+	private findFirstMarkdownFileRecursively(folder: TFolder): TFile | null {
+		// 현재 폴더의 마크다운 파일들 수집
+		const mdFiles = folder.children.filter(
+			(child): child is TFile => child instanceof TFile && child.extension === 'md'
+		);
+
+		// 파일이 있으면 플러그인 정렬 설정에 따라 정렬 후 첫 번째 반환
+		if (mdFiles.length > 0) {
+			const sortedFiles = this.sortManager.sort(mdFiles, this.settings.sort);
+			return sortedFiles[0];
+		}
+
+		// 하위 폴더들을 이름순으로 정렬 후 재귀 탐색
+		const subfolders = folder.children
+			.filter((child): child is TFolder => child instanceof TFolder)
+			.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+		for (const subfolder of subfolders) {
+			const fileInSubfolder = this.findFirstMarkdownFileRecursively(subfolder);
+			if (fileInSubfolder) {
+				return fileInSubfolder;
+			}
+		}
+
+		return null;
 	}
 
 }
