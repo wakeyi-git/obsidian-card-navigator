@@ -2,27 +2,52 @@
 
 ### Performance
 
-#### active-leaf-change Event Optimization (Phase 5)
+#### Comprehensive Performance Optimization (Phase 1-6)
+
+**Phase 1: DOM Read/Write Separation**
+- Batch all `getBoundingClientRect()` calls before any DOM writes
+- Prevents forced reflow during layout calculations
+- Applied to: LayoutManager, ViewportLayoutManager, KeyboardNav, ScrollManager, ViewRenderer
+
+**Phase 2: requestAnimationFrame Integration**
+- Layout updates deferred to next animation frame
+- Synchronized with browser rendering cycle
+- Applied to: LayoutManager, ViewportLayoutManager
+
+**Phase 3: PresetManager Early Return**
+- Skip processing when presets are disabled or no mappings exist
+- Eliminates unnecessary loops and logging
+
+**Phase 4: Conditional Logging Optimization**
+- TagMode: Grouped logs, skip empty results
+- PresetManager: Remove repetitive loop logs
+
+**Phase 5: getFiles() Result Caching**
+- 100ms TTL cache for file list
+- Eliminates duplicate calls during same render cycle
+- Cache invalidation on file delete/rename/metadata change
+
+**Phase 6: Card Rendering Log Optimization**
+- Remove individual tag/link parsing logs
+- Remove section-by-section render logs
+- Keep only summary logs for important events
+
+### Results
+- **Forced reflow**: 9 → 0 (100% reduction)
+- **Debug logs**: 200+ → 45 (~78% reduction)
+- **Duplicate getFiles() calls**: Eliminated
+
+#### active-leaf-change Event Optimization
 - **Early Return Optimization**: File change check is now performed first, skipping unnecessary processing for duplicate events
   - Reduces event processing from 3 times to 1 time per file open
   - Eliminates redundant `autoApplyPreset` calls
-  - Related file: [view.ts](src/view.ts)
 
 - **Settings Panel Optimization**: Added file path tracking to prevent duplicate `loadCurrentFileProperties()` calls
-  - New `lastLoadedFilePath` field tracks the last processed file
-  - Skips processing when the same file triggers multiple events
-  - Related file: [InteractiveCardSettings.ts](src/ui/settings/InteractiveCardSettings.ts)
 
 - **Context Bar Update Deferral**: Uses `requestAnimationFrame` to defer Context Bar updates after render completion
-  - Reduces UI blocking during rendering
-  - Smoother visual transitions when switching files
-  - Related file: [ViewRenderer.ts](src/view/ViewRenderer.ts)
 
 ### Technical Details
-- Optimized `active-leaf-change` event handler in view.ts with early return pattern
-- Added `lastLoadedFilePath` field to InteractiveCardSettings for duplicate detection
-- Split `initializeContextBar()` into wrapper and `doInitializeContextBar()` for deferred execution
-- Performance improvement documentation: [hierarchy-performance-improvement-plan.md](hierarchy-performance-improvement-plan.md)
+- See [PERFORMANCE_IMPROVEMENT_PLAN.md](docs/PERFORMANCE_IMPROVEMENT_PLAN.md) for detailed implementation
 
 ## [1.5.3] - 2025-11-25
 
