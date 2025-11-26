@@ -37,8 +37,11 @@ export class InteractiveCardSettings extends BaseSettings {
     private abortController: AbortController | null = null;
     private currentTabIndex = 0;
     private readonly stateKeys: ('normal' | 'active' | 'focused')[] = ['normal', 'active', 'focused'];
-    
+
     private logger: DebugLogger;
+
+    // ⭐ Phase 5 최적화: 마지막으로 로드한 파일 경로 추적
+    private lastLoadedFilePath: string | null = null;
     
     constructor(plugin: CardNavigatorPlugin) {
         super(plugin);
@@ -238,7 +241,17 @@ export class InteractiveCardSettings extends BaseSettings {
             container.addClass('is-mobile');
         }
         
+        // ⭐ Phase 5 최적화: 파일 변경 체크 추가
         this.plugin.app.workspace.on('active-leaf-change', () => {
+            const activeFile = this.plugin.app.workspace.getActiveFile();
+            const currentPath = activeFile?.path || null;
+
+            // 같은 파일이면 스킵
+            if (currentPath === this.lastLoadedFilePath) {
+                return;
+            }
+            this.lastLoadedFilePath = currentPath;
+
             this.loadCurrentFileProperties();
             if (this.previewCard && this.plugin.settings[this.selectedSection].normalContent.contentType === 'property') {
                 this.refreshPreviewCard();

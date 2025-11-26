@@ -1,3 +1,29 @@
+## [1.5.7] - 2025-11-26
+
+### Performance
+
+#### active-leaf-change Event Optimization (Phase 5)
+- **Early Return Optimization**: File change check is now performed first, skipping unnecessary processing for duplicate events
+  - Reduces event processing from 3 times to 1 time per file open
+  - Eliminates redundant `autoApplyPreset` calls
+  - Related file: [view.ts](src/view.ts)
+
+- **Settings Panel Optimization**: Added file path tracking to prevent duplicate `loadCurrentFileProperties()` calls
+  - New `lastLoadedFilePath` field tracks the last processed file
+  - Skips processing when the same file triggers multiple events
+  - Related file: [InteractiveCardSettings.ts](src/ui/settings/InteractiveCardSettings.ts)
+
+- **Context Bar Update Deferral**: Uses `requestAnimationFrame` to defer Context Bar updates after render completion
+  - Reduces UI blocking during rendering
+  - Smoother visual transitions when switching files
+  - Related file: [ViewRenderer.ts](src/view/ViewRenderer.ts)
+
+### Technical Details
+- Optimized `active-leaf-change` event handler in view.ts with early return pattern
+- Added `lastLoadedFilePath` field to InteractiveCardSettings for duplicate detection
+- Split `initializeContextBar()` into wrapper and `doInitializeContextBar()` for deferred execution
+- Performance improvement documentation: [hierarchy-performance-improvement-plan.md](hierarchy-performance-improvement-plan.md)
+
 ## [1.5.3] - 2025-11-25
 
 ### Added

@@ -315,8 +315,17 @@ export class ViewRenderer {
 	 *
 	 * Context Bar는 그룹화 여부와 관계없이 항상 표시되며,
 	 * 현재 모드(폴더/태그)에 따라 전체 목록을 드롭다운에 표시합니다.
+	 *
+	 * ⭐ Phase 5 최적화: requestAnimationFrame을 사용하여 렌더링 프레임 완료 후 업데이트
 	 */
 	private initializeContextBar(): void {
+		requestAnimationFrame(() => this.doInitializeContextBar());
+	}
+
+	/**
+	 * Context Bar 초기화 실제 구현
+	 */
+	private doInitializeContextBar(): void {
 		const currentMode = this.settings.currentMode;
 
 		// 현재 모드에 따른 Context Bar 경로 설정

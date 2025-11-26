@@ -264,41 +264,47 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				if (!isValidElement(this.cardsContainer)) {
 					return;
 				}
-				
+
 				if (this.state.getIsRendering()) {
 					this.logger.debug('View', t().debug.view.renderingSkipped);
 					return;
 				}
-				
+
 				const activeFile = this.app.workspace.getActiveFile();
+
+				// ⭐ Phase 5 최적화: 파일 변경 여부를 가장 먼저 체크하여 조기 반환
+				const hasActiveFileChanged = this.state.hasFileChanged(activeFile);
+				if (!hasActiveFileChanged) {
+					this.logger.debug('View', t().debug.view.sameFileNoAction);
+					return; // 같은 파일이면 아무 작업도 하지 않음
+				}
 
 				this.logger.debug('View', t().debug.view.activeLeafChange, {
 					previousFile: this.state.getPreviousFile()?.path || 'none',
 					currentFile: activeFile?.path || 'none'
 				});
-				
+
+				// 파일이 실제로 변경되었을 때만 preset 적용
 				await this.plugin.presetManager.autoApplyPreset(activeFile);
-				
-				const hasActiveFileChanged = this.state.hasFileChanged(activeFile);
-				const needsRerender = hasActiveFileChanged &&
-					this.viewRenderer.needsRerenderForFileChange(activeFile);
+
+				const needsRerender = this.viewRenderer.needsRerenderForFileChange(activeFile);
 
 				this.logger.debug('View', t().debug.view.rerenderRequired, {
 					hasActiveFileChanged,
 					needsRerender
 				});
-				
+
 				if (needsRerender) {
 					this.logger.debug('View', t().debug.view.contextChangeRerender);
 					await this.renderCards(this.cardsContainer);
-					
+
 					if (isValidFile(activeFile)) {
 						const fileToScroll: TFile = activeFile;
 						setTimeout(async () => {
 							await this.scrollManager.scrollToActiveFile(fileToScroll, 'file-change');
 						}, TIMING.RENDER_COMPLETE_DELAY);
 					}
-				} else if (hasActiveFileChanged) {
+				} else {
 					this.logger.debug('View', t().debug.view.sameContextUpdateClass);
 
 					// 그룹화 활성화 시, 접힌 그룹에 활성 파일이 있으면 자동 펼치기
@@ -314,14 +320,12 @@ export class CardNavigatorView extends ItemView implements ICardView {
 						const fileToScroll: TFile = activeFile;
 						await this.scrollManager.scrollToActiveFile(fileToScroll, 'card-click');
 					}
-				} else {
-					this.logger.debug('View', t().debug.view.sameFileNoAction);
 				}
-				
+
 				if (isDefined(this.toolbar)) {
 					this.toolbar.updateModeToggleIcon();
 				}
-				
+
 				this.state.setPreviousFile(activeFile);
 			})
 		);
@@ -365,6 +369,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				// ⭐ Phase 2: 캐시 무효화
 				this.cardFactory.invalidateCache(file);
 				this.sortManager.clearCache(); // 파일 삭제는 전체 캐시 무효화
+				this.folderMode.invalidateCache(); // ⭐ Phase 4: FolderMode 캐시 무효화
 
 				// ⭐ Vault 파일 목록 업데이트 대기 + 디바운싱
 				setTimeout(() => {
@@ -399,6 +404,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 					this.cardFactory.invalidateCache(oldFile);
 				}
 				this.sortManager.clearCache(); // 파일 이름 변경은 전체 캐시 무효화
+				this.folderMode.invalidateCache(); // ⭐ Phase 4: FolderMode 캐시 무효화
 
 				// ⭐ 디바운싱 적용: metadata 이벤트와 합쳐짐
 				if (this.debouncedForceRender) {

@@ -356,6 +356,7 @@ export class GroupRenderer {
      *
      * @remarks
      * Phase 4: 부모 그룹 접힘 시 자식 그룹도 함께 숨깁니다.
+     * ⭐ Phase 2 최적화: 재귀 호출 제거, 반복문 기반으로 변경
      *
      * @param section - 그룹 섹션 요소
      * @param collapsed - 접힌 상태
@@ -378,43 +379,71 @@ export class GroupRenderer {
             childrenContainer.style.display = collapsed ? 'none' : '';
         }
 
-        // 자식 그룹 섹션들도 토글 (재귀적으로)
-        const childSections = container.querySelectorAll(
-            `.card-group-section[data-parent-id="${groupId}"]`
+        // ⭐ Phase 2 최적화: 새로운 메서드 사용
+        if (collapsed) {
+            // 접을 때: 단일 쿼리로 모든 후손 숨김
+            this.hideAllDescendants(groupId, container);
+        } else {
+            // 펼칠 때: 직접 자식만 표시 (자식의 접힘 상태 고려)
+            this.showDirectChildren(groupId, container);
+        }
+    }
+
+    /**
+     * 모든 후손 그룹을 숨깁니다 (반복문 기반)
+     *
+     * @remarks
+     * ⭐ Phase 2 최적화: 재귀적 querySelectorAll → 단일 쿼리 + 반복문
+     * - 기존: O(d × h) - 계층 깊이만큼 DOM 쿼리 반복
+     * - 개선: O(d) - 단일 DOM 쿼리로 모든 후손 처리
+     *
+     * @param groupId - 부모 그룹 ID
+     * @param container - 전체 컨테이너
+     */
+    private hideAllDescendants(groupId: string, container: HTMLElement): void {
+        // 단일 쿼리로 parentId가 있는 모든 섹션 수집
+        const allSections = container.querySelectorAll(
+            '.card-group-section[data-parent-id]'
         ) as NodeListOf<HTMLElement>;
 
-        childSections.forEach(childSection => {
-            if (collapsed) {
-                childSection.style.display = 'none';
-            } else {
-                childSection.style.display = '';
-                // 자식이 자체적으로 접혀있으면 그 상태 유지
-                const childId = childSection.dataset.groupId;
-                if (childId && this.stateManager?.getCollapsed(childId)) {
-                    // 자식의 자식들은 여전히 숨김
-                    this.hideDescendants(childSection, container);
+        // 후손 ID를 추적하는 Set (초기값: 시작 그룹 ID)
+        const descendantIds = new Set<string>([groupId]);
+
+        // 단일 순회로 모든 후손 처리
+        allSections.forEach(section => {
+            const parentId = section.dataset.parentId;
+            if (parentId && descendantIds.has(parentId)) {
+                section.style.display = 'none';
+                const sectionId = section.dataset.groupId;
+                if (sectionId) {
+                    descendantIds.add(sectionId);
                 }
             }
         });
     }
 
     /**
-     * 특정 그룹의 모든 후손 그룹을 숨깁니다
+     * 직접 자식 그룹만 표시합니다
      *
-     * @param section - 부모 섹션
+     * @remarks
+     * ⭐ Phase 2 최적화: 펼칠 때 직접 자식만 표시하고,
+     * 자식이 접혀있으면 그 후손은 숨김 상태 유지
+     *
+     * @param groupId - 부모 그룹 ID
      * @param container - 전체 컨테이너
      */
-    private hideDescendants(section: HTMLElement, container: HTMLElement): void {
-        const groupId = section.dataset.groupId;
-        if (!groupId) return;
-
-        const descendants = container.querySelectorAll(
+    private showDirectChildren(groupId: string, container: HTMLElement): void {
+        const childSections = container.querySelectorAll(
             `.card-group-section[data-parent-id="${groupId}"]`
         ) as NodeListOf<HTMLElement>;
 
-        descendants.forEach(descendant => {
-            descendant.style.display = 'none';
-            this.hideDescendants(descendant, container);
+        childSections.forEach(childSection => {
+            childSection.style.display = '';
+            const childId = childSection.dataset.groupId;
+            // 자식이 접혀있으면 그 후손은 숨김 유지
+            if (childId && this.stateManager?.getCollapsed(childId)) {
+                this.hideAllDescendants(childId, container);
+            }
         });
     }
 

@@ -59,6 +59,8 @@ export class ContextBar {
     private outsideClickHandler: ((e: MouseEvent) => void) | null = null;
     /** 접힌 그룹 ID 세트 (드롭다운 내 계층 접기용) */
     private collapsedGroups: Set<string> = new Set();
+    /** ⭐ Phase 1 최적화: 그룹 ID → 그룹 객체 맵 (O(1) 조회용) */
+    private groupListMap: Map<string, GroupListItem> = new Map();
 
     constructor(container: HTMLElement) {
         this.container = container;
@@ -316,6 +318,11 @@ export class ContextBar {
 
     /**
      * 부모 그룹이 접혀있는지 확인합니다
+     *
+     * @remarks
+     * ⭐ Phase 1 최적화: Array.find() → Map.get()으로 변경
+     * - 기존: O(n × h) - 매번 전체 배열 순회
+     * - 개선: O(h) - Map을 통한 O(1) 조회
      */
     private isParentCollapsed(group: GroupListItem): boolean {
         if (!group.parentId) return false;
@@ -325,8 +332,8 @@ export class ContextBar {
             return true;
         }
 
-        // 조상 중 접힌 것이 있는지 재귀 확인
-        const parent = this.groupList.find(g => g.id === group.parentId);
+        // ⭐ Phase 1 최적화: Map을 통한 O(1) 조회
+        const parent = this.groupListMap.get(group.parentId);
         if (parent) {
             return this.isParentCollapsed(parent);
         }
@@ -358,6 +365,9 @@ export class ContextBar {
             ...g,
             isActive: g.id === activeGroupId
         }));
+
+        // ⭐ Phase 1 최적화: Map 생성 (O(1) 조회용)
+        this.groupListMap = new Map(this.groupList.map(g => [g.id, g]));
 
         // 토글 버튼 표시 상태 업데이트 (계층 구조가 있는 경우에만 표시)
         this.updateToggleButtonsVisibility();
@@ -471,6 +481,7 @@ export class ContextBar {
         this.collapseToggleIcon = null;
         this.currentPath = [];
         this.groupList = [];
+        this.groupListMap.clear(); // ⭐ Phase 1 최적화: Map 정리
         this.collapsedGroups.clear();
         this.onGroupSelect = null;
     }

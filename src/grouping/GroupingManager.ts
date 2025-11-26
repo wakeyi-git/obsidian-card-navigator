@@ -818,6 +818,11 @@ export class GroupingManager {
     /**
      * 볼트의 전체 폴더 목록을 계층 구조로 반환합니다
      *
+     * @remarks
+     * ⭐ Phase 3 최적화: hasChildren 계산을 O(n²) → O(n)으로 개선
+     * - 기존: 각 폴더마다 전체 폴더 목록 순회
+     * - 개선: 사전에 hasChildrenMap 구축 후 O(1) 조회
+     *
      * @returns 폴더 경로와 마크다운 파일 수를 포함한 배열
      */
     getAllFolders(): { path: string; name: string; fileCount: number; level: number; hasChildren: boolean; parentId: string | null }[] {
@@ -846,6 +851,22 @@ export class GroupingManager {
             }
         }
 
+        // ⭐ Phase 3 최적화: hasChildrenMap 사전 구축 (O(n))
+        const hasChildrenMap = new Set<string>();
+        for (const folderPath of allFolderPaths) {
+            if (folderPath === '/') continue;
+
+            const parts = folderPath.split('/').filter(p => p);
+            if (parts.length > 1) {
+                // 부모 경로가 자식을 가짐
+                const parentPath = parts.slice(0, -1).join('/');
+                hasChildrenMap.add(parentPath);
+            } else if (parts.length === 1) {
+                // 루트가 자식을 가짐
+                hasChildrenMap.add('/');
+            }
+        }
+
         // 폴더 목록을 배열로 변환하고 정렬
         const folders: { path: string; name: string; fileCount: number; level: number; hasChildren: boolean; parentId: string | null }[] = [];
 
@@ -862,17 +883,8 @@ export class GroupingManager {
                 parentPath = '/';
             }
 
-            // 자식이 있는지 확인 (직접 자식만 체크)
-            const hasChildren = Array.from(allFolderPaths).some(p => {
-                if (p === folderPath) return false;
-                if (folderPath === '/') {
-                    // 루트의 자식: 단일 세그먼트 폴더
-                    const pParts = p.split('/').filter(s => s);
-                    return pParts.length === 1;
-                }
-                // 직접 자식인지 확인 (현재 경로 + 1 레벨만)
-                return p.startsWith(folderPath + '/') && p.split('/').length === folderPath.split('/').length + 1;
-            });
+            // ⭐ Phase 3 최적화: O(1) 조회
+            const hasChildren = hasChildrenMap.has(folderPath);
 
             folders.push({
                 path: folderPath,
@@ -892,6 +904,11 @@ export class GroupingManager {
 
     /**
      * 볼트의 전체 태그 목록을 계층 구조로 반환합니다
+     *
+     * @remarks
+     * ⭐ Phase 3 최적화: hasChildren 계산을 O(n²) → O(n)으로 개선
+     * - 기존: 각 태그마다 전체 태그 목록 순회
+     * - 개선: 사전에 hasChildrenMap 구축 후 O(1) 조회
      *
      * @returns 태그와 사용 횟수를 포함한 배열
      */
@@ -947,6 +964,17 @@ export class GroupingManager {
             }
         }
 
+        // ⭐ Phase 3 최적화: hasChildrenMap 사전 구축 (O(n))
+        const hasChildrenMap = new Set<string>();
+        for (const tag of allTagPaths) {
+            const parts = tag.split('/');
+            if (parts.length > 1) {
+                // 부모 태그가 자식을 가짐
+                const parentTag = parts.slice(0, -1).join('/');
+                hasChildrenMap.add(parentTag);
+            }
+        }
+
         // 태그 목록을 배열로 변환하고 정렬
         const tagsArray: { tag: string; name: string; fileCount: number; level: number; hasChildren: boolean; parentId: string | null }[] = [];
 
@@ -961,12 +989,8 @@ export class GroupingManager {
                 parentTag = parts.slice(0, -1).join('/');
             }
 
-            // 자식이 있는지 확인 (직접 자식만 체크)
-            const hasChildren = Array.from(allTagPaths).some(t => {
-                if (t === tag) return false;
-                // 직접 자식인지 확인 (현재 태그 + 1 레벨만)
-                return t.startsWith(tag + '/') && t.split('/').length === tag.split('/').length + 1;
-            });
+            // ⭐ Phase 3 최적화: O(1) 조회
+            const hasChildren = hasChildrenMap.has(tag);
 
             tagsArray.push({
                 tag,
