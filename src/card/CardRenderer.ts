@@ -193,20 +193,23 @@ export class CardRenderer {
      * - 설정에 따라 플러그인 검색 또는 Obsidian 검색으로 분기
      */
     private setupLinkHandlersInternal(cardEl: HTMLElement): void {
-        this.logger.debug('Card', t().debug.card.setupLinkHandlers);
-        
+        // ⭐ Performance: 로그 그룹화 - 개별 링크/태그 로그 제거
         const linkElements = cardEl.querySelectorAll('.internal-link');
-        
-        this.logger.debug('Card', t().debug.card.internalLinkElementsFound, { count: linkElements.length });
-        
-        linkElements.forEach((linkEl, index) => {
+        const tagElements = cardEl.querySelectorAll('.tag-link');
+
+        // 핸들러가 설정될 요소가 있을 때만 로그 출력
+        if (linkElements.length > 0 || tagElements.length > 0) {
+            this.logger.debug('Card', t().debug.card.setupLinkHandlers, {
+                internalLinks: linkElements.length,
+                tagLinks: tagElements.length
+            });
+        }
+
+        linkElements.forEach((linkEl) => {
             const span = linkEl as HTMLElement;
             const filePath = span.dataset.filePath;
-            
-            this.logger.debug('Card', t().debug.card.linkFilePath(index), filePath);
-            
+
             if (!filePath) {
-                this.logger.debug('Card', t().debug.card.linkNoFilePath(index));
                 return;
             }
             
@@ -251,41 +254,35 @@ export class CardRenderer {
                 }
             });
         });
-        
-        const tagElements = cardEl.querySelectorAll('.tag-link');
-        
-        this.logger.debug('Card', t().debug.card.tagLinkElementsFound, { count: tagElements.length });
-        
-        tagElements.forEach((tagEl, index) => {
+
+        // ⭐ Performance: tagElements는 이미 위에서 조회했으므로 재사용
+        tagElements.forEach((tagEl) => {
             const span = tagEl as HTMLElement;
             const tagName = span.dataset.tag;
-            
-            this.logger.debug('Card', t().debug.card.tagName(index), tagName);
-            
+
             if (!tagName) {
-                this.logger.debug('Card', t().debug.card.tagNoName(index));
                 return;
             }
 
             // 스타일은 CSS에서 처리 (인라인 스타일 제거하여 다크 모드 지원 개선)
-            
+
             span.addEventListener('click', async (e: MouseEvent) => {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
+                // ⭐ Performance: 클릭 시에만 로그 출력 (초기화 시 개별 태그 로그 제거)
                 this.logger.debug('Card', t().debug.card.tagClicked, {
                     tagName,
-                    tagClickAction: this.settings?.tagClickAction || 'obsidian-search',
-                    timestamp: Date.now()
+                    tagClickAction: this.settings?.tagClickAction || 'obsidian-search'
                 });
-                
+
                 const tagClickAction = this.settings?.tagClickAction || 'plugin-search';
-                
+
                 switch (tagClickAction) {
                     case 'plugin-search':
                         await this.handlePluginSearch(tagName);
                         break;
-                        
+
                     case 'obsidian-search':
                     default:
                         await this.handleObsidianSearch(tagName);
@@ -467,13 +464,7 @@ export class CardRenderer {
         const sectionEl = document.createElement('div');
         sectionEl.className = className;
 
-        this.logger.debug('Card', t().debug.card.renderSectionCalled, {
-            sectionType: section.type,
-            renderMode: renderMode,
-            contentLength: section.content?.length || 0,
-            contentPreview: section.content?.substring(0, 100),
-            hasInternalLink: section.content?.includes('internal-link')
-        });
+        // ⭐ Performance: 섹션별 상세 로그 제거 (카드당 3번 호출되어 로그 과다)
 
         if (!section.content) {
             if (section.type === 'header') {
@@ -485,8 +476,6 @@ export class CardRenderer {
         }
 
         if (renderMode === 'markdown-html') {
-            this.logger.debug('Card', t().debug.card.markdownRenderingStart, { sectionType: section.type });
-
             // Obsidian 읽기 뷰와 동일한 클래스 추가
             sectionEl.addClass('markdown-preview-view');
             sectionEl.addClass('markdown-preview-section');
@@ -496,13 +485,7 @@ export class CardRenderer {
             const content = section.content;
             await this.renderMarkdown(content, sectionEl, sourcePath);
             sectionEl.addClass('card-markdown-content');
-
-            this.logger.debug('Card', t().debug.card.markdownRenderingComplete, {
-                sectionType: section.type,
-                innerHTML: sectionEl.innerHTML.substring(0, 100)
-            });
         } else {
-            this.logger.debug('Card', t().debug.card.plainTextRendering, { sectionType: section.type });
             this.renderPlainText(section.content, sectionEl);
         }
 
@@ -517,20 +500,12 @@ export class CardRenderer {
      * internal-link, tag-link를 감지하여 HTML 콘텐츠로 판별합니다.
      */
     private renderPlainText(text: string, container: HTMLElement): void {
-        this.logger.debug('Card', t().debug.card.renderPlainTextCalled, {
-            textLength: text.length,
-            hasSpan: text.includes('<span'),
-            hasInternalLink: text.includes('internal-link'),
-            hasTagLink: text.includes('tag-link'),
-            containerClass: container.className
-        });
-        
+        // ⭐ Performance: 반복적인 로그 제거 (카드당 3번 호출됨)
+
         // HTML 태그가 포함되어 있으면 DOM API로 파싱
         if (text.includes('<span') && (text.includes('internal-link') || text.includes('tag-link'))) {
-            this.logger.debug('Card', t().debug.card.htmlContentDetected);
             this.renderHTMLContent(text, container);
         } else {
-            this.logger.debug('Card', t().debug.card.plainTextContent);
             container.textContent = text;
         }
     }
@@ -544,34 +519,27 @@ export class CardRenderer {
      * 쉼표로 구분된 여러 링크/태그를 지원합니다.
      */
     private renderHTMLContent(html: string, container: HTMLElement): void {
-        this.logger.debug('Card', t().debug.card.renderHtmlContentCalled, {
-            htmlLength: html.length,
-            htmlPreview: html.substring(0, 200)
-        });
+        // ⭐ Performance: 반복적인 파싱 로그 제거 (태그 수에 비례해 로그 폭발)
 
         const parts = html.split(', ');
-        this.logger.debug('Card', t().debug.card.partsSeparated, { count: parts.length });
-        
         const fragment = document.createDocumentFragment();
-        
+
         parts.forEach((part, index) => {
             const trimmedPart = part.trim();
-            this.logger.debug('Card', t().debug.card.partTrimmed(index), { content: trimmedPart });
-            
+
             let match = trimmedPart.match(/<span class="internal-link" data-file-path="([^"]+)">(.+?)<\/span>/);
 
             if (match) {
                 const filePath = match[1];
                 const displayName = match[2];
-                this.logger.debug('Card', t().debug.card.linkParsed, { filePath, displayName });
-                
+
                 const span = document.createElement('span');
                 span.className = 'internal-link';
                 span.dataset.filePath = filePath;
                 span.textContent = displayName;
-                
+
                 fragment.appendChild(span);
-                
+
                 if (index < parts.length - 1) {
                     fragment.appendChild(document.createTextNode(', '));
                 }
@@ -581,28 +549,22 @@ export class CardRenderer {
                 if (match) {
                     const tagName = match[1];
                     const displayText = match[2];
-                    this.logger.debug('Card', t().debug.card.tagParsed, { tagName, displayText });
-                    
+
                     const span = document.createElement('span');
                     span.className = 'tag-link';
                     span.dataset.tag = tagName;
                     span.textContent = displayText;
-                    
+
                     fragment.appendChild(span);
-                    
+
                     if (index < parts.length - 1) {
                         fragment.appendChild(document.createTextNode(', '));
                     }
                 } else {
-                    this.logger.warn('Card', t().debug.card.htmlParsingFailed, {
-                        part: trimmedPart,
-                        reason: 'internal-link도 tag-link도 아님'
-                    });
-                    
+                    // 파싱 실패 시에만 경고 로그
                     if (trimmedPart.startsWith('<span') && trimmedPart.includes('tag-link')) {
                         const textMatch = trimmedPart.match(/>(.+?)</);
                         if (textMatch) {
-                            this.logger.debug('Card', t().debug.card.tagTextExtracted, { text: textMatch[1] });
                             fragment.appendChild(document.createTextNode(textMatch[1]));
                         } else {
                             fragment.appendChild(document.createTextNode(trimmedPart));
@@ -610,16 +572,15 @@ export class CardRenderer {
                     } else {
                         fragment.appendChild(document.createTextNode(trimmedPart));
                     }
-                    
+
                     if (index < parts.length - 1) {
                         fragment.appendChild(document.createTextNode(', '));
                     }
                 }
             }
         });
-        
+
         container.appendChild(fragment);
-        this.logger.debug('Card', t().debug.card.domAddComplete, { childrenCount: container.children.length });
     }
 
     /**
@@ -640,11 +601,7 @@ export class CardRenderer {
         sourcePath: string
     ): Promise<void> {
         try {
-            this.logger.debug('Card', t().debug.card.markdownRendererCalled, {
-                textLength: text.length,
-                sourcePath: sourcePath,
-                containerClass: container.className
-            });
+            // ⭐ Performance: 마크다운 렌더링 호출 로그 제거 (카드당 최대 3번 호출)
 
             await MarkdownRenderer.render(
                 this.app,
@@ -657,11 +614,6 @@ export class CardRenderer {
             // ⭐ CSS로 <br> 뒤 줄바꿈 처리 (DOM 조작 대신 클래스 추가)
             // white-space: pre-wrap 대신 white-space: pre-line 사용으로 해결
             container.addClass('card-markdown-rendered');
-
-            this.logger.debug('Card', t().debug.card.markdownRendererComplete, {
-                childrenCount: container.children.length,
-                innerHTML: container.innerHTML.substring(0, 500)
-            });
         } catch (error) {
             this.logger.error('Card', t().debug.card.markdownRenderError, error);
             this.renderPlainText(text, container);

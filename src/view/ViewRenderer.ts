@@ -109,19 +109,38 @@ export class ViewRenderer {
 		if (!isValidFile(activeFile)) {
 			return [];
 		}
-		
-		const cache = this.app.metadataCache.getFileCache(activeFile);
-		return cache?.tags?.map(t => t.tag) || [];
+
+		// getFileTags를 재사용하여 인라인 + 프론트매터 태그 모두 반환
+		return this.getFileTags(activeFile);
 	}
 	
 	/**
-	 * 파일의 태그 배열을 가져옵니다
-	 * 
+	 * 파일의 태그 배열을 가져옵니다 (인라인 + 프론트매터)
+	 *
 	 * @param file - 대상 파일
 	 */
 	private getFileTags(file: TFile): string[] {
 		const cache = this.app.metadataCache.getFileCache(file);
-		return cache?.tags?.map(t => t.tag) || [];
+		const tags: string[] = [];
+
+		// 인라인 태그 (#로 시작)
+		if (cache?.tags) {
+			tags.push(...cache.tags.map(t => t.tag));
+		}
+
+		// 프론트매터 태그 (# 없이 저장되므로 추가)
+		if (cache?.frontmatter?.tags) {
+			const fmTags = cache.frontmatter.tags;
+			if (Array.isArray(fmTags)) {
+				tags.push(...fmTags
+					.filter((t): t is string => typeof t === 'string' && t.length > 0)
+					.map(t => t.startsWith('#') ? t : `#${t}`));
+			} else if (typeof fmTags === 'string' && fmTags.length > 0) {
+				tags.push(fmTags.startsWith('#') ? fmTags : `#${fmTags}`);
+			}
+		}
+
+		return tags;
 	}
 	
 	/**
@@ -136,16 +155,16 @@ export class ViewRenderer {
 			if (activeTags.length === 0) {
 				return false;
 			}
-			
+
 			const fileTags = this.getFileTags(file);
 			const hasCommonTag = fileTags.some(tag => activeTags.includes(tag));
-			
+
 			this.logger.debug('View', t().viewRenderer.comments.activeFileTagMode, {
 				activeTags,
 				fileTags,
 				hasCommonTag
 			});
-			
+
 			return hasCommonTag;
 		} else {
 			// 지정된 태그 모드
@@ -153,16 +172,22 @@ export class ViewRenderer {
 			if (specifiedTags.length === 0) {
 				return false;
 			}
-			
+
 			const fileTags = this.getFileTags(file);
-			const hasSpecifiedTag = fileTags.some(tag => specifiedTags.includes(tag));
-			
+			// specifiedTags는 # 없이 저장되고, fileTags는 # 포함이므로
+			// 비교 시 fileTags에서 # 제거하거나 specifiedTags에 # 추가
+			const normalizedSpecifiedTags = specifiedTags.map(tag =>
+				tag.startsWith('#') ? tag : `#${tag}`
+			);
+			const hasSpecifiedTag = fileTags.some(tag => normalizedSpecifiedTags.includes(tag));
+
 			this.logger.debug('View', t().viewRenderer.comments.specifiedTagMode, {
 				specifiedTags,
+				normalizedSpecifiedTags,
 				fileTags,
 				hasSpecifiedTag
 			});
-			
+
 			return hasSpecifiedTag;
 		}
 	}
@@ -299,6 +324,58 @@ export class ViewRenderer {
 	/** ⭐ 현재 렌더링된 그룹 목록 (Context Bar 업데이트용) */
 	private currentGroups: CardGroup[] = [];
 
+	/** ⭐ Performance: getFiles() 결과 캐싱 */
+	private cachedFiles: TFile[] | null = null;
+	private cacheTimestamp: number = 0;
+	private readonly CACHE_TTL_MS = 100;
+
+	/**
+	 * ⭐ Performance: 캐싱된 파일 목록을 가져옵니다
+	 *
+	 * 동일한 렌더링 사이클 내에서 중복 getFiles() 호출을 방지합니다.
+	 * TTL(100ms) 내에는 캐시된 결과를 반환합니다.
+	 *
+	 * @returns 파일 목록 (캐시 또는 새로 조회)
+	 */
+	private getFilesWithCache(): TFile[] {
+		const now = Date.now();
+
+		// 캐시가 유효한 경우 반환
+		if (this.cachedFiles && (now - this.cacheTimestamp) < this.CACHE_TTL_MS) {
+			this.logger.debug('View', '⚡ getFilesWithCache: 캐시 사용', {
+				cachedCount: this.cachedFiles.length,
+				cacheAge: now - this.cacheTimestamp
+			});
+			return this.cachedFiles;
+		}
+
+		// 새로 조회
+		if (this.settings.currentMode === 'tag') {
+			this.cachedFiles = this.tagMode.getFiles();
+		} else {
+			this.cachedFiles = this.folderMode.getFiles();
+		}
+		this.cacheTimestamp = now;
+
+		this.logger.debug('View', '⚡ getFilesWithCache: 새로 조회', {
+			mode: this.settings.currentMode,
+			fileCount: this.cachedFiles.length
+		});
+
+		return this.cachedFiles;
+	}
+
+	/**
+	 * ⭐ Performance: 파일 캐시를 무효화합니다
+	 *
+	 * 파일 생성/삭제/수정, 폴더 변경, 태그 변경 시 호출합니다.
+	 */
+	invalidateFileCache(): void {
+		this.cachedFiles = null;
+		this.cacheTimestamp = 0;
+		this.logger.debug('View', '⚡ 파일 캐시 무효화됨');
+	}
+
 	/**
 	 * 간단한 디바운스 유틸리티
 	 */
@@ -347,36 +424,44 @@ export class ViewRenderer {
 		} else {
 			icon = 'hash';
 			if (this.settings.tagMode.useActiveFileTags) {
-				const activeFile = this.getActiveFile();
-				if (activeFile) {
-					const cache = this.app.metadataCache.getFileCache(activeFile);
-					const tags: string[] = [];
+				// 활성 태그 모드: specifiedTags가 설정되어 있으면 우선 사용 (드롭다운에서 선택한 태그)
+				// 그렇지 않으면 활성 파일의 첫 번째 태그 사용
+				if (this.settings.tagMode.specifiedTags.length > 0) {
+					// 드롭다운에서 선택한 태그가 있으면 그것을 표시
+					fullPath = this.settings.tagMode.specifiedTags[0].replace('#', '');
+				} else {
+					// 드롭다운에서 선택한 태그가 없으면 활성 파일의 첫 번째 태그 사용
+					const activeFile = this.getActiveFile();
+					if (activeFile) {
+						const cache = this.app.metadataCache.getFileCache(activeFile);
+						const tags: string[] = [];
 
-					// frontmatter 태그 수집
-					if (cache?.frontmatter?.tags) {
-						const fmTags = cache.frontmatter.tags;
-						if (Array.isArray(fmTags)) {
-							tags.push(...fmTags
-								.filter((t): t is string => typeof t === 'string' && t.length > 0)
-								.map((t: string) => t.startsWith('#') ? t : `#${t}`));
-						} else if (typeof fmTags === 'string' && fmTags.length > 0) {
-							tags.push(fmTags.startsWith('#') ? fmTags : `#${fmTags}`);
+						// frontmatter 태그 수집
+						if (cache?.frontmatter?.tags) {
+							const fmTags = cache.frontmatter.tags;
+							if (Array.isArray(fmTags)) {
+								tags.push(...fmTags
+									.filter((t): t is string => typeof t === 'string' && t.length > 0)
+									.map((t: string) => t.startsWith('#') ? t : `#${t}`));
+							} else if (typeof fmTags === 'string' && fmTags.length > 0) {
+								tags.push(fmTags.startsWith('#') ? fmTags : `#${fmTags}`);
+							}
 						}
-					}
 
-					// 인라인 태그 수집
-					if (cache?.tags) {
-						tags.push(...cache.tags.map(t => t.tag));
-					}
+						// 인라인 태그 수집
+						if (cache?.tags) {
+							tags.push(...cache.tags.map(t => t.tag));
+						}
 
-					if (tags.length > 0) {
-						// # 제거하여 getAllTags()의 tag.tag와 일치시킴
-						fullPath = tags[0].replace('#', '');
+						if (tags.length > 0) {
+							// # 제거하여 getAllTags()의 tag.tag와 일치시킴
+							fullPath = tags[0].replace('#', '');
+						} else {
+							fullPath = '';
+						}
 					} else {
 						fullPath = '';
 					}
-				} else {
-					fullPath = '';
 				}
 			} else if (this.settings.tagMode.specifiedTags.length > 0) {
 				// # 제거하여 getAllTags()의 tag.tag와 일치시킴
@@ -582,21 +667,29 @@ export class ViewRenderer {
 
 	/**
 	 * 현재 뷰포트에 보이는 그룹을 찾습니다
+	 *
+	 * @remarks
+	 * ⭐ Performance: DOM 읽기/쓰기 분리
+	 * - 모든 getBoundingClientRect() 호출을 일괄 수행
+	 * - Forced reflow 방지
 	 */
 	private findVisibleGroup(container: HTMLElement): CardGroup | null {
 		const groupSections = this.groupRenderer.findAllGroupSections(container);
 		if (groupSections.length === 0) return null;
 
+		// ⭐ Performance: 모든 DOM 읽기를 먼저 일괄 수행 (읽기 단계)
 		const containerRect = container.getBoundingClientRect();
 		const containerTop = containerRect.top;
+		const sectionRects = groupSections.map(section => section.getBoundingClientRect());
 
+		// ⭐ Performance: 읽기 완료 후 계산 수행 (처리 단계)
 		// 스크롤 위치에 가장 가까운 그룹 찾기
-		for (const section of groupSections) {
-			const sectionRect = section.getBoundingClientRect();
+		for (let i = 0; i < groupSections.length; i++) {
+			const sectionRect = sectionRects[i];
 
 			// 섹션의 상단이 컨테이너 상단 근처에 있으면 해당 그룹
 			if (sectionRect.top <= containerTop + 50 && sectionRect.bottom > containerTop) {
-				const groupId = section.dataset.groupId;
+				const groupId = groupSections[i].dataset.groupId;
 				if (groupId) {
 					return this.currentGroups.find(g => g.id === groupId) || null;
 				}
@@ -1036,6 +1129,7 @@ export class ViewRenderer {
 	): Promise<void> {
 		this.lastRenderState = null;
 		this.lastDetailedState = null; // ⭐ Phase 1.2
+		this.invalidateFileCache(); // ⭐ Performance: 강제 렌더링 시 캐시 무효화
 		await this.renderCards(container, onFileOpen);
 	}
 	
@@ -1060,11 +1154,8 @@ export class ViewRenderer {
 				false
 			);
 		} else {
-			if (this.settings.currentMode === 'tag') {
-				files = this.tagMode.getFiles();
-			} else {
-				files = this.folderMode.getFiles();
-			}
+			// ⭐ Performance: 캐싱된 파일 목록 사용
+			files = this.getFilesWithCache();
 		}
 
 		// 핀된 파일 항상 표시 옵션이 활성화되어 있으면 핀된 파일을 추가
@@ -1929,6 +2020,9 @@ export class ViewRenderer {
 
 	/**
 	 * 파일 목록을 동기적으로 가져옵니다 (캐시된 데이터 사용)
+	 *
+	 * @remarks
+	 * ⭐ Performance: getFilesWithCache()를 사용하여 중복 조회 방지
 	 */
 	private getFilesToDisplaySync(): TFile[] | null {
 		try {
@@ -1936,11 +2030,8 @@ export class ViewRenderer {
 				return null; // 검색 모드는 비동기 필요
 			}
 
-			if (this.settings.currentMode === 'tag') {
-				return this.tagMode.getFiles();
-			} else {
-				return this.folderMode.getFiles();
-			}
+			// ⭐ Performance: 캐싱된 파일 목록 사용
+			return this.getFilesWithCache();
 		} catch (error) {
 			this.logger.debug('View', 'Failed to get files synchronously', { error });
 			return null;

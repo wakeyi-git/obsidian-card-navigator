@@ -26,6 +26,9 @@ export class ViewportLayoutManager {
 	/** 뷰포트 변경 감지 디바운스 타이머 */
 	private updateTimeout: NodeJS.Timeout | null = null;
 
+	/** ⭐ Performance Phase 2: requestAnimationFrame ID */
+	private rafId: number | null = null;
+
 	/** 디바운스 지연 시간 (ms) */
 	private readonly DEBOUNCE_MS = 50;
 
@@ -59,6 +62,11 @@ export class ViewportLayoutManager {
 	 * IntersectionObserver 콜백
 	 *
 	 * @param entries - 관찰 대상 요소들의 교차 상태
+	 *
+	 * @remarks
+	 * ⭐ Performance Phase 2: requestAnimationFrame 활용
+	 * - 뷰포트 계산을 다음 프레임으로 지연
+	 * - 브라우저의 렌더링 사이클과 동기화
 	 */
 	private onIntersection(entries: IntersectionObserverEntry[]): void {
 		// 디바운스 처리
@@ -67,32 +75,51 @@ export class ViewportLayoutManager {
 		}
 
 		this.updateTimeout = setTimeout(() => {
-			this.updateVisibleRange();
+			// ⭐ Performance Phase 2: 이전 RAF 취소
+			if (this.rafId !== null) {
+				cancelAnimationFrame(this.rafId);
+			}
+
+			// ⭐ Performance Phase 2: 다음 프레임에서 범위 계산 수행
+			this.rafId = requestAnimationFrame(() => {
+				this.rafId = null;
+				this.updateVisibleRange();
+			});
 		}, this.DEBOUNCE_MS);
 	}
 
 	/**
 	 * 보이는 카드 범위를 업데이트합니다
+	 *
+	 * @remarks
+	 * ⭐ Performance: DOM 읽기/쓰기 분리 최적화
+	 * - 모든 getBoundingClientRect() 호출을 먼저 일괄 수행 (읽기 단계)
+	 * - 그 후 계산 및 상태 업데이트 수행 (쓰기 단계)
+	 * - Forced reflow 방지
 	 */
 	private updateVisibleRange(): void {
 		if (this.cards.length === 0) {
 			return;
 		}
 
-		// 현재 뷰포트에 보이는 카드 인덱스 계산
+		// ⭐ Performance: 모든 DOM 읽기를 먼저 일괄 수행 (읽기 단계)
 		const viewportTop = this.containerEl.scrollTop;
-		const viewportBottom = viewportTop + this.containerEl.clientHeight;
+		const viewportHeight = this.containerEl.clientHeight;
+		const viewportBottom = viewportTop + viewportHeight;
+		const containerRect = this.containerEl.getBoundingClientRect();
 
+		// 모든 카드의 rect를 한 번에 읽기
+		const cardRects = this.cards.map(card => card.getBoundingClientRect());
+
+		// ⭐ Performance: 읽기 완료 후 계산 수행 (처리 단계)
 		let newStart = -1;
 		let newEnd = -1;
 
 		for (let i = 0; i < this.cards.length; i++) {
-			const card = this.cards[i];
-			const rect = card.getBoundingClientRect();
-			const containerRect = this.containerEl.getBoundingClientRect();
+			const rect = cardRects[i];
 
 			// 카드의 컨테이너 상대 위치 계산
-			const cardTop = rect.top - containerRect.top + this.containerEl.scrollTop;
+			const cardTop = rect.top - containerRect.top + viewportTop;
 			const cardBottom = cardTop + rect.height;
 
 			// 뷰포트와 교차하는지 확인
@@ -220,6 +247,12 @@ export class ViewportLayoutManager {
 		if (this.updateTimeout) {
 			clearTimeout(this.updateTimeout);
 			this.updateTimeout = null;
+		}
+
+		// ⭐ Performance Phase 2: requestAnimationFrame 정리
+		if (this.rafId !== null) {
+			cancelAnimationFrame(this.rafId);
+			this.rafId = null;
 		}
 
 		this.cards = [];

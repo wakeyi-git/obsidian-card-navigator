@@ -264,30 +264,38 @@ export class ScrollManager {
     
     /**
      * 현재 뷰포트에 보이는 카드 개수를 계산합니다
-     * 
+     *
      * @returns 보이는 카드 개수
+     *
+     * @remarks
+     * ⭐ Performance: DOM 읽기/쓰기 분리
+     * - 모든 getBoundingClientRect() 호출을 일괄 수행
+     * - Forced reflow 방지
      */
     getVisibleCardCount(): number {
         const container = this.view.containerEl.querySelector('.card-navigator-cards');
         if (!container) return 0;
-        
-        const containerRect = container.getBoundingClientRect();
+
         const cards = Array.from(container.querySelectorAll('.card-item')) as HTMLElement[];
-        
+        if (cards.length === 0) return 0;
+
+        // ⭐ Performance: 모든 DOM 읽기를 먼저 일괄 수행 (읽기 단계)
+        const containerRect = container.getBoundingClientRect();
+        const cardRects = cards.map(card => card.getBoundingClientRect());
+
+        // ⭐ Performance: 읽기 완료 후 계산 수행 (처리 단계)
         let visibleCount = 0;
-        for (const card of cards) {
-            const cardRect = card.getBoundingClientRect();
-            
+        for (const cardRect of cardRects) {
             const isVisible = (
                 cardRect.top < containerRect.bottom &&
                 cardRect.bottom > containerRect.top
             );
-            
+
             if (isVisible) {
                 visibleCount++;
             }
         }
-        
+
         return visibleCount;
     }
     

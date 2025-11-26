@@ -81,13 +81,14 @@ export class PresetManager {
                     this.mappingIndex.byTag.get(mapping.target)!.push(mapping);
                     break;
 
-                case 'property':
+                case 'property': {
                     const propName = mapping.target.split(':')[0]; // "property:value" → "property"
                     if (!this.mappingIndex.byProperty.has(propName)) {
                         this.mappingIndex.byProperty.set(propName, []);
                     }
                     this.mappingIndex.byProperty.get(propName)!.push(mapping);
                     break;
+                }
             }
         }
 
@@ -580,6 +581,18 @@ export class PresetManager {
         }
 
         const settings = this.plugin.settings;
+
+        // ⭐ Performance: Early return - 프리셋 기능이 비활성화된 경우
+        if (!settings.enablePresets) {
+            return null;
+        }
+
+        // ⭐ Performance: Early return - 매핑이 없는 경우 (가장 흔한 케이스)
+        // 로그 출력 없이 즉시 반환하여 성능 향상
+        if (settings.presetMappings.length === 0) {
+            return null;
+        }
+
         const prioritySettings = settings.presetPriority;
 
         this.logger.debug('Preset', 'Search start', {
@@ -615,10 +628,11 @@ export class PresetManager {
             const typeOrder = this.determineTypeOrder();
             const modeLabel = prioritySettings.mode === 'auto' ? 'auto' : 'semi-auto';
 
-            this.logger.debug('Preset', `Search start (${modeLabel} mode)`, {
+            // ⭐ Performance: 검색 시작 로그는 한 번만
+            this.logger.debug('Preset', `Search (${modeLabel} mode)`, {
                 file: file.path,
-                priorityMode: prioritySettings.mode,
-                typeOrder
+                typeOrder,
+                totalMappings: settings.presetMappings.length
             });
 
             // 타입 우선순위 순서대로 매칭 검색
@@ -626,10 +640,10 @@ export class PresetManager {
                 const mappings = this.getMappingsByType(type)
                     .sort((a, b) => a.priority - b.priority);
 
-                this.logger.debug('Preset', `Mapping search (${type})`, {
-                    count: mappings.length,
-                    priorities: mappings.map(m => ({ target: m.target, priority: m.priority }))
-                });
+                // ⭐ Performance: 매핑이 없는 타입은 로그 생략
+                if (mappings.length === 0) {
+                    continue;
+                }
 
                 for (const mapping of mappings) {
                     if (this.isMatch(file, mapping)) {
@@ -638,11 +652,9 @@ export class PresetManager {
                         );
 
                         if (preset) {
-                            this.logger.debug('Preset', `Matched preset (${modeLabel} mode)`, {
+                            this.logger.debug('Preset', `Matched: ${preset.name}`, {
                                 type,
-                                target: mapping.target,
-                                priority: mapping.priority,
-                                presetName: preset.name
+                                target: mapping.target
                             });
                             return preset;
                         }
@@ -651,7 +663,7 @@ export class PresetManager {
             }
         }
 
-        this.logger.debug('Preset', 'No matched preset');
+        // ⭐ Performance: 매칭 실패 로그 생략 (대부분의 경우)
         return null;
     }
 

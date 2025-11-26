@@ -200,6 +200,9 @@ export class KeyboardNavigator {
 	 * ⭐ Section 8.2: 열 수 계산 결과 캐싱
 	 * - 컨테이너 너비가 변경되지 않았으면 캐시된 값 반환
 	 * - getBoundingClientRect() 호출 최소화로 성능 향상
+	 *
+	 * ⭐ Performance: DOM 읽기/쓰기 분리
+	 * - 모든 getBoundingClientRect() 호출을 일괄 수행
      */
     private calculateColumns(): number {
         if (this.cards.length === 0) return 1;
@@ -214,15 +217,21 @@ export class KeyboardNavigator {
 			return this.cachedColumns;
 		}
 
-        const firstCard = this.cards[0];
-        const firstLeft = firstCard.getBoundingClientRect().left;
+        // ⭐ Performance: 모든 DOM 읽기를 먼저 일괄 수행 (읽기 단계)
+        // 첫 번째 행을 찾기 위해 필요한 만큼만 읽기 (최대 카드 수 또는 예상 열 수)
+        const maxCardsToCheck = Math.min(this.cards.length, 20); // 합리적인 최대 열 수
+        const cardLefts: number[] = [];
 
+        for (let i = 0; i < maxCardsToCheck; i++) {
+            cardLefts.push(this.cards[i].getBoundingClientRect().left);
+        }
+
+        // ⭐ Performance: 읽기 완료 후 계산 수행 (처리 단계)
+        const firstLeft = cardLefts[0];
         let columns = 1;
-        for (let i = 1; i < this.cards.length; i++) {
-            const card = this.cards[i];
-            const left = card.getBoundingClientRect().left;
 
-            if (Math.abs(left - firstLeft) > 5) {
+        for (let i = 1; i < cardLefts.length; i++) {
+            if (Math.abs(cardLefts[i] - firstLeft) > 5) {
                 columns++;
             } else {
                 break;

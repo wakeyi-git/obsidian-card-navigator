@@ -49,6 +49,12 @@ export class LayoutManager {
     /** 전체 설정 가져오기 함수 (ViewportLayoutManager용) */
     private getFullSettings: () => CardNavigatorSettings;
 
+    /** ⭐ Performance: ResizeObserver에서 캐싱된 크기 (getBoundingClientRect 호출 최소화) */
+    private cachedSize: { width: number; height: number } | null = null;
+
+    /** ⭐ Performance Phase 2: requestAnimationFrame ID (중복 호출 방지) */
+    private rafId: number | null = null;
+
     private readonly RESIZE_DEBOUNCE_MS = 100;
     private readonly SIZE_CHANGE_THRESHOLD = 20;
 
@@ -98,22 +104,68 @@ export class LayoutManager {
 
     /**
      * 현재 레이아웃 모드를 감지합니다
-     * 
+     *
      * @returns width > height이면 'horizontal', 아니면 'vertical'
+     *
+     * @remarks
+     * ⭐ Performance: 캐싱된 크기를 우선 사용합니다.
      */
     private detectLayoutMode(): LayoutMode {
-        const rect = this.containerEl.getBoundingClientRect();
-        return rect.width > rect.height ? 'horizontal' : 'vertical';
+        const size = this.getContainerSize();
+        return this.detectLayoutModeFromSize(size);
+    }
+
+    /**
+     * 주어진 크기로 레이아웃 모드를 감지합니다
+     *
+     * @param size - 컨테이너 크기
+     * @returns width > height이면 'horizontal', 아니면 'vertical'
+     *
+     * @remarks
+     * ⭐ Performance: 크기를 파라미터로 받아 getBoundingClientRect 호출 방지
+     */
+    private detectLayoutModeFromSize(size: { width: number; height: number }): LayoutMode {
+        return size.width > size.height ? 'horizontal' : 'vertical';
     }
 
     /**
      * ResizeObserver를 설정합니다
+     *
+     * @remarks
+     * ⭐ Performance: ResizeObserver 콜백에서 크기를 캐싱하여
+     * getBoundingClientRect() 호출을 최소화합니다.
      */
     private setupResizeObserver(): void {
-        this.resizeObserver = new ResizeObserver(() => {
+        this.resizeObserver = new ResizeObserver((entries) => {
+            // ⭐ Performance: ResizeObserver에서 직접 크기를 캐싱
+            const entry = entries[0];
+            if (entry) {
+                this.cachedSize = {
+                    width: entry.contentRect.width,
+                    height: entry.contentRect.height
+                };
+            }
             this.onResize();
         });
         this.resizeObserver.observe(this.containerEl);
+    }
+
+    /**
+     * ⭐ Performance: 캐싱된 컨테이너 크기를 반환합니다
+     *
+     * @returns 컨테이너 크기 (캐시가 없으면 getBoundingClientRect 호출)
+     *
+     * @remarks
+     * ResizeObserver 콜백에서 캐싱된 크기를 우선 사용하여
+     * 불필요한 getBoundingClientRect() 호출을 방지합니다.
+     */
+    private getContainerSize(): { width: number; height: number } {
+        if (this.cachedSize) {
+            return this.cachedSize;
+        }
+        // 캐시가 없는 경우에만 직접 조회 (초기화 시)
+        const rect = this.containerEl.getBoundingClientRect();
+        return { width: rect.width, height: rect.height };
     }
 
     /**
@@ -122,6 +174,10 @@ export class LayoutManager {
      * @remarks
      * 디바운싱을 적용하여 과도한 재계산을 방지합니다.
      * 크기가 임계값(20px) 이상 변경되거나 모드가 바뀔 때만 레이아웃을 업데이트합니다.
+     *
+     * ⭐ Performance Phase 2: requestAnimationFrame 활용
+     * - 레이아웃 업데이트를 다음 프레임으로 지연
+     * - 브라우저의 렌더링 사이클과 동기화하여 forced reflow 방지
      */
     private onResize(): void {
         if (this.resizeTimeout) {
@@ -129,48 +185,59 @@ export class LayoutManager {
         }
 
         this.resizeTimeout = setTimeout(() => {
-            const rect = this.containerEl.getBoundingClientRect();
-            const newMode = this.detectLayoutMode();
-
-            const widthChange = this.previousSize
-                ? Math.abs(rect.width - this.previousSize.width)
-                : Infinity;
-            const heightChange = this.previousSize
-                ? Math.abs(rect.height - this.previousSize.height)
-                : Infinity;
-
-            const modeChanged = newMode !== this.currentMode;
-            const significantSizeChange =
-                widthChange >= this.SIZE_CHANGE_THRESHOLD ||
-                heightChange >= this.SIZE_CHANGE_THRESHOLD;
-
-            // ⭐ 모드 변경은 크기 변화와 무관하게 항상 우선 처리
-            if (modeChanged || significantSizeChange) {
-                this.logger.debug('Layout', '레이아웃 업데이트 트리거', {
-                    modeChanged,
-                    oldMode: this.currentMode,
-                    newMode,
-                    widthChange: widthChange.toFixed(1),
-                    heightChange: heightChange.toFixed(1),
-                    threshold: this.SIZE_CHANGE_THRESHOLD,
-                    containerSize: `${rect.width.toFixed(0)}×${rect.height.toFixed(0)}`
-                });
-
-                this.currentMode = newMode;
-                this.previousSize = {
-                    width: rect.width,
-                    height: rect.height
-                };
-                this.updateLayout();
-            } else {
-                // 디버깅: 업데이트가 건너뛰어진 경우
-                this.logger.debug('Layout', '레이아웃 업데이트 건너뜀', {
-                    widthChange: widthChange.toFixed(1),
-                    heightChange: heightChange.toFixed(1),
-                    threshold: this.SIZE_CHANGE_THRESHOLD,
-                    reason: '변화량이 임계값 미만'
-                });
+            // ⭐ Performance Phase 2: 이전 RAF 취소
+            if (this.rafId !== null) {
+                cancelAnimationFrame(this.rafId);
             }
+
+            // ⭐ Performance Phase 2: 다음 프레임에서 레이아웃 계산 수행
+            this.rafId = requestAnimationFrame(() => {
+                this.rafId = null;
+
+                // ⭐ Performance: 캐싱된 크기 사용 (getBoundingClientRect 호출 방지)
+                const size = this.getContainerSize();
+                const newMode = this.detectLayoutModeFromSize(size);
+
+                const widthChange = this.previousSize
+                    ? Math.abs(size.width - this.previousSize.width)
+                    : Infinity;
+                const heightChange = this.previousSize
+                    ? Math.abs(size.height - this.previousSize.height)
+                    : Infinity;
+
+                const modeChanged = newMode !== this.currentMode;
+                const significantSizeChange =
+                    widthChange >= this.SIZE_CHANGE_THRESHOLD ||
+                    heightChange >= this.SIZE_CHANGE_THRESHOLD;
+
+                // ⭐ 모드 변경은 크기 변화와 무관하게 항상 우선 처리
+                if (modeChanged || significantSizeChange) {
+                    this.logger.debug('Layout', '레이아웃 업데이트 트리거', {
+                        modeChanged,
+                        oldMode: this.currentMode,
+                        newMode,
+                        widthChange: widthChange.toFixed(1),
+                        heightChange: heightChange.toFixed(1),
+                        threshold: this.SIZE_CHANGE_THRESHOLD,
+                        containerSize: `${size.width.toFixed(0)}×${size.height.toFixed(0)}`
+                    });
+
+                    this.currentMode = newMode;
+                    this.previousSize = {
+                        width: size.width,
+                        height: size.height
+                    };
+                    this.updateLayout();
+                } else {
+                    // 디버깅: 업데이트가 건너뛰어진 경우
+                    this.logger.debug('Layout', '레이아웃 업데이트 건너뜀', {
+                        widthChange: widthChange.toFixed(1),
+                        heightChange: heightChange.toFixed(1),
+                        threshold: this.SIZE_CHANGE_THRESHOLD,
+                        reason: '변화량이 임계값 미만'
+                    });
+                }
+            });
 
             this.resizeTimeout = null;
         }, this.RESIZE_DEBOUNCE_MS);
@@ -180,9 +247,12 @@ export class LayoutManager {
 	 * ⭐ Section 7.1: 현재 레이아웃 상태를 생성합니다
 	 *
 	 * @returns 현재 레이아웃 상태 객체
+	 *
+	 * @remarks
+	 * ⭐ Performance: 캐싱된 크기를 사용하여 getBoundingClientRect 호출 방지
 	 */
 	private getCurrentLayoutState(): LayoutState {
-		const rect = this.containerEl.getBoundingClientRect();
+		const size = this.getContainerSize();
 		return {
 			cardMinWidth: this.settings.cardMinWidth,
 			cardMinHeight: this.settings.cardMinHeight,
@@ -190,8 +260,8 @@ export class LayoutManager {
 			cardMaxHeight: this.settings.cardMaxHeight,
 			gap: this.settings.gap,
 			mode: this.currentMode,
-			containerWidth: Math.floor(rect.width),
-			containerHeight: Math.floor(rect.height)
+			containerWidth: Math.floor(size.width),
+			containerHeight: Math.floor(size.height)
 		};
 	}
 
@@ -287,19 +357,20 @@ export class LayoutManager {
 			return;
 		}
 
-        const rect = this.containerEl.getBoundingClientRect();
+        // ⭐ Performance: 캐싱된 크기 사용 (getBoundingClientRect 호출 방지)
+        const size = this.getContainerSize();
         const mode = this.currentMode;
 
         // 그리드 크기 계산 (그룹화 여부와 무관하게 항상 계산)
         const gridSize = mode === 'vertical'
-            ? this.calculateGridSize(rect.width, this.settings.cardMinWidth)
-            : this.calculateGridSize(rect.height, this.settings.cardMinHeight);
+            ? this.calculateGridSize(size.width, this.settings.cardMinWidth)
+            : this.calculateGridSize(size.height, this.settings.cardMinHeight);
 
         this.logger.debug('Layout', '레이아웃 업데이트', {
             mode,
             gridSize,
-            width: rect.width,
-            height: rect.height,
+            width: size.width,
+            height: size.height,
             cardMinWidth: this.settings.cardMinWidth,
             cardMinHeight: this.settings.cardMinHeight
         });
@@ -521,6 +592,12 @@ export class LayoutManager {
         if (this.resizeTimeout) {
             clearTimeout(this.resizeTimeout);
             this.resizeTimeout = null;
+        }
+
+        // ⭐ Performance Phase 2: requestAnimationFrame 정리
+        if (this.rafId !== null) {
+            cancelAnimationFrame(this.rafId);
+            this.rafId = null;
         }
 
         // ⭐ Phase 3.5: ViewportLayoutManager 정리

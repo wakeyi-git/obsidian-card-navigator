@@ -520,15 +520,8 @@ export class CardDataExtractor {
             const renderModeSuffix = contentRenderMode || 'plain';
             const cacheKey = `${file.path}-${file.stat.mtime}-content-${includeFirstHeader ? 'with-header' : 'no-header'}-${renderModeSuffix}`;
             const cached = this.contentCache.get(cacheKey);
-            
-            this.logger.debug('Card', t().debug.card.fileContentExtraction, {
-                file: file.path,
-                includeFirstHeader,
-                contentRenderMode,
-                cacheKey,
-                usedCache: cached !== undefined
-            });
-            
+
+            // ⭐ Performance: 캐시 미스 시에만 로그 출력 (카드당 반복 호출됨)
             if (cached !== undefined) {
                 return cached;
             }
@@ -745,65 +738,48 @@ export class CardDataExtractor {
         try {
             const cacheKey = `${file.path}-${file.stat.mtime}-backlinks`;
             const cached = this.contentCache.get(cacheKey);
-            
-            this.logger.debug('Card', t().debug.card.backlinkExtraction, {
-                file: file.path,
-                mtime: file.stat.mtime,
-                cacheKey,
-                usedCache: cached !== undefined
-            });
-            
+
+            // ⭐ Performance: 캐시 히트 시 로그 없이 즉시 반환
             if (cached !== undefined) {
                 return cached;
             }
-            
+
             const backlinks: string[] = [];
             const resolvedLinks = this.app.metadataCache.resolvedLinks;
-            
-            this.logger.debug('Card', t().debug.card.resolvedLinks, { resolvedLinks });
-            
+
+            // ⭐ Performance: 개별 백링크 발견 로그 제거 (링크 수에 비례해 로그 폭발)
             for (const sourcePath in resolvedLinks) {
                 const links = resolvedLinks[sourcePath];
-                
+
                 if (links[file.path]) {
                     backlinks.push(sourcePath);
-                    this.logger.debug('Card', t().debug.card.backlinkFound, { from: sourcePath, to: file.path });
                 }
             }
-            
-            this.logger.debug('Card', t().debug.card.totalBacklinkCount, { count: backlinks.length });
-            
+
             if (backlinks.length === 0) {
                 this.contentCache.set(cacheKey, '');
-                this.logger.debug('Card', t().debug.card.noBacklinks);
                 return '';
             }
-            
+
             const linkElements: string[] = [];
-            
+
             for (const sourcePath of backlinks) {
                 const sourceFile = this.app.vault.getAbstractFileByPath(sourcePath);
-                
+
                 if (sourceFile instanceof TFile) {
                     const displayName = sourceFile.basename;
                     const encodedPath = this.htmlEncode(sourcePath);
                     const encodedName = this.htmlEncode(displayName);
-                    
+
                     linkElements.push(
                         `<span class="internal-link" data-file-path="${encodedPath}">${encodedName}</span>`
                     );
                 }
             }
-            
+
             const result = linkElements.join(', ');
             this.contentCache.set(cacheKey, result);
-            
-            this.logger.debug('Card', t().debug.card.backlinkExtractionComplete, {
-                file: file.path,
-                backlinkCount: backlinks.length,
-                result
-            });
-            
+
             return result;
             
         } catch (error) {
@@ -832,75 +808,53 @@ export class CardDataExtractor {
         try {
             const cacheKey = `${file.path}-${file.stat.mtime}-outgoing-links`;
             const cached = this.contentCache.get(cacheKey);
-            
-            this.logger.debug('Card', t().debug.card.outgoingLinkExtraction, {
-                file: file.path,
-                mtime: file.stat.mtime,
-                cacheKey,
-                usedCache: cached !== undefined
-            });
-            
+
+            // ⭐ Performance: 캐시 히트 시 로그 없이 즉시 반환
             if (cached !== undefined) {
                 return cached;
             }
-            
+
             const cache = this.app.metadataCache.getFileCache(file);
-            
-            this.logger.debug('Card', t().debug.card.fileCache, { cache });
-            this.logger.debug('Card', t().debug.card.contentLinksCount, { count: cache?.links?.length || 0 });
-            this.logger.debug('Card', t().debug.card.frontmatterLinksCount, { count: cache?.frontmatterLinks?.length || 0 });
-            
+
+            // ⭐ Performance: 개별 링크 처리 로그 제거 (링크 수에 비례해 로그 폭발)
             const allLinks = [
                 ...(cache?.links || []),
                 ...(cache?.frontmatterLinks || [])
             ];
-            
+
             if (allLinks.length === 0) {
                 this.contentCache.set(cacheKey, '');
-                this.logger.debug('Card', t().debug.card.noOutgoingLinks);
                 return '';
             }
-            
+
             const linkElements: string[] = [];
             const processedPaths = new Set<string>();
-            
+
             for (const link of allLinks) {
-                this.logger.debug('Card', t().debug.card.linkProcessing, { link: link.link });
-                
                 const targetFile = this.app.metadataCache.getFirstLinkpathDest(
                     link.link,
                     file.path
                 );
-                
-                this.logger.debug('Card', t().debug.card.targetFile, { path: targetFile?.path });
-                
+
                 if (targetFile instanceof TFile) {
                     if (processedPaths.has(targetFile.path)) {
-                        this.logger.debug('Card', t().debug.card.duplicateLinkSkipped, { path: targetFile.path });
                         continue;
                     }
                     processedPaths.add(targetFile.path);
-                    
+
                     const displayName = link.displayText || targetFile.basename;
                     const encodedPath = this.htmlEncode(targetFile.path);
                     const encodedName = this.htmlEncode(displayName);
-                    
+
                     linkElements.push(
                         `<span class="internal-link" data-file-path="${encodedPath}">${encodedName}</span>`
                     );
                 }
             }
-            
+
             const result = linkElements.join(', ');
             this.contentCache.set(cacheKey, result);
-            
-            this.logger.debug('Card', t().debug.card.outgoingLinkExtractionComplete, {
-                file: file.path,
-                totalLinkCount: allLinks.length,
-                uniqueLinkCount: linkElements.length,
-                result
-            });
-            
+
             return result;
             
         } catch (error) {

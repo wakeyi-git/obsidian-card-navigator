@@ -248,109 +248,100 @@ describe('LayoutManager', () => {
     });
     
     describe('resize handling', () => {
-        it('should debounce resize events', (done) => {
+        // ⭐ Performance: requestAnimationFrame 사용으로 인해 fake timers 필요
+        let rafCallbacks: (() => void)[] = [];
+        let originalRaf: typeof requestAnimationFrame;
+        let originalCaf: typeof cancelAnimationFrame;
+
+        beforeEach(() => {
+            jest.useFakeTimers();
+            rafCallbacks = [];
+            originalRaf = global.requestAnimationFrame;
+            originalCaf = global.cancelAnimationFrame;
+            global.requestAnimationFrame = (callback: () => void) => {
+                rafCallbacks.push(callback);
+                return rafCallbacks.length;
+            };
+            global.cancelAnimationFrame = (id: number) => {
+                rafCallbacks[id - 1] = () => {};
+            };
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+            global.requestAnimationFrame = originalRaf;
+            global.cancelAnimationFrame = originalCaf;
+        });
+
+        const runAllRafCallbacks = () => {
+            rafCallbacks.forEach(cb => cb());
+            rafCallbacks = [];
+        };
+
+        it('should debounce resize events', () => {
             const updateLayoutSpy = jest.spyOn(manager as any, 'updateLayout');
-            
-            // Trigger multiple resize events
-            Object.defineProperty(container, 'getBoundingClientRect', {
-                configurable: true,
-                value: jest.fn().mockReturnValue({
-                    width: 1100,
-                    height: 700,
-                    top: 0,
-                    left: 0,
-                    bottom: 700,
-                    right: 1100
-                })
-            });
-            
+
+            // ⭐ Performance: cachedSize 설정 (ResizeObserver에서 제공하는 것처럼)
+            (manager as any).cachedSize = { width: 1100, height: 700 };
+
             // Simulate ResizeObserver
             (manager as any).onResize();
             (manager as any).onResize();
             (manager as any).onResize();
-            
-            // Should be debounced
-            setTimeout(() => {
-                // Called only once after debounce
-                expect(updateLayoutSpy).toHaveBeenCalledTimes(1);
-                done();
-            }, 150); // Longer than debounce time (100ms)
+
+            // 디바운스 시간 경과
+            jest.advanceTimersByTime(150);
+            // RAF 콜백 실행
+            runAllRafCallbacks();
+
+            // Called only once after debounce
+            expect(updateLayoutSpy).toHaveBeenCalledTimes(1);
         });
-        
-        it('should not update layout for small size changes', (done) => {
+
+        it('should not update layout for small size changes', () => {
             const updateLayoutSpy = jest.spyOn(manager as any, 'updateLayout');
             updateLayoutSpy.mockClear();
-            
-            // Small change (< 20px threshold)
-            Object.defineProperty(container, 'getBoundingClientRect', {
-                configurable: true,
-                value: jest.fn().mockReturnValue({
-                    width: 1010,  // +10px
-                    height: 610,  // +10px
-                    top: 0,
-                    left: 0,
-                    bottom: 610,
-                    right: 1010
-                })
-            });
-            
+
+            // ⭐ Performance: cachedSize 설정 (작은 변화)
+            (manager as any).cachedSize = { width: 1010, height: 610 };
+
             (manager as any).onResize();
-            
-            setTimeout(() => {
-                expect(updateLayoutSpy).not.toHaveBeenCalled();
-                done();
-            }, 150);
+
+            jest.advanceTimersByTime(150);
+            runAllRafCallbacks();
+
+            expect(updateLayoutSpy).not.toHaveBeenCalled();
         });
-        
-        it('should update layout for significant size changes', (done) => {
+
+        it('should update layout for significant size changes', () => {
             const updateLayoutSpy = jest.spyOn(manager as any, 'updateLayout');
             updateLayoutSpy.mockClear();
-            
-            // Large change (>= 20px threshold)
-            Object.defineProperty(container, 'getBoundingClientRect', {
-                configurable: true,
-                value: jest.fn().mockReturnValue({
-                    width: 1030,  // +30px
-                    height: 630,  // +30px
-                    top: 0,
-                    left: 0,
-                    bottom: 630,
-                    right: 1030
-                })
-            });
-            
+
+            // ⭐ Performance: cachedSize 설정 (큰 변화)
+            (manager as any).cachedSize = { width: 1030, height: 630 };
+
             (manager as any).onResize();
-            
-            setTimeout(() => {
-                expect(updateLayoutSpy).toHaveBeenCalled();
-                done();
-            }, 150);
+
+            jest.advanceTimersByTime(150);
+            runAllRafCallbacks();
+
+            expect(updateLayoutSpy).toHaveBeenCalled();
         });
-        
-        it('should update layout when mode changes', (done) => {
+
+        it('should update layout when mode changes', () => {
             const updateLayoutSpy = jest.spyOn(manager as any, 'updateLayout');
             updateLayoutSpy.mockClear();
-            
-            // Change from horizontal to vertical
-            Object.defineProperty(container, 'getBoundingClientRect', {
-                configurable: true,
-                value: jest.fn().mockReturnValue({
-                    width: 400,   // Now taller than wide
-                    height: 800,
-                    top: 0,
-                    left: 0,
-                    bottom: 800,
-                    right: 400
-                })
-            });
-            
+
+            // ⭐ Performance: cachedSize 설정 (모드 변경)
+            (manager as any).cachedSize = { width: 400, height: 800 };
+
             (manager as any).onResize();
-            
-            setTimeout(() => {
-                expect(updateLayoutSpy).toHaveBeenCalled();
-                expect(manager.getMode()).toBe('vertical');
-                done();
-            }, 150);
+
+            jest.advanceTimersByTime(150);
+            runAllRafCallbacks();
+
+            expect(updateLayoutSpy).toHaveBeenCalled();
+            expect(manager.getMode()).toBe('vertical');
         });
     });
     
@@ -446,27 +437,30 @@ describe('LayoutManager', () => {
             const mode = manager.getMode();
             expect(mode).toBe('horizontal');
         });
-        
-        it('should reflect mode changes', (done) => {
-            // Change to vertical
-            Object.defineProperty(container, 'getBoundingClientRect', {
-                configurable: true,
-                value: jest.fn().mockReturnValue({
-                    width: 400,
-                    height: 800,
-                    top: 0,
-                    left: 0,
-                    bottom: 800,
-                    right: 400
-                })
-            });
-            
+
+        it('should reflect mode changes', () => {
+            // ⭐ Performance: fake timers와 RAF 모킹 필요
+            jest.useFakeTimers();
+            const rafCallbacks: (() => void)[] = [];
+            const originalRaf = global.requestAnimationFrame;
+            global.requestAnimationFrame = (callback: () => void) => {
+                rafCallbacks.push(callback);
+                return rafCallbacks.length;
+            };
+
+            // ⭐ Performance: cachedSize 설정 (모드 변경)
+            (manager as any).cachedSize = { width: 400, height: 800 };
+
             (manager as any).onResize();
-            
-            setTimeout(() => {
-                expect(manager.getMode()).toBe('vertical');
-                done();
-            }, 150);
+
+            jest.advanceTimersByTime(150);
+            rafCallbacks.forEach(cb => cb());
+
+            expect(manager.getMode()).toBe('vertical');
+
+            // Cleanup
+            jest.useRealTimers();
+            global.requestAnimationFrame = originalRaf;
         });
     });
 });

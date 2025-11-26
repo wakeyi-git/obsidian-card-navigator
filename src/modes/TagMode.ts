@@ -40,22 +40,34 @@ export class TagMode {
 
     /**
      * 태그 모드에서 표시할 파일 목록을 가져옵니다
-     * 
+     *
      * @returns 필터링된 파일 목록
+     *
+     * @remarks
+     * ⭐ Performance: 조건부 로깅 최적화
+     * - 로그를 그룹으로 묶어 콘솔 출력 감소
+     * - 결과가 없는 경우 상세 로그 생략
      */
     getFiles(): TFile[] {
         const targetTags = this.getTargetTags();
-        
-        this.logger.debug('Mode', 'TagMode.getFiles() - Target tags', targetTags);
-        this.logger.debug('Mode', 'TagMode.getFiles() - Settings', this.settings);
-        
+
+        // ⭐ Performance: 태그가 없는 경우 로그 없이 즉시 반환
         if (targetTags.length === 0) {
-            this.logger.debug('Mode', 'TagMode.getFiles() - No target tags, returning empty array');
             return [];
         }
 
         const files = this.getFilesByTags(targetTags);
-        this.logger.debug('Mode', `TagMode.getFiles() - Found ${files.length} files`);
+
+        // ⭐ Performance: 그룹화된 로그 (접힌 상태로 출력)
+        this.logger.groupCollapsed('Mode', `TagMode.getFiles() → ${files.length} files`);
+        this.logger.debug('Mode', 'Target tags', targetTags);
+        this.logger.debug('Mode', 'Settings', {
+            useActiveFileTags: this.settings.useActiveFileTags,
+            tagOperator: this.settings.tagOperator,
+            specifiedTags: this.settings.specifiedTags
+        });
+        this.logger.groupEnd();
+
         return files;
     }
 

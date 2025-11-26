@@ -345,6 +345,10 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				// ⭐ Phase 2: 캐시 무효화
 				this.cardFactory.invalidateCache(file);
 				this.sortManager.invalidateCacheForFile(file);
+				// ⭐ Performance: 태그 변경 시 파일 목록 캐시 무효화 (태그 모드에서 필요)
+				if (this.settings.currentMode === 'tag') {
+					this.viewRenderer.invalidateFileCache();
+				}
 
 				// ⭐ resolvedLinks 업데이트 대기 + 디바운싱
 				setTimeout(() => {
@@ -370,6 +374,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				this.cardFactory.invalidateCache(file);
 				this.sortManager.clearCache(); // 파일 삭제는 전체 캐시 무효화
 				this.folderMode.invalidateCache(); // ⭐ Phase 4: FolderMode 캐시 무효화
+				this.viewRenderer.invalidateFileCache(); // ⭐ Performance: 파일 목록 캐시 무효화
 
 				// ⭐ Vault 파일 목록 업데이트 대기 + 디바운싱
 				setTimeout(() => {
@@ -405,6 +410,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				}
 				this.sortManager.clearCache(); // 파일 이름 변경은 전체 캐시 무효화
 				this.folderMode.invalidateCache(); // ⭐ Phase 4: FolderMode 캐시 무효화
+				this.viewRenderer.invalidateFileCache(); // ⭐ Performance: 파일 목록 캐시 무효화
 
 				// ⭐ 디바운싱 적용: metadata 이벤트와 합쳐짐
 				if (this.debouncedForceRender) {
@@ -886,19 +892,71 @@ export class CardNavigatorView extends ItemView implements ICardView {
 
 			// 활성 파일 태그 모드인 경우: 해당 태그가 있는 파일을 열어서 활성 태그 변경
 			if (this.settings.tagMode.useActiveFileTags) {
+				const currentFile = this.app.workspace.getActiveFile();
+
+				// 선택한 태그를 포함하는 파일 필터링
 				const filesWithTag = this.app.vault.getMarkdownFiles().filter(file => {
 					const cache = this.app.metadataCache.getFileCache(file);
 					const tags = cache?.tags?.map(t => t.tag) || [];
-					const frontmatterTags = cache?.frontmatter?.tags || [];
-					const allTags = [...tags, ...frontmatterTags.map((t: string) => `#${t}`)];
+
+					// 프론트매터 태그 처리 (배열 또는 문자열)
+					const fmTags = cache?.frontmatter?.tags;
+					const frontmatterTags: string[] = [];
+					if (Array.isArray(fmTags)) {
+						frontmatterTags.push(...fmTags
+							.filter((t): t is string => typeof t === 'string' && t.length > 0)
+							.map(t => t.startsWith('#') ? t : `#${t}`));
+					} else if (typeof fmTags === 'string' && fmTags.length > 0) {
+						frontmatterTags.push(fmTags.startsWith('#') ? fmTags : `#${fmTags}`);
+					}
+
+					const allTags = [...tags, ...frontmatterTags];
 					return allTags.some(t => t === `#${tagPath}` || t === tagPath);
 				});
+
 				if (filesWithTag.length > 0) {
+					// 플러그인 정렬 기준에 따라 파일 정렬 후 첫 번째 파일 선택
+					const sortedFiles = this.sortManager.sort(filesWithTag, this.settings.sort);
+					const targetFile = sortedFiles[0];
+
+					this.logger.debug('View', 'Tag dropdown: opening file with selected tag', {
+						tagPath,
+						targetFile: targetFile.path,
+						currentFile: currentFile?.path,
+						totalFilesWithTag: filesWithTag.length
+					});
+
 					// 파일 열기 전 렌더 상태 초기화 (강제 재렌더링 유도)
 					this.viewRenderer.resetRenderState();
-					await this.openFile(filesWithTag[0]);
+
+					// 현재 파일과 대상 파일이 다른 경우: 먼저 파일 열기
+					if (currentFile?.path !== targetFile.path) {
+						this.logger.debug('View', 'Tag dropdown: opening different file');
+						await this.openFile(targetFile);
+						// openFile 후 active-leaf-change 이벤트가 발생하여 재렌더링됨
+						// 하지만 이벤트 타이밍 문제로 재렌더링이 안 될 수 있으므로
+						// 약간의 지연 후 상태를 확인하고 필요시 강제 재렌더링
+					}
+
+					// 항상 강제 재렌더링 수행 (타이밍 문제 방지)
+					// 파일이 변경되었으면 active-leaf-change에서 이미 렌더링했을 수 있지만,
+					// 중복 렌더링보다는 누락되는 것이 더 큰 문제이므로 항상 수행
+					this.logger.debug('View', 'Tag dropdown: force render after file selection');
+					if (this.cardsContainer) {
+						await this.viewRenderer.forceRender(
+							this.cardsContainer,
+							(f) => this.openFile(f)
+						);
+					}
+
+					// Toolbar 아이콘 업데이트
+					if (this.toolbar) {
+						this.toolbar.updateModeToggleIcon();
+					}
 					return;
 				}
+
+				this.logger.debug('View', 'Tag dropdown: no files with tag found', { tagPath });
 				// 태그를 가진 파일이 없으면 지정 태그 모드로 표시
 			}
 
