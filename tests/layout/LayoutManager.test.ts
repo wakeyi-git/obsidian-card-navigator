@@ -258,13 +258,15 @@ describe('LayoutManager', () => {
             rafCallbacks = [];
             originalRaf = global.requestAnimationFrame;
             originalCaf = global.cancelAnimationFrame;
-            global.requestAnimationFrame = (callback: () => void) => {
-                rafCallbacks.push(callback);
+            global.requestAnimationFrame = ((callback: FrameRequestCallback) => {
+                rafCallbacks.push(() => callback(performance.now()));
                 return rafCallbacks.length;
-            };
-            global.cancelAnimationFrame = (id: number) => {
-                rafCallbacks[id - 1] = () => {};
-            };
+            }) as typeof requestAnimationFrame;
+            global.cancelAnimationFrame = ((id: number) => {
+                if (rafCallbacks[id - 1]) {
+                    rafCallbacks[id - 1] = () => {};
+                }
+            }) as typeof cancelAnimationFrame;
         });
 
         afterEach(() => {
@@ -443,10 +445,10 @@ describe('LayoutManager', () => {
             jest.useFakeTimers();
             const rafCallbacks: (() => void)[] = [];
             const originalRaf = global.requestAnimationFrame;
-            global.requestAnimationFrame = (callback: () => void) => {
-                rafCallbacks.push(callback);
+            global.requestAnimationFrame = ((callback: FrameRequestCallback) => {
+                rafCallbacks.push(() => callback(performance.now()));
                 return rafCallbacks.length;
-            };
+            }) as typeof requestAnimationFrame;
 
             // ⭐ Performance: cachedSize 설정 (모드 변경)
             (manager as any).cachedSize = { width: 400, height: 800 };
