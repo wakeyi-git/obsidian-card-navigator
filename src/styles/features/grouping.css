@@ -1,0 +1,196 @@
+/* =============================================================================
+   Card Navigator - Grouping Styles (Feature CSS)
+   Loaded when grouping mode is enabled
+   ============================================================================= */
+
+/* =============================================================================
+   Group Container
+   ============================================================================= */
+
+.card-navigator-group {
+	margin-bottom: 16px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+/* =============================================================================
+   Group Header
+   ============================================================================= */
+
+.group-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 14px;
+	background: var(--background-primary-alt);
+	border-bottom: 1px solid var(--background-modifier-border);
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.group-header:hover {
+	background: var(--background-modifier-hover);
+}
+
+/* Collapse indicator */
+.group-collapse-icon {
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-muted);
+	transition: transform 0.2s ease;
+}
+
+.group-collapse-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+.card-navigator-group.is-collapsed .group-collapse-icon {
+	transform: rotate(-90deg);
+}
+
+/* Group icon */
+.group-icon {
+	flex-shrink: 0;
+	width: 18px;
+	height: 18px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-muted);
+}
+
+.group-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* Group title */
+.group-title {
+	flex: 1;
+	font-weight: 600;
+	color: var(--text-normal);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Group count */
+.group-count {
+	flex-shrink: 0;
+	font-size: 0.85em;
+	color: var(--text-muted);
+	padding: 2px 8px;
+	background: var(--background-secondary);
+	border-radius: 10px;
+}
+
+/* Group actions */
+.group-actions {
+	flex-shrink: 0;
+	display: flex;
+	gap: 4px;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.group-header:hover .group-actions {
+	opacity: 1;
+}
+
+.group-action-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	border-radius: 4px;
+	color: var(--text-muted);
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.group-action-btn:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.group-action-btn svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* =============================================================================
+   Group Content
+   ============================================================================= */
+
+.group-content {
+	padding: 10px;
+	transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.card-navigator-group.is-collapsed .group-content {
+	display: none;
+}
+
+/* =============================================================================
+   Empty Group
+   ============================================================================= */
+
+.group-empty {
+	padding: 20px;
+	text-align: center;
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+/* =============================================================================
+   Folder Path Display
+   ============================================================================= */
+
+.folder-path {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 0.85em;
+	color: var(--text-muted);
+}
+
+.folder-path-segment {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.folder-path-separator {
+	color: var(--text-faint);
+}
+
+/* =============================================================================
+   Tag Group Styles
+   ============================================================================= */
+
+.group-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 8px;
+	background: var(--tag-background);
+	color: var(--tag-color);
+	border-radius: 10px;
+	font-size: 0.85em;
+}
+
+.group-tag::before {
+	content: '#';
+	opacity: 0.7;
+}

@@ -1,0 +1,165 @@
+/* =============================================================================
+   Card Navigator - Settings Tab UI Styles (Feature CSS)
+   Loaded when settings tab is opened
+   ============================================================================= */
+
+/* Tab bar - Obsidian style: simple and flat design */
+.setting-tab-bar {
+	display: flex;
+	gap: 0;
+	margin-bottom: 0;
+	padding: 0;
+	overflow-x: auto;
+	overflow-y: hidden;
+	background: transparent;
+	border-bottom: 1px solid var(--background-modifier-border);
+	position: relative;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.setting-tab-bar::-webkit-scrollbar {
+	display: none;
+}
+
+/* Auto-scroll area indicator */
+.setting-tab-bar::before,
+.setting-tab-bar::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 25%;
+	pointer-events: none;
+	z-index: 1;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+.setting-tab-bar::before {
+	left: 0;
+	background: linear-gradient(to right,
+		rgba(var(--interactive-accent-rgb), 0.08) 0%,
+		transparent 100%);
+}
+
+.setting-tab-bar::after {
+	right: 0;
+	background: linear-gradient(to left,
+		rgba(var(--interactive-accent-rgb), 0.08) 0%,
+		transparent 100%);
+}
+
+.setting-tab-bar:hover::before,
+.setting-tab-bar:hover::after {
+	opacity: 1;
+}
+
+/* Tab button - Obsidian standard style */
+.setting-tab-button {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 24px;
+	background: transparent;
+	border: none;
+	border-bottom: 2px solid transparent;
+	color: var(--text-muted);
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	white-space: nowrap;
+	outline: none;
+	border-radius: 0;
+}
+
+.setting-tab-button .setting-tab-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: inherit;
+	flex-shrink: 0;
+}
+
+.setting-tab-button .setting-tab-icon svg {
+	width: 16px;
+	height: 16px;
+	color: inherit;
+}
+
+.setting-tab-button .setting-tab-label {
+	color: inherit;
+}
+
+.setting-tab-button:hover {
+	color: var(--text-normal);
+	background: transparent;
+	border-bottom-color: var(--background-modifier-border-hover);
+}
+
+.card-navigator-settings .setting-tab-button.is-active {
+	color: var(--text-normal);
+	background: transparent;
+	font-weight: 600;
+	border-bottom: 2px solid var(--interactive-accent);
+	box-shadow: none;
+}
+
+.card-navigator-settings .setting-tab-button.is-active .setting-tab-icon,
+.card-navigator-settings .setting-tab-button.is-active .setting-tab-label {
+	color: var(--text-normal);
+}
+
+.setting-tab-button:focus {
+	outline: none;
+	box-shadow: none;
+}
+
+/* Tab content container */
+.setting-tab-content {
+	min-height: 400px;
+	padding: 24px 0;
+}
+
+.setting-tab-pane {
+	animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Responsive: small screens */
+@media (max-width: 768px) {
+	.setting-tab-button {
+		padding: 10px 16px;
+		font-size: 13px;
+	}
+
+	.setting-tab-content {
+		min-height: 300px;
+		padding: 16px 0;
+	}
+}
+
+@media (max-width: 480px) {
+	.setting-tab-button {
+		padding: 8px 12px;
+		font-size: 12px;
+		gap: 6px;
+	}
+
+	.setting-tab-button .setting-tab-icon svg {
+		width: 14px;
+		height: 14px;
+	}
+}

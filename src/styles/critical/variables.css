@@ -1,0 +1,37 @@
+/* =============================================================================
+   Card Navigator - CSS Custom Properties
+   Theme-aware variables that adapt to light/dark modes
+   ============================================================================= */
+
+:root {
+	color-scheme: light dark;
+
+	/* Shadow colors */
+	--cn-shadow-sm: rgba(0, 0, 0, 0.05);
+	--cn-shadow-md: rgba(0, 0, 0, 0.1);
+	--cn-shadow-lg: rgba(0, 0, 0, 0.2);
+	--cn-modal-backdrop: rgba(0, 0, 0, 0.5);
+
+	/* Text colors */
+	--cn-text-on-bg: var(--text-normal);
+	--cn-text-muted-on-bg: var(--text-muted);
+
+	/* Card state defaults - can be overridden per-card */
+	--cn-card-transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.theme-dark {
+	color-scheme: dark;
+	--cn-shadow-sm: rgba(0, 0, 0, 0.3);
+	--cn-shadow-md: rgba(0, 0, 0, 0.4);
+	--cn-shadow-lg: rgba(0, 0, 0, 0.6);
+	--cn-modal-backdrop: rgba(0, 0, 0, 0.7);
+}
+
+.theme-light {
+	color-scheme: light;
+	--cn-shadow-sm: rgba(0, 0, 0, 0.05);
+	--cn-shadow-md: rgba(0, 0, 0, 0.1);
+	--cn-shadow-lg: rgba(0, 0, 0, 0.2);
+	--cn-modal-backdrop: rgba(0, 0, 0, 0.5);
+}

@@ -1,0 +1,291 @@
+/* =============================================================================
+   Card Navigator - Filter UI Styles (Feature CSS)
+   Loaded when filter functionality is used
+   ============================================================================= */
+
+/* =============================================================================
+   Filter Section in Toolbar
+   ============================================================================= */
+
+.filter-active-indicator {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-radius: 12px;
+	font-size: 0.8em;
+	font-weight: 500;
+}
+
+.filter-active-indicator-icon {
+	display: flex;
+	align-items: center;
+}
+
+.filter-active-indicator-icon svg {
+	width: 12px;
+	height: 12px;
+}
+
+.filter-active-indicator-clear {
+	cursor: pointer;
+	margin-left: 4px;
+	opacity: 0.8;
+	transition: opacity 0.15s ease;
+}
+
+.filter-active-indicator-clear:hover {
+	opacity: 1;
+}
+
+/* =============================================================================
+   Filter Panel
+   ============================================================================= */
+
+.filter-panel {
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 16px;
+	margin-bottom: 10px;
+}
+
+.filter-panel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+}
+
+.filter-panel-title {
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.filter-panel-close {
+	cursor: pointer;
+	color: var(--text-muted);
+	transition: color 0.15s ease;
+}
+
+.filter-panel-close:hover {
+	color: var(--text-normal);
+}
+
+/* =============================================================================
+   Filter Groups
+   ============================================================================= */
+
+.filter-group {
+	margin-bottom: 16px;
+}
+
+.filter-group:last-child {
+	margin-bottom: 0;
+}
+
+.filter-group-label {
+	display: block;
+	font-size: 0.85em;
+	font-weight: 500;
+	color: var(--text-muted);
+	margin-bottom: 8px;
+}
+
+/* =============================================================================
+   Filter Types
+   ============================================================================= */
+
+/* Tag filter */
+.filter-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.filter-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 10px;
+	background: var(--tag-background);
+	color: var(--tag-color);
+	border-radius: 12px;
+	font-size: 0.85em;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.filter-tag:hover {
+	background: var(--tag-background-hover);
+}
+
+.filter-tag.is-active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.filter-tag-remove {
+	display: flex;
+	align-items: center;
+	opacity: 0.7;
+}
+
+.filter-tag-remove:hover {
+	opacity: 1;
+}
+
+.filter-tag-remove svg {
+	width: 12px;
+	height: 12px;
+}
+
+/* Folder filter */
+.filter-folders {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.filter-folder-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 10px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.filter-folder-item:hover {
+	border-color: var(--interactive-accent);
+}
+
+.filter-folder-item.is-active {
+	border-color: var(--interactive-accent);
+	background: var(--interactive-accent-hover);
+}
+
+.filter-folder-icon {
+	color: var(--text-muted);
+}
+
+.filter-folder-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Date filter */
+.filter-date-range {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.filter-date-input {
+	flex: 1;
+	padding: 6px 10px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
+
+.filter-date-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+}
+
+.filter-date-separator {
+	color: var(--text-muted);
+}
+
+/* =============================================================================
+   Filter Actions
+   ============================================================================= */
+
+.filter-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-top: 16px;
+	padding-top: 12px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.filter-clear-btn {
+	padding: 6px 14px;
+	background: transparent;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	color: var(--text-muted);
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.filter-clear-btn:hover {
+	border-color: var(--text-muted);
+	color: var(--text-normal);
+}
+
+.filter-apply-btn {
+	padding: 6px 14px;
+	background: var(--interactive-accent);
+	border: none;
+	border-radius: 4px;
+	color: var(--text-on-accent);
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.filter-apply-btn:hover {
+	background: var(--interactive-accent-hover);
+}
+
+/* =============================================================================
+   Quick Filters
+   ============================================================================= */
+
+.quick-filters {
+	display: flex;
+	gap: 6px;
+	margin-bottom: 10px;
+	overflow-x: auto;
+	padding-bottom: 4px;
+}
+
+.quick-filter-chip {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 10px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 12px;
+	font-size: 0.85em;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	white-space: nowrap;
+}
+
+.quick-filter-chip:hover {
+	border-color: var(--interactive-accent);
+}
+
+.quick-filter-chip.is-active {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.quick-filter-chip svg {
+	width: 14px;
+	height: 14px;
+}

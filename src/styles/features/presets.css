@@ -1,0 +1,192 @@
+/* =============================================================================
+   Card Navigator - Preset Management Styles (Feature CSS)
+   Loaded when presets settings are accessed
+   ============================================================================= */
+
+/* Preset item container */
+.card-navigator-preset-item {
+	margin-bottom: 16px;
+	padding: 16px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	transition: all 0.2s ease;
+}
+
+.card-navigator-preset-item:hover {
+	background: var(--background-secondary-alt);
+	border-color: var(--interactive-accent);
+	box-shadow: 0 2px 8px var(--cn-shadow-sm);
+}
+
+/* Preset info area */
+.preset-info {
+	margin-bottom: 12px;
+}
+
+/* Preset name */
+.preset-name {
+	font-weight: 600;
+	font-size: 1em;
+	color: var(--text-normal);
+	margin-bottom: 4px;
+}
+
+/* Preset description */
+.preset-description {
+	font-size: 0.85em;
+	color: var(--text-muted);
+	line-height: 1.4;
+}
+
+/* Preset actions */
+.preset-actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.preset-action-btn {
+	padding: 6px 12px;
+	font-size: 0.85em;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+/* Default button style */
+.preset-action-btn:not(.mod-cta):not(.mod-warning) {
+	background: var(--background-primary);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+}
+
+.preset-action-btn:not(.mod-cta):not(.mod-warning):hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--text-muted);
+}
+
+/* Apply button (CTA) */
+.preset-action-btn.mod-cta {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+}
+
+.preset-action-btn.mod-cta:hover {
+	background: var(--interactive-accent-hover);
+}
+
+/* Delete button (Warning) */
+.preset-action-btn.mod-warning {
+	background: transparent;
+	color: var(--text-error);
+	border: 1px solid var(--text-error);
+}
+
+.preset-action-btn.mod-warning:hover {
+	background: var(--background-modifier-error);
+}
+
+/* =============================================================================
+   Preset Mapping Styles
+   ============================================================================= */
+
+/* Mapping section container */
+.preset-mapping-section {
+	margin-top: 20px;
+	padding-top: 16px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.preset-mapping-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+}
+
+.preset-mapping-title {
+	font-weight: 600;
+	font-size: 0.95em;
+	color: var(--text-normal);
+}
+
+/* Mapping list */
+.preset-mapping-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.preset-mapping-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+}
+
+.preset-mapping-item:hover {
+	border-color: var(--interactive-accent);
+}
+
+/* Mapping item parts */
+.preset-mapping-folder {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--text-normal);
+}
+
+.preset-mapping-preset {
+	flex-shrink: 0;
+	padding: 2px 8px;
+	background: var(--background-secondary);
+	border-radius: 3px;
+	font-size: 0.85em;
+	color: var(--text-muted);
+}
+
+.preset-mapping-remove {
+	flex-shrink: 0;
+	cursor: pointer;
+	color: var(--text-muted);
+	transition: color 0.15s ease;
+}
+
+.preset-mapping-remove:hover {
+	color: var(--text-error);
+}
+
+/* Add mapping button */
+.preset-mapping-add {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 10px;
+	background: var(--background-secondary);
+	border: 1px dashed var(--background-modifier-border);
+	border-radius: 4px;
+	color: var(--text-muted);
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.preset-mapping-add:hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
+	color: var(--text-normal);
+}
+
+/* Empty state */
+.preset-mapping-empty {
+	text-align: center;
+	padding: 20px;
+	color: var(--text-muted);
+	font-style: italic;
+}

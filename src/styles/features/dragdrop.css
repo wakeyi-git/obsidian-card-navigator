@@ -1,0 +1,164 @@
+/* =============================================================================
+   Card Navigator - Drag & Drop Styles (Feature CSS)
+   Loaded when drag and drop interactions are used
+   ============================================================================= */
+
+/* =============================================================================
+   Dragging State
+   ============================================================================= */
+
+/* Card being dragged */
+.card-item.is-dragging {
+	opacity: 0.5;
+	cursor: grabbing;
+	transform: scale(0.98);
+	box-shadow: 0 8px 24px var(--cn-shadow-lg);
+	z-index: 100;
+}
+
+/* Drag preview (ghost image) */
+.card-drag-preview {
+	position: fixed;
+	pointer-events: none;
+	z-index: 1000;
+	opacity: 0.9;
+	transform: rotate(2deg);
+	box-shadow: 0 8px 32px var(--cn-shadow-lg);
+}
+
+/* =============================================================================
+   Drop Targets
+   ============================================================================= */
+
+/* Valid drop target */
+.drop-target {
+	transition: all 0.15s ease;
+}
+
+.drop-target.is-valid-drop {
+	border-color: var(--interactive-accent) !important;
+	background: var(--interactive-accent-hover);
+	box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
+/* Drop zone indicator */
+.drop-zone-indicator {
+	position: absolute;
+	background: var(--interactive-accent);
+	border-radius: 2px;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.drop-target.is-valid-drop .drop-zone-indicator {
+	opacity: 1;
+}
+
+/* Horizontal drop indicator (between cards in vertical mode) */
+.drop-zone-indicator.horizontal {
+	left: 0;
+	right: 0;
+	height: 3px;
+}
+
+.drop-zone-indicator.horizontal.top {
+	top: -5px;
+}
+
+.drop-zone-indicator.horizontal.bottom {
+	bottom: -5px;
+}
+
+/* Vertical drop indicator (between cards in horizontal mode) */
+.drop-zone-indicator.vertical {
+	top: 0;
+	bottom: 0;
+	width: 3px;
+}
+
+.drop-zone-indicator.vertical.left {
+	left: -5px;
+}
+
+.drop-zone-indicator.vertical.right {
+	right: -5px;
+}
+
+/* =============================================================================
+   Folder Drop Target
+   ============================================================================= */
+
+.folder-drop-target {
+	position: relative;
+	transition: all 0.2s ease;
+}
+
+.folder-drop-target.is-drag-over {
+	background: var(--interactive-accent-hover);
+	border-color: var(--interactive-accent);
+}
+
+.folder-drop-target.is-drag-over::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border: 2px dashed var(--interactive-accent);
+	border-radius: inherit;
+	pointer-events: none;
+}
+
+/* =============================================================================
+   Drag Handle
+   ============================================================================= */
+
+.drag-handle {
+	cursor: grab;
+	color: var(--text-muted);
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.card-item:hover .drag-handle {
+	opacity: 1;
+}
+
+.drag-handle:hover {
+	color: var(--text-normal);
+}
+
+.drag-handle:active {
+	cursor: grabbing;
+}
+
+/* =============================================================================
+   Sortable List
+   ============================================================================= */
+
+.sortable-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.sortable-item {
+	position: relative;
+	transition: transform 0.15s ease;
+}
+
+.sortable-item.is-placeholder {
+	background: var(--background-modifier-border);
+	border: 2px dashed var(--interactive-accent);
+	opacity: 0.5;
+}
+
+/* =============================================================================
+   Disabled Drag State
+   ============================================================================= */
+
+.drag-disabled .drag-handle {
+	display: none;
+}
+
+.drag-disabled .card-item {
+	cursor: default;
+}

@@ -1,0 +1,282 @@
+/* =============================================================================
+   Card Navigator - Card Styles (Unified State-based Approach)
+
+   State management via CSS custom properties:
+   - .card-item sets --cn-state: normal (default)
+   - .card-item.active sets --cn-state: active
+   - .card-item.focused sets --cn-state: focused
+
+   Each section (header/body/footer) inherits state from parent card
+   ============================================================================= */
+
+/* Card Grid Container */
+.card-navigator-cards {
+	display: grid;
+	margin-bottom: 10px;
+	gap: 10px;
+	flex: 1;
+	min-height: 0;
+	padding: 0 2px 10px 10px;
+
+	/* Grid defaults */
+	--card-min-width: 150px;
+	--card-min-height: 100px;
+	--card-max-width: 400px;
+	--card-max-height: 300px;
+	--grid-columns: 3;
+	--grid-rows: 2;
+}
+
+/* Vertical mode */
+.card-navigator-cards.vertical-mode {
+	grid-template-columns: repeat(var(--grid-columns, 3), 1fr);
+	grid-auto-rows: minmax(var(--card-min-height, 100px), auto);
+	grid-template-rows: initial;
+	grid-auto-columns: initial;
+	grid-auto-flow: row;
+	overflow-x: hidden;
+	overflow-y: auto;
+	align-content: start;
+	justify-content: start;
+}
+
+/* Horizontal mode */
+.card-navigator-cards.horizontal-mode {
+	grid-template-rows: repeat(var(--grid-rows, 2), 1fr);
+	grid-auto-columns: minmax(var(--card-min-width, 150px), auto);
+	grid-template-columns: initial;
+	grid-auto-rows: initial;
+	grid-auto-flow: column;
+	overflow-x: auto;
+	overflow-y: hidden;
+	align-content: start;
+	justify-content: start;
+}
+
+/* =============================================================================
+   Card Item - Base styles with state-aware CSS variables
+   ============================================================================= */
+
+.card-navigator-cards .card-item {
+	/* State indicator (overridden by .active/.focused) */
+	--cn-state: normal;
+
+	/* Card-level style properties with fallback chain */
+	background: var(--card-bg-normal, var(--card-navigator-bg-normal, var(--background-secondary)));
+	font-size: var(--card-font-size-normal, var(--card-navigator-font-size-normal, 14px));
+	font-weight: var(--card-font-weight-normal, var(--card-navigator-font-weight-normal, normal));
+	color: var(--card-text-color-normal, var(--card-navigator-text-color-normal, var(--cn-text-on-bg)));
+	border: var(--card-navigator-border-width-normal, 1px) solid var(--card-navigator-border-color-normal, var(--background-modifier-border));
+	border-radius: var(--card-navigator-border-radius-normal, 5px);
+
+	/* Layout */
+	cursor: pointer;
+	transition: var(--cn-card-transition);
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+
+	/* Interaction fixes */
+	user-select: none;
+	-webkit-user-select: none;
+	outline: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+/* Vertical mode card sizing */
+.card-navigator-cards.vertical-mode .card-item {
+	height: var(--card-min-height, 200px);
+	max-height: var(--card-max-height, 300px);
+}
+
+/* Horizontal mode card sizing */
+.card-navigator-cards.horizontal-mode .card-item {
+	height: 100%;
+	max-width: var(--card-max-width, 400px);
+}
+
+/* =============================================================================
+   Card States - Active & Focused
+   ============================================================================= */
+
+.card-navigator-cards .card-item.active {
+	--cn-state: active;
+	background: var(--card-bg-active, var(--card-navigator-bg-active, var(--background-secondary)));
+	font-size: var(--card-font-size-active, var(--card-navigator-font-size-active, 14px));
+	font-weight: var(--card-font-weight-active, var(--card-navigator-font-weight-active, normal));
+	color: var(--card-text-color-active, var(--card-navigator-text-color-active, var(--text-normal)));
+	border: var(--card-navigator-border-width-active, 2px) solid var(--card-navigator-border-color-active, var(--interactive-accent));
+	border-radius: var(--card-navigator-border-radius-active, 5px);
+}
+
+.card-navigator-cards .card-item.focused {
+	--cn-state: focused;
+	background: var(--card-bg-focused, var(--card-navigator-bg-focused, var(--background-secondary-alt)));
+	font-size: var(--card-font-size-focused, var(--card-navigator-font-size-focused, 14px));
+	font-weight: var(--card-font-weight-focused, var(--card-navigator-font-weight-focused, normal));
+	color: var(--card-text-color-focused, var(--card-navigator-text-color-focused, var(--text-normal)));
+	border: var(--card-navigator-border-width-focused, 2px) solid var(--card-navigator-border-color-focused, var(--interactive-accent));
+	border-radius: var(--card-navigator-border-radius-focused, 5px);
+}
+
+/* Hover effect */
+.card-navigator-cards .card-item:hover {
+	background: var(--background-secondary-alt);
+	border-color: var(--interactive-accent);
+	transform: translateY(-2px);
+	box-shadow: 0 2px 8px var(--cn-shadow-md);
+}
+
+/* =============================================================================
+   Card Header - Unified state handling
+   ============================================================================= */
+
+.card-navigator-cards .card-header {
+	padding: 10px 12px;
+	background: var(--card-header-bg-normal, var(--background-primary-alt));
+	border-bottom: var(--card-header-border-width-normal, 1px) solid var(--card-header-border-color-normal, var(--background-modifier-border));
+	font-weight: var(--card-header-font-weight-normal, 600);
+	font-size: var(--card-header-font-size-normal, 0.95em);
+	color: var(--card-header-text-color-normal, var(--cn-text-on-bg));
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Header state variations - using parent's --cn-state */
+.card-navigator-cards .card-item.active .card-header,
+.card-navigator-cards .card-item.focused .card-header {
+	background: var(--card-header-bg-active, var(--card-header-bg-normal, var(--background-primary-alt)));
+	border-bottom-color: var(--card-header-border-color-active, var(--card-header-border-color-normal, var(--background-modifier-border)));
+	color: var(--card-header-text-color-active, var(--card-header-text-color-normal, var(--cn-text-on-bg)));
+}
+
+/* Header text modes */
+.card-navigator-cards .card-header:not(.card-markdown-content) {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.card-navigator-cards .card-header.card-markdown-content {
+	white-space: normal !important;
+	text-overflow: clip !important;
+	overflow: visible !important;
+}
+
+/* =============================================================================
+   Card Body - Unified state handling
+   ============================================================================= */
+
+.card-navigator-cards .card-body {
+	padding: 12px;
+	flex: 1;
+	background: var(--card-body-bg-normal, transparent);
+	border: var(--card-body-border-width-normal, 0) solid var(--card-body-border-color-normal, transparent);
+	border-radius: var(--card-body-border-radius-normal, 0);
+	font-size: var(--card-body-font-size-normal, 0.85em);
+	font-weight: var(--card-body-font-weight-normal, normal);
+	color: var(--card-body-text-color-normal, var(--cn-text-muted-on-bg));
+	line-height: 1.5;
+	overflow-y: auto;
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Body state variations */
+.card-navigator-cards .card-item.active .card-body,
+.card-navigator-cards .card-item.focused .card-body {
+	background: var(--card-body-bg-active, var(--card-body-bg-normal, transparent));
+	color: var(--card-body-text-color-active, var(--card-body-text-color-normal, var(--cn-text-muted-on-bg)));
+}
+
+/* Body text modes */
+.card-navigator-cards .card-body:not(.card-markdown-content) {
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+}
+
+.card-navigator-cards .card-body.card-markdown-content {
+	display: block !important;
+	-webkit-box-orient: unset !important;
+	overflow-y: auto !important;
+	max-height: 300px;
+}
+
+/* Body typography */
+.card-navigator-cards .card-body p { margin: 0 0 0.5em 0; }
+.card-navigator-cards .card-body p:last-child { margin-bottom: 0; }
+.card-navigator-cards .card-body strong { font-weight: 600; color: var(--text-normal); }
+.card-navigator-cards .card-body em { font-style: italic; }
+.card-navigator-cards .card-body code {
+	background: var(--code-background);
+	padding: 2px 4px;
+	border-radius: 3px;
+	font-family: var(--font-monospace);
+	font-size: 0.9em;
+}
+.card-navigator-cards .card-body a { color: var(--link-color); text-decoration: none; }
+.card-navigator-cards .card-body a:hover { text-decoration: underline; }
+
+/* =============================================================================
+   Card Footer - Unified state handling
+   ============================================================================= */
+
+.card-navigator-cards .card-footer {
+	padding: 8px 12px;
+	background: var(--card-footer-bg-normal, var(--background-primary-alt));
+	border-top: var(--card-footer-border-width-normal, 1px) solid var(--card-footer-border-color-normal, var(--background-modifier-border));
+	border-radius: var(--card-footer-border-radius-normal, 0);
+	font-size: var(--card-footer-font-size-normal, 0.75em);
+	font-weight: var(--card-footer-font-weight-normal, normal);
+	color: var(--card-footer-text-color-normal, var(--text-faint));
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Footer state variations */
+.card-navigator-cards .card-item.active .card-footer,
+.card-navigator-cards .card-item.focused .card-footer {
+	background: var(--card-footer-bg-active, var(--card-footer-bg-normal, var(--background-primary-alt)));
+	border-top-color: var(--card-footer-border-color-active, var(--card-footer-border-color-normal, var(--background-modifier-border)));
+	color: var(--card-footer-text-color-active, var(--card-footer-text-color-normal, var(--text-faint)));
+}
+
+/* Footer text modes */
+.card-navigator-cards .card-footer:not(.card-markdown-content) {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.card-navigator-cards .card-footer.card-markdown-content {
+	white-space: normal !important;
+	text-overflow: clip !important;
+	overflow: visible !important;
+}
+
+/* =============================================================================
+   Card Title (legacy support)
+   ============================================================================= */
+
+.card-navigator-cards .card-title {
+	font-size: 0.9em;
+	color: var(--text-normal);
+	text-align: center;
+	word-break: break-word;
+}
+
+/* =============================================================================
+   Scrollbar
+   ============================================================================= */
+
+.card-navigator-cards::-webkit-scrollbar { width: 8px; }
+.card-navigator-cards::-webkit-scrollbar-track { background: var(--background-primary); }
+.card-navigator-cards::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
+.card-navigator-cards::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Search highlight */
+.card-navigator-cards mark {
+	background: var(--text-highlight-bg);
+	color: var(--text-normal);
+	padding: 2px 0;
+	border-radius: 2px;
+}

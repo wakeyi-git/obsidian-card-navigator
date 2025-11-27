@@ -1,0 +1,69 @@
+/* =============================================================================
+   Card Navigator - Container & Layout
+   ============================================================================= */
+
+.view-content.card-navigator-container {
+	padding: 0;
+	border: none;
+}
+
+.card-navigator-container {
+	background: var(--background-primary);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	padding: 0 10px 20px;
+	margin-bottom: 20px;
+	transition: background-color 0.2s ease;
+}
+
+.card-navigator-header {
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.card-navigator-header h4 {
+	margin: 0 0 10px 0;
+	font-size: 1.2em;
+	color: var(--text-normal);
+}
+
+/* Progress Bar */
+.card-navigator-progress-bar {
+	position: relative;
+	width: 100%;
+	height: 3px;
+	background: var(--background-modifier-border);
+	overflow: hidden;
+	opacity: 1;
+	transition: opacity 0.3s ease;
+}
+
+.card-navigator-progress-bar.fade-out { opacity: 0; }
+
+.card-navigator-progress-bar .progress-fill {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	background: var(--interactive-accent);
+	transition: width 0.2s ease;
+	box-shadow: 0 0 10px var(--interactive-accent);
+}
+
+.card-navigator-progress-bar .progress-fill.indeterminate {
+	width: 30% !important;
+	animation: progress-indeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes progress-indeterminate {
+	0% { left: -30%; }
+	100% { left: 100%; }
+}
+
+/* Empty state */
+.card-navigator-empty {
+	text-align: center;
+	padding: 40px 20px;
+	color: var(--text-muted);
+	font-style: italic;
+}

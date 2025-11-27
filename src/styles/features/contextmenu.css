@@ -1,0 +1,111 @@
+/* =============================================================================
+   Card Navigator - Context Menu Styles (Feature CSS)
+   Loaded when context menu is needed
+   ============================================================================= */
+
+/* Context menu container */
+.card-navigator-context-menu {
+	position: fixed;
+	z-index: 1000;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	box-shadow: 0 4px 16px var(--cn-shadow-lg);
+	min-width: 180px;
+	max-width: 280px;
+	padding: 4px 0;
+	overflow: hidden;
+}
+
+/* Menu item */
+.context-menu-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 14px;
+	cursor: pointer;
+	transition: background-color 0.1s ease;
+	color: var(--text-normal);
+	font-size: 0.9em;
+}
+
+.context-menu-item:hover {
+	background: var(--background-modifier-hover);
+}
+
+.context-menu-item:active {
+	background: var(--background-modifier-active-hover);
+}
+
+/* Menu item icon */
+.context-menu-item-icon {
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-muted);
+}
+
+.context-menu-item-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* Menu item text */
+.context-menu-item-text {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Disabled item */
+.context-menu-item.is-disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.context-menu-item.is-disabled:hover {
+	background: transparent;
+}
+
+/* Danger item (delete, etc.) */
+.context-menu-item.is-danger {
+	color: var(--text-error);
+}
+
+.context-menu-item.is-danger .context-menu-item-icon {
+	color: var(--text-error);
+}
+
+.context-menu-item.is-danger:hover {
+	background: var(--background-modifier-error);
+}
+
+/* Separator */
+.context-menu-separator {
+	height: 1px;
+	background: var(--background-modifier-border);
+	margin: 4px 0;
+}
+
+/* Submenu indicator */
+.context-menu-item.has-submenu::after {
+	content: '';
+	width: 0;
+	height: 0;
+	border-top: 4px solid transparent;
+	border-bottom: 4px solid transparent;
+	border-left: 4px solid var(--text-muted);
+	margin-left: auto;
+}
+
+/* Keyboard shortcut */
+.context-menu-shortcut {
+	margin-left: auto;
+	font-size: 0.8em;
+	color: var(--text-muted);
+	font-family: var(--font-monospace);
+}

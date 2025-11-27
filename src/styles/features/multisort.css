@@ -1,0 +1,188 @@
+/* =============================================================================
+   Card Navigator - Multi-level Sort UI Styles (Feature CSS)
+   Loaded when multi-sort modal is opened
+   ============================================================================= */
+
+/* Sort levels container */
+.card-navigator-multi-sort-levels {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+/* Individual sort level */
+.sort-level-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	transition: all 0.15s ease;
+}
+
+.sort-level-item:hover {
+	border-color: var(--interactive-accent);
+}
+
+.sort-level-item.is-dragging {
+	opacity: 0.5;
+	background: var(--background-secondary-alt);
+}
+
+/* Sort level number */
+.sort-level-number {
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--background-modifier-border);
+	border-radius: 50%;
+	font-size: 0.8em;
+	font-weight: 600;
+	color: var(--text-muted);
+}
+
+/* Drag handle */
+.sort-level-drag-handle {
+	flex-shrink: 0;
+	cursor: grab;
+	color: var(--text-muted);
+	transition: color 0.15s ease;
+}
+
+.sort-level-drag-handle:hover {
+	color: var(--text-normal);
+}
+
+.sort-level-drag-handle:active {
+	cursor: grabbing;
+}
+
+/* Sort field selector */
+.sort-level-field {
+	flex: 1;
+}
+
+.sort-level-field select {
+	width: 100%;
+	padding: 6px 10px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 0.9em;
+}
+
+.sort-level-field select:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+}
+
+/* Sort direction toggle */
+.sort-level-direction {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.sort-direction-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	color: var(--text-muted);
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.sort-direction-btn:hover {
+	border-color: var(--interactive-accent);
+	color: var(--text-normal);
+}
+
+.sort-direction-btn.is-active {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.sort-direction-btn svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* Remove level button */
+.sort-level-remove {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	cursor: pointer;
+	color: var(--text-muted);
+	border-radius: 4px;
+	transition: all 0.15s ease;
+}
+
+.sort-level-remove:hover {
+	background: var(--background-modifier-error);
+	color: var(--text-error);
+}
+
+/* Add level button */
+.sort-level-add {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 12px;
+	background: var(--background-secondary);
+	border: 1px dashed var(--background-modifier-border);
+	border-radius: 6px;
+	color: var(--text-muted);
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.sort-level-add:hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
+	color: var(--text-normal);
+}
+
+/* Sort modal footer */
+.multi-sort-modal-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 20px;
+	padding-top: 16px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.multi-sort-reset {
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: 0.9em;
+	transition: color 0.15s ease;
+}
+
+.multi-sort-reset:hover {
+	color: var(--text-normal);
+}
+
+.multi-sort-actions {
+	display: flex;
+	gap: 10px;
+}

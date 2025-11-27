@@ -1,0 +1,170 @@
+/* =============================================================================
+   Card Navigator - Selection System Styles (Feature CSS)
+   Loaded when multi-selection is enabled
+   ============================================================================= */
+
+/* =============================================================================
+   Batch Actions
+   ============================================================================= */
+
+/* Batch actions container */
+.batch-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* Batch action icon */
+.batch-action-icon {
+	padding: 6px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.batch-action-icon:hover {
+	background: var(--background-modifier-hover);
+	color: var(--interactive-accent);
+}
+
+.batch-action-icon:active {
+	background: var(--background-modifier-active-hover);
+	transform: scale(0.95);
+}
+
+/* Danger action (delete, etc.) */
+.batch-action-danger {
+	color: var(--text-error);
+}
+
+.batch-action-danger:hover {
+	background: var(--background-modifier-error);
+	color: var(--text-error);
+}
+
+/* =============================================================================
+   Selection Bar
+   ============================================================================= */
+
+.selection-bar {
+	position: sticky;
+	top: 0;
+	z-index: 50;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 12px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-radius: 6px;
+	margin-bottom: 10px;
+	box-shadow: 0 2px 8px var(--cn-shadow-md);
+}
+
+.selection-bar-info {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 500;
+}
+
+.selection-bar-count {
+	font-weight: 600;
+}
+
+.selection-bar-actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+/* Selection bar button */
+.selection-bar-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	border-radius: 4px;
+	color: var(--text-on-accent);
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.selection-bar-btn:hover {
+	background: rgba(255, 255, 255, 0.2);
+}
+
+.selection-bar-btn svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* =============================================================================
+   Selected Card Styles
+   ============================================================================= */
+
+.card-item.selected {
+	border-color: var(--interactive-accent) !important;
+	box-shadow: 0 0 0 2px var(--interactive-accent),
+				0 2px 8px var(--cn-shadow-md);
+}
+
+.card-item.selected::before {
+	content: '';
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	width: 20px;
+	height: 20px;
+	background: var(--interactive-accent);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 5;
+}
+
+.card-item.selected::after {
+	content: '✓';
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	width: 20px;
+	height: 20px;
+	color: var(--text-on-accent);
+	font-size: 12px;
+	font-weight: 700;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 6;
+}
+
+/* =============================================================================
+   Responsive
+   ============================================================================= */
+
+@media (max-width: 600px) {
+	.selection-bar {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+	}
+
+	.batch-actions {
+		width: 100%;
+		justify-content: flex-end;
+		flex-wrap: wrap;
+	}
+
+	.batch-action-icon {
+		flex: 0 0 auto;
+	}
+}

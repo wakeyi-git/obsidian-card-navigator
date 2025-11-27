@@ -1,0 +1,64 @@
+/* =============================================================================
+   Card Navigator - Search & Filter (Critical)
+   ============================================================================= */
+
+/* Search input wrapper */
+.search-input-container-wrapper {
+	padding: 0 10px;
+	margin-bottom: 10px;
+	max-height: 200px;
+	opacity: 1;
+	overflow: visible;
+	transition: max-height 0.2s ease, opacity 0.2s ease, margin-bottom 0.2s ease;
+}
+
+.search-input-container-wrapper.hidden {
+	max-height: 0;
+	opacity: 0;
+	margin-bottom: 0;
+	padding-top: 0;
+	padding-bottom: 0;
+	overflow: hidden;
+}
+
+@keyframes slideDown {
+	from { opacity: 0; transform: translateY(-10px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+/* Search container */
+.card-navigator-header .search-input-container {
+	display: flex;
+	align-items: center;
+	position: relative;
+}
+
+/* Search input */
+.card-navigator-header .search-input {
+	flex: 1;
+	padding-right: 32px;
+}
+
+/* Case sensitive toggle */
+.card-navigator-header .search-input-case-sensitive-toggle {
+	position: absolute;
+	right: 2px;
+	transition: right 0.2s ease;
+}
+
+.card-navigator-header .search-input-case-sensitive-toggle.shifted {
+	right: 28px;
+}
+
+.card-navigator-header .search-input-case-sensitive-toggle.is-active {
+	color: var(--interactive-accent);
+}
+
+/* Clear button */
+.card-navigator-header .search-input-clear-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: absolute;
+	right: 0;
+}

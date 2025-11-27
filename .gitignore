@@ -25,3 +25,6 @@ data.json
 docs
 coverage
 .claude
+
+# CSS development backup (created by minify-css.js)
+styles.dev.css

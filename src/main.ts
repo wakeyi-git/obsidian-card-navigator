@@ -10,8 +10,10 @@ import { SaveSearchModal, SavedSearchModal } from './search/SavedSearchModal';
 import { DebugLogger } from './utils/DebugLogger';
 import { ErrorHandler, ErrorSeverity } from './utils/ErrorHandler';
 import { PerformanceMonitor } from './utils/performance';
-import { setLanguage, setLanguageAsync, t, detectLanguageFromLocale, type TranslationKeys } from './i18n';
+import { setLanguageAsync, t, detectLanguageFromLocale, type TranslationKeys } from './i18n';
 import { getMomentLocale } from './utils/locale';
+import { getStyleLoader, resetStyleLoader, StyleLoader } from './styles/StyleLoader';
+import { registerFeatureStyles } from './styles/featureStyles.generated';
 
 /**
  * Card Navigator 플러그인
@@ -29,6 +31,7 @@ export default class CardNavigatorPlugin extends Plugin {
 	public logger!: DebugLogger;
 	public errorHandler!: ErrorHandler;
 	public performanceMonitor!: PerformanceMonitor;
+	private styleLoader: StyleLoader;
 
 	/**
 	 * 플러그인 활성화
@@ -36,6 +39,10 @@ export default class CardNavigatorPlugin extends Plugin {
 	 * 플러그인이 로드될 때 호출되며, 모든 초기화 작업을 수행합니다.
 	 */
 	async onload(): Promise<void> {
+		// Initialize StyleLoader and register feature CSS modules
+		registerFeatureStyles();
+		this.styleLoader = getStyleLoader();
+
 		this.settingsManager = new SettingsManager(
 			this.app,
 			async (settings: CardNavigatorSettings) => {
@@ -338,6 +345,7 @@ export default class CardNavigatorPlugin extends Plugin {
 	onunload(): void {
 		this.logger.debug('Plugin', t().plugin.unloading);
 		this.styleManager.resetStyles();
+		resetStyleLoader(); // Cleanup dynamic CSS modules
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_CARD_NAVIGATOR);
 	}
 
@@ -504,5 +512,13 @@ export default class CardNavigatorPlugin extends Plugin {
 			return leaves[0].view;
 		}
 		return null;
+	}
+
+	/**
+	 * StyleLoader 인스턴스를 반환합니다
+	 * Feature CSS의 조건부 로딩에 사용됩니다
+	 */
+	getStyleLoader(): StyleLoader {
+		return this.styleLoader;
 	}
 }

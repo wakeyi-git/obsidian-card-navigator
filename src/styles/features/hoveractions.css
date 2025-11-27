@@ -1,0 +1,72 @@
+/* =============================================================================
+   Card Navigator - Hover Actions Styles (Feature CSS)
+   Loaded when hover actions feature is enabled
+   ============================================================================= */
+
+/* Hover actions container */
+.card-hover-actions {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	display: none;
+	gap: 4px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 4px;
+	box-shadow: 0 2px 8px var(--cn-shadow-md);
+	z-index: 10;
+}
+
+/* Show hover actions on card hover */
+.card-item:hover .card-hover-actions {
+	display: flex;
+}
+
+/* Individual action button */
+.card-hover-action-btn {
+	flex-shrink: 0;
+}
+
+/* Pinned state */
+.card-hover-action-btn.is-pinned {
+	color: var(--text-accent);
+}
+
+.card-hover-action-btn.is-pinned svg {
+	fill: var(--text-accent);
+	stroke: var(--text-accent);
+}
+
+/* Pinned card visual indicator */
+.card-item.is-pinned-card:not(.card-placeholder),
+.card-item.is-pinned-card.card-rendered {
+	border-top: 3px solid var(--text-accent) !important;
+	border-top-style: solid !important;
+}
+
+.card-item[data-pinned="true"]:not(.card-placeholder),
+.card-item[data-pinned="true"].card-rendered {
+	border-top: 3px solid var(--text-accent) !important;
+	border-top-style: solid !important;
+}
+
+/* Starred (bookmarked) state */
+.card-hover-action-btn.is-starred {
+	color: var(--text-accent);
+}
+
+.card-hover-action-btn.is-starred svg {
+	fill: var(--text-accent);
+	stroke: var(--text-accent);
+}
+
+/* Delete button special styling */
+.card-hover-action-btn.delete-action:hover {
+	color: var(--text-error);
+}
+
+/* Card item needs relative positioning for absolute hover actions */
+.card-item {
+	position: relative;
+}
