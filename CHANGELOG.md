@@ -1,3 +1,33 @@
+## [1.5.9] - 2025-11-28
+
+### Fixed
+
+#### Context Bar Folder Selection
+- **Active Folder Mode Card Display**: Fixed cards not appearing when selecting folder from context bar dropdown
+  - In folder mode with "Active Folder" option enabled, clicking a folder in the dropdown would open a file but not display cards
+  - Added `forceRender()` call after file open to ensure cards are properly rendered
+  - Aligned behavior with tag mode which already had this fix
+  - Related files: [view.ts](src/view.ts)
+
+## [1.5.8] - 2025-11-27
+
+### Added
+
+#### Conditional CSS Loading System (StyleLoader)
+- **On-Demand Feature CSS Loading**: Implemented dynamic CSS loading based on feature activation
+  - Feature-specific CSS is loaded only when the feature is first used
+  - Reduces initial CSS payload by ~25KB (from ~104KB to ~79KB critical CSS)
+  - Improves initial render performance and reduces memory footprint
+  - Supports: settings, presets, modals, selection, dragdrop, filter, grouping, contextmenu, hoveractions, multisort
+  - Related files: [StyleLoader.ts](src/styles/StyleLoader.ts), [featureStyles.generated.ts](src/styles/featureStyles.generated.ts)
+
+- **Build-time CSS Processing**: New build script for feature CSS extraction
+  - Automatically extracts and minifies feature CSS files
+  - Generates TypeScript module with embedded CSS strings
+  - Production mode: Full minification with cssnano
+  - Development mode: Preserves formatting for debugging
+  - Related files: [scripts/build-css.js](scripts/build-css.js)
+
 ## [1.5.7] - 2025-11-26
 
 ### Performance

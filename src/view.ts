@@ -852,6 +852,22 @@ export class CardNavigatorView extends ItemView implements ICardView {
 						// 파일 열기 전 렌더 상태 초기화 (강제 재렌더링 유도)
 						this.viewRenderer.resetRenderState();
 						await this.openFile(firstFile);
+
+						// 항상 강제 재렌더링 수행 (타이밍 문제 방지)
+						// 파일이 변경되었으면 active-leaf-change에서 이미 렌더링했을 수 있지만,
+						// 중복 렌더링보다는 누락되는 것이 더 큰 문제이므로 항상 수행
+						this.logger.debug('View', 'Folder dropdown: force render after file selection');
+						if (this.cardsContainer) {
+							await this.viewRenderer.forceRender(
+								this.cardsContainer,
+								(f) => this.openFile(f)
+							);
+						}
+
+						// Toolbar 아이콘 업데이트
+						if (this.toolbar) {
+							this.toolbar.updateModeToggleIcon();
+						}
 						return;
 					}
 				}
