@@ -73,15 +73,28 @@ export class TagMode {
 
     /**
      * 대상 태그 목록을 가져옵니다
-     * 
+     *
+     * @remarks
+     * 우선순위:
+     * 1. overrideTags (컨텍스트 바에서 선택한 임시 태그)
+     * 2. useActiveFileTags가 true이면 활성 파일의 태그
+     * 3. specifiedTags가 있으면 지정된 태그
+     *
      * @private
      */
     private getTargetTags(): string[] {
+        // 1. 오버라이드 태그 우선 (컨텍스트 바에서 선택한 경우)
+        if (this.settings.overrideTags && this.settings.overrideTags.length > 0) {
+            return this.settings.overrideTags;
+        }
+
+        // 2. 활성 파일 태그 모드
         if (this.settings.useActiveFileTags) {
             return this.getActiveFileTags();
-        } else {
-            return this.settings.specifiedTags;
         }
+
+        // 3. 지정 태그 모드
+        return this.settings.specifiedTags;
     }
 
     /**
@@ -209,10 +222,28 @@ export class TagMode {
 
     /**
      * 현재 대상 태그 목록을 가져옵니다
-     * 
+     *
      * @returns 현재 대상 태그 목록
      */
     getCurrentTags(): string[] {
         return this.getTargetTags();
+    }
+
+    /**
+     * 오버라이드 태그가 설정되어 있는지 확인합니다
+     *
+     * @returns 오버라이드가 활성화되어 있으면 true
+     */
+    hasOverride(): boolean {
+        return !!(this.settings.overrideTags && this.settings.overrideTags.length > 0);
+    }
+
+    /**
+     * 오버라이드 태그를 가져옵니다
+     *
+     * @returns 오버라이드 태그 배열 또는 null
+     */
+    getOverrideTags(): string[] | null {
+        return this.settings.overrideTags ?? null;
     }
 }

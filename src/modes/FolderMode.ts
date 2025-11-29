@@ -78,13 +78,29 @@ export class FolderMode {
 
     /**
      * 현재 대상 폴더를 가져옵니다
-     * 
+     *
+     * @remarks
+     * 우선순위:
+     * 1. overrideFolder (컨텍스트 바에서 선택한 임시 폴더)
+     * 2. useActiveFolder가 true이면 활성 파일의 폴더
+     * 3. specifiedFolder가 있으면 지정된 폴더
+     * 4. 그 외에는 루트 폴더
+     *
      * @private
      */
     private getCurrentFolder(): TFolder | null {
+        // 1. 오버라이드 폴더 우선 (컨텍스트 바에서 선택한 경우)
+        if (this.settings.overrideFolder) {
+            return this.getFolderByPath(this.settings.overrideFolder);
+        }
+
+        // 2. 활성 폴더 모드
         if (this.settings.useActiveFolder) {
             return this.getActiveFolderFromFile();
-        } else if (this.settings.specifiedFolder) {
+        }
+
+        // 3. 지정 폴더 모드
+        if (this.settings.specifiedFolder) {
             return this.getFolderByPath(this.settings.specifiedFolder);
         }
 
@@ -189,5 +205,23 @@ export class FolderMode {
      */
     invalidateCache(): void {
         this.fileCache.clear();
+    }
+
+    /**
+     * 오버라이드 폴더가 설정되어 있는지 확인합니다
+     *
+     * @returns 오버라이드가 활성화되어 있으면 true
+     */
+    hasOverride(): boolean {
+        return !!this.settings.overrideFolder;
+    }
+
+    /**
+     * 오버라이드 폴더 경로를 가져옵니다
+     *
+     * @returns 오버라이드 폴더 경로 또는 null
+     */
+    getOverrideFolder(): string | null {
+        return this.settings.overrideFolder ?? null;
     }
 }

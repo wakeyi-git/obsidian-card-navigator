@@ -640,6 +640,12 @@ export interface FolderModeSettings {
     specifiedFolder?: string;
     /** 하위 폴더 포함 여부 */
     includeSubfolders: boolean;
+    /**
+     * 컨텍스트 바에서 선택한 임시 오버라이드 폴더
+     * 활성 폴더 모드에서 드롭다운 선택 시 파일을 열지 않고 이 값을 사용
+     * 사용자가 직접 파일을 열면 자동으로 해제됨
+     */
+    overrideFolder?: string | null;
 }
 
 /**
@@ -652,6 +658,12 @@ export interface TagModeSettings {
     specifiedTags: string[];
     /** 태그 매칭 방식 */
     tagOperator: 'AND' | 'OR';
+    /**
+     * 컨텍스트 바에서 선택한 임시 오버라이드 태그
+     * 활성 태그 모드에서 드롭다운 선택 시 파일을 열지 않고 이 값을 사용
+     * 사용자가 직접 파일을 열면 자동으로 해제됨
+     */
+    overrideTags?: string[] | null;
 }
 
 /**
@@ -1019,12 +1031,14 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
     currentMode: 'folder',
     folderMode: {
         useActiveFolder: true,
-        includeSubfolders: false
+        includeSubfolders: false,
+        overrideFolder: null
     },
     tagMode: {
         useActiveFileTags: true,
         specifiedTags: [],
-        tagOperator: 'OR'
+        tagOperator: 'OR',
+        overrideTags: null
     },
     sort: {
         criteria: 'name',

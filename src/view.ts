@@ -279,6 +279,11 @@ export class CardNavigatorView extends ItemView implements ICardView {
 					return; // 같은 파일이면 아무 작업도 하지 않음
 				}
 
+				// ⭐ 오버라이드 해제: 사용자가 직접 파일을 열었을 때
+				// 컨텍스트 바 드롭다운에서 선택한 임시 폴더/태그 오버라이드를 해제하고
+				// 다시 활성 파일 기반으로 동작하도록 함
+				this.clearOverrides();
+
 				this.logger.debug('View', t().debug.view.activeLeafChange, {
 					previousFile: this.state.getPreviousFile()?.path || 'none',
 					currentFile: activeFile?.path || 'none'
@@ -727,9 +732,53 @@ export class CardNavigatorView extends ItemView implements ICardView {
 			});
 		}
 	}
-	
 
-	
+	/**
+	 * 폴더/태그 오버라이드를 해제합니다
+	 *
+	 * @remarks
+	 * 컨텍스트 바 드롭다운에서 선택한 임시 오버라이드를 해제하고
+	 * 다시 활성 파일 기반으로 동작하도록 합니다.
+	 * 사용자가 직접 파일을 열었을 때 (active-leaf-change) 호출됩니다.
+	 */
+	private clearOverrides(): void {
+		let hasChanges = false;
+
+		// 폴더 오버라이드 해제
+		if (this.settings.folderMode.overrideFolder) {
+			this.logger.debug('View', 'Clearing folder override', {
+				previousOverride: this.settings.folderMode.overrideFolder
+			});
+			this.plugin.settingsManager.updateSettings({
+				folderMode: {
+					...this.settings.folderMode,
+					overrideFolder: null
+				}
+			});
+			this.folderMode.invalidateCache();
+			hasChanges = true;
+		}
+
+		// 태그 오버라이드 해제
+		if (this.settings.tagMode.overrideTags && this.settings.tagMode.overrideTags.length > 0) {
+			this.logger.debug('View', 'Clearing tag override', {
+				previousOverride: this.settings.tagMode.overrideTags
+			});
+			this.plugin.settingsManager.updateSettings({
+				tagMode: {
+					...this.settings.tagMode,
+					overrideTags: null
+				}
+			});
+			hasChanges = true;
+		}
+
+		// 변경사항이 있으면 저장 (비동기, 완료 대기 안함)
+		if (hasChanges) {
+			this.plugin.saveSettings();
+		}
+	}
+
 	/**
 	 * Card Navigator에 포커스를 설정하고 활성 카드로 이동합니다
 	 *
@@ -826,56 +875,40 @@ export class CardNavigatorView extends ItemView implements ICardView {
 
 		// 그룹 ID에서 폴더/태그 경로 추출
 		if (groupId.startsWith('folder-')) {
-			// 폴더 선택: 해당 폴더로 이동 (모드 옵션 유지)
+			// 폴더 선택: 해당 폴더의 카드 표시 (파일 열지 않음)
 			const folderPath = groupId.replace('folder-', '');
 
-			this.logger.debug('View', 'Navigating to folder', { folderPath });
+			this.logger.debug('View', 'Navigating to folder (cards only)', { folderPath });
 
-			// specifiedFolder 업데이트 (지정 폴더 모드에서 사용)
-			this.plugin.settingsManager.updateSettings({
-				currentMode: 'folder',
-				folderMode: {
-					...this.settings.folderMode,
-					specifiedFolder: folderPath
-				}
-			});
+			// 활성 폴더 모드인 경우: 오버라이드 설정 (파일 열지 않고 카드만 표시)
+			if (this.settings.folderMode.useActiveFolder) {
+				this.plugin.settingsManager.updateSettings({
+					currentMode: 'folder',
+					folderMode: {
+						...this.settings.folderMode,
+						overrideFolder: folderPath
+					}
+				});
+
+				this.logger.debug('View', 'Folder dropdown: set override folder', { folderPath });
+			} else {
+				// 지정 폴더 모드: specifiedFolder 업데이트
+				this.plugin.settingsManager.updateSettings({
+					currentMode: 'folder',
+					folderMode: {
+						...this.settings.folderMode,
+						specifiedFolder: folderPath
+					}
+				});
+			}
 
 			await this.plugin.saveSettings();
 
-			// 활성 폴더 모드인 경우: 해당 폴더의 파일을 열어서 활성 폴더 변경
-			if (this.settings.folderMode.useActiveFolder) {
-				const folder = this.app.vault.getAbstractFileByPath(folderPath);
-				if (folder instanceof TFolder) {
-					// 폴더 내 첫 번째 마크다운 파일 찾기 (재귀적으로 하위 폴더도 검색)
-					const firstFile = this.findFirstMarkdownFileRecursively(folder);
-					if (firstFile) {
-						// 파일 열기 전 렌더 상태 초기화 (강제 재렌더링 유도)
-						this.viewRenderer.resetRenderState();
-						await this.openFile(firstFile);
+			// 파일 목록 캐시 무효화 (새 폴더 기준으로 다시 조회)
+			this.folderMode.invalidateCache();
 
-						// 항상 강제 재렌더링 수행 (타이밍 문제 방지)
-						// 파일이 변경되었으면 active-leaf-change에서 이미 렌더링했을 수 있지만,
-						// 중복 렌더링보다는 누락되는 것이 더 큰 문제이므로 항상 수행
-						this.logger.debug('View', 'Folder dropdown: force render after file selection');
-						if (this.cardsContainer) {
-							await this.viewRenderer.forceRender(
-								this.cardsContainer,
-								(f) => this.openFile(f)
-							);
-						}
-
-						// Toolbar 아이콘 업데이트
-						if (this.toolbar) {
-							this.toolbar.updateModeToggleIcon();
-						}
-						return;
-					}
-				}
-				// 폴더와 하위 폴더에 파일이 없으면 지정 폴더 모드로 표시
-				// (뷰 새로고침으로 specifiedFolder 사용)
-			}
-
-			// 지정 폴더 모드이거나 파일이 없는 경우: 뷰 새로고침
+			// 렌더 상태 초기화 및 카드 렌더링 (파일 열지 않음)
+			this.viewRenderer.resetRenderState();
 			if (this.cardsContainer) {
 				await this.viewRenderer.forceRender(
 					this.cardsContainer,
@@ -890,93 +923,37 @@ export class CardNavigatorView extends ItemView implements ICardView {
 
 			return;
 		} else if (groupId.startsWith('tag-')) {
-			// 태그 선택: 해당 태그로 이동 (모드 옵션 유지)
+			// 태그 선택: 해당 태그의 카드 표시 (파일 열지 않음)
 			const tagPath = groupId.replace('tag-', '');
 
-			this.logger.debug('View', 'Navigating to tag', { tagPath });
+			this.logger.debug('View', 'Navigating to tag (cards only)', { tagPath });
 
-			// specifiedTags 업데이트 (지정 태그 모드에서 사용)
-			this.plugin.settingsManager.updateSettings({
-				currentMode: 'tag',
-				tagMode: {
-					...this.settings.tagMode,
-					specifiedTags: [tagPath]
-				}
-			});
+			// 활성 태그 모드인 경우: 오버라이드 설정 (파일 열지 않고 카드만 표시)
+			if (this.settings.tagMode.useActiveFileTags) {
+				this.plugin.settingsManager.updateSettings({
+					currentMode: 'tag',
+					tagMode: {
+						...this.settings.tagMode,
+						overrideTags: [tagPath]
+					}
+				});
+
+				this.logger.debug('View', 'Tag dropdown: set override tag', { tagPath });
+			} else {
+				// 지정 태그 모드: specifiedTags 업데이트
+				this.plugin.settingsManager.updateSettings({
+					currentMode: 'tag',
+					tagMode: {
+						...this.settings.tagMode,
+						specifiedTags: [tagPath]
+					}
+				});
+			}
 
 			await this.plugin.saveSettings();
 
-			// 활성 파일 태그 모드인 경우: 해당 태그가 있는 파일을 열어서 활성 태그 변경
-			if (this.settings.tagMode.useActiveFileTags) {
-				const currentFile = this.app.workspace.getActiveFile();
-
-				// 선택한 태그를 포함하는 파일 필터링
-				const filesWithTag = this.app.vault.getMarkdownFiles().filter(file => {
-					const cache = this.app.metadataCache.getFileCache(file);
-					const tags = cache?.tags?.map(t => t.tag) || [];
-
-					// 프론트매터 태그 처리 (배열 또는 문자열)
-					const fmTags = cache?.frontmatter?.tags;
-					const frontmatterTags: string[] = [];
-					if (Array.isArray(fmTags)) {
-						frontmatterTags.push(...fmTags
-							.filter((t): t is string => typeof t === 'string' && t.length > 0)
-							.map(t => t.startsWith('#') ? t : `#${t}`));
-					} else if (typeof fmTags === 'string' && fmTags.length > 0) {
-						frontmatterTags.push(fmTags.startsWith('#') ? fmTags : `#${fmTags}`);
-					}
-
-					const allTags = [...tags, ...frontmatterTags];
-					return allTags.some(t => t === `#${tagPath}` || t === tagPath);
-				});
-
-				if (filesWithTag.length > 0) {
-					// 플러그인 정렬 기준에 따라 파일 정렬 후 첫 번째 파일 선택
-					const sortedFiles = this.sortManager.sort(filesWithTag, this.settings.sort);
-					const targetFile = sortedFiles[0];
-
-					this.logger.debug('View', 'Tag dropdown: opening file with selected tag', {
-						tagPath,
-						targetFile: targetFile.path,
-						currentFile: currentFile?.path,
-						totalFilesWithTag: filesWithTag.length
-					});
-
-					// 파일 열기 전 렌더 상태 초기화 (강제 재렌더링 유도)
-					this.viewRenderer.resetRenderState();
-
-					// 현재 파일과 대상 파일이 다른 경우: 먼저 파일 열기
-					if (currentFile?.path !== targetFile.path) {
-						this.logger.debug('View', 'Tag dropdown: opening different file');
-						await this.openFile(targetFile);
-						// openFile 후 active-leaf-change 이벤트가 발생하여 재렌더링됨
-						// 하지만 이벤트 타이밍 문제로 재렌더링이 안 될 수 있으므로
-						// 약간의 지연 후 상태를 확인하고 필요시 강제 재렌더링
-					}
-
-					// 항상 강제 재렌더링 수행 (타이밍 문제 방지)
-					// 파일이 변경되었으면 active-leaf-change에서 이미 렌더링했을 수 있지만,
-					// 중복 렌더링보다는 누락되는 것이 더 큰 문제이므로 항상 수행
-					this.logger.debug('View', 'Tag dropdown: force render after file selection');
-					if (this.cardsContainer) {
-						await this.viewRenderer.forceRender(
-							this.cardsContainer,
-							(f) => this.openFile(f)
-						);
-					}
-
-					// Toolbar 아이콘 업데이트
-					if (this.toolbar) {
-						this.toolbar.updateModeToggleIcon();
-					}
-					return;
-				}
-
-				this.logger.debug('View', 'Tag dropdown: no files with tag found', { tagPath });
-				// 태그를 가진 파일이 없으면 지정 태그 모드로 표시
-			}
-
-			// 지정 태그 모드이거나 파일이 없는 경우: 뷰 새로고침
+			// 렌더 상태 초기화 및 카드 렌더링 (파일 열지 않음)
+			this.viewRenderer.resetRenderState();
 			if (this.cardsContainer) {
 				await this.viewRenderer.forceRender(
 					this.cardsContainer,

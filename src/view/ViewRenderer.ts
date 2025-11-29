@@ -412,7 +412,11 @@ export class ViewRenderer {
 
 		if (currentMode === 'folder') {
 			icon = 'folder';
-			if (this.settings.folderMode.useActiveFolder) {
+			// 우선순위: overrideFolder > useActiveFolder > specifiedFolder
+			if (this.settings.folderMode.overrideFolder) {
+				// 컨텍스트 바에서 선택한 오버라이드 폴더
+				fullPath = this.settings.folderMode.overrideFolder;
+			} else if (this.settings.folderMode.useActiveFolder) {
 				const activeFile = this.getActiveFile();
 				fullPath = activeFile?.parent?.path || '';
 			} else if (this.settings.folderMode.specifiedFolder) {
@@ -423,45 +427,42 @@ export class ViewRenderer {
 			activeGroupId = `folder-${fullPath}`;
 		} else {
 			icon = 'hash';
-			if (this.settings.tagMode.useActiveFileTags) {
-				// 활성 태그 모드: specifiedTags가 설정되어 있으면 우선 사용 (드롭다운에서 선택한 태그)
-				// 그렇지 않으면 활성 파일의 첫 번째 태그 사용
-				if (this.settings.tagMode.specifiedTags.length > 0) {
-					// 드롭다운에서 선택한 태그가 있으면 그것을 표시
-					fullPath = this.settings.tagMode.specifiedTags[0].replace('#', '');
-				} else {
-					// 드롭다운에서 선택한 태그가 없으면 활성 파일의 첫 번째 태그 사용
-					const activeFile = this.getActiveFile();
-					if (activeFile) {
-						const cache = this.app.metadataCache.getFileCache(activeFile);
-						const tags: string[] = [];
+			// 우선순위: overrideTags > useActiveFileTags > specifiedTags
+			if (this.settings.tagMode.overrideTags && this.settings.tagMode.overrideTags.length > 0) {
+				// 컨텍스트 바에서 선택한 오버라이드 태그
+				fullPath = this.settings.tagMode.overrideTags[0].replace('#', '');
+			} else if (this.settings.tagMode.useActiveFileTags) {
+				// 활성 태그 모드: 활성 파일의 첫 번째 태그 사용
+				const activeFile = this.getActiveFile();
+				if (activeFile) {
+					const cache = this.app.metadataCache.getFileCache(activeFile);
+					const tags: string[] = [];
 
-						// frontmatter 태그 수집
-						if (cache?.frontmatter?.tags) {
-							const fmTags = cache.frontmatter.tags;
-							if (Array.isArray(fmTags)) {
-								tags.push(...fmTags
-									.filter((t): t is string => typeof t === 'string' && t.length > 0)
-									.map((t: string) => t.startsWith('#') ? t : `#${t}`));
-							} else if (typeof fmTags === 'string' && fmTags.length > 0) {
-								tags.push(fmTags.startsWith('#') ? fmTags : `#${fmTags}`);
-							}
+					// frontmatter 태그 수집
+					if (cache?.frontmatter?.tags) {
+						const fmTags = cache.frontmatter.tags;
+						if (Array.isArray(fmTags)) {
+							tags.push(...fmTags
+								.filter((t): t is string => typeof t === 'string' && t.length > 0)
+								.map((t: string) => t.startsWith('#') ? t : `#${t}`));
+						} else if (typeof fmTags === 'string' && fmTags.length > 0) {
+							tags.push(fmTags.startsWith('#') ? fmTags : `#${fmTags}`);
 						}
+					}
 
-						// 인라인 태그 수집
-						if (cache?.tags) {
-							tags.push(...cache.tags.map(t => t.tag));
-						}
+					// 인라인 태그 수집
+					if (cache?.tags) {
+						tags.push(...cache.tags.map(t => t.tag));
+					}
 
-						if (tags.length > 0) {
-							// # 제거하여 getAllTags()의 tag.tag와 일치시킴
-							fullPath = tags[0].replace('#', '');
-						} else {
-							fullPath = '';
-						}
+					if (tags.length > 0) {
+						// # 제거하여 getAllTags()의 tag.tag와 일치시킴
+						fullPath = tags[0].replace('#', '');
 					} else {
 						fullPath = '';
 					}
+				} else {
+					fullPath = '';
 				}
 			} else if (this.settings.tagMode.specifiedTags.length > 0) {
 				// # 제거하여 getAllTags()의 tag.tag와 일치시킴

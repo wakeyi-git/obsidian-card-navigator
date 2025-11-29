@@ -1,3 +1,21 @@
+## [1.5.10] - 2025-11-29
+
+### Improved
+
+#### Context Bar Navigation UX
+- **Cards-Only Display Mode**: Improved UX for context bar dropdown folder/tag selection
+  - Selecting a folder/tag from dropdown now displays cards without automatically opening a file
+  - Users can browse cards first, then click a card to open the desired file
+  - Override is automatically cleared when user opens a file (via card click or file explorer)
+  - More predictable navigation: dropdown = browse, card click = open file
+  - Related files: [view.ts](src/view.ts), [FolderMode.ts](src/modes/FolderMode.ts), [TagMode.ts](src/modes/TagMode.ts), [ViewRenderer.ts](src/view/ViewRenderer.ts), [types.ts](src/types.ts)
+
+### Technical Details
+- Added `overrideFolder` field to `FolderModeSettings` for temporary folder override
+- Added `overrideTags` field to `TagModeSettings` for temporary tag override
+- Override values take priority over active file-based filtering
+- Override cleared on `active-leaf-change` event (when user opens a different file)
+
 ## [1.5.9] - 2025-11-28
 
 ### Fixed
