@@ -44,7 +44,8 @@ const featureFiles = [
     'grouping.css',
     'contextmenu.css',
     'hoveractions.css',
-    'multisort.css'
+    'multisort.css',
+    'matrix.css'
 ];
 
 // Mapping from file to module name
@@ -58,7 +59,8 @@ const fileToModule = {
     'grouping.css': 'grouping',
     'contextmenu.css': 'contextmenu',
     'hoveractions.css': 'hoveractions',
-    'multisort.css': 'multisort'
+    'multisort.css': 'multisort',
+    'matrix.css': 'matrix'
 };
 
 console.log(`CSS Build: ${mode.toUpperCase()} mode\n`);

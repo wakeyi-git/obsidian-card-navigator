@@ -111,7 +111,8 @@ describe('ViewRenderer - Additional Coverage', () => {
         layoutManager = {
             updateLayout: jest.fn(),
             getMode: jest.fn(() => 'vertical'),
-            updateViewportCards: jest.fn() // Phase 3.5
+            updateViewportCards: jest.fn(), // Phase 3.5
+            invalidateState: jest.fn() // 2D Matrix support
         } as any;
         
         // ViewportManager mock

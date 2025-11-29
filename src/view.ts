@@ -88,7 +88,8 @@ export class CardNavigatorView extends ItemView implements ICardView {
 	private sortManager: SortManager;
 	private toolbar: Toolbar | null = null;
 	private searchInputContainer: HTMLElement | null = null;
-	private dragDropHandler: DragDropHandler;
+	/** 🆕 public으로 변경 - MatrixRenderer에서 접근 필요 */
+	public dragDropHandler: DragDropHandler;
 	private contextMenu: CardContextMenu;
 	public selectionManager: SelectionManager;
 	private contextBar: ContextBar | null = null;
@@ -238,14 +239,23 @@ export class CardNavigatorView extends ItemView implements ICardView {
 		);
 		
 		this.viewRenderer.updateLayoutManager(this.layoutManager);
-		this.layoutManager.updateLayout();
 		this.keyboardNavigator.registerKeyboardListeners();
 
-		// 초기 렌더링을 먼저 수행한 후 이벤트 리스너 등록
-		// onOpen() 중 active-leaf-change 이벤트로 인한 중복 렌더링 방지
+		// ⭐ 초기 렌더링: workspace 레이아웃이 준비될 때까지 대기
+		// onOpen() 시점에는 컨테이너가 DOM에 추가되었지만 아직 레이아웃이 완료되지 않아
+		// 0×0 크기일 수 있음. onLayoutReady 콜백에서 렌더링하면 컨테이너가 실제 크기를 갖음
+		// Reference: https://docs.obsidian.md/plugins/guides/load-time
 		const activeFile = this.app.workspace.getActiveFile();
 		await this.plugin.presetManager.autoApplyPreset(activeFile);
-		await this.renderCards(this.cardsContainer);
+
+		// workspace 레이아웃이 준비되면 초기 렌더링 수행
+		this.app.workspace.onLayoutReady(async () => {
+			// 레이아웃 먼저 업데이트 (컨테이너 크기 확정됨)
+			this.layoutManager?.updateLayout();
+			if (this.cardsContainer) {
+				await this.renderCards(this.cardsContainer);
+			}
+		});
 		
 		// ⭐ 디바운스된 forceRender 함수 생성
 		// 500ms 내 여러 파일 이벤트가 발생해도 마지막 한 번만 렌더링
@@ -284,24 +294,49 @@ export class CardNavigatorView extends ItemView implements ICardView {
 				// 다시 활성 파일 기반으로 동작하도록 함
 				this.clearOverrides();
 
+				// ⭐ 이전 파일 정보를 먼저 저장 (폴더 변경 감지에 필요)
+				const previousFile = this.state.getPreviousFile();
+
 				this.logger.debug('View', t().debug.view.activeLeafChange, {
-					previousFile: this.state.getPreviousFile()?.path || 'none',
+					previousFile: previousFile?.path || 'none',
 					currentFile: activeFile?.path || 'none'
 				});
 
-				// 파일이 실제로 변경되었을 때만 preset 적용
-				await this.plugin.presetManager.autoApplyPreset(activeFile);
+				// ⭐ previousFile을 먼저 설정하여 중복 이벤트 방지
+				// autoApplyPreset이 비동기 작업 중 이벤트가 재발생해도 조기 반환됨
+				this.state.setPreviousFile(activeFile);
 
-				const needsRerender = this.viewRenderer.needsRerenderForFileChange(activeFile);
+				// 파일이 실제로 변경되었을 때만 preset 적용
+				// ⭐ 프리셋이 변경되면 강제로 리렌더링해야 함 (레이아웃/스타일 변경)
+				const presetChanged = await this.plugin.presetManager.autoApplyPreset(activeFile);
+
+				// ⭐ 프리셋 변경 시 카드 캐시 무효화 (새 스타일로 렌더링되도록)
+				if (presetChanged) {
+					this.viewRenderer.invalidateCardCache();
+				}
+
+				// ⭐ 폴더 변경 감지: 저장해둔 이전 파일 정보를 전달
+				const needsRerender = presetChanged || this.viewRenderer.needsRerenderForFileChangeWithPrevious(activeFile, previousFile);
 
 				this.logger.debug('View', t().debug.view.rerenderRequired, {
 					hasActiveFileChanged,
-					needsRerender
+					needsRerender,
+					presetChanged
 				});
 
 				if (needsRerender) {
 					this.logger.debug('View', t().debug.view.contextChangeRerender);
-					await this.renderCards(this.cardsContainer);
+
+					// ⭐ 프리셋 변경 시 forceRender 사용 (상태 비교 건너뛰기)
+					// 프리셋이 변경되면 설정이 완전히 달라지므로 상태 캐시를 무효화해야 함
+					if (presetChanged) {
+						await this.viewRenderer.forceRender(
+							this.cardsContainer,
+							(f) => this.openFile(f)
+						);
+					} else {
+						await this.renderCards(this.cardsContainer);
+					}
 
 					if (isValidFile(activeFile)) {
 						const fileToScroll: TFile = activeFile;
@@ -331,7 +366,7 @@ export class CardNavigatorView extends ItemView implements ICardView {
 					this.toolbar.updateModeToggleIcon();
 				}
 
-				this.state.setPreviousFile(activeFile);
+				// previousFile은 이미 위에서 설정됨 (중복 이벤트 방지용)
 			})
 		);
 		
@@ -368,6 +403,31 @@ export class CardNavigatorView extends ItemView implements ICardView {
 			})
 		);
 		
+		// ⭐ 파일 생성 감지 및 자동 추가 (디바운싱 적용)
+		// 새 파일이 생성되면 뷰를 자동으로 업데이트하여 새 카드를 표시합니다.
+		this.registerEvent(
+			this.app.vault.on('create', async (file) => {
+				if (!(file instanceof TFile)) return;
+
+				this.logger.debug('View', 'File create detected', { path: file.path });
+
+				// ⭐ 캐시 무효화
+				this.folderMode.invalidateCache();
+				this.viewRenderer.invalidateFileCache();
+
+				// ⭐ Vault 파일 목록 업데이트 대기 + 디바운싱
+				setTimeout(() => {
+					if (this.debouncedForceRender) {
+						this.debouncedForceRender().catch(err => {
+							if (err.message !== 'Debounced call cancelled') {
+								this.logger.error('View', 'Debounced render failed after file create', { error: err });
+							}
+						});
+					}
+				}, TIMING.VAULT_UPDATE_DELAY);
+			})
+		);
+
 		// ⭐ 파일 삭제 감지 및 자동 제거 (디바운싱 적용)
 		this.registerEvent(
 			this.app.vault.on('delete', async (file) => {
@@ -744,9 +804,10 @@ export class CardNavigatorView extends ItemView implements ICardView {
 	private clearOverrides(): void {
 		let hasChanges = false;
 
-		// 폴더 오버라이드 해제
-		if (this.settings.folderMode.overrideFolder) {
-			this.logger.debug('View', 'Clearing folder override', {
+		// ⭐ 폴더 오버라이드 해제: 활성 폴더 모드일 때만
+		// 지정 폴더 모드에서는 오버라이드를 유지해야 사용자가 선택한 폴더가 유지됨
+		if (this.settings.folderMode.overrideFolder && this.settings.folderMode.useActiveFolder) {
+			this.logger.debug('View', 'Clearing folder override (active folder mode)', {
 				previousOverride: this.settings.folderMode.overrideFolder
 			});
 			this.plugin.settingsManager.updateSettings({
@@ -759,9 +820,10 @@ export class CardNavigatorView extends ItemView implements ICardView {
 			hasChanges = true;
 		}
 
-		// 태그 오버라이드 해제
-		if (this.settings.tagMode.overrideTags && this.settings.tagMode.overrideTags.length > 0) {
-			this.logger.debug('View', 'Clearing tag override', {
+		// ⭐ 태그 오버라이드 해제: 활성 태그 모드일 때만
+		// 지정 태그 모드에서는 오버라이드를 유지해야 사용자가 선택한 태그가 유지됨
+		if (this.settings.tagMode.overrideTags && this.settings.tagMode.overrideTags.length > 0 && this.settings.tagMode.useActiveFileTags) {
+			this.logger.debug('View', 'Clearing tag override (active tag mode)', {
 				previousOverride: this.settings.tagMode.overrideTags
 			});
 			this.plugin.settingsManager.updateSettings({

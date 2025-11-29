@@ -19,7 +19,8 @@ export type FeatureStyleModule =
     | 'grouping'       // Grouping and folder styles
     | 'contextmenu'    // Context menu styles
     | 'hoveractions'   // Card hover action buttons
-    | 'multisort';     // Multi-level sort UI
+    | 'multisort'      // Multi-level sort UI
+    | 'matrix';        // 2D Matrix grouping (Eisenhower Matrix)
 
 /**
  * CSS content for each feature module
@@ -35,7 +36,8 @@ const FEATURE_STYLES: Record<FeatureStyleModule, string> = {
     grouping: '',
     contextmenu: '',
     hoveractions: '',
-    multisort: ''
+    multisort: '',
+    matrix: ''
 };
 
 /**
@@ -173,6 +175,14 @@ export class StyleLoader {
      */
     async loadGroupingStyles(): Promise<void> {
         await this.loadModule('grouping');
+    }
+
+    /**
+     * Load matrix styles
+     * Call when 2D matrix grouping mode is enabled
+     */
+    async loadMatrixStyles(): Promise<void> {
+        await this.loadModule('matrix');
     }
 
     /**

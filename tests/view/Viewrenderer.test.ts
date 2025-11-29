@@ -381,7 +381,8 @@ describe('ViewRenderer', () => {
 		mockLayoutManager = {
 			updateLayout: jest.fn(),
 			getMode: jest.fn(() => 'vertical'),
-			updateViewportCards: jest.fn() // Phase 3.5
+			updateViewportCards: jest.fn(), // Phase 3.5
+			invalidateState: jest.fn() // 2D Matrix support
 		} as any;
 		
 		// Mock KeyboardNavigator

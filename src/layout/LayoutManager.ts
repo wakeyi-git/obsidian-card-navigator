@@ -98,8 +98,11 @@ export class LayoutManager {
             getFullSettings
         );
 
-        // 초기 레이아웃 적용
-        this.updateLayout();
+        // ⭐ 초기 레이아웃 적용: 컨테이너 크기가 확정된 경우에만
+        // 크기가 0이면 ResizeObserver가 크기 변경 시 자동으로 updateLayout() 호출
+        if (rect.width >= 10 && rect.height >= 10) {
+            this.updateLayout();
+        }
     }
 
     /**
@@ -343,8 +346,17 @@ export class LayoutManager {
      * ⭐ Section 7.2: CSS 변수 배치 업데이트
      * - cssText를 사용한 한 번의 DOM 조작으로 모든 CSS 변수 설정
      * - 리페인트 최소화로 성능 향상
+     *
+     * ⭐ 2D Matrix 모드: matrix-view 클래스가 있으면 레이아웃 업데이트 건너뜀
+     * - Matrix 모드는 자체 CSS 레이아웃을 사용하므로 기존 레이아웃과 독립
      */
     updateLayout(): void {
+        // ⭐ 2D Matrix 모드 확인 - matrix-view 클래스가 있으면 건너뜀
+        if (this.containerEl.classList.contains('matrix-view')) {
+            this.logger.debug('Layout', 'Matrix 모드 활성화됨, 레이아웃 업데이트 건너뜀');
+            return;
+        }
+
 		// ⭐ Section 7.1: 레이아웃 변경 감지
 		const currentState = this.getCurrentLayoutState();
 
@@ -551,6 +563,18 @@ export class LayoutManager {
 	forceUpdateLayout(): void {
 		this.lastLayoutState = null;
 		this.updateLayout();
+	}
+
+	/**
+	 * ⭐ 레이아웃 상태를 무효화합니다 (즉시 업데이트 없이)
+	 *
+	 * @remarks
+	 * 다음 updateLayout() 호출 시 상태 비교를 건너뛰고 레이아웃을 다시 적용합니다.
+	 * forceRender 등에서 container.style.cssText가 초기화될 때 사용합니다.
+	 */
+	invalidateState(): void {
+		this.lastLayoutState = null;
+		this.logger.debug('Layout', '레이아웃 상태 무효화됨');
 	}
 
     /**

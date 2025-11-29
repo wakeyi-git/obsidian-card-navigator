@@ -10,6 +10,7 @@ import { TagMode } from '../modes/TagMode';
 import { SortManager } from '../sort/SortManager';
 import { GroupingManager } from '../grouping/GroupingManager';
 import { GroupRenderer } from '../grouping/GroupRenderer';
+import { MatrixRenderer } from '../grouping/MatrixRenderer';
 import CardNavigatorPlugin from '../main';
 import type { CardNavigatorView } from '../view';
 import { isValidFile, isDefined } from '../utils/typeGuards';
@@ -20,7 +21,8 @@ import { IncrementalRenderer } from './IncrementalRenderer';
 import { ProgressBar } from '../ui/ProgressBar';
 import { VIEWPORT } from '../constants';
 import { t } from '../i18n';
-import type { RenderState, RenderChanges, CardGroup, NavigatorMode } from '../types';
+import { getStyleLoader } from '../styles/StyleLoader';
+import type { RenderState, RenderChanges, CardGroup, NavigatorMode, CardNavigatorSettings } from '../types';
 import type { PathSegment } from '../ui/ContextBar';
 
 /**
@@ -44,6 +46,8 @@ export class ViewRenderer {
 	private sortManager: SortManager;
 	public groupingManager: GroupingManager;
 	public groupRenderer: GroupRenderer;
+	/** 🆕 2D 매트릭스 렌더러 */
+	public matrixRenderer: MatrixRenderer | null = null;
 	private logger: DebugLogger;
 
 	private lastRenderState: string | null = null;
@@ -374,6 +378,16 @@ export class ViewRenderer {
 		this.cachedFiles = null;
 		this.cacheTimestamp = 0;
 		this.logger.debug('View', '⚡ 파일 캐시 무효화됨');
+	}
+
+	/**
+	 * ⭐ 카드 캐시를 무효화합니다
+	 *
+	 * 프리셋 변경, 설정 변경 시 호출하여 모든 카드가 새 설정으로 렌더링되도록 합니다.
+	 */
+	invalidateCardCache(): void {
+		this.cardFactory.invalidateCache();
+		this.logger.debug('View', '⚡ 카드 캐시 무효화됨');
 	}
 
 	/**
@@ -828,6 +842,18 @@ export class ViewRenderer {
 		// 이렇게 하면 폴더 재방문 시 이전 폴더의 카드가 남지 않음
 		container.empty();
 
+		// ⭐ Matrix 모드에서 다른 모드로 전환 시 matrix-view 클래스 제거
+		// Matrix CSS가 일반 레이아웃과 충돌하지 않도록 함
+		const wasMatrixMode = container.classList.contains('matrix-view');
+		container.classList.remove('matrix-view');
+
+		// ⭐ Matrix 관련 CSS 변수만 제거 (레이아웃 CSS 변수는 유지하여 깜빡임 방지)
+		if (wasMatrixMode) {
+			container.style.removeProperty('--matrix-primary-count');
+			container.style.removeProperty('--matrix-cell-min-width');
+			container.style.removeProperty('--matrix-cell-min-height');
+		}
+
 		// ⭐ container.empty()가 이벤트 리스너도 제거하므로 플래그 리셋
 		this.eventsDelegated = false;
 
@@ -863,19 +889,39 @@ export class ViewRenderer {
 			if (this.shouldCancelRendering(renderingId, 'after file list fetch')) {
 				return;
 			}
-			
+
+			// 🆕 2D 매트릭스 모드 확인
+			const matrixSettings = this.settings.grouping.matrix2D;
+
+			// ⭐ 디버그: 렌더링 시점의 설정 상태 확인
+			this.logger.debug('View', 'Checking matrix mode at render time', {
+				matrix2DEnabled: matrixSettings?.enabled,
+				groupingEnabled: this.settings.grouping?.enabled,
+				primaryAxis: matrixSettings?.primaryAxis?.propertyName,
+				secondaryAxis: matrixSettings?.secondaryAxis?.propertyName
+			});
+
+			if (matrixSettings?.enabled) {
+				this.logger.debug('View', 'Using 2D matrix rendering', {
+					fileCount: files.length,
+					primaryAxis: matrixSettings.primaryAxis.propertyName,
+					secondaryAxis: matrixSettings.secondaryAxis.propertyName
+				});
+
+				await this.renderCardsAsMatrix(container, onFileOpen, files);
+			}
 			// 100개 이상이면 Viewport 렌더링 사용
-			if (files.length >= 100) {
+			else if (files.length >= 100) {
 				this.logger.debug('View', 'Using viewport rendering', {
 				fileCount: files.length
 				});
-				
+
 				await this.renderCardsWithViewport(container, onFileOpen, renderingId);
 			} else {
 				this.logger.debug('View', 'Using standard rendering', {
 				fileCount: files.length
 				});
-				
+
 				await this.renderCardsStandard(container, onFileOpen, renderingId, files);
 			}
 
@@ -936,7 +982,13 @@ export class ViewRenderer {
 			groupingEnabled: settings.grouping.enabled,
 			groupingCriteria: settings.grouping.criteria,
 			groupingSort: settings.grouping.groupSort,
-			groupingSortOrder: settings.grouping.groupSortOrder
+			groupingSortOrder: settings.grouping.groupSortOrder,
+			// ⭐ 2D 매트릭스 설정 포함 (프리셋 자동 적용 시 재렌더링 트리거)
+			matrix2DEnabled: settings.grouping.matrix2D?.enabled || false,
+			matrix2DPrimaryAxis: settings.grouping.matrix2D?.primaryAxis?.propertyName || '',
+			matrix2DSecondaryAxis: settings.grouping.matrix2D?.secondaryAxis?.propertyName || '',
+			// ⭐ 카드 스타일 설정 포함 (프리셋 자동 적용 시 재렌더링 트리거)
+			cardStyleHash: this.generateCardStyleHash(settings)
 		};
 
 		if (settings.currentMode === 'folder') {
@@ -973,6 +1025,29 @@ export class ViewRenderer {
 		}
 
 		return stateObject;
+	}
+
+	/**
+	 * ⭐ 카드 스타일 설정의 해시를 생성합니다
+	 *
+	 * @param settings - 현재 설정
+	 * @returns 카드 스타일 설정의 간단한 해시 문자열
+	 *
+	 * @remarks
+	 * 프리셋 자동 적용 시 카드 스타일이 변경되면 재렌더링을 트리거합니다.
+	 */
+	private generateCardStyleHash(settings: CardNavigatorSettings): string {
+		// 주요 카드 스타일 설정만 포함 (성능 고려)
+		const styleConfig = {
+			headerNormalStyle: settings.header?.normalStyle,
+			headerActiveStyle: settings.header?.activeStyle,
+			bodyNormalStyle: settings.body?.normalStyle,
+			bodyActiveStyle: settings.body?.activeStyle,
+			footerNormalStyle: settings.footer?.normalStyle,
+			footerActiveStyle: settings.footer?.activeStyle,
+			renderMode: settings.renderMode
+		};
+		return JSON.stringify(styleConfig);
 	}
 
 	/**
@@ -1131,6 +1206,14 @@ export class ViewRenderer {
 		this.lastRenderState = null;
 		this.lastDetailedState = null; // ⭐ Phase 1.2
 		this.invalidateFileCache(); // ⭐ Performance: 강제 렌더링 시 캐시 무효화
+
+		// ⭐ 레이아웃 상태 리셋: 프리셋 변경 등으로 인한 강제 렌더링 시
+		// renderCards에서 container.style.cssText = ''로 인라인 스타일이 초기화되므로
+		// LayoutManager도 상태를 리셋해야 레이아웃이 다시 적용됨
+		if (isDefined(this.layoutManager)) {
+			this.layoutManager.invalidateState();
+		}
+
 		await this.renderCards(container, onFileOpen);
 	}
 	
@@ -1324,12 +1407,25 @@ export class ViewRenderer {
 	 * - 첫 로드인데 이미 렌더링 완료된 경우
 	 */
 	needsRerenderForFileChange(newActiveFile: TFile | null): boolean {
+		return this.needsRerenderForFileChangeWithPrevious(newActiveFile, this.state.getPreviousFile());
+	}
+
+	/**
+	 * ⭐ 파일 변경 시 재렌더링이 필요한지 확인합니다 (이전 파일 정보 직접 전달)
+	 *
+	 * @param newActiveFile - 새로운 활성 파일
+	 * @param previousFile - 이전 활성 파일 (setPreviousFile 전에 저장된 값)
+	 * @returns 재렌더링이 필요한 경우 true
+	 *
+	 * @remarks
+	 * active-leaf-change 핸들러에서 중복 이벤트 방지를 위해 setPreviousFile을 먼저 호출하므로,
+	 * 이전 파일 정보를 미리 저장해서 이 메서드에 전달해야 합니다.
+	 */
+	needsRerenderForFileChangeWithPrevious(newActiveFile: TFile | null, previousFile: TFile | null): boolean {
 		if (!isValidFile(newActiveFile)) {
 			return false;
 		}
-		
-		const previousFile = this.state.getPreviousFile();
-		
+
 		// 첫 로드 체크 (이전 파일이 없음)
 		if (!isValidFile(previousFile)) {
 			// lastRenderState가 있으면 이미 초기 렌더링이 완료됨
@@ -1339,18 +1435,18 @@ export class ViewRenderer {
 				this.logger.debug('View', 'No previous file but already rendered → no rerender needed');
 				return false;
 			}
-			
+
 			// 아직 렌더링되지 않았으면 재렌더링 필요
 			this.logger.debug('View', 'No previous file (first load) → rerender needed');
 			return true;
 		}
-		
+
 		// 검색 모드에서는 재렌더링 불필요 (검색 결과는 파일 변경과 무관)
 		if (this.state.hasSearchQuery()) {
 			this.logger.debug('View', 'Search mode → no rerender needed');
 			return false;
 		}
-		
+
 		// 태그 모드
 		if (this.settings.currentMode === 'tag') {
 			// 활성 파일 태그 모드: 파일마다 태그가 다르므로 재렌더링 필요
@@ -1358,16 +1454,16 @@ export class ViewRenderer {
 				this.logger.debug('View', 'Active file tags mode → rerender needed');
 				return true;
 			}
-			
+
 			// 지정된 태그 모드: 태그가 고정되어 있으므로 재렌더링 불필요
 			this.logger.debug('View', 'Specified tags mode → no rerender needed');
 			return false;
 		}
-		
+
 		// 폴더 모드: 폴더가 변경되었는지 확인
 		const previousFolder = previousFile.parent;
 		const currentFolder = newActiveFile.parent;
-		
+
 		if (previousFolder?.path !== currentFolder?.path) {
 			this.logger.debug('View', 'Folder mode + folder changed → rerender needed', {
 				previousFolder: previousFolder?.path || 'root',
@@ -1375,7 +1471,7 @@ export class ViewRenderer {
 			});
 			return true;
 		}
-		
+
 		this.logger.debug('View', 'Folder mode + same folder → no rerender needed');
 		return false;
 	}
@@ -1416,6 +1512,9 @@ export class ViewRenderer {
 		renderingId: number,
 		files: TFile[]
 	): Promise<void> {
+		// ⭐ Matrix 모드에서 전환 시 matrix-view 클래스 제거
+		container.classList.remove('matrix-view');
+
 		if (this.shouldCancelRendering(renderingId, 'before rendering')) {
 			return;
 		}
@@ -1693,6 +1792,9 @@ export class ViewRenderer {
 		onFileOpen: (file: TFile) => void,
 		renderingId: number
 	): Promise<void> {
+		// ⭐ Matrix 모드에서 전환 시 matrix-view 클래스 제거
+		container.classList.remove('matrix-view');
+
 		if (this.shouldCancelRendering(renderingId, 'before viewport setup')) {
 			return;
 		}
@@ -2316,5 +2418,92 @@ export class ViewRenderer {
 	 */
 	clearPerformanceMetrics(): void {
 		this.profiler.clearMetrics();
+	}
+
+	// =========================================================================
+	// 2D Matrix Grouping (Eisenhower Matrix)
+	// =========================================================================
+
+	/**
+	 * 🆕 2D 매트릭스 모드로 카드를 렌더링합니다
+	 *
+	 * @remarks
+	 * 아이젠하워 매트릭스와 같은 2D 그리드 레이아웃으로 카드를 표시합니다.
+	 * 두 가지 프론트매터 속성을 기준으로 파일을 N×M 그리드에 배치합니다.
+	 *
+	 * @param container - 렌더링할 컨테이너
+	 * @param onFileOpen - 파일 오픈 콜백
+	 * @param files - 표시할 파일 목록
+	 */
+	private async renderCardsAsMatrix(
+		container: HTMLElement,
+		onFileOpen: (file: TFile) => void,
+		files: TFile[]
+	): Promise<void> {
+		const matrixSettings = this.settings.grouping.matrix2D;
+
+		// Matrix CSS 로드
+		await getStyleLoader().loadMatrixStyles();
+
+		// ⭐ 기존 레이아웃 클래스 제거 (Matrix 모드는 독립적)
+		container.classList.remove('vertical-mode', 'horizontal-mode');
+
+		// ⭐ 기존 레이아웃 CSS 변수 제거 (Matrix는 자체 CSS 사용)
+		container.style.removeProperty('--card-min-width');
+		container.style.removeProperty('--card-min-height');
+		container.style.removeProperty('--card-max-width');
+		container.style.removeProperty('--card-max-height');
+		container.style.removeProperty('--card-gap');
+		container.style.removeProperty('--grid-columns');
+		container.style.removeProperty('--grid-rows');
+
+		container.classList.add('matrix-view');
+
+		// MatrixRenderer가 없으면 생성
+		if (!this.matrixRenderer) {
+			this.matrixRenderer = new MatrixRenderer(
+				this.app,
+				container,
+				() => this.settings,
+				// createCard 콜백 - CardFactory 사용
+				async (file, cardContainer, activeFile, fileOpenCallback) => {
+					return this.cardFactory.createCard(file, cardContainer, activeFile, fileOpenCallback);
+				},
+				this.view.dragDropHandler,
+				onFileOpen,
+				// onPropertyChange 콜백
+				async (file, primaryProp, primaryVal, secondaryProp, secondaryVal) => {
+					await this.view.dragDropHandler.updateFileProperties(file, {
+						[primaryProp]: primaryVal,
+						[secondaryProp]: secondaryVal
+					});
+					// 뷰 리렌더링
+					await this.forceRender(container, onFileOpen);
+				},
+				// onCellToggle 콜백
+				(cellId, collapsed) => {
+					this.groupingManager.saveMatrixCellCollapsedState(cellId, collapsed);
+				}
+			);
+		}
+
+		// 파일을 2D 매트릭스로 그룹화
+		const grid = this.groupingManager.groupFilesAs2DMatrix(files, matrixSettings);
+
+		// 매트릭스 렌더링
+		await this.matrixRenderer.render(grid);
+
+		this.logger.debug('View', '2D Matrix rendering complete', {
+			totalFiles: grid.totalFileCount,
+			unclassifiedCount: grid.unclassifiedFiles.length,
+			gridSize: `${grid.primaryLabels.length}x${grid.secondaryLabels.length}`
+		});
+
+		// Update file count in toolbar
+		const toolbar = this.view.getToolbar();
+		if (toolbar) {
+			const totalFiles = this.app.vault.getMarkdownFiles().length;
+			toolbar.updateFileCount(files.length, totalFiles);
+		}
 	}
 }

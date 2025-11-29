@@ -414,6 +414,100 @@ export type GroupSortCriteria =
     | 'latest-file'   // 최신 파일 기준
     | 'hierarchy';    // 계층 구조 (폴더 깊이, 태그 계층)
 
+// ============================================================================
+// 2D Matrix Grouping Types (Eisenhower Matrix)
+// ============================================================================
+
+/**
+ * 매트릭스 축 설정
+ *
+ * @remarks
+ * 2D 매트릭스의 각 축(X축/Y축)에 대한 설정을 정의합니다.
+ * 예: urgency 속성의 값으로 Urgent, Not Urgent를 사용
+ */
+export interface MatrixAxisSettings {
+    /** 속성 이름 (예: urgency, importance) */
+    propertyName: string;
+    /** 속성 값 목록 (순서대로 표시, 예: ["Urgent", "Not Urgent"]) */
+    values: string[];
+    /** 축 레이블 (선택적, 기본값은 propertyName) */
+    label?: string;
+}
+
+/**
+ * 2D 매트릭스 그룹화 설정
+ *
+ * @remarks
+ * 아이젠하워 매트릭스와 같은 2차원 그룹화를 위한 설정입니다.
+ * 두 가지 속성을 기준으로 N×M 그리드 형태로 카드를 배치합니다.
+ */
+export interface Matrix2DSettings {
+    /** 2D 매트릭스 그룹화 활성화 여부 */
+    enabled: boolean;
+    /** X축 (가로) 설정 */
+    primaryAxis: MatrixAxisSettings;
+    /** Y축 (세로) 설정 */
+    secondaryAxis: MatrixAxisSettings;
+    /** 미분류 섹션 표시 여부 (속성값이 없는 파일용) */
+    showUnclassifiedSection: boolean;
+    /** 미분류 섹션 제목 */
+    unclassifiedSectionTitle: string;
+    /** 드래그 앤 드롭으로 속성 변경 허용 여부 */
+    enableDragDropPropertyChange: boolean;
+    /** 셀 최소 너비 (px) */
+    cellMinWidth: number;
+    /** 셀 최소 높이 (px) */
+    cellMinHeight: number;
+}
+
+/**
+ * 매트릭스 셀 (사분면)
+ *
+ * @remarks
+ * 2D 매트릭스의 각 셀(사분면)을 나타냅니다.
+ * 예: 아이젠하워 매트릭스의 "긴급하고 중요한" 셀
+ */
+export interface MatrixCell {
+    /** 셀 고유 ID (예: "urgency-Urgent:importance-Important") */
+    id: string;
+    /** X축 속성 값 */
+    primaryValue: string;
+    /** Y축 속성 값 */
+    secondaryValue: string;
+    /** 이 셀에 속한 파일 목록 */
+    files: TFile[];
+    /** 접힌 상태 */
+    collapsed: boolean;
+    /** 파일 개수 */
+    fileCount: number;
+    /** 셀 표시 이름 (선택적, 커스텀 레이블) */
+    displayName?: string;
+}
+
+/**
+ * 매트릭스 그리드 데이터
+ *
+ * @remarks
+ * 전체 2D 매트릭스 구조를 나타냅니다.
+ * cells 배열은 [secondaryIndex][primaryIndex] 형식입니다.
+ */
+export interface MatrixGrid {
+    /** X축 레이블 목록 */
+    primaryLabels: string[];
+    /** Y축 레이블 목록 */
+    secondaryLabels: string[];
+    /** X축 속성 이름 */
+    primaryPropertyName: string;
+    /** Y축 속성 이름 */
+    secondaryPropertyName: string;
+    /** 2D 셀 배열 [secondaryIndex][primaryIndex] */
+    cells: MatrixCell[][];
+    /** 미분류 파일 목록 (속성값이 없는 파일) */
+    unclassifiedFiles: TFile[];
+    /** 총 파일 수 */
+    totalFileCount: number;
+}
+
 /**
  * 그룹화 설정
  */
@@ -438,6 +532,8 @@ export interface GroupingSettings {
     inheritFileSorting: boolean;
     /** 핀된 파일을 별도 그룹으로 분리 여부 */
     showPinnedAsGroup?: boolean;
+    /** 🆕 2D 매트릭스 그룹화 설정 (아이젠하워 매트릭스 등) */
+    matrix2D: Matrix2DSettings;
 }
 
 /**
@@ -1077,7 +1173,25 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
         groupSort: 'name',
         groupSortOrder: 'asc',
         inheritFileSorting: true,
-        showPinnedAsGroup: true
+        showPinnedAsGroup: true,
+        matrix2D: {
+            enabled: false,
+            primaryAxis: {
+                propertyName: 'urgency',
+                values: ['Urgent', 'Not Urgent'],
+                label: 'Urgency'
+            },
+            secondaryAxis: {
+                propertyName: 'importance',
+                values: ['Important', 'Not Important'],
+                label: 'Importance'
+            },
+            showUnclassifiedSection: true,
+            unclassifiedSectionTitle: 'Unclassified',
+            enableDragDropPropertyChange: true,
+            cellMinWidth: 200,
+            cellMinHeight: 150
+        }
     },
     debug: {
         enabled: false,

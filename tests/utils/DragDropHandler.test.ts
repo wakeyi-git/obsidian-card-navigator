@@ -196,10 +196,10 @@ describe('DragDropHandler', () => {
                     '[[test]]'
                 );
                 expect(mockDataTransfer.setData).toHaveBeenCalledWith(
-                    'file-path',
+                    'text/x-file-path',
                     JSON.stringify(['test.md'])
                 );
-                expect(mockDataTransfer.effectAllowed).toBe('copyLink');
+                expect(mockDataTransfer.effectAllowed).toBe('copyMove');
             });
             
             it('should add dragging class', () => {

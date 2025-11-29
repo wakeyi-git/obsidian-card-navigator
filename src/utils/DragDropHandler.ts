@@ -84,13 +84,16 @@ export class DragDropHandler {
                     ? this.selectionManager.getSelectedFiles()
                     : [file];
 
-                // 모든 파일 내용을 미리 로드하여 캠싱
-                for (const f of filesToCache) {
+                // ⚡ 성능 최적화: 병렬로 모든 파일 내용을 미리 로드하여 캠싱
+                await Promise.all(filesToCache.map(async (f) => {
                     const content = await this.getFileContentForDrag(f, settings.dragDrop.fullContentOptions);
                     this.cachedDragContent.set(f.path, content);
+                }));
+
+                // 요약 로그만 출력 (개별 파일 로그 제거)
+                if (filesToCache.length > 0) {
                     this.logger.debug('DragDrop', t().dragDrop.contentCached, {
-                        file: f.basename,
-                        length: content.length
+                        fileCount: filesToCache.length
                     });
                 }
             }
@@ -146,8 +149,9 @@ export class DragDropHandler {
 
             e.dataTransfer.setData('text/plain', dragContent);
             // 다중 파일인 경우 모든 파일 경로를 JSON으로 저장
-            e.dataTransfer.setData('file-path', JSON.stringify(selectedFiles.map(f => f.path)));
-            e.dataTransfer.effectAllowed = 'copyLink';
+            // 'text/x-file-path'를 사용하여 표준 MIME 타입 형식 준수
+            e.dataTransfer.setData('text/x-file-path', JSON.stringify(selectedFiles.map(f => f.path)));
+            e.dataTransfer.effectAllowed = 'copyMove';
 
             cardEl.addClass('dragging');
 
@@ -225,7 +229,8 @@ export class DragDropHandler {
 
             if (!e.dataTransfer) return;
 
-            const filePathData = e.dataTransfer.getData('file-path');
+            // text/x-file-path MIME 타입에서 파일 경로 가져오기
+            const filePathData = e.dataTransfer.getData('text/x-file-path');
             if (!filePathData) return;
 
             // JSON 파싱 시도 (다중 파일)
@@ -363,6 +368,65 @@ export class DragDropHandler {
         } catch (error) {
             this.logger.error('DragDrop', t().dragDrop.fileContentFetchFailed, error);
             return '';
+        }
+    }
+
+    // =========================================================================
+    // Matrix Property Update (2D Matrix Grouping)
+    // =========================================================================
+
+    /**
+     * 파일의 프론트매터 속성을 업데이트합니다
+     *
+     * @remarks
+     * 2D 매트릭스 그룹화에서 드래그 앤 드롭으로 셀을 변경할 때 사용합니다.
+     * Obsidian의 processFrontMatter API를 사용하여 안전하게 업데이트합니다.
+     *
+     * @param file - 대상 파일
+     * @param propertyName - 속성 이름
+     * @param propertyValue - 새 속성 값
+     */
+    async updateFileProperty(file: TFile, propertyName: string, propertyValue: string): Promise<void> {
+        try {
+            await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+                frontmatter[propertyName] = propertyValue;
+            });
+
+            this.logger.debug('DragDrop', 'Property updated', {
+                file: file.basename,
+                property: propertyName,
+                value: propertyValue
+            });
+        } catch (error) {
+            this.logger.error('DragDrop', 'Failed to update property', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 파일의 여러 프론트매터 속성을 한 번에 업데이트합니다
+     *
+     * @remarks
+     * 2D 매트릭스 그룹화에서 두 속성(예: urgency, importance)을 동시에 변경할 때 사용합니다.
+     *
+     * @param file - 대상 파일
+     * @param properties - 업데이트할 속성들 { propertyName: propertyValue }
+     */
+    async updateFileProperties(file: TFile, properties: Record<string, string>): Promise<void> {
+        try {
+            await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+                for (const [name, value] of Object.entries(properties)) {
+                    frontmatter[name] = value;
+                }
+            });
+
+            this.logger.debug('DragDrop', 'Properties updated', {
+                file: file.basename,
+                properties
+            });
+        } catch (error) {
+            this.logger.error('DragDrop', 'Failed to update properties', error);
+            throw error;
         }
     }
 }

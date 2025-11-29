@@ -1,0 +1,365 @@
+/* =============================================================================
+   Card Navigator - 2D Matrix Grouping Styles (Feature CSS)
+   Loaded when 2D matrix grouping mode is enabled (Eisenhower Matrix, etc.)
+   ============================================================================= */
+
+/* =============================================================================
+   CSS Custom Properties
+   ============================================================================= */
+
+.matrix-view {
+    /* Matrix-specific CSS variables */
+    --matrix-gap: 8px;
+    --matrix-cell-padding: 10px;
+    --matrix-header-bg: var(--background-primary-alt);
+    --matrix-cell-bg: var(--background-secondary);
+    --matrix-cell-border: var(--background-modifier-border);
+    --matrix-drop-target-bg: var(--interactive-accent);
+    --matrix-unclassified-border: var(--text-muted);
+
+    /* ⭐ Override/Reset existing layout styles - Matrix는 독립적인 레이아웃 사용 */
+    display: block !important;
+    overflow: auto !important;
+}
+
+/* =============================================================================
+   Matrix Container
+   ============================================================================= */
+
+.matrix-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 10px;
+    height: 100%;
+    overflow: auto;
+}
+
+/* =============================================================================
+   Unclassified Section (미분류 섹션)
+   ============================================================================= */
+
+.matrix-unclassified-section {
+    border: 2px dashed var(--matrix-unclassified-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+    overflow: hidden;
+}
+
+.matrix-unclassified-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--matrix-header-bg);
+    border-bottom: 1px solid var(--matrix-cell-border);
+}
+
+.matrix-unclassified-title-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.matrix-unclassified-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.matrix-unclassified-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.matrix-unclassified-title {
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.matrix-unclassified-count {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    background: var(--background-secondary);
+    border-radius: 10px;
+}
+
+.matrix-unclassified-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--matrix-gap);
+    padding: var(--matrix-cell-padding);
+    min-height: 60px;
+}
+
+/* Cards within unclassified section */
+.matrix-unclassified-cards .card-item {
+    /* 미분류 섹션 카드도 컴팩트하게 */
+    --card-min-width: 150px;
+    --card-max-width: 200px;
+    flex: 1 1 var(--card-min-width);
+    max-width: var(--card-max-width);
+}
+
+/* Empty unclassified section hint */
+.matrix-unclassified-cards:empty::after {
+    content: 'Drag cards here from the matrix below';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 40px;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+/* =============================================================================
+   Matrix Grid Container
+   ============================================================================= */
+
+.matrix-grid-container {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+.matrix-grid {
+    display: grid;
+    /* --matrix-primary-count: X축(primary) 값 개수 (예: 2x2 매트릭스 = 2) */
+    grid-template-columns:
+        minmax(80px, 120px)  /* Y축 레이블 열 (고정 너비) */
+        repeat(
+            var(--matrix-primary-count, 2),
+            minmax(var(--matrix-cell-min-width, 200px), 1fr)
+        );
+    gap: var(--matrix-gap);
+    min-width: fit-content;
+}
+
+/* =============================================================================
+   Matrix Corner Cell (빈 코너)
+   ============================================================================= */
+
+.matrix-corner-cell {
+    /* 빈 코너 셀 - 왼쪽 상단 */
+    background: transparent;
+}
+
+/* =============================================================================
+   Matrix Header Cells (X축 레이블)
+   ============================================================================= */
+
+.matrix-header-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    background: var(--matrix-header-bg);
+    border-radius: 6px;
+    font-weight: 600;
+    color: var(--text-normal);
+    text-align: center;
+    min-height: 40px;
+}
+
+.matrix-x-label {
+    /* X축 레이블 - 상단 가로 */
+}
+
+/* =============================================================================
+   Matrix Row Labels (Y축 레이블)
+   ============================================================================= */
+
+.matrix-row-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    background: var(--matrix-header-bg);
+    border-radius: 6px;
+    font-weight: 600;
+    color: var(--text-normal);
+    text-align: center;
+    writing-mode: horizontal-tb;
+    min-width: 100px;
+}
+
+.matrix-y-label {
+    /* Y축 레이블 - 왼쪽 세로 */
+}
+
+/* =============================================================================
+   Matrix Cells (셀/사분면)
+   ============================================================================= */
+
+.matrix-cell {
+    display: flex;
+    flex-direction: column;
+    background: var(--matrix-cell-bg);
+    border: 1px solid var(--matrix-cell-border);
+    border-radius: 6px;
+    min-height: var(--matrix-cell-min-height, 150px);
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.matrix-cell:hover {
+    border-color: var(--interactive-accent);
+}
+
+/* Cell Header */
+.matrix-cell-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    background: var(--background-primary-alt);
+    border-bottom: 1px solid var(--matrix-cell-border);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.matrix-cell-header:hover {
+    background: var(--background-modifier-hover);
+}
+
+.matrix-cell-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+}
+
+.matrix-cell-toggle svg {
+    width: 14px;
+    height: 14px;
+}
+
+.matrix-cell.is-collapsed .matrix-cell-toggle {
+    /* chevron-right 아이콘 사용 */
+}
+
+.matrix-cell-count {
+    font-size: 0.85em;
+    font-weight: 500;
+    color: var(--text-muted);
+    padding: 2px 6px;
+    background: var(--background-secondary);
+    border-radius: 8px;
+}
+
+/* Cell Cards Container */
+.matrix-cell-cards {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: var(--matrix-gap);
+    padding: var(--matrix-cell-padding);
+    overflow-y: auto;
+}
+
+.matrix-cell.is-collapsed .matrix-cell-cards {
+    display: none;
+}
+
+/* Cards within matrix cells */
+.matrix-cell-cards .card-item {
+    /* 셀 내 카드 크기 조정 - 더 컴팩트하게 */
+    --card-min-width: 150px;
+    --card-max-width: 200px;
+    flex: 1 1 var(--card-min-width);
+    max-width: var(--card-max-width);
+}
+
+/* =============================================================================
+   Drop Target Styles
+   ============================================================================= */
+
+.matrix-cell-drop-target {
+    border-color: var(--matrix-drop-target-bg) !important;
+    box-shadow: 0 0 0 2px var(--matrix-drop-target-bg);
+    background: color-mix(in srgb, var(--matrix-drop-target-bg) 10%, var(--matrix-cell-bg));
+}
+
+.matrix-unclassified-section.drop-target {
+    border-color: var(--matrix-drop-target-bg) !important;
+    box-shadow: 0 0 0 2px var(--matrix-drop-target-bg);
+}
+
+/* =============================================================================
+   Responsive / Mobile
+   ============================================================================= */
+
+@media (max-width: 600px) {
+    .matrix-grid {
+        /* 모바일에서는 그리드를 세로로 쌓기 */
+        grid-template-columns: 1fr;
+    }
+
+    .matrix-corner-cell,
+    .matrix-header-cell {
+        display: none;
+    }
+
+    .matrix-row-label {
+        writing-mode: horizontal-tb;
+        width: 100%;
+        margin-top: 16px;
+    }
+
+    .matrix-cell {
+        /* 모바일에서 셀 레이블 표시 */
+    }
+
+    .matrix-cell::before {
+        content: attr(data-primary-value) ' / ' attr(data-secondary-value);
+        display: block;
+        padding: 6px 10px;
+        font-size: 0.8em;
+        color: var(--text-muted);
+        background: var(--background-primary-alt);
+        border-bottom: 1px solid var(--matrix-cell-border);
+    }
+}
+
+/* =============================================================================
+   Dark Mode Adjustments
+   ============================================================================= */
+
+.theme-dark .matrix-cell-drop-target {
+    background: color-mix(in srgb, var(--matrix-drop-target-bg) 15%, var(--matrix-cell-bg));
+}
+
+/* =============================================================================
+   Animation / Transitions
+   ============================================================================= */
+
+.matrix-cell-cards .card-item {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.matrix-cell-cards .card-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+/* Card moving animation placeholder */
+@keyframes matrix-card-move {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.matrix-cell-cards .card-item.just-moved {
+    animation: matrix-card-move 0.3s ease;
+}

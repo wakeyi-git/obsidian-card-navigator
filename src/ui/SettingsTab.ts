@@ -399,7 +399,10 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                 })
             );
 
+        // 그룹화가 비활성화되어도 2D Matrix 설정은 표시 (프리셋 자동 적용 지원)
         if (!this.plugin.settings.grouping.enabled) {
+            // 2D Matrix 설정만 표시
+            this.addMatrix2DSettings(containerEl, t);
             return;
         }
 
@@ -521,6 +524,268 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
                     await this.plugin.refreshView();
                 })
             );
+
+        // 2D Matrix Grouping 설정은 그룹화 활성화와 독립적으로 표시
+        // (프리셋 자동 적용 시에도 표시되어야 함)
+        this.addMatrix2DSettings(containerEl, t);
+    }
+
+    /**
+     * 2D 매트릭스 그룹화 설정을 추가합니다
+     *
+     * @remarks
+     * 2D 매트릭스는 일반 그룹화(grouping.enabled)와 독립적으로 동작합니다.
+     * 프리셋 매핑을 통해 자동 적용될 수 있으므로 항상 설정 UI에 표시됩니다.
+     */
+    private addMatrix2DSettings(containerEl: HTMLElement, t: ReturnType<typeof this.plugin.t>): void {
+        const matrixTrans = t.settings.matrix2D;
+        const matrixSettings = this.plugin.settings.grouping.matrix2D;
+
+        // 섹션 헤더
+        new Setting(containerEl)
+            .setHeading()
+            .setName(matrixTrans.title)
+            .setDesc(matrixTrans.description);
+
+        // 2D 매트릭스 활성화
+        new Setting(containerEl)
+            .setName(matrixTrans.enabled)
+            .setDesc(matrixTrans.enabledDescription)
+            .addToggle(toggle => toggle
+                .setValue(matrixSettings.enabled)
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.matrix2D.enabled = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                    this.display();
+                })
+            );
+
+        // 2D 매트릭스가 활성화되어 있을 때만 추가 설정 표시
+        if (!matrixSettings.enabled) {
+            return;
+        }
+
+        // === 프리셋 선택 ===
+        new Setting(containerEl)
+            .setName(matrixTrans.presets.title)
+            .addDropdown(dropdown => dropdown
+                .addOption('eisenhower', matrixTrans.presets.eisenhowerMatrix)
+                .addOption('custom', matrixTrans.presets.custom)
+                .setValue(this.getMatrixPresetType())
+                .onChange(async (value) => {
+                    if (value === 'eisenhower') {
+                        this.applyEisenhowerPreset();
+                    }
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                    this.display();
+                })
+            );
+
+        // === Primary Axis (X축) 설정 ===
+        new Setting(containerEl)
+            .setHeading()
+            .setName(matrixTrans.primaryAxis)
+            .setDesc(matrixTrans.primaryAxisDescription);
+
+        // Primary 속성 이름
+        new Setting(containerEl)
+            .setName(matrixTrans.propertyName)
+            .addText(text => text
+                .setPlaceholder(matrixTrans.propertyNamePlaceholder)
+                .setValue(matrixSettings.primaryAxis.propertyName)
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.matrix2D.primaryAxis.propertyName = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                })
+            );
+
+        // Primary 속성 값들
+        new Setting(containerEl)
+            .setName(matrixTrans.propertyValues)
+            .setDesc(matrixTrans.propertyValuesDescription)
+            .addText(text => text
+                .setPlaceholder(matrixTrans.propertyValuesPlaceholder)
+                .setValue(matrixSettings.primaryAxis.values.join(', '))
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.matrix2D.primaryAxis.values =
+                        value.split(',').map(v => v.trim()).filter(v => v.length > 0);
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                })
+            );
+
+        // Primary 축 레이블 (선택적)
+        new Setting(containerEl)
+            .setName(matrixTrans.axisLabel)
+            .addText(text => text
+                .setPlaceholder(matrixTrans.axisLabelPlaceholder)
+                .setValue(matrixSettings.primaryAxis.label || '')
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.matrix2D.primaryAxis.label = value || undefined;
+                    await this.plugin.saveSettings();
+                })
+            );
+
+        // === Secondary Axis (Y축) 설정 ===
+        new Setting(containerEl)
+            .setHeading()
+            .setName(matrixTrans.secondaryAxis)
+            .setDesc(matrixTrans.secondaryAxisDescription);
+
+        // Secondary 속성 이름
+        new Setting(containerEl)
+            .setName(matrixTrans.propertyName)
+            .addText(text => text
+                .setPlaceholder(matrixTrans.propertyNamePlaceholder)
+                .setValue(matrixSettings.secondaryAxis.propertyName)
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.matrix2D.secondaryAxis.propertyName = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                })
+            );
+
+        // Secondary 속성 값들
+        new Setting(containerEl)
+            .setName(matrixTrans.propertyValues)
+            .setDesc(matrixTrans.propertyValuesDescription)
+            .addText(text => text
+                .setPlaceholder(matrixTrans.propertyValuesPlaceholder)
+                .setValue(matrixSettings.secondaryAxis.values.join(', '))
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.matrix2D.secondaryAxis.values =
+                        value.split(',').map(v => v.trim()).filter(v => v.length > 0);
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                })
+            );
+
+        // Secondary 축 레이블 (선택적)
+        new Setting(containerEl)
+            .setName(matrixTrans.axisLabel)
+            .addText(text => text
+                .setPlaceholder(matrixTrans.axisLabelPlaceholder)
+                .setValue(matrixSettings.secondaryAxis.label || '')
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.matrix2D.secondaryAxis.label = value || undefined;
+                    await this.plugin.saveSettings();
+                })
+            );
+
+        // === 추가 옵션 ===
+        new Setting(containerEl)
+            .setHeading()
+            .setName(t.settingsTab.tabs.other);
+
+        // 미분류 섹션 표시
+        new Setting(containerEl)
+            .setName(matrixTrans.showUnclassifiedSection)
+            .setDesc(matrixTrans.showUnclassifiedSectionDescription)
+            .addToggle(toggle => toggle
+                .setValue(matrixSettings.showUnclassifiedSection)
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.matrix2D.showUnclassifiedSection = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                    this.display();
+                })
+            );
+
+        // 미분류 섹션 제목 (표시할 때만)
+        if (matrixSettings.showUnclassifiedSection) {
+            new Setting(containerEl)
+                .setName(matrixTrans.unclassifiedSectionTitle)
+                .addText(text => text
+                    .setPlaceholder(matrixTrans.unclassifiedSectionTitlePlaceholder)
+                    .setValue(matrixSettings.unclassifiedSectionTitle)
+                    .onChange(async (value) => {
+                        this.plugin.settings.grouping.matrix2D.unclassifiedSectionTitle = value || 'Unclassified';
+                        await this.plugin.saveSettings();
+                        await this.plugin.refreshView();
+                    })
+                );
+        }
+
+        // 드래그 앤 드롭 속성 변경
+        new Setting(containerEl)
+            .setName(matrixTrans.enableDragDropPropertyChange)
+            .setDesc(matrixTrans.enableDragDropPropertyChangeDescription)
+            .addToggle(toggle => toggle
+                .setValue(matrixSettings.enableDragDropPropertyChange)
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.matrix2D.enableDragDropPropertyChange = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                })
+            );
+
+        // 셀 최소 너비
+        new Setting(containerEl)
+            .setName(matrixTrans.cellMinWidth)
+            .setDesc(matrixTrans.cellMinWidthDescription)
+            .addSlider(slider => slider
+                .setLimits(100, 400, 10)
+                .setValue(matrixSettings.cellMinWidth)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.matrix2D.cellMinWidth = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                })
+            );
+
+        // 셀 최소 높이
+        new Setting(containerEl)
+            .setName(matrixTrans.cellMinHeight)
+            .setDesc(matrixTrans.cellMinHeightDescription)
+            .addSlider(slider => slider
+                .setLimits(100, 400, 10)
+                .setValue(matrixSettings.cellMinHeight)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.grouping.matrix2D.cellMinHeight = value;
+                    await this.plugin.saveSettings();
+                    await this.plugin.refreshView();
+                })
+            );
+    }
+
+    /**
+     * 현재 매트릭스 설정이 어떤 프리셋인지 확인합니다
+     */
+    private getMatrixPresetType(): string {
+        const settings = this.plugin.settings.grouping.matrix2D;
+
+        // 아이젠하워 매트릭스 패턴 확인
+        if (
+            settings.primaryAxis.propertyName === 'urgency' &&
+            settings.secondaryAxis.propertyName === 'importance' &&
+            settings.primaryAxis.values.length === 2 &&
+            settings.secondaryAxis.values.length === 2
+        ) {
+            return 'eisenhower';
+        }
+
+        return 'custom';
+    }
+
+    /**
+     * 아이젠하워 매트릭스 프리셋을 적용합니다
+     */
+    private applyEisenhowerPreset(): void {
+        this.plugin.settings.grouping.matrix2D.primaryAxis = {
+            propertyName: 'urgency',
+            values: ['Urgent', 'Not Urgent'],
+            label: 'Urgency'
+        };
+        this.plugin.settings.grouping.matrix2D.secondaryAxis = {
+            propertyName: 'importance',
+            values: ['Important', 'Not Important'],
+            label: 'Importance'
+        };
     }
 
     /**

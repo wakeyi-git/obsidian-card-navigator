@@ -1,8 +1,9 @@
 import { TFile, App } from 'obsidian';
-import { CardGroup, GroupingSettings, TagGroupMode, DateGroupBasis } from '../types';
+import { CardGroup, GroupingSettings, TagGroupMode, DateGroupBasis, Matrix2DSettings, MatrixGrid, MatrixCell } from '../types';
 import { DebugLogger } from '../utils/DebugLogger';
 import { GroupStateManager } from './GroupStateManager';
 import { PinManager } from './PinManager';
+import { t } from '../i18n';
 
 /**
  * 파일을 그룹으로 나누는 관리자
@@ -356,12 +357,16 @@ export class GroupingManager {
 
         for (const [monthKey, monthFiles] of monthMap.entries()) {
             const [year, month] = monthKey.split('-');
-            const date = new Date(parseInt(year), parseInt(month) - 1);
-            const monthName = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+            const yearNum = parseInt(year);
+            const monthNum = parseInt(month);
+            // Use i18n for month name and format
+            const monthNames = t().settings.grouping.monthNames;
+            const monthName = monthNames[monthNum as keyof typeof monthNames];
+            const formattedName = t().settings.grouping.monthFormat(yearNum, monthName);
 
             groups.push({
                 id: `month-${monthKey}`,
-                name: monthName,
+                name: formattedName,
                 fullPath: monthKey,
                 icon: 'calendar',
                 files: monthFiles,
@@ -399,9 +404,16 @@ export class GroupingManager {
         const groups: CardGroup[] = [];
 
         for (const [weekKey, weekFiles] of weekMap.entries()) {
+            // Parse year and week number from key (e.g., "2024-W23")
+            const [yearStr, weekStr] = weekKey.split('-W');
+            const yearNum = parseInt(yearStr);
+            const weekNum = parseInt(weekStr);
+            // Use i18n for week format
+            const formattedName = t().settings.grouping.weekFormat(yearNum, weekNum);
+
             groups.push({
                 id: `week-${weekKey}`,
-                name: weekKey.replace('-W', ' Week '),
+                name: formattedName,
                 fullPath: weekKey,
                 icon: 'calendar',
                 files: weekFiles,
@@ -1148,5 +1160,161 @@ export class GroupingManager {
             this.stateManager.setBatch(states);
             this.logger.debug('Grouping', `Expanded ${expandedIds.length} ancestor groups for ${groupId}`);
         }
+    }
+
+    // =========================================================================
+    // 2D Matrix Grouping (Eisenhower Matrix)
+    // =========================================================================
+
+    /**
+     * 파일을 2D 매트릭스로 그룹화합니다
+     *
+     * @remarks
+     * 두 가지 프론트매터 속성을 기준으로 파일을 N×M 그리드에 배치합니다.
+     * 속성값이 없는 파일은 unclassifiedFiles에 포함됩니다.
+     *
+     * @param files - 그룹화할 파일 목록
+     * @param settings - 2D 매트릭스 설정
+     * @returns MatrixGrid 데이터 구조
+     */
+    groupFilesAs2DMatrix(files: TFile[], settings: Matrix2DSettings): MatrixGrid {
+        const { primaryAxis, secondaryAxis } = settings;
+
+        this.logger.debug('Grouping', `Grouping ${files.length} files as 2D matrix`, {
+            primaryProperty: primaryAxis.propertyName,
+            gridSize: `${primaryAxis.values.length}x${secondaryAxis.values.length}`
+        });
+
+        // ⚡ 성능 최적화: 값→인덱스 맵 생성 (O(n) indexOf 반복 호출 → O(1) 조회)
+        const primaryIndexMap = new Map<string, number>();
+        const secondaryIndexMap = new Map<string, number>();
+        primaryAxis.values.forEach((v, i) => primaryIndexMap.set(v, i));
+        secondaryAxis.values.forEach((v, i) => secondaryIndexMap.set(v, i));
+
+        // 빈 셀 매트릭스 초기화
+        const cells: MatrixCell[][] = [];
+        for (let y = 0; y < secondaryAxis.values.length; y++) {
+            const row: MatrixCell[] = [];
+            const secondaryValue = secondaryAxis.values[y];
+            for (let x = 0; x < primaryAxis.values.length; x++) {
+                const primaryValue = primaryAxis.values[x];
+                const cellId = `matrix-${primaryAxis.propertyName}-${primaryValue}:${secondaryAxis.propertyName}-${secondaryValue}`;
+
+                row.push({
+                    id: cellId,
+                    primaryValue,
+                    secondaryValue,
+                    files: [],
+                    collapsed: this.stateManager.getCollapsed(cellId),
+                    fileCount: 0
+                });
+            }
+            cells.push(row);
+        }
+
+        // 미분류 파일 목록
+        const unclassifiedFiles: TFile[] = [];
+
+        // ⚡ 성능 최적화: 속성 이름을 변수로 캐싱
+        const primaryPropName = primaryAxis.propertyName;
+        const secondaryPropName = secondaryAxis.propertyName;
+
+        // 각 파일을 적절한 셀에 배치
+        for (const file of files) {
+            const { primaryValue, secondaryValue } = this.getFileMatrixPosition(
+                file,
+                primaryPropName,
+                secondaryPropName
+            );
+
+            // ⚡ 성능 최적화: Map 조회 사용 (O(1))
+            const primaryIndex = primaryValue !== null ? (primaryIndexMap.get(primaryValue) ?? -1) : -1;
+            const secondaryIndex = secondaryValue !== null ? (secondaryIndexMap.get(secondaryValue) ?? -1) : -1;
+
+            if (primaryIndex === -1 || secondaryIndex === -1) {
+                unclassifiedFiles.push(file);
+            } else {
+                const cell = cells[secondaryIndex][primaryIndex];
+                cell.files.push(file);
+                cell.fileCount++;
+            }
+        }
+
+        // 결과 생성
+        const grid: MatrixGrid = {
+            primaryLabels: primaryAxis.values,
+            secondaryLabels: secondaryAxis.values,
+            primaryPropertyName: primaryAxis.propertyName,
+            secondaryPropertyName: secondaryAxis.propertyName,
+            cells,
+            unclassifiedFiles,
+            totalFileCount: files.length
+        };
+
+        this.logger.debug('Grouping', `2D Matrix grouping complete`, {
+            totalFiles: files.length,
+            unclassifiedCount: unclassifiedFiles.length,
+            gridSize: `${primaryAxis.values.length}x${secondaryAxis.values.length}`
+        });
+
+        return grid;
+    }
+
+    /**
+     * 파일의 매트릭스 위치(속성값)를 가져옵니다
+     *
+     * @param file - 대상 파일
+     * @param primaryPropertyName - X축 속성 이름
+     * @param secondaryPropertyName - Y축 속성 이름
+     * @returns 두 속성값 (없으면 null)
+     */
+    private getFileMatrixPosition(
+        file: TFile,
+        primaryPropertyName: string,
+        secondaryPropertyName: string
+    ): { primaryValue: string | null; secondaryValue: string | null } {
+        const cache = this.app.metadataCache.getFileCache(file);
+
+        if (!cache || !cache.frontmatter) {
+            return { primaryValue: null, secondaryValue: null };
+        }
+
+        const primaryValue = this.extractPropertyValue(cache.frontmatter, primaryPropertyName);
+        const secondaryValue = this.extractPropertyValue(cache.frontmatter, secondaryPropertyName);
+
+        return { primaryValue, secondaryValue };
+    }
+
+    /**
+     * 프론트매터에서 속성값을 추출합니다
+     *
+     * @param frontmatter - 프론트매터 객체
+     * @param propertyName - 속성 이름
+     * @returns 속성값 문자열 (없으면 null)
+     */
+    private extractPropertyValue(frontmatter: Record<string, unknown>, propertyName: string): string | null {
+        const value = frontmatter[propertyName];
+
+        if (value === undefined || value === null) {
+            return null;
+        }
+
+        // 배열인 경우 첫 번째 값 사용
+        if (Array.isArray(value)) {
+            return value.length > 0 ? String(value[0]) : null;
+        }
+
+        return String(value);
+    }
+
+    /**
+     * 매트릭스 셀의 접힌 상태를 저장합니다
+     *
+     * @param cellId - 셀 ID
+     * @param collapsed - 접힌 상태
+     */
+    saveMatrixCellCollapsedState(cellId: string, collapsed: boolean): void {
+        this.stateManager.setCollapsed(cellId, collapsed);
+        this.logger.debug('Grouping', `Saved matrix cell collapsed state for ${cellId}: ${collapsed}`);
     }
 }

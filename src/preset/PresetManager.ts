@@ -15,6 +15,9 @@ export class PresetManager {
     private currentPresetId: string | null = null;
     private logger: DebugLogger;
 
+    /** ⭐ 프리셋 적용 전 원래 설정 (프리셋 매핑 폴더를 벗어났을 때 복원용) */
+    private originalSettings: Partial<CardNavigatorSettings> | null = null;
+
     /** ⭐ Phase 2: 프리셋 매핑 인덱스 (성능 최적화 - O(n) → O(1)) */
     private mappingIndex: {
         byFolder: Map<string, PresetMapping[]>;  // folder path → mappings
@@ -36,10 +39,100 @@ export class PresetManager {
 
     /**
      * PresetManager를 초기화합니다
+     *
+     * @remarks
+     * ⭐ 개선 (2025-11-29): 플러그인 시작 시 프리셋 상태 검증
+     * 플러그인이 비활성화된 상태에서 settings.json에 프리셋 설정이 저장되어 있을 수 있습니다.
+     * 플러그인을 다시 활성화할 때 현재 파일이 프리셋 매핑과 일치하지 않으면
+     * 프리셋 관련 설정을 기본값으로 리셋합니다.
      */
     async initialize(): Promise<void> {
         this.buildMappingIndex();
+
+        // ⭐ 플러그인 시작 시 프리셋 상태 검증
+        await this.validatePresetStateOnLoad();
+
         this.logger.debug('Preset', t().debug.presets.managerInitialized);
+    }
+
+    /**
+     * 플러그인 로드 시 프리셋 상태를 검증합니다
+     *
+     * @remarks
+     * 프리셋이 적용된 상태(예: matrix2D.enabled = true)에서 플러그인이 비활성화되면
+     * 해당 설정이 settings.json에 저장됩니다. 플러그인을 다시 활성화할 때
+     * 프리셋 관련 설정을 기본값으로 리셋하여 뷰가 열릴 때 올바른 프리셋이 적용되도록 합니다.
+     *
+     * ⭐ 중요: 플러그인 로드 시점과 뷰 열림 시점의 활성 파일이 다를 수 있으므로
+     * 여기서는 프리셋을 적용하지 않고 리셋만 합니다. 실제 프리셋 적용은
+     * 뷰의 onOpen()에서 autoApplyPreset()을 통해 이루어집니다.
+     */
+    private async validatePresetStateOnLoad(): Promise<void> {
+        const settings = this.plugin.settings;
+
+        // 프리셋 기능이 비활성화되어 있으면 검증 불필요
+        if (!settings.enablePresets) {
+            return;
+        }
+
+        // 매핑이 없으면 검증 불필요
+        if (settings.presetMappings.length === 0) {
+            return;
+        }
+
+        // ⭐ 프리셋 고유 설정이 활성화되어 있는지 확인
+        // (예: matrix2D.enabled가 true이면 프리셋이 적용된 상태)
+        const hasPresetSettingsApplied = this.hasPresetSpecificSettings(settings);
+
+        if (hasPresetSettingsApplied) {
+            // 프리셋 설정이 저장되어 있음 → 기본값으로 리셋
+            // 뷰가 열릴 때 autoApplyPreset()에서 현재 활성 파일에 맞는 프리셋이 적용됨
+            this.logger.debug('Preset', 'Resetting preset settings on plugin load (will be re-applied when view opens)', {
+                matrix2DEnabled: settings.grouping?.matrix2D?.enabled
+            });
+
+            await this.resetPresetSpecificSettings();
+        }
+    }
+
+    /**
+     * 프리셋 고유 설정이 활성화되어 있는지 확인합니다
+     *
+     * @remarks
+     * 기본값과 다른 프리셋 고유 설정이 있는지 확인합니다.
+     * 현재는 matrix2D.enabled를 주로 확인합니다.
+     */
+    private hasPresetSpecificSettings(settings: CardNavigatorSettings): boolean {
+        // Matrix 2D가 활성화되어 있으면 프리셋 설정이 적용된 것으로 판단
+        // (기본값은 false)
+        if (settings.grouping?.matrix2D?.enabled === true) {
+            return true;
+        }
+
+        // 추후 다른 프리셋 고유 설정 추가 가능
+        // 예: 특정 그룹화 설정, 특수 레이아웃 등
+
+        return false;
+    }
+
+    /**
+     * 프리셋 관련 설정을 기본값으로 리셋합니다
+     */
+    private async resetPresetSpecificSettings(): Promise<void> {
+        const settings = this.plugin.settings;
+
+        // Matrix 2D 비활성화
+        if (settings.grouping?.matrix2D) {
+            settings.grouping.matrix2D.enabled = false;
+        }
+
+        // 현재 프리셋 ID 초기화
+        this.currentPresetId = null;
+
+        // 설정 저장 (뷰 새로고침 없이)
+        await this.plugin.saveSettingsQuiet();
+
+        this.logger.debug('Preset', 'Preset specific settings reset to defaults');
     }
 
     /**
@@ -331,18 +424,19 @@ export class PresetManager {
     }
 
     /**
-     * 파일 변경 시 프리셋을 자동으로 추적합니다
-     * 
+     * 파일 변경 시 프리셋을 자동으로 적용합니다
+     *
      * @param file - 현재 활성화된 파일
      * @returns 프리셋이 변경되었으면 true
-     * 
+     *
      * @remarks
-     * 설정을 변경하지 않고 currentPresetId만 업데이트합니다.
-     * 카드 렌더링 시 이 정보를 사용하여 파일별로 적절한 프리셋을 적용합니다.
+     * ⭐ 개선 (2025-11-29): 프리셋 매핑 시 실제 설정도 적용하도록 변경
+     * 2D Matrix 그룹화 등 렌더링 방식을 변경하는 설정이 제대로 적용되도록 합니다.
+     * ⭐ 개선 (2025-11-29): 프리셋 매핑 폴더를 벗어났을 때 원래 설정으로 복원
      */
     async autoApplyPreset(file: TFile | null): Promise<boolean> {
         const settings = this.plugin.settings;
-        
+
         if (!settings.enablePresets) {
             return false;
         }
@@ -350,6 +444,12 @@ export class PresetManager {
         const previousPresetId = this.currentPresetId;
 
         if (file === null) {
+            // ⭐ 파일이 없으면 원래 설정으로 복원
+            if (previousPresetId !== null && this.originalSettings) {
+                this.restoreOriginalSettings(settings);
+                // ⭐ 설정 저장 (뷰 새로고침 없이) - 호출자가 렌더링을 담당하므로 중복 렌더링 방지
+                await this.plugin.saveSettingsQuiet();
+            }
             this.currentPresetId = null;
             const changed = previousPresetId !== null;
             if (changed) {
@@ -359,18 +459,58 @@ export class PresetManager {
         }
 
         const preset = this.findMatchingPreset(file);
-        
+
         if (preset) {
             this.currentPresetId = preset.id;
             const changed = previousPresetId !== preset.id;
+
             if (changed) {
                 this.logger.debug('Preset', t().debug.presets.changed, {
                     from: previousPresetId || 'none',
                     to: preset.id
                 });
+
+                // ⭐ 최초 프리셋 적용 시에만 원래 설정 저장 (이미 저장된 경우 덮어쓰지 않음)
+                if (previousPresetId === null && this.originalSettings === null) {
+                    this.saveOriginalSettings(settings);
+                }
+
+                // ⭐ 프리셋 설정을 실제로 적용 (presets, presetMappings, debug 제외)
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { presets, presetMappings, debug, ...settingsToApply } = preset.settings;
+
+                // ⭐ 디버그: 적용 전 상태
+                this.logger.debug('Preset', 'Before applying preset', {
+                    currentMatrix2DEnabled: settings.grouping?.matrix2D?.enabled,
+                    presetMatrix2DEnabled: settingsToApply.grouping?.matrix2D?.enabled,
+                    presetGroupingEnabled: settingsToApply.grouping?.enabled
+                });
+
+                const mergedSettings = this.deepMerge(settings, settingsToApply);
+                Object.assign(settings, mergedSettings);
+
+                // ⭐ 디버그: 적용 후 상태 (settings 객체가 실제로 변경되었는지 확인)
+                this.logger.debug('Preset', 'After applying preset', {
+                    settingsMatrix2DEnabled: settings.grouping?.matrix2D?.enabled,
+                    mergedMatrix2DEnabled: mergedSettings.grouping?.matrix2D?.enabled
+                });
+
+                // ⭐ 설정 저장 (뷰 새로고침 없이) - 호출자가 렌더링을 담당하므로 중복 렌더링 방지
+                await this.plugin.saveSettingsQuiet();
+
+                this.logger.debug('Preset', 'Auto-applied preset settings', {
+                    presetName: preset.name,
+                    matrix2DEnabled: settingsToApply.grouping?.matrix2D?.enabled
+                });
             }
             return changed;
         } else {
+            // ⭐ 매칭되는 프리셋이 없으면 원래 설정으로 복원
+            if (previousPresetId !== null && this.originalSettings) {
+                this.restoreOriginalSettings(settings);
+                // ⭐ 설정 저장 (뷰 새로고침 없이) - 호출자가 렌더링을 담당하므로 중복 렌더링 방지
+                await this.plugin.saveSettingsQuiet();
+            }
             this.currentPresetId = null;
             const changed = previousPresetId !== null;
             if (changed) {
@@ -378,6 +518,38 @@ export class PresetManager {
             }
             return changed;
         }
+    }
+
+    /**
+     * 프리셋 적용 전 원래 설정을 저장합니다
+     */
+    private saveOriginalSettings(settings: CardNavigatorSettings): void {
+        // presets, presetMappings, debug는 제외하고 저장
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { presets, presetMappings, debug, ...settingsToSave } = settings;
+        this.originalSettings = JSON.parse(JSON.stringify(settingsToSave));
+
+        this.logger.debug('Preset', 'Saved original settings before preset application', {
+            matrix2DEnabled: settingsToSave.grouping?.matrix2D?.enabled
+        });
+    }
+
+    /**
+     * 원래 설정으로 복원합니다
+     */
+    private restoreOriginalSettings(settings: CardNavigatorSettings): void {
+        if (!this.originalSettings) {
+            return;
+        }
+
+        Object.assign(settings, this.deepMerge(settings, this.originalSettings));
+
+        this.logger.debug('Preset', 'Restored original settings', {
+            matrix2DEnabled: this.originalSettings.grouping?.matrix2D?.enabled
+        });
+
+        // 복원 후 원래 설정 초기화
+        this.originalSettings = null;
     }
 
     /**

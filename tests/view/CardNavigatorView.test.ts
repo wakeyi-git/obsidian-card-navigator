@@ -68,6 +68,11 @@ const createMockApp = (): jest.Mocked<App> => {
     mockApp.workspace.on = jest.fn((event: string, callback: Function) => {
         return {} as any; // EventRef mock
     }) as any;
+
+    // Mock workspace.onLayoutReady - immediately execute callback
+    mockApp.workspace.onLayoutReady = jest.fn((callback: Function) => {
+        callback();
+    }) as any;
     
     // Mock metadataCache.on for events
     mockApp.metadataCache.on = jest.fn((event: string, callback: Function) => {
@@ -387,27 +392,32 @@ describe('CardNavigatorView', () => {
         it('onOpen - 이벤트 리스너가 등록되어야 함', async () => {
             await view.onOpen();
 
-            // registerEvent가 호출되었는지 확인 (5번: workspace active-leaf-change, workspace css-change, metadataCache, vault delete, vault rename)
-            expect(view.registerEvent).toHaveBeenCalledTimes(5);
-            
+            // registerEvent가 호출되었는지 확인 (6번: workspace active-leaf-change, workspace css-change, metadataCache, vault create, vault delete, vault rename)
+            expect(view.registerEvent).toHaveBeenCalledTimes(6);
+
             // workspace 이벤트 리스너 확인
             expect(mockApp.workspace.on).toHaveBeenCalledWith(
                 'active-leaf-change',
                 expect.any(Function)
             );
-            
+
             // metadataCache 이벤트 리스너 확인
             expect(mockApp.metadataCache.on).toHaveBeenCalledWith(
                 'changed',
                 expect.any(Function)
             );
-            
+
             // vault 이벤트 리스너 확인
+            expect(mockApp.vault.on).toHaveBeenCalledWith(
+                'create',
+                expect.any(Function)
+            );
+
             expect(mockApp.vault.on).toHaveBeenCalledWith(
                 'delete',
                 expect.any(Function)
             );
-            
+
             expect(mockApp.vault.on).toHaveBeenCalledWith(
                 'rename',
                 expect.any(Function)

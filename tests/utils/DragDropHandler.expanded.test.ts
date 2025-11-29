@@ -184,7 +184,7 @@ describe('DragDropHandler - Expanded Coverage', () => {
                 .mockResolvedValueOnce('# Target\n\nTarget content');
 
             const dataTransfer = new DataTransfer();
-            dataTransfer.setData('file-path', sourceFile.path);
+            dataTransfer.setData('text/x-file-path', JSON.stringify([sourceFile.path]));
 
             const dropEvent = new DragEvent('drop', { dataTransfer });
             Object.defineProperty(dropEvent, 'dataTransfer', {
@@ -208,7 +208,7 @@ describe('DragDropHandler - Expanded Coverage', () => {
             handler.setupDraggable(cardEl, file);
 
             const dataTransfer = new DataTransfer();
-            dataTransfer.setData('file-path', file.path);
+            dataTransfer.setData('text/x-file-path', JSON.stringify([file.path]));
 
             const dropEvent = new DragEvent('drop', { dataTransfer });
             Object.defineProperty(dropEvent, 'dataTransfer', {
@@ -234,7 +234,7 @@ describe('DragDropHandler - Expanded Coverage', () => {
             (vault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
 
             const dataTransfer = new DataTransfer();
-            dataTransfer.setData('file-path', 'nonexistent.md');
+            dataTransfer.setData('text/x-file-path', JSON.stringify(['nonexistent.md']));
 
             const dropEvent = new DragEvent('drop', { dataTransfer });
             Object.defineProperty(dropEvent, 'dataTransfer', {
@@ -270,7 +270,7 @@ describe('DragDropHandler - Expanded Coverage', () => {
                 .mockResolvedValueOnce('# Target\n\n[[source]]');
 
             const dataTransfer = new DataTransfer();
-            dataTransfer.setData('file-path', sourceFile.path);
+            dataTransfer.setData('text/x-file-path', JSON.stringify([sourceFile.path]));
 
             const dropEvent = new DragEvent('drop', { dataTransfer });
             Object.defineProperty(dropEvent, 'dataTransfer', {
@@ -303,7 +303,7 @@ describe('DragDropHandler - Expanded Coverage', () => {
             const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
             const dataTransfer = new DataTransfer();
-            dataTransfer.setData('file-path', sourceFile.path);
+            dataTransfer.setData('text/x-file-path', JSON.stringify([sourceFile.path]));
 
             const dropEvent = new DragEvent('drop', { dataTransfer });
             Object.defineProperty(dropEvent, 'dataTransfer', {

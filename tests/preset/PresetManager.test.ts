@@ -18,13 +18,17 @@ describe('PresetManager', () => {
                 metadataCache: {
                     getFileCache: jest.fn()
                 },
-                vault: {}
+                vault: {},
+                workspace: {
+                    getActiveFile: jest.fn().mockReturnValue(null)
+                }
             } as any,
             settings: mockSettings,
             settingsManager: {
                 getSettings: jest.fn().mockReturnValue(mockSettings)
             },
             saveSettings: jest.fn().mockResolvedValue(undefined),
+            saveSettingsQuiet: jest.fn().mockResolvedValue(undefined),
             refreshView: jest.fn()
         } as any;
         
