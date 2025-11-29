@@ -373,9 +373,17 @@ export default class CardNavigatorPlugin extends Plugin {
 
 	/**
 	 * 설정 저장
-	 * 
+	 *
 	 * 설정을 파일에 저장한 후,
 	 * 스타일을 적용하고 모든 뷰를 새로고침합니다.
+	 *
+	 * @remarks
+	 * ⭐ 중요: 프리셋이 적용된 상태에서는 프리셋 설정이 디스크에 저장되지 않도록
+	 * getSettingsForDisk()를 통해 깨끗한 설정을 생성하여 저장합니다.
+	 *
+	 * 설정값 세트:
+	 * 1. 활성 설정 (settings): 메모리에서 실제 적용되는 값 (프리셋 포함)
+	 * 2. 디스크 설정 (diskSettings): 저장되는 값 (프리셋 제외)
 	 */
 	async saveSettings(): Promise<void> {
 		try {
@@ -389,13 +397,30 @@ export default class CardNavigatorPlugin extends Plugin {
 				: settings.language;
 			await setLanguageAsync(actualLanguage);
 
-			await this.saveData(settings);
+			// ⭐ 디스크에 저장할 깨끗한 설정 생성
+			// 프리셋이 적용된 상태면 originalSettings 기반으로 생성
+			// 프리셋이 비활성화한 카테고리만 현재 설정에서 가져옴
+			const diskSettings = this.presetManager.getSettingsForDisk(settings);
+			await this.saveData(diskSettings);
 
+			// 스타일은 현재 메모리 설정으로 적용 (프리셋 포함)
 			this.styleManager.applyStyles(settings);
+
+			// ⭐ 프리셋이 적용된 상태에서 설정 변경 시:
+			// originalSettings 업데이트 (비활성화된 카테고리의 설정 반영)
+			// diskSettings를 전달하여 정확한 값으로 업데이트
+			this.presetManager.updateOriginalSettingsOnSave(diskSettings);
+
+			// 프리셋 재적용 (활성화된 카테고리는 프리셋 설정 유지)
+			const activeFile = this.app.workspace.getActiveFile();
+			await this.presetManager.autoApplyPreset(activeFile);
 
 			await this.refreshView();
 
-			this.logger.debug('Plugin', 'saveSettings() complete');
+			this.logger.debug('Plugin', 'saveSettings() complete', {
+				diskRenderMode: diskSettings.renderMode,
+				memoryRenderMode: settings.renderMode
+			});
 		} catch (error) {
 			this.errorHandler.handle(
 				error,
@@ -409,8 +434,12 @@ export default class CardNavigatorPlugin extends Plugin {
 
 	/**
 	 * 설정을 조용히 저장 (뷰 새로고침 없이)
-	 * 
+	 *
 	 * refreshView()를 호출하지 않으므로 불필요한 재렌더링을 방지합니다.
+	 *
+	 * @remarks
+	 * saveSettings()와 동일하게 getSettingsForDisk()를 사용하여
+	 * 프리셋 설정이 디스크에 저장되지 않도록 합니다.
 	 */
 	async saveSettingsQuiet(): Promise<void> {
 		try {
@@ -424,7 +453,11 @@ export default class CardNavigatorPlugin extends Plugin {
 				: settings.language;
 			await setLanguageAsync(actualLanguage);
 
-			await this.saveData(settings);
+			// ⭐ 디스크에 저장할 깨끗한 설정 생성
+			const diskSettings = this.presetManager.getSettingsForDisk(settings);
+			await this.saveData(diskSettings);
+
+			// 스타일은 현재 메모리 설정으로 적용
 			this.styleManager.applyStyles(settings);
 
 			this.logger.debug('Plugin', t().settingsAdditional.settingsSaveQuietComplete);

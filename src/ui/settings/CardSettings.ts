@@ -1,6 +1,5 @@
 import { Setting, Notice, setIcon } from 'obsidian';
 import CardNavigatorPlugin from '../../main';
-import { BaseSettings } from './BaseSettings';
 import { CardSettings, CardSectionSettings, CardStyleSettings, CardSectionStyleSettings, CardSectionContentSettings, DEFAULT_SETTINGS } from '../../types';
 import { debounce } from '../../utils/debounce';
 import { DebugLogger } from '../../utils/DebugLogger';
@@ -9,31 +8,31 @@ import { t } from '../../i18n';
 
 /**
  * 미리 보기 기반 인터랙티브 카드 설정 UI
- * 
+ *
  * 실시간 미리 보기를 통해 직관적으로 카드 스타일을 설정할 수 있습니다.
  * 헤더/바디/풋터 영역을 클릭하여 선택하고, 각 영역의 내용과 스타일을
  * 일반/활성/포커스 상태별로 설정할 수 있습니다.
- * 
+ *
  * @remarks
  * - 메모리 누수 방지 (AbortController)
  * - 키보드 접근성 지원
  * - 모바일 터치 이벤트 대응
  * - requestAnimationFrame으로 리플로우 최소화
  */
-export class InteractiveCardSettings extends BaseSettings {
+export class CardSettingsUI {
     private previewCard: HTMLElement | null = null;
     private selectedSection: 'header' | 'body' | 'footer' = 'header';
     private selectedState: 'normal' | 'active' | 'focused' = 'normal';
     private sectionSettingsPanel: HTMLElement | null = null;
     private cardBaseSettingsContent: HTMLElement | null = null;
-    
+
     private availableProperties: Set<string> = new Set();
     private currentFileProperties: Map<string, string> = new Map();
-    
+
     private debouncedSave: () => void;
     private debouncedUpdatePreview: () => void;
     private debouncedForceViewRender: () => void;
-    
+
     private abortController: AbortController | null = null;
     private currentTabIndex = 0;
     private readonly stateKeys: ('normal' | 'active' | 'focused')[] = ['normal', 'active', 'focused'];
@@ -42,9 +41,8 @@ export class InteractiveCardSettings extends BaseSettings {
 
     // ⭐ Phase 5 최적화: 마지막으로 로드한 파일 경로 추적
     private lastLoadedFilePath: string | null = null;
-    
-    constructor(plugin: CardNavigatorPlugin) {
-        super(plugin);
+
+    constructor(private plugin: CardNavigatorPlugin) {
         
         // ✅ 함수를 전달하여 항상 최신 settings를 참조
         this.logger = new DebugLogger(() => plugin.settings);
@@ -1567,19 +1565,24 @@ export class InteractiveCardSettings extends BaseSettings {
     
     /**
      * 색상 값을 HEX 형식으로 추출합니다
-     * 
+     *
      * @remarks
      * RGB/RGBA 형식을 HEX로 변환하여 color picker와 호환되도록 합니다.
      */
-    protected extractColorValue(color: string): string {
+    private extractColorValue(color: string): string {
+        // CSS 변수인 경우 기본값 반환
         if (color.startsWith('var(')) {
-            return super.extractColorValue(color);
+            const match = color.match(/var\([^,]+,\s*([^)]+)\)/);
+            if (match && match[1]) {
+                return this.extractColorValue(match[1].trim());
+            }
+            return '#000000';
         }
-        
+
         if (color.startsWith('#')) {
             return color;
         }
-        
+
         const rgb = color.match(/\d+/g);
         if (rgb && rgb.length >= 3) {
             const hex = '#' + rgb.slice(0, 3)
@@ -1587,7 +1590,7 @@ export class InteractiveCardSettings extends BaseSettings {
                 .join('');
             return hex;
         }
-        
+
         return '#000000';
     }
     

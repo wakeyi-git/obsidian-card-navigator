@@ -56,7 +56,17 @@ function createMockCardData(
             renderMode: 'plain',
             normalCardStyle: DEFAULT_SETTINGS.normalCardStyle,
             activeCardStyle: DEFAULT_SETTINGS.activeCardStyle,
-            focusedCardStyle: DEFAULT_SETTINGS.focusedCardStyle
+            focusedCardStyle: DEFAULT_SETTINGS.focusedCardStyle,
+            // cardStyle 카테고리: 섹션 스타일 추가
+            headerStyle: DEFAULT_SETTINGS.header.normalStyle,
+            headerActiveStyle: DEFAULT_SETTINGS.header.activeStyle,
+            headerFocusedStyle: DEFAULT_SETTINGS.header.focusedStyle,
+            bodyStyle: DEFAULT_SETTINGS.body.normalStyle,
+            bodyActiveStyle: DEFAULT_SETTINGS.body.activeStyle,
+            bodyFocusedStyle: DEFAULT_SETTINGS.body.focusedStyle,
+            footerStyle: DEFAULT_SETTINGS.footer.normalStyle,
+            footerActiveStyle: DEFAULT_SETTINGS.footer.activeStyle,
+            footerFocusedStyle: DEFAULT_SETTINGS.footer.focusedStyle
         }
     };
 }
@@ -212,10 +222,16 @@ describe('CardRenderer - Extended Tests', () => {
         it('섹션별 스타일을 개별적으로 적용해야 함', async () => {
             const cardData = createMockCardData('test');
 
-            // 각 섹션의 스타일 커스터마이즈
-            cardData.cardSettings.header.normalStyle.fontSize = 16;
-            cardData.cardSettings.body.normalStyle.fontSize = 14;
-            cardData.cardSettings.footer.normalStyle.fontSize = 12;
+            // 각 섹션의 스타일 커스터마이즈 - cardSettings의 Style 필드를 직접 수정
+            if (cardData.cardSettings.headerStyle) {
+                cardData.cardSettings.headerStyle.fontSize = 16;
+            }
+            if (cardData.cardSettings.bodyStyle) {
+                cardData.cardSettings.bodyStyle.fontSize = 14;
+            }
+            if (cardData.cardSettings.footerStyle) {
+                cardData.cardSettings.footerStyle.fontSize = 12;
+            }
 
             const cardEl = await renderer.renderCard(cardData, container);
 

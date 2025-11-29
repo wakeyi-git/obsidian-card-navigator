@@ -1,3 +1,51 @@
+## [1.6.0] - 2025-11-29
+
+### Added
+
+#### 2D Matrix Grouping (Eisenhower Matrix)
+- **New Grouping Mode**: Organize cards in a 2D matrix layout based on two property values
+  - Create Eisenhower Matrix (Urgent/Important) or any custom 2x2 matrix
+  - Configure row and column axes with custom property names and values
+  - Support for both simple (2-value) and extended (3-value) matrix configurations
+  - Empty cells show placeholder for easy identification
+  - Related files: [Matrix2DGroupRenderer.ts](src/grouping/Matrix2DGroupRenderer.ts), [Matrix2DSettings.ts](src/ui/settings/Matrix2DSettings.ts)
+
+- **Preset Support**: 2D Matrix settings included in preset apply categories
+  - New `matrix2D` category in preset apply scope
+  - Independent control of matrix settings per preset
+  - Related files: [PresetManager.ts](src/preset/PresetManager.ts), [types.ts](src/types.ts)
+
+### Improved
+
+#### Settings UI Refactoring
+- **Modular Settings Architecture**: Split monolithic SettingsTab into focused modules
+  - SourceSettings: Folder/Tag mode configuration
+  - GroupingSettings: Grouping criteria and options
+  - LayoutSettings: Card layout and sizing
+  - InteractiveCardSettings: Card state styles and interactions
+  - InteractionSettings: Hover actions, drag & drop, scroll behavior
+  - PresetSettings: Preset management and mappings
+  - OtherSettings: Debug, language, search options
+  - Related files: [src/ui/settings/](src/ui/settings/)
+
+#### Preset System Fixes
+- **Settings Synchronization**: Fixed issues with preset settings not being properly managed
+  - Added `getSettingsForDisk()` method to prevent preset settings from being saved to disk
+  - Added `updateOriginalSettingsOnSave()` to correctly update original settings when modified during preset application
+  - Fixed cardStyle category fallback to use originalSettings instead of default values
+  - Related files: [PresetManager.ts](src/preset/PresetManager.ts), [main.ts](src/main.ts)
+
+- **Preset Storage Optimization**: Removed meta settings from preset storage
+  - Excluded `enablePresets`, `presetPriority`, `presets`, `presetMappings` from saved preset data
+  - Prevents circular reference and reduces data.json file size
+  - Related files: [PresetManager.ts](src/preset/PresetManager.ts)
+
+### Performance
+
+- **Card Rendering Optimization**: Removed double RAF pattern for smoother rendering
+  - Simplified animation frame handling in card rendering pipeline
+  - Related files: [ViewRenderer.ts](src/view/ViewRenderer.ts)
+
 ## [1.5.10] - 2025-11-29
 
 ### Improved

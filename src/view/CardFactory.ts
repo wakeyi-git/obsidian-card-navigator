@@ -173,7 +173,11 @@ export class CardFactory {
 	
 	/**
 	 * 전역 설정에서 CardSettings 추출
-	 * 
+	 *
+	 * @remarks
+	 * 전역 설정을 사용하므로 모든 스타일 필드가 포함됩니다.
+	 * (프리셋과 달리 cardStyle 카테고리 비활성화 없음)
+	 *
 	 * @private
 	 */
 	private getGlobalCardSettings(): CardSettings {
@@ -182,9 +186,20 @@ export class CardFactory {
 			body: this.settings.body,
 			footer: this.settings.footer,
 			renderMode: this.settings.renderMode,
+			// 카드 전체 스타일
 			normalCardStyle: this.settings.normalCardStyle,
 			activeCardStyle: this.settings.activeCardStyle,
-			focusedCardStyle: this.settings.focusedCardStyle
+			focusedCardStyle: this.settings.focusedCardStyle,
+			// 섹션 스타일 (전역 설정 사용)
+			headerStyle: this.settings.header.normalStyle,
+			headerActiveStyle: this.settings.header.activeStyle,
+			headerFocusedStyle: this.settings.header.focusedStyle,
+			bodyStyle: this.settings.body.normalStyle,
+			bodyActiveStyle: this.settings.body.activeStyle,
+			bodyFocusedStyle: this.settings.body.focusedStyle,
+			footerStyle: this.settings.footer.normalStyle,
+			footerActiveStyle: this.settings.footer.activeStyle,
+			footerFocusedStyle: this.settings.footer.focusedStyle
 		};
 	}
 	

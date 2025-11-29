@@ -87,8 +87,9 @@
 }
 
 .matrix-unclassified-cards {
-    display: flex;
-    flex-wrap: wrap;
+    /* CSS Grid로 균등 너비 카드 배치 */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--matrix-card-min-width, 150px), 1fr));
     gap: var(--matrix-gap);
     padding: var(--matrix-cell-padding);
     min-height: 60px;
@@ -96,11 +97,9 @@
 
 /* Cards within unclassified section */
 .matrix-unclassified-cards .card-item {
-    /* 미분류 섹션 카드도 컴팩트하게 */
-    --card-min-width: 150px;
-    --card-max-width: 200px;
-    flex: 1 1 var(--card-min-width);
-    max-width: var(--card-max-width);
+    /* Grid가 너비를 자동으로 균등 분배 */
+    width: 100%;
+    min-width: 0;
 }
 
 /* Empty unclassified section hint */
@@ -255,8 +254,9 @@
 /* Cell Cards Container */
 .matrix-cell-cards {
     flex: 1;
-    display: flex;
-    flex-wrap: wrap;
+    /* CSS Grid로 균등 너비 카드 배치 - 패널 크기에 따라 자동 조절 */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--matrix-card-min-width, 150px), 1fr));
     align-content: flex-start;
     gap: var(--matrix-gap);
     padding: var(--matrix-cell-padding);
@@ -269,11 +269,9 @@
 
 /* Cards within matrix cells */
 .matrix-cell-cards .card-item {
-    /* 셀 내 카드 크기 조정 - 더 컴팩트하게 */
-    --card-min-width: 150px;
-    --card-max-width: 200px;
-    flex: 1 1 var(--card-min-width);
-    max-width: var(--card-max-width);
+    /* Grid가 너비를 자동으로 균등 분배 - 모든 카드 동일 너비 */
+    width: 100%;
+    min-width: 0;
 }
 
 /* =============================================================================

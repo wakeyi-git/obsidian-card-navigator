@@ -1,24 +1,26 @@
-import { Setting, Notice, Modal, setIcon, TFolder } from 'obsidian';
-import { BaseSettings } from './BaseSettings';
-import { TextInputModal } from '../modals/TextInputModal';
-import { Preset, PresetMapping } from '../../types';
+import { Modal, Notice, setIcon, Setting, TFolder } from 'obsidian';
+import { t } from '../../i18n';
+import type CardNavigatorPlugin from '../../main';
+import { Preset, PresetMapping, PresetApplyCategories, DEFAULT_PRESET_APPLY_CATEGORIES } from '../../types';
 import { DebugLogger } from '../../utils/DebugLogger';
 import { ErrorHandler, ErrorSeverity } from '../../utils/ErrorHandler';
-import { t } from '../../i18n';
 import { getMomentLocale } from '../../utils/locale';
-import type CardNavigatorPlugin from '../../main';
+import { TextInputModal } from '../modals/TextInputModal';
+import type { CardNavigatorSettingTab } from '../SettingsTab';
 
 /**
  * 프리셋 관리 UI
  *
  * 프리셋 생성, 적용, 삭제 및 폴더/태그별 자동 적용 매핑을 관리합니다.
  */
-export class PresetSettings extends BaseSettings {
+export class PresetSettings {
     private logger: DebugLogger;
     private errorHandler: ErrorHandler;
 
-    constructor(plugin: CardNavigatorPlugin) {
-        super(plugin);
+    constructor(
+        private plugin: CardNavigatorPlugin,
+        private settingsTab: CardNavigatorSettingTab
+    ) {
         this.logger = new DebugLogger(() => plugin.settings);
         this.errorHandler = new ErrorHandler(this.logger);
     }
@@ -26,11 +28,15 @@ export class PresetSettings extends BaseSettings {
      * 프리셋 설정을 렌더링합니다
      */
     render(containerEl: HTMLElement): void {
-        this.createHeader(
-            containerEl,
-            t().settingsTab.presetSettings.title,
-            t().settingsTab.presetSettings.description
-        );
+        // 섹션 헤더
+        new Setting(containerEl)
+            .setHeading()
+            .setName(t().settingsTab.presetSettings.title);
+
+        // containerEl.createEl('p', {
+        //     text: t().settingsTab.presetSettings.description,
+        //     cls: 'setting-item-description'
+        // });
 
         this.addEnablePresetsToggle(containerEl);
 
@@ -72,7 +78,9 @@ export class PresetSettings extends BaseSettings {
      * 프리셋 생성 버튼을 추가합니다
      */
     private addCreatePresetButton(containerEl: HTMLElement): void {
-        this.createDivider(containerEl, t().settingsTab.presetSettings.createDivider);
+        new Setting(containerEl)
+            .setHeading()
+            .setName(t().settingsTab.presetSettings.createDivider);
 
         new Setting(containerEl)
             .setName(t().settingsTab.presets.createPreset)
@@ -238,26 +246,26 @@ export class PresetSettings extends BaseSettings {
                     .inputEl;
 
                 inputEl.style.width = '100%';
-                
+
                 inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
                     // IME 입력 중에는 엔터 키 무시
                     if (e.isComposing) {
                         return;
                     }
-                    
+
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         this.savePreset(presetName, description);
                         modal.close();
                     }
-                    
+
                     if (e.key === 'Escape') {
                         e.preventDefault();
                         modal.close();
                     }
                 });
             });
-        
+
         new Setting(modal.contentEl)
             .addButton(btn => btn
                 .setButtonText(t().settingsTab.presets.cancel)
@@ -273,9 +281,9 @@ export class PresetSettings extends BaseSettings {
                     modal.close();
                 })
             );
-        
+
         modal.open();
-        
+
         setTimeout(() => {
             inputEl?.focus();
         }, 100);
@@ -306,7 +314,9 @@ export class PresetSettings extends BaseSettings {
      * 프리셋 목록을 추가합니다
      */
     private addPresetList(containerEl: HTMLElement): void {
-        this.createDivider(containerEl, t().settingsTab.presetSettings.title);
+        // new Setting(containerEl)
+        //     .setHeading()
+        //     .setName(t().settingsTab.presetSettings.title);
 
         const presets = this.plugin.presetManager.getAllPresets();
 
@@ -356,15 +366,15 @@ export class PresetSettings extends BaseSettings {
                 });
                 descEl.style.cursor = 'pointer';
             }
-            
+
             const date = new Date(preset.createdAt);
             infoContainer.createEl('p', {
                 text: `${t().settingsTab.presetSettings.createdDate} ${date.toLocaleDateString(getMomentLocale())}`,
                 cls: 'preset-date setting-item-description'
             });
-            
+
             const buttonsContainer = presetContainer.createDiv({ cls: 'preset-buttons'});
-            
+
             const applyBtn = buttonsContainer.createEl('button', {
                 text: t().settingsTab.presetSettings.applyButton,
                 cls: 'mod-cta'
@@ -374,7 +384,7 @@ export class PresetSettings extends BaseSettings {
                 this.plugin.settingsTab.display();
                 new Notice(t().settingsTab.presetSettings.applySuccess(preset.name));
             });
-            
+
             const overwriteBtn = buttonsContainer.createEl('button', {
                 text: t().settingsTab.presetSettings.overwriteButton
             });
@@ -393,6 +403,13 @@ export class PresetSettings extends BaseSettings {
                         );
                     }
                 }
+            });
+
+            const applyScopeBtn = buttonsContainer.createEl('button', {
+                text: t().settingsTab.presetSettings.applyScopeButton
+            });
+            applyScopeBtn.addEventListener('click', () => {
+                this.showApplyScopeModal(preset);
             });
 
             const duplicateBtn = buttonsContainer.createEl('button', {
@@ -414,7 +431,7 @@ export class PresetSettings extends BaseSettings {
                     );
                 }
             });
-            
+
             const exportBtn = buttonsContainer.createEl('button', {
                 text: t().settingsTab.presetSettings.exportButton
             });
@@ -431,7 +448,7 @@ export class PresetSettings extends BaseSettings {
                     );
                 }
             });
-            
+
             const deleteBtn = buttonsContainer.createEl('button', {
                 text: t().settingsTab.presetSettings.deleteButton,
                 cls: 'mod-warning'
@@ -453,7 +470,7 @@ export class PresetSettings extends BaseSettings {
                 }
             });
         });
-        
+
         new Setting(containerEl)
             .setName(t().settingsTab.presets.importPreset)
             .setDesc(t().settingsTab.settingsManagement.importDescription)
@@ -471,12 +488,12 @@ export class PresetSettings extends BaseSettings {
     private downloadJSON(json: string, filename: string): void {
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        
+
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
         a.click();
-        
+
         URL.revokeObjectURL(url);
         new Notice(t().notices.presets.exported);
     }
@@ -516,7 +533,9 @@ export class PresetSettings extends BaseSettings {
      * 프리셋 매핑 설정을 추가합니다
      */
     private addPresetMapping(containerEl: HTMLElement): void {
-        this.createDivider(containerEl, t().settingsTab.presetSettings.priorityDivider);
+        new Setting(containerEl)
+            .setHeading()
+            .setName(t().settingsTab.presetSettings.priorityDivider);
 
         // 우선순위 설정을 가장 먼저 표시
         this.addPriorityModeSettings(containerEl);
@@ -1160,9 +1179,9 @@ export class PresetSettings extends BaseSettings {
         if (folderMappings.length > 0) {
             folderMappings.forEach((mapping: PresetMapping, index: number) => {
                 this.renderMappingItem(
-                    mappingContainer, 
-                    mapping, 
-                    index, 
+                    mappingContainer,
+                    mapping,
+                    index,
                     folderMappings.length
                 );
             });
@@ -1201,9 +1220,9 @@ export class PresetSettings extends BaseSettings {
         if (tagMappings.length > 0) {
             tagMappings.forEach((mapping: PresetMapping, index: number) => {
                 this.renderMappingItem(
-                    mappingContainer, 
-                    mapping, 
-                    index, 
+                    mappingContainer,
+                    mapping,
+                    index,
                     tagMappings.length
                 );
             });
@@ -1555,24 +1574,24 @@ export class PresetSettings extends BaseSettings {
      */
     private getAllFolders(): TFolder[] {
         const folders: TFolder[] = [];
-        
+
         const addFoldersRecursively = (folder: TFolder) => {
             folders.push(folder);
-            
+
             folder.children.forEach(child => {
                 if (child instanceof TFolder) {
                     addFoldersRecursively(child);
                 }
             });
         };
-        
+
         const rootFolder = this.plugin.app.vault.getRoot();
         rootFolder.children.forEach(child => {
             if (child instanceof TFolder) {
                 addFoldersRecursively(child);
             }
         });
-        
+
         return folders;
     }
 
@@ -1660,13 +1679,13 @@ export class PresetSettings extends BaseSettings {
 
             const prevMapping = allMappings[currentIndex - 1];
             const tempPriority = mapping.priority;
-            
+
             await this.plugin.presetManager.updateMappingPriority(
                 mapping.type,
                 mapping.target,
                 prevMapping.priority
             );
-            
+
             await this.plugin.presetManager.updateMappingPriority(
                 prevMapping.type,
                 prevMapping.target,
@@ -2170,6 +2189,103 @@ export class PresetSettings extends BaseSettings {
                 }
             }
         });
+    }
+
+    /**
+     * 프리셋 적용 범위 편집 모달을 표시합니다
+     */
+    private showApplyScopeModal(preset: Preset): void {
+        const modal = new Modal(this.plugin.app);
+        modal.titleEl.setText(t().settingsTab.presetSettings.applyScopeTitle);
+
+        // 현재 적용 범위 가져오기 (없으면 기본값 사용)
+        const currentCategories: PresetApplyCategories = preset.applyCategories
+            ? { ...preset.applyCategories }
+            : { ...DEFAULT_PRESET_APPLY_CATEGORIES };
+
+        // 설명
+        modal.contentEl.createEl('p', {
+            cls: 'setting-item-description',
+            text: t().settingsTab.presetSettings.applyScopeDescription
+        });
+
+        // 카테고리별 체크박스
+        const categories: Array<{ key: keyof PresetApplyCategories; label: string; desc: string }> = [
+            { key: 'mode', label: t().settingsTab.presetSettings.categoryMode, desc: t().settingsTab.presetSettings.categoryModeDesc },
+            { key: 'grouping', label: t().settingsTab.presetSettings.categoryGrouping, desc: t().settingsTab.presetSettings.categoryGroupingDesc },
+            { key: 'matrix2D', label: t().settingsTab.presetSettings.categoryMatrix2D, desc: t().settingsTab.presetSettings.categoryMatrix2DDesc },
+            { key: 'pin', label: t().settingsTab.presetSettings.categoryPin, desc: t().settingsTab.presetSettings.categoryPinDesc },
+            { key: 'sort', label: t().settingsTab.presetSettings.categorySort, desc: t().settingsTab.presetSettings.categorySortDesc },
+            { key: 'cardContent', label: t().settingsTab.presetSettings.categoryCardContent, desc: t().settingsTab.presetSettings.categoryCardContentDesc },
+            { key: 'cardStyle', label: t().settingsTab.presetSettings.categoryCardStyle, desc: t().settingsTab.presetSettings.categoryCardStyleDesc },
+            { key: 'layout', label: t().settingsTab.presetSettings.categoryLayout, desc: t().settingsTab.presetSettings.categoryLayoutDesc },
+            { key: 'interaction', label: t().settingsTab.presetSettings.categoryInteraction, desc: t().settingsTab.presetSettings.categoryInteractionDesc }
+        ];
+
+        for (const category of categories) {
+            new Setting(modal.contentEl)
+                .setName(category.label)
+                .setDesc(category.desc)
+                .addToggle(toggle => toggle
+                    .setValue(currentCategories[category.key])
+                    .onChange(value => {
+                        currentCategories[category.key] = value;
+                    })
+                );
+        }
+
+        // 전체 선택/해제 버튼
+        new Setting(modal.contentEl)
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presetSettings.selectAll)
+                .onClick(() => {
+                    for (const key of Object.keys(currentCategories) as Array<keyof PresetApplyCategories>) {
+                        currentCategories[key] = true;
+                    }
+                    modal.close();
+                    this.showApplyScopeModal({ ...preset, applyCategories: currentCategories });
+                })
+            )
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presetSettings.deselectAll)
+                .onClick(() => {
+                    for (const key of Object.keys(currentCategories) as Array<keyof PresetApplyCategories>) {
+                        currentCategories[key] = false;
+                    }
+                    modal.close();
+                    this.showApplyScopeModal({ ...preset, applyCategories: currentCategories });
+                })
+            );
+
+        // 확인/취소 버튼
+        new Setting(modal.contentEl)
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.cancel)
+                .onClick(() => {
+                    modal.close();
+                })
+            )
+            .addButton(btn => btn
+                .setButtonText(t().settingsTab.presets.confirm)
+                .setCta()
+                .onClick(async () => {
+                    try {
+                        await this.plugin.presetManager.updatePresetApplyCategories(preset.id, currentCategories);
+                        modal.close();
+                        this.plugin.settingsTab.display();
+                        new Notice(t().settingsTab.presetSettings.applyScopeUpdated);
+                    } catch (error) {
+                        this.errorHandler.handle(
+                            error,
+                            ErrorSeverity.ERROR,
+                            { category: 'Preset', action: 'update apply scope' },
+                            'Failed to update preset apply scope'
+                        );
+                    }
+                })
+            );
+
+        modal.open();
     }
 
     /**

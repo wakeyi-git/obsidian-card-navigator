@@ -1,4 +1,5 @@
-import { CardNavigatorSettings } from '../types';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { CardNavigatorSettings, DEFAULT_PRESET_APPLY_CATEGORIES } from '../types';
 import { DebugLogger } from '../utils/DebugLogger';
 
 /**
@@ -32,7 +33,7 @@ export class SettingsMigration {
 	private logger: DebugLogger;
 
 	/** 현재 설정 버전 */
-	private readonly CURRENT_VERSION = 2;
+	private readonly CURRENT_VERSION = 3;
 
 	constructor(logger: DebugLogger) {
 		this.logger = logger;
@@ -66,6 +67,9 @@ export class SettingsMigration {
 		}
 		if (version < 2) {
 			migratedData = this.migrateV1toV2(migratedData, changedFields);
+		}
+		if (version < 3) {
+			migratedData = this.migrateV2toV3(migratedData, changedFields);
 		}
 
 		// 버전 업데이트
@@ -199,6 +203,42 @@ export class SettingsMigration {
 	}
 
 	/**
+	 * 버전 2 → 3 마이그레이션
+	 *
+	 * @remarks
+	 * 변경 사항:
+	 * - 프리셋에 applyCategories 필드 추가 (카테고리별 적용 범위 설정)
+	 */
+	private migrateV2toV3(data: any, changedFields: string[]): any {
+		const migrated = { ...data };
+
+		// 프리셋에 applyCategories 기본값 추가
+		if (migrated.presets && Array.isArray(migrated.presets)) {
+			let presetsUpdated = 0;
+			migrated.presets = migrated.presets.map((preset: any) => {
+				if (!preset.applyCategories) {
+					presetsUpdated++;
+					return {
+						...preset,
+						applyCategories: { ...DEFAULT_PRESET_APPLY_CATEGORIES }
+					};
+				}
+				return preset;
+			});
+
+			if (presetsUpdated > 0) {
+				changedFields.push(`presets.applyCategories (${presetsUpdated} presets)`);
+
+				this.logger.debug('Settings', 'Added applyCategories to presets', {
+					presetsUpdated
+				});
+			}
+		}
+
+		return migrated;
+	}
+
+	/**
 	 * 현재 설정 버전을 반환합니다
 	 */
 	getCurrentVersion(): number {
@@ -243,6 +283,11 @@ export class SettingsMigration {
 
 		let downgraded = { ...data };
 
+		// V3 → V2
+		if (targetVersion < 3) {
+			downgraded = this.downgradeV3toV2(downgraded);
+		}
+
 		// V2 → V1
 		if (targetVersion < 2) {
 			downgraded = this.downgradeV2toV1(downgraded);
@@ -254,6 +299,24 @@ export class SettingsMigration {
 		}
 
 		(downgraded as any).version = targetVersion;
+		return downgraded;
+	}
+
+	/**
+	 * 버전 3 → 2 다운그레이드
+	 */
+	private downgradeV3toV2(data: any): any {
+		const downgraded = { ...data };
+
+		// 프리셋에서 applyCategories 필드 제거
+		if (downgraded.presets && Array.isArray(downgraded.presets)) {
+			downgraded.presets = downgraded.presets.map((preset: any) => {
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
+				const { applyCategories, ...rest } = preset;
+				return rest;
+			});
+		}
+
 		return downgraded;
 	}
 

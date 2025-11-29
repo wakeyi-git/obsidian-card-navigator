@@ -371,7 +371,8 @@ describe('ViewRenderer', () => {
 		mockCardFactory = {
 			createCard: jest.fn(),
 			createPlaceholder: jest.fn(),
-			renderPlaceholder: jest.fn()
+			renderPlaceholder: jest.fn(),
+			invalidateCache: jest.fn()
 		} as any;
 		
 		// Real ViewStateManager

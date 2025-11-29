@@ -1,5 +1,5 @@
 import { TFile, CachedMetadata, TagCache } from 'obsidian';
-import { CardNavigatorSettings, Preset, PresetMapping, PresetMappingType, CardSettings } from '../types';
+import { CardNavigatorSettings, Preset, PresetMapping, PresetMappingType, CardSettings, PresetApplyCategories, DEFAULT_PRESET_APPLY_CATEGORIES } from '../types';
 import CardNavigatorPlugin from '../main';
 import { DebugLogger } from '../utils/DebugLogger';
 import { t } from '../i18n';
@@ -211,36 +211,175 @@ export class PresetManager {
 
     /**
      * 파일에 매핑된 프리셋의 카드 설정을 반환합니다
-     * 
+     *
      * @param file - 대상 파일
      * @returns 카드 설정 또는 null
+     *
+     * @remarks
+     * applyCategories의 cardContent와 cardStyle 카테고리를 고려합니다.
+     * 두 카테고리가 모두 비활성화된 경우 null을 반환합니다.
      */
     getCardSettingsForFile(file: TFile | null): CardSettings | null {
         if (!file || !this.plugin.settings.enablePresets) {
             return null;
         }
-        
+
         const preset = this.findMatchingPreset(file);
         if (!preset) {
             return null;
         }
-        
-        return this.extractCardSettings(preset.settings);
+
+        // applyCategories 확인 (없으면 기본값 사용)
+        const applyCategories = preset.applyCategories ?? DEFAULT_PRESET_APPLY_CATEGORIES;
+
+        // cardContent와 cardStyle 모두 비활성화된 경우 null 반환
+        if (!applyCategories.cardContent && !applyCategories.cardStyle) {
+            return null;
+        }
+
+        return this.extractCardSettings(preset.settings, applyCategories);
     }
-    
+
     /**
      * CardNavigatorSettings에서 CardSettings만 추출합니다
+     *
+     * @param settings - 프리셋 설정
+     * @param applyCategories - 적용할 카테고리 (undefined면 모든 설정 추출)
+     *
+     * @remarks
+     * cardContent 카테고리: header/body/footer 내용 설정 + renderMode
+     * cardStyle 카테고리: 카드 전체 스타일 + header/body/footer 섹션 스타일
+     *
+     * 비활성화된 카테고리는 originalSettings (프리셋 적용 전 원래 설정)를 사용합니다.
+     * originalSettings가 없으면 현재 plugin.settings를 사용합니다.
      */
-    private extractCardSettings(settings: CardNavigatorSettings): CardSettings {
-        return {
-            header: settings.header,
-            body: settings.body,
-            footer: settings.footer,
-            renderMode: settings.renderMode,
-            normalCardStyle: settings.normalCardStyle,
-            activeCardStyle: settings.activeCardStyle,
-            focusedCardStyle: settings.focusedCardStyle
+    private extractCardSettings(
+        settings: CardNavigatorSettings,
+        applyCategories?: PresetApplyCategories
+    ): CardSettings {
+        // 현재 전역 설정 (항상 유효함)
+        const currentSettings = this.plugin.settings;
+
+        // ⭐ 비활성화된 카테고리에 사용할 원래 설정 (프리셋 적용 전 설정)
+        // originalSettings가 있으면 사용, 없으면 현재 설정 사용
+
+        // cardContent용 fallback
+        const fallbackHeader = this.originalSettings?.header ?? currentSettings.header;
+        const fallbackBody = this.originalSettings?.body ?? currentSettings.body;
+        const fallbackFooter = this.originalSettings?.footer ?? currentSettings.footer;
+        const fallbackRenderMode = this.originalSettings?.renderMode ?? currentSettings.renderMode;
+
+        // ⭐ cardStyle용 fallback (별도로 관리)
+        const fallbackNormalCardStyle = this.originalSettings?.normalCardStyle ?? currentSettings.normalCardStyle;
+        const fallbackActiveCardStyle = this.originalSettings?.activeCardStyle ?? currentSettings.activeCardStyle;
+        const fallbackFocusedCardStyle = this.originalSettings?.focusedCardStyle ?? currentSettings.focusedCardStyle;
+        // 섹션 스타일은 header/body/footer 내에 있음
+        const fallbackHeaderStyle = this.originalSettings?.header?.normalStyle ?? currentSettings.header.normalStyle;
+        const fallbackHeaderActiveStyle = this.originalSettings?.header?.activeStyle ?? currentSettings.header.activeStyle;
+        const fallbackHeaderFocusedStyle = this.originalSettings?.header?.focusedStyle ?? currentSettings.header.focusedStyle;
+        const fallbackBodyStyle = this.originalSettings?.body?.normalStyle ?? currentSettings.body.normalStyle;
+        const fallbackBodyActiveStyle = this.originalSettings?.body?.activeStyle ?? currentSettings.body.activeStyle;
+        const fallbackBodyFocusedStyle = this.originalSettings?.body?.focusedStyle ?? currentSettings.body.focusedStyle;
+        const fallbackFooterStyle = this.originalSettings?.footer?.normalStyle ?? currentSettings.footer.normalStyle;
+        const fallbackFooterActiveStyle = this.originalSettings?.footer?.activeStyle ?? currentSettings.footer.activeStyle;
+        const fallbackFooterFocusedStyle = this.originalSettings?.footer?.focusedStyle ?? currentSettings.footer.focusedStyle;
+
+        // applyCategories가 없으면 모든 설정 사용
+        if (!applyCategories) {
+            return {
+                header: settings.header,
+                body: settings.body,
+                footer: settings.footer,
+                renderMode: settings.renderMode,
+                normalCardStyle: settings.normalCardStyle,
+                activeCardStyle: settings.activeCardStyle,
+                focusedCardStyle: settings.focusedCardStyle,
+                // 섹션 스타일도 포함
+                headerStyle: settings.header.normalStyle,
+                headerActiveStyle: settings.header.activeStyle,
+                headerFocusedStyle: settings.header.focusedStyle,
+                bodyStyle: settings.body.normalStyle,
+                bodyActiveStyle: settings.body.activeStyle,
+                bodyFocusedStyle: settings.body.focusedStyle,
+                footerStyle: settings.footer.normalStyle,
+                footerActiveStyle: settings.footer.activeStyle,
+                footerFocusedStyle: settings.footer.focusedStyle
+            };
+        }
+
+        // ⭐ cardContent: 내용 설정만 추출 (스타일은 fallback 사용)
+        // ⭐ cardStyle: 카드 전체 스타일 + 섹션 스타일
+
+        // 헤더 설정: 내용은 cardContent, 스타일은 cardStyle에서 제어
+        const headerResult = {
+            enabled: applyCategories.cardContent ? settings.header.enabled : fallbackHeader.enabled,
+            normalContent: applyCategories.cardContent ? settings.header.normalContent : fallbackHeader.normalContent,
+            activeContent: applyCategories.cardContent ? settings.header.activeContent : fallbackHeader.activeContent,
+            focusedContent: applyCategories.cardContent ? settings.header.focusedContent : fallbackHeader.focusedContent,
+            // ⭐ 스타일은 cardStyle 카테고리에서 제어 - 별도의 fallback 사용
+            normalStyle: applyCategories.cardStyle ? settings.header.normalStyle : fallbackHeaderStyle,
+            activeStyle: applyCategories.cardStyle ? settings.header.activeStyle : fallbackHeaderActiveStyle,
+            focusedStyle: applyCategories.cardStyle ? settings.header.focusedStyle : fallbackHeaderFocusedStyle
         };
+
+        // 바디 설정
+        const bodyResult = {
+            enabled: applyCategories.cardContent ? settings.body.enabled : fallbackBody.enabled,
+            normalContent: applyCategories.cardContent ? settings.body.normalContent : fallbackBody.normalContent,
+            activeContent: applyCategories.cardContent ? settings.body.activeContent : fallbackBody.activeContent,
+            focusedContent: applyCategories.cardContent ? settings.body.focusedContent : fallbackBody.focusedContent,
+            // ⭐ 스타일은 cardStyle 카테고리에서 제어 - 별도의 fallback 사용
+            normalStyle: applyCategories.cardStyle ? settings.body.normalStyle : fallbackBodyStyle,
+            activeStyle: applyCategories.cardStyle ? settings.body.activeStyle : fallbackBodyActiveStyle,
+            focusedStyle: applyCategories.cardStyle ? settings.body.focusedStyle : fallbackBodyFocusedStyle
+        };
+
+        // 풋터 설정
+        const footerResult = {
+            enabled: applyCategories.cardContent ? settings.footer.enabled : fallbackFooter.enabled,
+            normalContent: applyCategories.cardContent ? settings.footer.normalContent : fallbackFooter.normalContent,
+            activeContent: applyCategories.cardContent ? settings.footer.activeContent : fallbackFooter.activeContent,
+            focusedContent: applyCategories.cardContent ? settings.footer.focusedContent : fallbackFooter.focusedContent,
+            // ⭐ 스타일은 cardStyle 카테고리에서 제어 - 별도의 fallback 사용
+            normalStyle: applyCategories.cardStyle ? settings.footer.normalStyle : fallbackFooterStyle,
+            activeStyle: applyCategories.cardStyle ? settings.footer.activeStyle : fallbackFooterActiveStyle,
+            focusedStyle: applyCategories.cardStyle ? settings.footer.focusedStyle : fallbackFooterFocusedStyle
+        };
+
+        const result: CardSettings = {
+            header: headerResult,
+            body: bodyResult,
+            footer: footerResult,
+            renderMode: applyCategories.cardContent ? settings.renderMode : fallbackRenderMode,
+            // ⭐ cardStyle이 비활성화되면 originalSettings 값 사용 (undefined가 아님!)
+            normalCardStyle: applyCategories.cardStyle ? settings.normalCardStyle : fallbackNormalCardStyle,
+            activeCardStyle: applyCategories.cardStyle ? settings.activeCardStyle : fallbackActiveCardStyle,
+            focusedCardStyle: applyCategories.cardStyle ? settings.focusedCardStyle : fallbackFocusedCardStyle,
+            // ⭐ 섹션 스타일도 마찬가지로 fallback 사용
+            headerStyle: applyCategories.cardStyle ? settings.header.normalStyle : fallbackHeaderStyle,
+            headerActiveStyle: applyCategories.cardStyle ? settings.header.activeStyle : fallbackHeaderActiveStyle,
+            headerFocusedStyle: applyCategories.cardStyle ? settings.header.focusedStyle : fallbackHeaderFocusedStyle,
+            bodyStyle: applyCategories.cardStyle ? settings.body.normalStyle : fallbackBodyStyle,
+            bodyActiveStyle: applyCategories.cardStyle ? settings.body.activeStyle : fallbackBodyActiveStyle,
+            bodyFocusedStyle: applyCategories.cardStyle ? settings.body.focusedStyle : fallbackBodyFocusedStyle,
+            footerStyle: applyCategories.cardStyle ? settings.footer.normalStyle : fallbackFooterStyle,
+            footerActiveStyle: applyCategories.cardStyle ? settings.footer.activeStyle : fallbackFooterActiveStyle,
+            footerFocusedStyle: applyCategories.cardStyle ? settings.footer.focusedStyle : fallbackFooterFocusedStyle
+        };
+
+        this.logger.debug('Preset', 'extractCardSettings result', {
+            cardContentEnabled: applyCategories.cardContent,
+            cardStyleEnabled: applyCategories.cardStyle,
+            resultRenderMode: result.renderMode,
+            presetRenderMode: settings.renderMode,
+            fallbackRenderMode: fallbackRenderMode,
+            hasOriginalSettings: this.originalSettings !== null,
+            // 카드 스타일 디버깅
+            hasNormalCardStyle: !!result.normalCardStyle,
+            hasHeaderStyle: !!result.headerStyle
+        });
+
+        return result;
     }
 
     /**
@@ -338,6 +477,57 @@ export class PresetManager {
     }
 
     /**
+     * 프리셋의 적용 범위를 업데이트합니다
+     *
+     * @param id - 프리셋 ID
+     * @param applyCategories - 새로운 적용 범위 설정
+     */
+    async updatePresetApplyCategories(id: string, applyCategories: PresetApplyCategories): Promise<void> {
+        const settings = this.plugin.settings;
+        const preset = settings.presets.find(p => p.id === id);
+
+        if (!preset) {
+            this.logger.warn('Preset', t().debug.presets.notFound, id);
+            return;
+        }
+
+        preset.applyCategories = applyCategories;
+
+        // 현재 적용된 프리셋의 적용 범위가 변경되면 원래 설정 복원 후 재적용
+        const needsReapply = this.currentPresetId === id;
+        if (needsReapply) {
+            // 원래 설정으로 복원 (originalSettings는 유지하여 재적용 시 사용)
+            if (this.originalSettings) {
+                Object.assign(settings, this.deepMerge(settings, this.originalSettings));
+                this.logger.debug('Preset', 'Restored original settings for re-apply', {
+                    renderMode: this.originalSettings.renderMode,
+                    matrix2DEnabled: this.originalSettings.grouping?.matrix2D?.enabled
+                });
+            }
+            this.currentPresetId = null;
+            this.logger.debug('Preset', 'Reset currentPresetId for re-apply', { presetId: id });
+        }
+
+        await this.plugin.saveSettings();
+        this.logger.debug('Preset', 'Updated preset apply categories', {
+            presetName: preset.name,
+            applyCategories: Object.entries(applyCategories)
+                .filter(([, v]) => v)
+                .map(([k]) => k)
+        });
+
+        // 프리셋 재적용 및 뷰 새로고침
+        if (needsReapply) {
+            // 현재 활성 파일로 프리셋 재적용
+            const activeFile = this.plugin.app.workspace.getActiveFile();
+            await this.autoApplyPreset(activeFile);
+
+            // 뷰 새로고침
+            this.plugin.refreshView();
+        }
+    }
+
+    /**
      * 프리셋을 복제합니다
      * 
      * @param id - 복제할 프리셋 ID
@@ -430,9 +620,9 @@ export class PresetManager {
      * @returns 프리셋이 변경되었으면 true
      *
      * @remarks
-     * ⭐ 개선 (2025-11-29): 프리셋 매핑 시 실제 설정도 적용하도록 변경
-     * 2D Matrix 그룹화 등 렌더링 방식을 변경하는 설정이 제대로 적용되도록 합니다.
-     * ⭐ 개선 (2025-11-29): 프리셋 매핑 폴더를 벗어났을 때 원래 설정으로 복원
+     * ⭐ 개선 (2025-11-29): 프리셋 설정을 메모리에만 적용 (디스크 저장 안 함)
+     * 뷰 레벨 설정(mode, grouping, matrix2D 등)은 plugin.settings에 적용되지만
+     * 디스크에 저장하지 않습니다. 플러그인 재시작 후에는 원래 설정이 유지됩니다.
      */
     async autoApplyPreset(file: TFile | null): Promise<boolean> {
         const settings = this.plugin.settings;
@@ -444,11 +634,9 @@ export class PresetManager {
         const previousPresetId = this.currentPresetId;
 
         if (file === null) {
-            // ⭐ 파일이 없으면 원래 설정으로 복원
+            // 파일이 없으면 원래 설정으로 복원 (메모리에서만)
             if (previousPresetId !== null && this.originalSettings) {
                 this.restoreOriginalSettings(settings);
-                // ⭐ 설정 저장 (뷰 새로고침 없이) - 호출자가 렌더링을 담당하므로 중복 렌더링 방지
-                await this.plugin.saveSettingsQuiet();
             }
             this.currentPresetId = null;
             const changed = previousPresetId !== null;
@@ -461,55 +649,48 @@ export class PresetManager {
         const preset = this.findMatchingPreset(file);
 
         if (preset) {
-            this.currentPresetId = preset.id;
             const changed = previousPresetId !== preset.id;
+            this.currentPresetId = preset.id;
 
             if (changed) {
                 this.logger.debug('Preset', t().debug.presets.changed, {
                     from: previousPresetId || 'none',
                     to: preset.id
                 });
-
-                // ⭐ 최초 프리셋 적용 시에만 원래 설정 저장 (이미 저장된 경우 덮어쓰지 않음)
-                if (previousPresetId === null && this.originalSettings === null) {
-                    this.saveOriginalSettings(settings);
-                }
-
-                // ⭐ 프리셋 설정을 실제로 적용 (presets, presetMappings, debug 제외)
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { presets, presetMappings, debug, ...settingsToApply } = preset.settings;
-
-                // ⭐ 디버그: 적용 전 상태
-                this.logger.debug('Preset', 'Before applying preset', {
-                    currentMatrix2DEnabled: settings.grouping?.matrix2D?.enabled,
-                    presetMatrix2DEnabled: settingsToApply.grouping?.matrix2D?.enabled,
-                    presetGroupingEnabled: settingsToApply.grouping?.enabled
-                });
-
-                const mergedSettings = this.deepMerge(settings, settingsToApply);
-                Object.assign(settings, mergedSettings);
-
-                // ⭐ 디버그: 적용 후 상태 (settings 객체가 실제로 변경되었는지 확인)
-                this.logger.debug('Preset', 'After applying preset', {
-                    settingsMatrix2DEnabled: settings.grouping?.matrix2D?.enabled,
-                    mergedMatrix2DEnabled: mergedSettings.grouping?.matrix2D?.enabled
-                });
-
-                // ⭐ 설정 저장 (뷰 새로고침 없이) - 호출자가 렌더링을 담당하므로 중복 렌더링 방지
-                await this.plugin.saveSettingsQuiet();
-
-                this.logger.debug('Preset', 'Auto-applied preset settings', {
-                    presetName: preset.name,
-                    matrix2DEnabled: settingsToApply.grouping?.matrix2D?.enabled
-                });
             }
+
+            // 첫 프리셋 적용 시 원래 설정 저장
+            if (previousPresetId === null && this.originalSettings === null) {
+                this.saveOriginalSettings(settings);
+            }
+
+            // ⭐ 프리셋 설정을 메모리에 적용 (디스크 저장 안 함)
+            // 동일한 프리셋이라도 항상 재적용: 비활성화된 카테고리의 전역 설정 변경을 반영하기 위함
+            const applyCategories = preset.applyCategories ?? DEFAULT_PRESET_APPLY_CATEGORIES;
+            const settingsToApply = this.extractSettingsByCategories(preset.settings, applyCategories);
+
+            this.logger.debug('Preset', 'Applying preset (memory only)', {
+                presetId: preset.id,
+                changed,
+                currentMatrix2DEnabled: settings.grouping?.matrix2D?.enabled,
+                presetMatrix2DEnabled: preset.settings.grouping?.matrix2D?.enabled,
+                applyCategories
+            });
+
+            const mergedSettings = this.deepMerge(settings, settingsToApply);
+            Object.assign(settings, mergedSettings);
+
+            this.logger.debug('Preset', 'After applying preset (memory only)', {
+                settingsMatrix2DEnabled: settings.grouping?.matrix2D?.enabled,
+                settingsRenderMode: settings.renderMode,
+                note: 'Settings applied to memory only - NOT saved to disk'
+            });
+
             return changed;
         } else {
-            // ⭐ 매칭되는 프리셋이 없으면 원래 설정으로 복원
+            // 매칭되는 프리셋이 없으면 원래 설정으로 복원 (메모리에서만)
             if (previousPresetId !== null && this.originalSettings) {
                 this.restoreOriginalSettings(settings);
-                // ⭐ 설정 저장 (뷰 새로고침 없이) - 호출자가 렌더링을 담당하므로 중복 렌더링 방지
-                await this.plugin.saveSettingsQuiet();
             }
             this.currentPresetId = null;
             const changed = previousPresetId !== null;
@@ -521,6 +702,25 @@ export class PresetManager {
     }
 
     /**
+     * 현재 적용된 프리셋의 설정을 반환합니다 (렌더링용)
+     *
+     * @returns 프리셋 설정 또는 null (프리셋이 적용되지 않은 경우)
+     */
+    getCurrentPresetSettings(): Partial<CardNavigatorSettings> | null {
+        if (!this.currentPresetId) {
+            return null;
+        }
+
+        const preset = this.plugin.settings.presets.find(p => p.id === this.currentPresetId);
+        if (!preset) {
+            return null;
+        }
+
+        const applyCategories = preset.applyCategories ?? DEFAULT_PRESET_APPLY_CATEGORIES;
+        return this.extractSettingsByCategories(preset.settings, applyCategories);
+    }
+
+    /**
      * 프리셋 적용 전 원래 설정을 저장합니다
      */
     private saveOriginalSettings(settings: CardNavigatorSettings): void {
@@ -529,13 +729,14 @@ export class PresetManager {
         const { presets, presetMappings, debug, ...settingsToSave } = settings;
         this.originalSettings = JSON.parse(JSON.stringify(settingsToSave));
 
-        this.logger.debug('Preset', 'Saved original settings before preset application', {
+        this.logger.debug('Preset', 'Saved original settings', {
+            renderMode: settingsToSave.renderMode,
             matrix2DEnabled: settingsToSave.grouping?.matrix2D?.enabled
         });
     }
 
     /**
-     * 원래 설정으로 복원합니다
+     * 원래 설정으로 복원합니다 (메모리에서만)
      */
     private restoreOriginalSettings(settings: CardNavigatorSettings): void {
         if (!this.originalSettings) {
@@ -544,12 +745,255 @@ export class PresetManager {
 
         Object.assign(settings, this.deepMerge(settings, this.originalSettings));
 
-        this.logger.debug('Preset', 'Restored original settings', {
+        this.logger.debug('Preset', 'Restored original settings (memory only)', {
+            renderMode: this.originalSettings.renderMode,
             matrix2DEnabled: this.originalSettings.grouping?.matrix2D?.enabled
         });
 
         // 복원 후 원래 설정 초기화
         this.originalSettings = null;
+    }
+
+    /**
+     * ⭐ 전역 설정 변경 시 originalSettings를 업데이트합니다
+     *
+     * @remarks
+     * 프리셋이 적용된 상태에서 전역 설정이 변경(저장)되면,
+     * 프리셋이 비활성화한 카테고리의 설정을 originalSettings에 반영해야 합니다.
+     * 이렇게 해야 프리셋 비적용 영역으로 이동 시 변경된 설정이 유지됩니다.
+     *
+     * @param savedSettings - 디스크에 저장된 새 설정
+     */
+    updateOriginalSettingsOnSave(savedSettings: CardNavigatorSettings): void {
+        if (!this.originalSettings || !this.currentPresetId) {
+            return;
+        }
+
+        const preset = this.plugin.settings.presets.find(p => p.id === this.currentPresetId);
+        if (!preset) {
+            return;
+        }
+
+        const applyCategories = preset.applyCategories ?? DEFAULT_PRESET_APPLY_CATEGORIES;
+
+        // 프리셋이 비활성화한 카테고리의 설정만 originalSettings에 업데이트
+        // (활성화된 카테고리는 프리셋 설정이 적용되므로 originalSettings에서 유지)
+
+        // cardContent가 비활성화되면 해당 설정을 originalSettings에 업데이트
+        if (!applyCategories.cardContent) {
+            this.originalSettings.header = JSON.parse(JSON.stringify(savedSettings.header));
+            this.originalSettings.body = JSON.parse(JSON.stringify(savedSettings.body));
+            this.originalSettings.footer = JSON.parse(JSON.stringify(savedSettings.footer));
+            this.originalSettings.renderMode = savedSettings.renderMode;
+        }
+
+        // cardStyle이 비활성화되면 해당 설정을 originalSettings에 업데이트
+        if (!applyCategories.cardStyle) {
+            this.originalSettings.normalCardStyle = JSON.parse(JSON.stringify(savedSettings.normalCardStyle));
+            this.originalSettings.activeCardStyle = JSON.parse(JSON.stringify(savedSettings.activeCardStyle));
+            this.originalSettings.focusedCardStyle = JSON.parse(JSON.stringify(savedSettings.focusedCardStyle));
+            // 섹션 스타일도 header/body/footer 내에 있으므로 cardContent와 함께 처리됨
+        }
+
+        // mode가 비활성화되면 해당 설정을 originalSettings에 업데이트
+        if (!applyCategories.mode) {
+            this.originalSettings.currentMode = savedSettings.currentMode;
+            this.originalSettings.folderMode = JSON.parse(JSON.stringify(savedSettings.folderMode));
+            this.originalSettings.tagMode = JSON.parse(JSON.stringify(savedSettings.tagMode));
+        }
+
+        // grouping이 비활성화되면 해당 설정을 originalSettings에 업데이트
+        if (!applyCategories.grouping) {
+            if (!this.originalSettings.grouping) {
+                this.originalSettings.grouping = JSON.parse(JSON.stringify(savedSettings.grouping));
+            } else {
+                // matrix2D는 별도 카테고리이므로 제외
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { matrix2D, ...rest } = savedSettings.grouping;
+                Object.assign(this.originalSettings.grouping, JSON.parse(JSON.stringify(rest)));
+            }
+        }
+
+        // matrix2D가 비활성화되면 해당 설정을 originalSettings에 업데이트
+        if (!applyCategories.matrix2D) {
+            if (!this.originalSettings.grouping) {
+                this.originalSettings.grouping = { ...savedSettings.grouping };
+            }
+            this.originalSettings.grouping.matrix2D = JSON.parse(JSON.stringify(savedSettings.grouping.matrix2D));
+        }
+
+        // sort가 비활성화되면 해당 설정을 originalSettings에 업데이트
+        if (!applyCategories.sort) {
+            this.originalSettings.sort = JSON.parse(JSON.stringify(savedSettings.sort));
+        }
+
+        // layout이 비활성화되면 해당 설정을 originalSettings에 업데이트
+        if (!applyCategories.layout) {
+            this.originalSettings.layout = JSON.parse(JSON.stringify(savedSettings.layout));
+        }
+
+        // interaction이 비활성화되면 해당 설정을 originalSettings에 업데이트
+        if (!applyCategories.interaction) {
+            this.originalSettings.enableCardHoverActions = savedSettings.enableCardHoverActions;
+            this.originalSettings.tagClickAction = savedSettings.tagClickAction;
+            this.originalSettings.scrollBehavior = savedSettings.scrollBehavior;
+            this.originalSettings.dragDrop = JSON.parse(JSON.stringify(savedSettings.dragDrop));
+        }
+
+        // pin이 비활성화되면 해당 설정을 originalSettings에 업데이트
+        if (!applyCategories.pin) {
+            this.originalSettings.alwaysShowPinnedFiles = savedSettings.alwaysShowPinnedFiles;
+            if (this.originalSettings.grouping) {
+                this.originalSettings.grouping.showPinnedAsGroup = savedSettings.grouping.showPinnedAsGroup;
+            }
+        }
+
+        this.logger.debug('Preset', 'Updated originalSettings on save', {
+            presetId: this.currentPresetId,
+            applyCategories,
+            updatedRenderMode: !applyCategories.cardContent ? savedSettings.renderMode : undefined
+        });
+    }
+
+    /**
+     * ⭐ 디스크에 저장할 설정을 반환합니다
+     *
+     * @param currentSettings - 현재 메모리 설정 (프리셋이 적용되어 있을 수 있음)
+     * @returns 디스크에 저장할 깨끗한 설정
+     *
+     * @remarks
+     * 프리셋이 적용된 상태에서는:
+     * - 활성화된 카테고리: originalSettings (프리셋 적용 전 원래 설정)
+     * - 비활성화된 카테고리: currentSettings (사용자가 변경한 설정)
+     *
+     * 프리셋이 적용되지 않은 상태에서는:
+     * - currentSettings를 그대로 반환
+     *
+     * 이렇게 해야 프리셋 설정이 디스크에 저장되지 않고,
+     * 플러그인 재시작 시 원래 설정이 유지됩니다.
+     */
+    getSettingsForDisk(currentSettings: CardNavigatorSettings): CardNavigatorSettings {
+        // 프리셋이 적용되지 않았으면 현재 설정 그대로 반환
+        if (!this.currentPresetId || !this.originalSettings) {
+            return currentSettings;
+        }
+
+        const preset = this.plugin.settings.presets.find(p => p.id === this.currentPresetId);
+        if (!preset) {
+            return currentSettings;
+        }
+
+        const applyCategories = preset.applyCategories ?? DEFAULT_PRESET_APPLY_CATEGORIES;
+
+        // 깊은 복사로 시작
+        const diskSettings = JSON.parse(JSON.stringify(currentSettings)) as CardNavigatorSettings;
+
+        // ⭐ 프리셋이 활성화한 카테고리는 originalSettings 값으로 덮어씀
+        // (프리셋 설정이 디스크에 저장되지 않도록)
+
+        // mode 카테고리
+        if (applyCategories.mode && this.originalSettings.currentMode !== undefined) {
+            diskSettings.currentMode = this.originalSettings.currentMode;
+            if (this.originalSettings.folderMode) {
+                diskSettings.folderMode = JSON.parse(JSON.stringify(this.originalSettings.folderMode));
+            }
+            if (this.originalSettings.tagMode) {
+                diskSettings.tagMode = JSON.parse(JSON.stringify(this.originalSettings.tagMode));
+            }
+        }
+
+        // grouping 카테고리
+        if (applyCategories.grouping && this.originalSettings.grouping) {
+            // matrix2D는 별도 카테고리이므로 보존
+            const currentMatrix2D = diskSettings.grouping?.matrix2D;
+            diskSettings.grouping = JSON.parse(JSON.stringify(this.originalSettings.grouping));
+            if (currentMatrix2D && !applyCategories.matrix2D) {
+                diskSettings.grouping.matrix2D = currentMatrix2D;
+            }
+        }
+
+        // matrix2D 카테고리
+        if (applyCategories.matrix2D && this.originalSettings.grouping?.matrix2D) {
+            if (!diskSettings.grouping) {
+                diskSettings.grouping = { ...currentSettings.grouping };
+            }
+            diskSettings.grouping.matrix2D = JSON.parse(JSON.stringify(this.originalSettings.grouping.matrix2D));
+        }
+
+        // sort 카테고리
+        if (applyCategories.sort && this.originalSettings.sort) {
+            diskSettings.sort = JSON.parse(JSON.stringify(this.originalSettings.sort));
+        }
+
+        // cardContent 카테고리
+        if (applyCategories.cardContent) {
+            if (this.originalSettings.header) {
+                diskSettings.header = JSON.parse(JSON.stringify(this.originalSettings.header));
+            }
+            if (this.originalSettings.body) {
+                diskSettings.body = JSON.parse(JSON.stringify(this.originalSettings.body));
+            }
+            if (this.originalSettings.footer) {
+                diskSettings.footer = JSON.parse(JSON.stringify(this.originalSettings.footer));
+            }
+            if (this.originalSettings.renderMode !== undefined) {
+                diskSettings.renderMode = this.originalSettings.renderMode;
+            }
+        }
+
+        // cardStyle 카테고리
+        if (applyCategories.cardStyle) {
+            if (this.originalSettings.normalCardStyle) {
+                diskSettings.normalCardStyle = JSON.parse(JSON.stringify(this.originalSettings.normalCardStyle));
+            }
+            if (this.originalSettings.activeCardStyle) {
+                diskSettings.activeCardStyle = JSON.parse(JSON.stringify(this.originalSettings.activeCardStyle));
+            }
+            if (this.originalSettings.focusedCardStyle) {
+                diskSettings.focusedCardStyle = JSON.parse(JSON.stringify(this.originalSettings.focusedCardStyle));
+            }
+        }
+
+        // layout 카테고리
+        if (applyCategories.layout && this.originalSettings.layout) {
+            diskSettings.layout = JSON.parse(JSON.stringify(this.originalSettings.layout));
+        }
+
+        // interaction 카테고리
+        if (applyCategories.interaction) {
+            if (this.originalSettings.enableCardHoverActions !== undefined) {
+                diskSettings.enableCardHoverActions = this.originalSettings.enableCardHoverActions;
+            }
+            if (this.originalSettings.tagClickAction !== undefined) {
+                diskSettings.tagClickAction = this.originalSettings.tagClickAction;
+            }
+            if (this.originalSettings.scrollBehavior !== undefined) {
+                diskSettings.scrollBehavior = this.originalSettings.scrollBehavior;
+            }
+            if (this.originalSettings.dragDrop) {
+                diskSettings.dragDrop = JSON.parse(JSON.stringify(this.originalSettings.dragDrop));
+            }
+        }
+
+        // pin 카테고리
+        if (applyCategories.pin) {
+            if (this.originalSettings.alwaysShowPinnedFiles !== undefined) {
+                diskSettings.alwaysShowPinnedFiles = this.originalSettings.alwaysShowPinnedFiles;
+            }
+            if (this.originalSettings.grouping?.showPinnedAsGroup !== undefined && diskSettings.grouping) {
+                diskSettings.grouping.showPinnedAsGroup = this.originalSettings.grouping.showPinnedAsGroup;
+            }
+        }
+
+        this.logger.debug('Preset', 'Generated settings for disk (preset active)', {
+            presetId: this.currentPresetId,
+            applyCategories,
+            diskRenderMode: diskSettings.renderMode,
+            currentRenderMode: currentSettings.renderMode,
+            originalRenderMode: this.originalSettings.renderMode
+        });
+
+        return diskSettings;
     }
 
     /**
@@ -1087,9 +1531,29 @@ export class PresetManager {
 
     /**
      * 현재 설정을 복제합니다
+     *
+     * @remarks
+     * ⭐ 프리셋 메타 설정은 제외합니다:
+     * - enablePresets: 프리셋 기능 활성화 여부
+     * - presetPriority: 우선순위 모드 설정
+     * - presets: 프리셋 목록 (순환 참조 방지)
+     * - presetMappings: 매핑 목록
+     *
+     * 이 설정들은 프리셋이 적용될 때 덮어씌워지지 않지만 (extractSettingsByCategories에서 추출하지 않음),
+     * 프리셋에 저장하면 다음 문제가 발생합니다:
+     * 1. 저장 공간 낭비 (프리셋 안에 모든 프리셋이 중첩 저장됨)
+     * 2. data.json 크기가 기하급수적으로 증가
      */
     private cloneCurrentSettings(): CardNavigatorSettings {
-        return JSON.parse(JSON.stringify(this.plugin.settings));
+        const cloned = JSON.parse(JSON.stringify(this.plugin.settings));
+
+        // ⭐ 프리셋 메타 설정 제거 (프리셋에 저장할 필요 없음)
+        delete cloned.enablePresets;
+        delete cloned.presetPriority;
+        delete cloned.presets;
+        delete cloned.presetMappings;
+
+        return cloned;
     }
 
     /**
@@ -1109,8 +1573,97 @@ export class PresetManager {
     }
     
     /**
+     * 프리셋 적용 범위에 따라 설정을 선택적으로 추출합니다
+     *
+     * @param presetSettings - 프리셋에 저장된 전체 설정
+     * @param categories - 적용할 카테고리
+     * @returns 선택된 카테고리의 설정만 포함하는 객체
+     */
+    private extractSettingsByCategories(
+        presetSettings: CardNavigatorSettings,
+        categories: PresetApplyCategories
+    ): Partial<CardNavigatorSettings> {
+        const result: Partial<CardNavigatorSettings> = {};
+
+        // 모드 (폴더/태그 모드 + 모드별 설정)
+        if (categories.mode) {
+            result.currentMode = presetSettings.currentMode;
+            result.folderMode = presetSettings.folderMode;
+            result.tagMode = presetSettings.tagMode;
+        }
+
+        // 그룹화 (기준, 그룹 정렬 등) - matrix2D 제외
+        if (categories.grouping) {
+            result.grouping = {
+                ...presetSettings.grouping,
+                // matrix2D는 별도 카테고리이므로 현재 설정 유지
+                matrix2D: this.plugin.settings.grouping.matrix2D
+            };
+        }
+
+        // 2D 매트릭스 그룹화
+        if (categories.matrix2D) {
+            if (!result.grouping) {
+                result.grouping = { ...this.plugin.settings.grouping };
+            }
+            result.grouping.matrix2D = presetSettings.grouping.matrix2D;
+        }
+
+        // 핀 설정
+        if (categories.pin) {
+            result.alwaysShowPinnedFiles = presetSettings.alwaysShowPinnedFiles;
+            if (!result.grouping) {
+                result.grouping = { ...this.plugin.settings.grouping };
+            }
+            result.grouping.showPinnedAsGroup = presetSettings.grouping.showPinnedAsGroup;
+        }
+
+        // 정렬
+        if (categories.sort) {
+            result.sort = presetSettings.sort;
+        }
+
+        // 카드 내용 (header/body/footer 콘텐츠 타입, renderMode)
+        if (categories.cardContent) {
+            result.header = presetSettings.header;
+            result.body = presetSettings.body;
+            result.footer = presetSettings.footer;
+            result.renderMode = presetSettings.renderMode;
+        }
+
+        // 카드 스타일 (색상, 테두리 등)
+        if (categories.cardStyle) {
+            result.normalCardStyle = presetSettings.normalCardStyle;
+            result.activeCardStyle = presetSettings.activeCardStyle;
+            result.focusedCardStyle = presetSettings.focusedCardStyle;
+        }
+
+        // 레이아웃 (카드 크기, 간격 등)
+        if (categories.layout) {
+            result.layout = presetSettings.layout;
+        }
+
+        // 상호작용 (호버 액션, 클릭 동작 등)
+        if (categories.interaction) {
+            result.enableCardHoverActions = presetSettings.enableCardHoverActions;
+            result.tagClickAction = presetSettings.tagClickAction;
+            result.scrollBehavior = presetSettings.scrollBehavior;
+            result.dragDrop = presetSettings.dragDrop;
+        }
+
+        this.logger.debug('Preset', 'Extracted settings by categories', {
+            appliedCategories: Object.entries(categories)
+                .filter(([, v]) => v)
+                .map(([k]) => k),
+            extractedKeys: Object.keys(result)
+        });
+
+        return result;
+    }
+
+    /**
      * 깊은 병합을 수행합니다
-     * 
+     *
      * @param target - 대상 객체
      * @param source - 병합할 객체
      * @returns 병합된 객체

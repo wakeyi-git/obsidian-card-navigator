@@ -163,96 +163,173 @@ export class StyleUtils {
         card: HTMLElement,
         cardSettings: CardSettings
     ): void {
-        // Header styles
-        if (cardSettings.header) {
-            // Normal 스타일은 항상 모든 속성 설정
-            card.style.setProperty('--card-header-bg-normal', cardSettings.header.normalStyle.backgroundColor);
-            card.style.setProperty('--card-header-font-size-normal', `${cardSettings.header.normalStyle.fontSize}px`);
-            card.style.setProperty('--card-header-text-color-normal', this.getContrastColor(cardSettings.header.normalStyle.backgroundColor));
-            card.style.setProperty('--card-header-border-color-normal', cardSettings.header.normalStyle.borderColor);
-            card.style.setProperty('--card-header-border-width-normal', `${cardSettings.header.normalStyle.borderWidth}px`);
-            card.style.setProperty('--card-header-border-radius-normal', `${cardSettings.header.normalStyle.borderRadius}px`);
-
-            // Active 스타일: 상속 모드가 아닐 때만 모든 속성 설정
-            if (!cardSettings.header.activeStyle.inheritFromNormal) {
-                card.style.setProperty('--card-header-bg-active', cardSettings.header.activeStyle.backgroundColor);
-                card.style.setProperty('--card-header-font-size-active', `${cardSettings.header.activeStyle.fontSize}px`);
-                card.style.setProperty('--card-header-text-color-active', this.getContrastColor(cardSettings.header.activeStyle.backgroundColor));
-                card.style.setProperty('--card-header-border-color-active', cardSettings.header.activeStyle.borderColor);
-                card.style.setProperty('--card-header-border-width-active', `${cardSettings.header.activeStyle.borderWidth}px`);
-                card.style.setProperty('--card-header-border-radius-active', `${cardSettings.header.activeStyle.borderRadius}px`);
-            }
-
-            // Focused 스타일: 상속 모드가 아닐 때만 모든 속성 설정
-            if (!cardSettings.header.focusedStyle.inheritFromNormal) {
-                card.style.setProperty('--card-header-bg-focused', cardSettings.header.focusedStyle.backgroundColor);
-                card.style.setProperty('--card-header-font-size-focused', `${cardSettings.header.focusedStyle.fontSize}px`);
-                card.style.setProperty('--card-header-text-color-focused', this.getContrastColor(cardSettings.header.focusedStyle.backgroundColor));
-                card.style.setProperty('--card-header-border-color-focused', cardSettings.header.focusedStyle.borderColor);
-                card.style.setProperty('--card-header-border-width-focused', `${cardSettings.header.focusedStyle.borderWidth}px`);
-                card.style.setProperty('--card-header-border-radius-focused', `${cardSettings.header.focusedStyle.borderRadius}px`);
-            }
+        // ⭐ Card-level styles (normalCardStyle, activeCardStyle, focusedCardStyle)
+        // cardStyle이 undefined면 이전에 설정된 CSS 변수를 제거하여 전역 스타일 사용
+        if (cardSettings.normalCardStyle) {
+            card.style.setProperty('--card-navigator-bg-normal', cardSettings.normalCardStyle.backgroundColor);
+            card.style.setProperty('--card-navigator-font-size-normal', `${cardSettings.normalCardStyle.fontSize}px`);
+            card.style.setProperty('--card-navigator-border-color-normal', cardSettings.normalCardStyle.borderColor);
+            card.style.setProperty('--card-navigator-border-width-normal', `${cardSettings.normalCardStyle.borderWidth}px`);
+            card.style.setProperty('--card-navigator-border-radius-normal', `${cardSettings.normalCardStyle.borderRadius}px`);
+        } else {
+            // ⭐ cardStyle 비활성화: 이전에 설정된 CSS 변수 제거
+            card.style.removeProperty('--card-navigator-bg-normal');
+            card.style.removeProperty('--card-navigator-font-size-normal');
+            card.style.removeProperty('--card-navigator-border-color-normal');
+            card.style.removeProperty('--card-navigator-border-width-normal');
+            card.style.removeProperty('--card-navigator-border-radius-normal');
         }
 
-        // Body styles
-        if (cardSettings.body) {
-            // Normal 스타일은 항상 모든 속성 설정
-            card.style.setProperty('--card-body-bg-normal', cardSettings.body.normalStyle.backgroundColor);
-            card.style.setProperty('--card-body-font-size-normal', `${cardSettings.body.normalStyle.fontSize}px`);
-            card.style.setProperty('--card-body-text-color-normal', this.getContrastColor(cardSettings.body.normalStyle.backgroundColor));
-            card.style.setProperty('--card-body-border-color-normal', cardSettings.body.normalStyle.borderColor);
-            card.style.setProperty('--card-body-border-width-normal', `${cardSettings.body.normalStyle.borderWidth}px`);
-            card.style.setProperty('--card-body-border-radius-normal', `${cardSettings.body.normalStyle.borderRadius}px`);
-
-            // Active 스타일: 상속 모드가 아닐 때만 모든 속성 설정
-            if (!cardSettings.body.activeStyle.inheritFromNormal) {
-                card.style.setProperty('--card-body-bg-active', cardSettings.body.activeStyle.backgroundColor);
-                card.style.setProperty('--card-body-font-size-active', `${cardSettings.body.activeStyle.fontSize}px`);
-                card.style.setProperty('--card-body-text-color-active', this.getContrastColor(cardSettings.body.activeStyle.backgroundColor));
-                card.style.setProperty('--card-body-border-color-active', cardSettings.body.activeStyle.borderColor);
-                card.style.setProperty('--card-body-border-width-active', `${cardSettings.body.activeStyle.borderWidth}px`);
-                card.style.setProperty('--card-body-border-radius-active', `${cardSettings.body.activeStyle.borderRadius}px`);
+        if (cardSettings.activeCardStyle) {
+            if (!cardSettings.activeCardStyle.inheritFromNormal) {
+                card.style.setProperty('--card-navigator-bg-active', cardSettings.activeCardStyle.backgroundColor);
+                card.style.setProperty('--card-navigator-font-size-active', `${cardSettings.activeCardStyle.fontSize}px`);
+                card.style.setProperty('--card-navigator-border-color-active', cardSettings.activeCardStyle.borderColor);
+                card.style.setProperty('--card-navigator-border-width-active', `${cardSettings.activeCardStyle.borderWidth}px`);
+                card.style.setProperty('--card-navigator-border-radius-active', `${cardSettings.activeCardStyle.borderRadius}px`);
             }
-
-            // Focused 스타일: 상속 모드가 아닐 때만 모든 속성 설정
-            if (!cardSettings.body.focusedStyle.inheritFromNormal) {
-                card.style.setProperty('--card-body-bg-focused', cardSettings.body.focusedStyle.backgroundColor);
-                card.style.setProperty('--card-body-font-size-focused', `${cardSettings.body.focusedStyle.fontSize}px`);
-                card.style.setProperty('--card-body-text-color-focused', this.getContrastColor(cardSettings.body.focusedStyle.backgroundColor));
-                card.style.setProperty('--card-body-border-color-focused', cardSettings.body.focusedStyle.borderColor);
-                card.style.setProperty('--card-body-border-width-focused', `${cardSettings.body.focusedStyle.borderWidth}px`);
-                card.style.setProperty('--card-body-border-radius-focused', `${cardSettings.body.focusedStyle.borderRadius}px`);
-            }
+        } else {
+            // ⭐ cardStyle 비활성화: 이전에 설정된 CSS 변수 제거
+            card.style.removeProperty('--card-navigator-bg-active');
+            card.style.removeProperty('--card-navigator-font-size-active');
+            card.style.removeProperty('--card-navigator-border-color-active');
+            card.style.removeProperty('--card-navigator-border-width-active');
+            card.style.removeProperty('--card-navigator-border-radius-active');
         }
 
-        // Footer styles
-        if (cardSettings.footer) {
-            // Normal 스타일은 항상 모든 속성 설정
-            card.style.setProperty('--card-footer-bg-normal', cardSettings.footer.normalStyle.backgroundColor);
-            card.style.setProperty('--card-footer-font-size-normal', `${cardSettings.footer.normalStyle.fontSize}px`);
-            card.style.setProperty('--card-footer-text-color-normal', this.getContrastColor(cardSettings.footer.normalStyle.backgroundColor));
-            card.style.setProperty('--card-footer-border-color-normal', cardSettings.footer.normalStyle.borderColor);
-            card.style.setProperty('--card-footer-border-width-normal', `${cardSettings.footer.normalStyle.borderWidth}px`);
-            card.style.setProperty('--card-footer-border-radius-normal', `${cardSettings.footer.normalStyle.borderRadius}px`);
+        if (cardSettings.focusedCardStyle) {
+            if (!cardSettings.focusedCardStyle.inheritFromNormal) {
+                card.style.setProperty('--card-navigator-bg-focused', cardSettings.focusedCardStyle.backgroundColor);
+                card.style.setProperty('--card-navigator-font-size-focused', `${cardSettings.focusedCardStyle.fontSize}px`);
+                card.style.setProperty('--card-navigator-border-color-focused', cardSettings.focusedCardStyle.borderColor);
+                card.style.setProperty('--card-navigator-border-width-focused', `${cardSettings.focusedCardStyle.borderWidth}px`);
+                card.style.setProperty('--card-navigator-border-radius-focused', `${cardSettings.focusedCardStyle.borderRadius}px`);
+            }
+        } else {
+            // ⭐ cardStyle 비활성화: 이전에 설정된 CSS 변수 제거
+            card.style.removeProperty('--card-navigator-bg-focused');
+            card.style.removeProperty('--card-navigator-font-size-focused');
+            card.style.removeProperty('--card-navigator-border-color-focused');
+            card.style.removeProperty('--card-navigator-border-width-focused');
+            card.style.removeProperty('--card-navigator-border-radius-focused');
+        }
 
-            // Active 스타일: 상속 모드가 아닐 때만 모든 속성 설정
-            if (!cardSettings.footer.activeStyle.inheritFromNormal) {
-                card.style.setProperty('--card-footer-bg-active', cardSettings.footer.activeStyle.backgroundColor);
-                card.style.setProperty('--card-footer-font-size-active', `${cardSettings.footer.activeStyle.fontSize}px`);
-                card.style.setProperty('--card-footer-text-color-active', this.getContrastColor(cardSettings.footer.activeStyle.backgroundColor));
-                card.style.setProperty('--card-footer-border-color-active', cardSettings.footer.activeStyle.borderColor);
-                card.style.setProperty('--card-footer-border-width-active', `${cardSettings.footer.activeStyle.borderWidth}px`);
-                card.style.setProperty('--card-footer-border-radius-active', `${cardSettings.footer.activeStyle.borderRadius}px`);
+        // ⭐ Header styles (cardStyle 카테고리 - headerStyle로 활성화 여부 판단)
+        if (cardSettings.headerStyle) {
+            // Normal 스타일
+            card.style.setProperty('--card-header-bg-normal', cardSettings.headerStyle.backgroundColor);
+            card.style.setProperty('--card-header-font-size-normal', `${cardSettings.headerStyle.fontSize}px`);
+            card.style.setProperty('--card-header-text-color-normal', this.getContrastColor(cardSettings.headerStyle.backgroundColor));
+            card.style.setProperty('--card-header-border-color-normal', cardSettings.headerStyle.borderColor);
+            card.style.setProperty('--card-header-border-width-normal', `${cardSettings.headerStyle.borderWidth}px`);
+            card.style.setProperty('--card-header-border-radius-normal', `${cardSettings.headerStyle.borderRadius}px`);
+
+            // Active 스타일
+            if (cardSettings.headerActiveStyle && !cardSettings.headerActiveStyle.inheritFromNormal) {
+                card.style.setProperty('--card-header-bg-active', cardSettings.headerActiveStyle.backgroundColor);
+                card.style.setProperty('--card-header-font-size-active', `${cardSettings.headerActiveStyle.fontSize}px`);
+                card.style.setProperty('--card-header-text-color-active', this.getContrastColor(cardSettings.headerActiveStyle.backgroundColor));
+                card.style.setProperty('--card-header-border-color-active', cardSettings.headerActiveStyle.borderColor);
+                card.style.setProperty('--card-header-border-width-active', `${cardSettings.headerActiveStyle.borderWidth}px`);
+                card.style.setProperty('--card-header-border-radius-active', `${cardSettings.headerActiveStyle.borderRadius}px`);
             }
 
-            // Focused 스타일: 상속 모드가 아닐 때만 모든 속성 설정
-            if (!cardSettings.footer.focusedStyle.inheritFromNormal) {
-                card.style.setProperty('--card-footer-bg-focused', cardSettings.footer.focusedStyle.backgroundColor);
-                card.style.setProperty('--card-footer-font-size-focused', `${cardSettings.footer.focusedStyle.fontSize}px`);
-                card.style.setProperty('--card-footer-text-color-focused', this.getContrastColor(cardSettings.footer.focusedStyle.backgroundColor));
-                card.style.setProperty('--card-footer-border-color-focused', cardSettings.footer.focusedStyle.borderColor);
-                card.style.setProperty('--card-footer-border-width-focused', `${cardSettings.footer.focusedStyle.borderWidth}px`);
-                card.style.setProperty('--card-footer-border-radius-focused', `${cardSettings.footer.focusedStyle.borderRadius}px`);
+            // Focused 스타일
+            if (cardSettings.headerFocusedStyle && !cardSettings.headerFocusedStyle.inheritFromNormal) {
+                card.style.setProperty('--card-header-bg-focused', cardSettings.headerFocusedStyle.backgroundColor);
+                card.style.setProperty('--card-header-font-size-focused', `${cardSettings.headerFocusedStyle.fontSize}px`);
+                card.style.setProperty('--card-header-text-color-focused', this.getContrastColor(cardSettings.headerFocusedStyle.backgroundColor));
+                card.style.setProperty('--card-header-border-color-focused', cardSettings.headerFocusedStyle.borderColor);
+                card.style.setProperty('--card-header-border-width-focused', `${cardSettings.headerFocusedStyle.borderWidth}px`);
+                card.style.setProperty('--card-header-border-radius-focused', `${cardSettings.headerFocusedStyle.borderRadius}px`);
+            }
+        } else {
+            // ⭐ cardStyle 비활성화: 헤더 섹션 스타일 CSS 변수 제거
+            this.removeSectionStyleProperties(card, 'header');
+        }
+
+        // ⭐ Body styles (cardStyle 카테고리)
+        if (cardSettings.bodyStyle) {
+            // Normal 스타일
+            card.style.setProperty('--card-body-bg-normal', cardSettings.bodyStyle.backgroundColor);
+            card.style.setProperty('--card-body-font-size-normal', `${cardSettings.bodyStyle.fontSize}px`);
+            card.style.setProperty('--card-body-text-color-normal', this.getContrastColor(cardSettings.bodyStyle.backgroundColor));
+            card.style.setProperty('--card-body-border-color-normal', cardSettings.bodyStyle.borderColor);
+            card.style.setProperty('--card-body-border-width-normal', `${cardSettings.bodyStyle.borderWidth}px`);
+            card.style.setProperty('--card-body-border-radius-normal', `${cardSettings.bodyStyle.borderRadius}px`);
+
+            // Active 스타일
+            if (cardSettings.bodyActiveStyle && !cardSettings.bodyActiveStyle.inheritFromNormal) {
+                card.style.setProperty('--card-body-bg-active', cardSettings.bodyActiveStyle.backgroundColor);
+                card.style.setProperty('--card-body-font-size-active', `${cardSettings.bodyActiveStyle.fontSize}px`);
+                card.style.setProperty('--card-body-text-color-active', this.getContrastColor(cardSettings.bodyActiveStyle.backgroundColor));
+                card.style.setProperty('--card-body-border-color-active', cardSettings.bodyActiveStyle.borderColor);
+                card.style.setProperty('--card-body-border-width-active', `${cardSettings.bodyActiveStyle.borderWidth}px`);
+                card.style.setProperty('--card-body-border-radius-active', `${cardSettings.bodyActiveStyle.borderRadius}px`);
+            }
+
+            // Focused 스타일
+            if (cardSettings.bodyFocusedStyle && !cardSettings.bodyFocusedStyle.inheritFromNormal) {
+                card.style.setProperty('--card-body-bg-focused', cardSettings.bodyFocusedStyle.backgroundColor);
+                card.style.setProperty('--card-body-font-size-focused', `${cardSettings.bodyFocusedStyle.fontSize}px`);
+                card.style.setProperty('--card-body-text-color-focused', this.getContrastColor(cardSettings.bodyFocusedStyle.backgroundColor));
+                card.style.setProperty('--card-body-border-color-focused', cardSettings.bodyFocusedStyle.borderColor);
+                card.style.setProperty('--card-body-border-width-focused', `${cardSettings.bodyFocusedStyle.borderWidth}px`);
+                card.style.setProperty('--card-body-border-radius-focused', `${cardSettings.bodyFocusedStyle.borderRadius}px`);
+            }
+        } else {
+            // ⭐ cardStyle 비활성화: 바디 섹션 스타일 CSS 변수 제거
+            this.removeSectionStyleProperties(card, 'body');
+        }
+
+        // ⭐ Footer styles (cardStyle 카테고리)
+        if (cardSettings.footerStyle) {
+            // Normal 스타일
+            card.style.setProperty('--card-footer-bg-normal', cardSettings.footerStyle.backgroundColor);
+            card.style.setProperty('--card-footer-font-size-normal', `${cardSettings.footerStyle.fontSize}px`);
+            card.style.setProperty('--card-footer-text-color-normal', this.getContrastColor(cardSettings.footerStyle.backgroundColor));
+            card.style.setProperty('--card-footer-border-color-normal', cardSettings.footerStyle.borderColor);
+            card.style.setProperty('--card-footer-border-width-normal', `${cardSettings.footerStyle.borderWidth}px`);
+            card.style.setProperty('--card-footer-border-radius-normal', `${cardSettings.footerStyle.borderRadius}px`);
+
+            // Active 스타일
+            if (cardSettings.footerActiveStyle && !cardSettings.footerActiveStyle.inheritFromNormal) {
+                card.style.setProperty('--card-footer-bg-active', cardSettings.footerActiveStyle.backgroundColor);
+                card.style.setProperty('--card-footer-font-size-active', `${cardSettings.footerActiveStyle.fontSize}px`);
+                card.style.setProperty('--card-footer-text-color-active', this.getContrastColor(cardSettings.footerActiveStyle.backgroundColor));
+                card.style.setProperty('--card-footer-border-color-active', cardSettings.footerActiveStyle.borderColor);
+                card.style.setProperty('--card-footer-border-width-active', `${cardSettings.footerActiveStyle.borderWidth}px`);
+                card.style.setProperty('--card-footer-border-radius-active', `${cardSettings.footerActiveStyle.borderRadius}px`);
+            }
+
+            // Focused 스타일
+            if (cardSettings.footerFocusedStyle && !cardSettings.footerFocusedStyle.inheritFromNormal) {
+                card.style.setProperty('--card-footer-bg-focused', cardSettings.footerFocusedStyle.backgroundColor);
+                card.style.setProperty('--card-footer-font-size-focused', `${cardSettings.footerFocusedStyle.fontSize}px`);
+                card.style.setProperty('--card-footer-text-color-focused', this.getContrastColor(cardSettings.footerFocusedStyle.backgroundColor));
+                card.style.setProperty('--card-footer-border-color-focused', cardSettings.footerFocusedStyle.borderColor);
+                card.style.setProperty('--card-footer-border-width-focused', `${cardSettings.footerFocusedStyle.borderWidth}px`);
+                card.style.setProperty('--card-footer-border-radius-focused', `${cardSettings.footerFocusedStyle.borderRadius}px`);
+            }
+        } else {
+            // ⭐ cardStyle 비활성화: 풋터 섹션 스타일 CSS 변수 제거
+            this.removeSectionStyleProperties(card, 'footer');
+        }
+    }
+
+    /**
+     * 섹션 스타일 CSS 변수를 제거합니다
+     *
+     * @param card - 카드 요소
+     * @param section - 섹션 이름 (header, body, footer)
+     */
+    private static removeSectionStyleProperties(card: HTMLElement, section: 'header' | 'body' | 'footer'): void {
+        const states = ['normal', 'active', 'focused'];
+        const props = ['bg', 'font-size', 'text-color', 'border-color', 'border-width', 'border-radius'];
+
+        for (const state of states) {
+            for (const prop of props) {
+                card.style.removeProperty(`--card-${section}-${prop}-${state}`);
             }
         }
     }

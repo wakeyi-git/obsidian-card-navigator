@@ -131,6 +131,21 @@ export const LAYOUT_LIMITS = {
     gap: { min: 5, max: 20, step: 1 },
 } as const;
 
+/**
+ * 2D 매트릭스 레이아웃 설정 제한값
+ *
+ * @remarks
+ * 2D 매트릭스 그룹화 모드에서 사용되는 셀 및 카드 크기 설정의 제한값입니다.
+ */
+export const MATRIX_LIMITS = {
+    /** 셀 최소 너비 (px) */
+    cellMinWidth: { min: 100, max: 500, step: 10 },
+    /** 셀 최소 높이 (px) */
+    cellMinHeight: { min: 100, max: 500, step: 10 },
+    /** 셀 내 카드 최소 너비 (px) */
+    cardMinWidth: { min: 100, max: 300, step: 10 },
+} as const;
+
 export const VIEWPORT = {
     /** 
      * viewport 밖에서 미리 로드할 거리 (px)

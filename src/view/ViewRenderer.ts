@@ -1206,6 +1206,7 @@ export class ViewRenderer {
 		this.lastRenderState = null;
 		this.lastDetailedState = null; // ⭐ Phase 1.2
 		this.invalidateFileCache(); // ⭐ Performance: 강제 렌더링 시 캐시 무효화
+		this.invalidateCardCache(); // ⭐ 카드 캐시도 무효화 (스타일 변경 반영)
 
 		// ⭐ 레이아웃 상태 리셋: 프리셋 변경 등으로 인한 강제 렌더링 시
 		// renderCards에서 container.style.cssText = ''로 인라인 스타일이 초기화되므로

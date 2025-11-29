@@ -73,17 +73,40 @@ export interface CardSection {
 
 /**
  * 카드별 설정
- * 
+ *
  * 프리셋이 매핑된 파일의 경우 전역 설정 대신 이 설정이 적용됩니다.
+ *
+ * @remarks
+ * cardContent 카테고리: header/body/footer 내용 설정 + renderMode
+ * cardStyle 카테고리: 카드 전체 스타일 + header/body/footer 섹션 스타일
  */
 export interface CardSettings {
+    /** 헤더 설정 (전체) - 내용과 스타일을 모두 포함 */
     header: CardSectionSettings;
+    /** 바디 설정 (전체) - 내용과 스타일을 모두 포함 */
     body: CardSectionSettings;
+    /** 풋터 설정 (전체) - 내용과 스타일을 모두 포함 */
     footer: CardSectionSettings;
+    /** 렌더링 모드 (cardContent 카테고리) */
     renderMode: RenderMode;
-    normalCardStyle: CardStyleSettings;
-    activeCardStyle: CardStyleSettings;
-    focusedCardStyle: CardStyleSettings;
+    /** 카드 전체 스타일 - 일반 (cardStyle 카테고리, undefined면 전역 CSS 변수 사용) */
+    normalCardStyle?: CardStyleSettings;
+    /** 카드 전체 스타일 - 활성 (cardStyle 카테고리, undefined면 전역 CSS 변수 사용) */
+    activeCardStyle?: CardStyleSettings;
+    /** 카드 전체 스타일 - 포커스 (cardStyle 카테고리, undefined면 전역 CSS 변수 사용) */
+    focusedCardStyle?: CardStyleSettings;
+    /** 헤더 섹션 스타일 (cardStyle 카테고리, undefined면 전역 CSS 변수 사용) */
+    headerStyle?: CardSectionStyleSettings;
+    headerActiveStyle?: CardSectionStyleSettings;
+    headerFocusedStyle?: CardSectionStyleSettings;
+    /** 바디 섹션 스타일 (cardStyle 카테고리, undefined면 전역 CSS 변수 사용) */
+    bodyStyle?: CardSectionStyleSettings;
+    bodyActiveStyle?: CardSectionStyleSettings;
+    bodyFocusedStyle?: CardSectionStyleSettings;
+    /** 풋터 섹션 스타일 (cardStyle 카테고리, undefined면 전역 CSS 변수 사용) */
+    footerStyle?: CardSectionStyleSettings;
+    footerActiveStyle?: CardSectionStyleSettings;
+    footerFocusedStyle?: CardSectionStyleSettings;
 }
 
 /**
@@ -458,6 +481,8 @@ export interface Matrix2DSettings {
     cellMinWidth: number;
     /** 셀 최소 높이 (px) */
     cellMinHeight: number;
+    /** 셀 내 카드 최소 너비 (px) */
+    cardMinWidth: number;
 }
 
 /**
@@ -808,8 +833,50 @@ export interface SortOptions {
 }
 
 /**
+ * 프리셋 적용 범위 카테고리
+ *
+ * 프리셋 자동 적용 시 어떤 설정 카테고리를 적용할지 선택합니다.
+ * 선택되지 않은 카테고리는 현재 전역 설정을 유지합니다.
+ */
+export interface PresetApplyCategories {
+    /** 모드 (폴더/태그 모드 + 모드별 설정) */
+    mode: boolean;
+    /** 그룹화 (기준, 그룹 정렬 등) */
+    grouping: boolean;
+    /** 2D 매트릭스 그룹화 */
+    matrix2D: boolean;
+    /** 핀 설정 */
+    pin: boolean;
+    /** 정렬 */
+    sort: boolean;
+    /** 카드 내용 (header/body/footer 콘텐츠 타입, renderMode) */
+    cardContent: boolean;
+    /** 카드 스타일 (색상, 테두리 등) */
+    cardStyle: boolean;
+    /** 레이아웃 (카드 크기, 간격 등) */
+    layout: boolean;
+    /** 상호작용 (호버 액션, 클릭 동작 등) */
+    interaction: boolean;
+}
+
+/**
+ * 기본 프리셋 적용 범위 (모든 카테고리 적용)
+ */
+export const DEFAULT_PRESET_APPLY_CATEGORIES: PresetApplyCategories = {
+    mode: true,
+    grouping: true,
+    matrix2D: true,
+    pin: true,
+    sort: true,
+    cardContent: true,
+    cardStyle: true,
+    layout: true,
+    interaction: true
+};
+
+/**
  * 프리셋
- * 
+ *
  * 사용자 설정을 저장하고 빠르게 불러올 수 있습니다.
  */
 export interface Preset {
@@ -823,6 +890,14 @@ export interface Preset {
     settings: CardNavigatorSettings;
     /** 생성 시간 (타임스탬프) */
     createdAt: number;
+    /**
+     * 프리셋 적용 범위
+     *
+     * @remarks
+     * 자동 적용 시 어떤 설정 카테고리를 적용할지 선택합니다.
+     * undefined인 경우 모든 카테고리를 적용합니다 (하위 호환성).
+     */
+    applyCategories?: PresetApplyCategories;
 }
 
 /**
@@ -1190,7 +1265,8 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
             unclassifiedSectionTitle: 'Unclassified',
             enableDragDropPropertyChange: true,
             cellMinWidth: 200,
-            cellMinHeight: 150
+            cellMinHeight: 150,
+            cardMinWidth: 150
         }
     },
     debug: {

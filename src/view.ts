@@ -250,8 +250,8 @@ export class CardNavigatorView extends ItemView implements ICardView {
 
 		// workspace 레이아웃이 준비되면 초기 렌더링 수행
 		this.app.workspace.onLayoutReady(async () => {
-			// 레이아웃 먼저 업데이트 (컨테이너 크기 확정됨)
-			this.layoutManager?.updateLayout();
+			// renderCards() 내부에서 layoutManager.updateLayout()이 호출되므로
+			// 여기서 별도로 호출할 필요 없음 (중복 레이아웃 적용 방지)
 			if (this.cardsContainer) {
 				await this.renderCards(this.cardsContainer);
 			}

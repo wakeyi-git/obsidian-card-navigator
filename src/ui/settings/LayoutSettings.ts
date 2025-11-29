@@ -1,24 +1,34 @@
 import { Setting } from 'obsidian';
-import { BaseSettings } from './BaseSettings';
-import { DEFAULT_SETTINGS } from '../../types';
 import { LAYOUT_LIMITS } from '../../constants';
 import { t } from '../../i18n';
+import CardNavigatorPlugin from '../../main';
+import { DEFAULT_SETTINGS } from '../../types';
+import type { CardNavigatorSettingTab } from '../SettingsTab';
 
 /**
  * LayoutSettings
  *
  * 레이아웃 설정 UI
  */
-export class LayoutSettings extends BaseSettings {
+export class LayoutSettings {
+    constructor(
+        private plugin: CardNavigatorPlugin,
+        private settingsTab: CardNavigatorSettingTab
+    ) {}
+
     /**
      * 레이아웃 설정을 렌더링합니다
      */
     render(containerEl: HTMLElement): void {
-        this.createHeader(
-            containerEl,
-            t().settingsTab.tabs.layout,
-            t().settings.layoutSection.description
-        );
+        // 섹션 헤더
+        new Setting(containerEl)
+            .setHeading()
+            .setName(t().settingsTab.tabs.layout);
+
+        // containerEl.createEl('p', {
+        //     text: t().settings.layoutSection.description,
+        //     cls: 'setting-item-description'
+        // });
 
         const settings = this.plugin.settingsManager.getSettings();
         const defaultLayout = DEFAULT_SETTINGS.layout;
@@ -42,7 +52,7 @@ export class LayoutSettings extends BaseSettings {
                 .onClick(async () => {
                     settings.layout.cardMinWidth = defaultLayout.cardMinWidth;
                     await this.plugin.saveSettings();
-                    this.plugin.settingsTab.display();
+                    this.settingsTab.display();
                 })
             );
 
@@ -65,7 +75,7 @@ export class LayoutSettings extends BaseSettings {
                 .onClick(async () => {
                     settings.layout.cardMinHeight = defaultLayout.cardMinHeight;
                     await this.plugin.saveSettings();
-                    this.plugin.settingsTab.display();
+                    this.settingsTab.display();
                 })
             );
 
@@ -88,7 +98,7 @@ export class LayoutSettings extends BaseSettings {
                 .onClick(async () => {
                     settings.layout.cardMaxWidth = defaultLayout.cardMaxWidth;
                     await this.plugin.saveSettings();
-                    this.plugin.settingsTab.display();
+                    this.settingsTab.display();
                 })
             );
 
@@ -111,7 +121,7 @@ export class LayoutSettings extends BaseSettings {
                 .onClick(async () => {
                     settings.layout.cardMaxHeight = defaultLayout.cardMaxHeight;
                     await this.plugin.saveSettings();
-                    this.plugin.settingsTab.display();
+                    this.settingsTab.display();
                 })
             );
 
@@ -134,7 +144,7 @@ export class LayoutSettings extends BaseSettings {
                 .onClick(async () => {
                     settings.layout.gap = defaultLayout.gap;
                     await this.plugin.saveSettings();
-                    this.plugin.settingsTab.display();
+                    this.settingsTab.display();
                 })
             );
     }

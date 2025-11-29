@@ -150,6 +150,9 @@ export class MatrixRenderer {
             cls: 'matrix-unclassified-cards'
         });
 
+        // 카드 최소 너비 CSS 변수 설정
+        cardsContainer.style.setProperty('--matrix-card-min-width', `${settings.cardMinWidth}px`);
+
         // ⚡ 성능 최적화: 병렬 카드 렌더링
         if (grid.unclassifiedFiles.length > 0) {
             await Promise.all(grid.unclassifiedFiles.map(file => this.renderFileCard(cardsContainer, file)));
@@ -173,6 +176,7 @@ export class MatrixRenderer {
         gridContainer.style.setProperty('--matrix-primary-count', grid.primaryLabels.length.toString());
         gridContainer.style.setProperty('--matrix-cell-min-width', `${settings.cellMinWidth}px`);
         gridContainer.style.setProperty('--matrix-cell-min-height', `${settings.cellMinHeight}px`);
+        gridContainer.style.setProperty('--matrix-card-min-width', `${settings.cardMinWidth}px`);
 
         // 그리드 (테이블 형태)
         const gridEl = gridContainer.createEl('div', {

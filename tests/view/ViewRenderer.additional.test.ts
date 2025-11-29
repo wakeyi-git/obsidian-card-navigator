@@ -94,7 +94,8 @@ describe('ViewRenderer - Additional Coverage', () => {
                 container.appendChild(div);
                 return div;
             }),
-            renderPlaceholder: jest.fn().mockResolvedValue(undefined)
+            renderPlaceholder: jest.fn().mockResolvedValue(undefined),
+            invalidateCache: jest.fn()
         } as any;
         
         // SearchEngine mock
