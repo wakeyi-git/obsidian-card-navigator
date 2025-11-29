@@ -142,12 +142,9 @@ export class CardRenderer {
         this.setupLinkHandlersInternal(cardEl);
 
         // 검색어 하이라이트 적용
-        // 이중 requestAnimationFrame을 사용하여 마크다운 렌더링이 완전히 완료된 후 하이라이트 적용
-        // 첫 번째 프레임에서 DOM이 추가되고, 두 번째 프레임에서 완전히 렌더링됨
+        // ⭐ Performance: 마크다운 렌더링은 이미 await로 완료되었으므로 단일 RAF로 충분
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                this.applySearchHighlight(cardEl);
-            });
+            this.applySearchHighlight(cardEl);
         });
 
         return cardEl;

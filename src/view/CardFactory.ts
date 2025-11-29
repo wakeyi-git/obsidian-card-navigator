@@ -124,11 +124,9 @@ export class CardFactory {
 
 			// ⭐ 검색어 하이라이트 적용 (캐시된 카드)
 			// 캐시된 카드는 renderCard()를 거치지 않으므로 명시적으로 하이라이트 적용
-			// 이중 requestAnimationFrame을 사용하여 DOM이 완전히 준비된 후 적용
+			// ⭐ Performance: 단일 RAF로 충분 (DOM은 이미 준비됨)
 			requestAnimationFrame(() => {
-				requestAnimationFrame(() => {
-					this.renderer.applyHighlight(card);
-				});
+				this.renderer.applyHighlight(card);
 			});
 
 			// ⭐ 컨테이너에 카드 추가 (캐시 미스 경로와 동일하게)
