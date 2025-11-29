@@ -1606,7 +1606,9 @@ export class PresetManager {
             if (!result.grouping) {
                 result.grouping = { ...this.plugin.settings.grouping };
             }
-            result.grouping.matrix2D = presetSettings.grouping.matrix2D;
+            if (presetSettings.grouping?.matrix2D) {
+                result.grouping.matrix2D = presetSettings.grouping.matrix2D;
+            }
         }
 
         // 핀 설정

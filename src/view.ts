@@ -338,12 +338,8 @@ export class CardNavigatorView extends ItemView implements ICardView {
 						await this.renderCards(this.cardsContainer);
 					}
 
-					if (isValidFile(activeFile)) {
-						const fileToScroll: TFile = activeFile;
-						setTimeout(async () => {
-							await this.scrollManager.scrollToActiveFile(fileToScroll, 'file-change');
-						}, TIMING.RENDER_COMPLETE_DELAY);
-					}
+					// ⭐ ViewRenderer에서 이미 렌더링 시 활성 카드로 스크롤을 처리합니다.
+					// 중복 스크롤 호출을 제거하여 깜빡임을 방지합니다.
 				} else {
 					this.logger.debug('View', t().debug.view.sameContextUpdateClass);
 

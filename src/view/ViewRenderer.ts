@@ -830,11 +830,13 @@ export class ViewRenderer {
 			// 지금은 full render로 fallback
 		}
 
-		// ⭐ 스크롤 위치 보존: 활성 파일이 변경되지 않았으면 스크롤 위치 저장
-		const currentActiveFile = this.getActiveFile();
-		const hasActiveFileChanged = this.state.hasFileChanged(currentActiveFile);
+		// ⭐ 스크롤 위치 보존/활성 카드 스크롤 판단
+		// filesChanged가 true면 폴더/태그/검색 결과가 바뀐 것이므로 활성 카드로 스크롤 필요
+		// 참고: state.hasFileChanged()는 view.ts에서 setPreviousFile() 후에 호출되므로
+		// 여기서는 changes 객체를 사용하여 판단해야 함
+		const needsScrollToActive = changes.filesChanged || changes.changeType === 'full';
 		let scrollTop = 0;
-		if (!hasActiveFileChanged) {
+		if (!needsScrollToActive) {
 			scrollTop = container.scrollTop;
 		}
 
@@ -929,8 +931,8 @@ export class ViewRenderer {
 			this.lastRenderState = currentState;
 			this.lastDetailedState = currentDetailedState;
 
-			// ⭐ 스크롤 위치 복원: 활성 파일이 변경되지 않았으면 저장했던 스크롤 위치로 복원
-			if (!hasActiveFileChanged && scrollTop > 0) {
+			// ⭐ 스크롤 위치 복원: 파일 목록이 변경되지 않았으면 저장했던 스크롤 위치로 복원
+			if (!needsScrollToActive && scrollTop > 0) {
 				container.scrollTop = scrollTop;
 			}
 
@@ -1668,21 +1670,57 @@ export class ViewRenderer {
 			this.layoutManager.updateLayout();
 		}
 
-		// ⭐ 활성 카드로 즉시 스크롤 (애니메이션 없이)
+		// ⭐ 깜빡임 방지: 레이아웃 계산 완료 후 스크롤 위치 설정
+		// DOM 추가 직후에는 offsetTop/offsetLeft가 0을 반환할 수 있음
+		// getBoundingClientRect()로 레이아웃 계산을 강제함
+		// ⭐ 초기 렌더링 시 활성 카드로 스크롤 (scrollBehavior와 무관하게)
+		// scrollBehavior: 'none'은 "애니메이션 없이 스크롤"을 의미함 (스크롤 안 함이 아님)
+		// scrollBehavior 설정은 후속 스크롤 동작에만 영향을 미침
 		if (currentActiveFile) {
-			const activeCard = Array.from(container.querySelectorAll('.card-item')).find(
+			// ⭐ 먼저 path로 검색, 실패하면 .active 클래스로 검색
+			let activeCard = Array.from(container.querySelectorAll('.card-item')).find(
 				card => (card as HTMLElement).dataset.filePath === currentActiveFile.path
 			) as HTMLElement;
 
-			if (activeCard) {
-				const isHorizontalMode = container.classList.contains('horizontal-mode');
-				const finalBlock: ScrollLogicalPosition = isHorizontalMode ? 'nearest' : 'center';
-				const finalInline: ScrollLogicalPosition = isHorizontalMode ? 'center' : 'nearest';
+			// fallback: .active 클래스로 검색 (카드 생성 시 active 클래스가 추가됨)
+			if (!activeCard) {
+				activeCard = container.querySelector('.card-item.active') as HTMLElement;
+			}
 
-				activeCard.scrollIntoView({
-					behavior: 'instant',
-					block: finalBlock,
-					inline: finalInline
+			if (activeCard) {
+				// ⭐ 레이아웃 강제 계산: getBoundingClientRect()가 리플로우 트리거
+				const containerRect = container.getBoundingClientRect();
+				const cardRect = activeCard.getBoundingClientRect();
+				const isHorizontalMode = container.classList.contains('horizontal-mode');
+
+				if (isHorizontalMode) {
+					// 가로 모드: scrollLeft로 중앙 정렬
+					const cardOffsetLeft = cardRect.left - containerRect.left + container.scrollLeft;
+					const cardWidth = cardRect.width;
+					const containerWidth = containerRect.width;
+					const targetScrollLeft = cardOffsetLeft - (containerWidth / 2) + (cardWidth / 2);
+					const maxScrollLeft = container.scrollWidth - containerWidth;
+					container.scrollLeft = Math.max(0, Math.min(targetScrollLeft, maxScrollLeft));
+				} else {
+					// 세로 모드: scrollTop으로 중앙 정렬
+					const cardOffsetTop = cardRect.top - containerRect.top + container.scrollTop;
+					const cardHeight = cardRect.height;
+					const containerHeight = containerRect.height;
+					const targetScrollTop = cardOffsetTop - (containerHeight / 2) + (cardHeight / 2);
+					const maxScrollTop = container.scrollHeight - containerHeight;
+					container.scrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
+				}
+
+				this.logger.debug('View', 'Scroll to active card (standard)', {
+					cardPath: currentActiveFile.path,
+					isHorizontal: isHorizontalMode,
+					containerHeight: containerRect.height,
+					scrollHeight: container.scrollHeight,
+					scrollTop: container.scrollTop
+				});
+			} else {
+				this.logger.debug('View', 'Active card not found in DOM', {
+					cardPath: currentActiveFile.path
 				});
 			}
 		}
@@ -1919,17 +1957,38 @@ export class ViewRenderer {
 			return;
 		}
 
-		// ⭐ 활성 카드로 즉시 스크롤 (애니메이션 없이, ViewportManager 생성 전)
+		// ⭐ 깜빡임 방지: 레이아웃 계산 완료 후 스크롤 위치 설정
+		// getBoundingClientRect()로 레이아웃 계산을 강제함
 		if (activeIndex >= 0 && placeholders[activeIndex]) {
 			const activeCard = placeholders[activeIndex];
+			const containerRect = container.getBoundingClientRect();
+			const cardRect = activeCard.getBoundingClientRect();
 			const isHorizontalMode = container.classList.contains('horizontal-mode');
-			const finalBlock: ScrollLogicalPosition = isHorizontalMode ? 'nearest' : 'center';
-			const finalInline: ScrollLogicalPosition = isHorizontalMode ? 'center' : 'nearest';
 
-			activeCard.scrollIntoView({
-				behavior: 'instant',
-				block: finalBlock,
-				inline: finalInline
+			if (isHorizontalMode) {
+				// 가로 모드: scrollLeft로 중앙 정렬
+				const cardOffsetLeft = cardRect.left - containerRect.left + container.scrollLeft;
+				const cardWidth = cardRect.width;
+				const containerWidth = containerRect.width;
+				const targetScrollLeft = cardOffsetLeft - (containerWidth / 2) + (cardWidth / 2);
+				const maxScrollLeft = container.scrollWidth - containerWidth;
+				container.scrollLeft = Math.max(0, Math.min(targetScrollLeft, maxScrollLeft));
+			} else {
+				// 세로 모드: scrollTop으로 중앙 정렬
+				const cardOffsetTop = cardRect.top - containerRect.top + container.scrollTop;
+				const cardHeight = cardRect.height;
+				const containerHeight = containerRect.height;
+				const targetScrollTop = cardOffsetTop - (containerHeight / 2) + (cardHeight / 2);
+				const maxScrollTop = container.scrollHeight - containerHeight;
+				container.scrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
+			}
+
+			this.logger.debug('View', 'Scroll to active card (viewport)', {
+				activeIndex,
+				isHorizontal: isHorizontalMode,
+				containerHeight: containerRect.height,
+				scrollHeight: container.scrollHeight,
+				scrollTop: container.scrollTop
 			});
 		}
 
