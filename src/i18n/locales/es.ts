@@ -911,8 +911,12 @@ export const es = {
 			bodyRenderModeDescription: 'Elija cómo mostrar el contenido del cuerpo. En modo "Markdown HTML", no se aplica el límite de longitud máxima',
 			renderModeOptions: {
 				plain: 'Texto Plano (Sintaxis Markdown tal cual)',
+				plainStripped: 'Texto Plano (Sintaxis Markdown eliminada)',
 				markdownHtml: 'Markdown HTML (Estilo de vista de lectura)',
 			},
+			customSyntaxFilters: 'Filtros de Sintaxis Personalizados',
+			customSyntaxFiltersDescription: 'Ingrese patrones a eliminar del contenido de las tarjetas (separados por coma o salto de línea). Útil para sintaxis específicas de plugins como ~=, <u></u>, etc.',
+			customSyntaxFiltersPlaceholder: 'ej: ~=, <u>, </u>',
 			maxLength: 'Longitud Máxima',
 			maxLengthDescription: (isMarkdownHtml: boolean) =>
 				isMarkdownHtml
@@ -1077,6 +1081,13 @@ export const es = {
 		},
 
 		layoutSettings: {
+			orientationMode: 'Orientación del Diseño',
+			orientationModeDescription: 'Elija cómo el diseño cambia entre los modos horizontal y vertical.\n\n• Auto: Cambio automático según el tamaño del contenedor (predeterminado)\n• Siempre Vertical: Siempre usar diseño de desplazamiento vertical\n• Siempre Horizontal: Siempre usar diseño de desplazamiento horizontal',
+			orientationModeOptions: {
+				auto: 'Auto (según tamaño del contenedor)',
+				alwaysVertical: 'Siempre Vertical',
+				alwaysHorizontal: 'Siempre Horizontal',
+			},
 			minWidth: 'Ancho Mínimo de Tarjeta',
 			minWidthDescription: (min: number, max: number) => `Establecer el ancho mínimo de las tarjetas (${min}-${max}px)`,
 			minHeight: 'Altura Mínima de Tarjeta',

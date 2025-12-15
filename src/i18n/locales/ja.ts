@@ -874,8 +874,12 @@ export const ja = {
 			bodyRenderModeDescription: '本文内容の表示方法を選択します。「Markdown HTML」モードでは最大長制限が適用されません',
 			renderModeOptions: {
 				plain: 'プレーンテキスト（Markdown構文をそのまま）',
+				plainStripped: 'プレーンテキスト（Markdown構文を削除）',
 				markdownHtml: 'Markdown HTML（読み取りビュースタイル）',
 			},
+			customSyntaxFilters: 'カスタム構文フィルター',
+			customSyntaxFiltersDescription: 'カード内容から削除するパターンを入力します（カンマまたは改行で区切り）。~=、<u></u>などのプラグイン専用構文に便利です。',
+			customSyntaxFiltersPlaceholder: '例：~=, <u>, </u>',
 			maxLength: '最大長',
 			maxLengthDescription: (isMarkdownHtml: boolean) =>
 				isMarkdownHtml
@@ -1004,6 +1008,13 @@ export const ja = {
 			alwaysShowPinnedDescription: 'スクロールやモード変更時にもピン留めファイルを表示',
 		},
 		layoutSettings: {
+			orientationMode: 'レイアウト方向',
+			orientationModeDescription: 'レイアウトの水平/垂直モード切り替え方式を選択します。\n\n• 自動：コンテナサイズに応じて自動切り替え（デフォルト）\n• 常に垂直：常に垂直スクロールレイアウトを使用\n• 常に水平：常に水平スクロールレイアウトを使用',
+			orientationModeOptions: {
+				auto: '自動（コンテナサイズ基準）',
+				alwaysVertical: '常に垂直',
+				alwaysHorizontal: '常に水平',
+			},
 			minWidth: 'カード最小幅',
 			minWidthDescription: (min: number, max: number) => `カードの最小幅を設定（${min}-${max}px）`,
 			minHeight: 'カード最小高さ',

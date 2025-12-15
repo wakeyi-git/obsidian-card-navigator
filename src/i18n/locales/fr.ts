@@ -874,8 +874,12 @@ export const fr = {
 			bodyRenderModeDescription: 'Choisir comment afficher le contenu du corps. En mode "Markdown HTML", la limite de longueur maximale n\'est pas appliquée',
 			renderModeOptions: {
 				plain: 'Texte Brut (Syntaxe Markdown telle quelle)',
+				plainStripped: 'Texte Brut (Syntaxe Markdown supprimée)',
 				markdownHtml: 'Markdown HTML (Style de vue de lecture)',
 			},
+			customSyntaxFilters: 'Filtres de Syntaxe Personnalisés',
+			customSyntaxFiltersDescription: 'Entrez les patterns à supprimer du contenu des cartes (séparés par virgule ou saut de ligne). Utile pour les syntaxes spécifiques aux plugins comme ~=, <u></u>, etc.',
+			customSyntaxFiltersPlaceholder: 'ex: ~=, <u>, </u>',
 			maxLength: 'Longueur Maximale',
 			maxLengthDescription: (isMarkdownHtml: boolean) =>
 				isMarkdownHtml
@@ -1004,6 +1008,13 @@ export const fr = {
 			alwaysShowPinnedDescription: 'Afficher les fichiers épinglés même lors du défilement ou du changement de mode',
 		},
 		layoutSettings: {
+			orientationMode: 'Orientation de la Mise en Page',
+			orientationModeDescription: 'Choisissez comment la mise en page bascule entre les modes horizontal et vertical.\n\n• Auto : Basculement automatique selon la taille du conteneur (par défaut)\n• Toujours Vertical : Toujours utiliser la mise en page à défilement vertical\n• Toujours Horizontal : Toujours utiliser la mise en page à défilement horizontal',
+			orientationModeOptions: {
+				auto: 'Auto (selon la taille du conteneur)',
+				alwaysVertical: 'Toujours Vertical',
+				alwaysHorizontal: 'Toujours Horizontal',
+			},
 			minWidth: 'Largeur Minimale de Carte',
 			minWidthDescription: (min: number, max: number) => `Définir la largeur minimale des cartes (${min}-${max}px)`,
 			minHeight: 'Hauteur Minimale de Carte',

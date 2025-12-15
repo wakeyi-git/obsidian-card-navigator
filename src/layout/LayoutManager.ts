@@ -126,8 +126,20 @@ export class LayoutManager {
      *
      * @remarks
      * ⭐ Performance: 크기를 파라미터로 받아 getBoundingClientRect 호출 방지
+     * ⭐ orientationMode 설정에 따라 강제 모드 적용 가능
      */
     private detectLayoutModeFromSize(size: { width: number; height: number }): LayoutMode {
+        const orientationMode = this.getFullSettings().layout.orientationMode;
+
+        // 강제 모드 설정 확인
+        if (orientationMode === 'always-vertical') {
+            return 'vertical';
+        }
+        if (orientationMode === 'always-horizontal') {
+            return 'horizontal';
+        }
+
+        // 'auto' - 컨테이너 크기에 따라 자동 결정
         return size.width > size.height ? 'horizontal' : 'vertical';
     }
 
@@ -547,9 +559,26 @@ export class LayoutManager {
      * 설정을 업데이트합니다
      *
      * @param settings - 새로운 레이아웃 설정
+     *
+     * @remarks
+     * ⭐ orientationMode 변경 시 현재 모드를 재감지하여 즉시 적용합니다.
      */
     updateSettings(settings: LayoutSettings): void {
         this.settings = settings;
+
+        // orientationMode 변경 시 현재 모드 재감지
+        const size = this.getContainerSize();
+        const newMode = this.detectLayoutModeFromSize(size);
+        if (newMode !== this.currentMode) {
+            this.currentMode = newMode;
+            this.logger.debug('Layout', 'orientationMode 변경으로 모드 전환', {
+                newMode,
+                orientationMode: this.getFullSettings().layout.orientationMode
+            });
+        }
+
+        // 상태 무효화하여 강제 업데이트
+        this.lastLayoutState = null;
         this.updateLayout();
     }
 

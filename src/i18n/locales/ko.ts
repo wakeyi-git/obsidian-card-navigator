@@ -872,8 +872,12 @@ export const ko = {
 			bodyRenderModeDescription: '본문 내용을 표시하는 방식을 선택합니다. "Markdown HTML" 모드에서는 최대 길이 제한이 적용되지 않습니다',
 			renderModeOptions: {
 				plain: 'Plain Text (마크다운 문법 그대로)',
+				plainStripped: 'Plain Text (마크다운 문법 제거)',
 				markdownHtml: 'Markdown HTML (읽기 뷰 스타일)',
 			},
+			customSyntaxFilters: '사용자 정의 문법 필터',
+			customSyntaxFiltersDescription: '카드 내용에서 제거할 패턴을 입력합니다 (쉼표 또는 줄바꿈으로 구분). ~=, <u></u> 등 플러그인 전용 문법에 유용합니다.',
+			customSyntaxFiltersPlaceholder: '예: ~=, <u>, </u>',
 			maxLength: '최대 길이',
 			maxLengthDescription: (isMarkdownHtml: boolean) =>
 				isMarkdownHtml
@@ -1002,6 +1006,13 @@ export const ko = {
 			alwaysShowPinnedDescription: '스크롤하거나 모드를 변경해도 핀된 파일을 항상 표시합니다',
 		},
 		layoutSettings: {
+			orientationMode: '레이아웃 방향',
+			orientationModeDescription: '레이아웃의 가로/세로 모드 전환 방식을 선택합니다.\n\n• 자동: 컨테이너 크기에 따라 자동 전환 (기본값)\n• 항상 세로: 항상 세로 스크롤 레이아웃 사용\n• 항상 가로: 항상 가로 스크롤 레이아웃 사용',
+			orientationModeOptions: {
+				auto: '자동 (컨테이너 크기 기준)',
+				alwaysVertical: '항상 세로',
+				alwaysHorizontal: '항상 가로',
+			},
 			minWidth: '카드 최소 너비',
 			minWidthDescription: (min: number, max: number) => `카드의 최소 너비를 설정합니다 (${min}-${max}px)`,
 			minHeight: '카드 최소 높이',

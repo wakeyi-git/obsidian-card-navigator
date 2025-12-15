@@ -1,10 +1,10 @@
 {
-	"id": "card-navigator",
-	"name": "Card Navigator",
-	"version": "1.6.0",
-	"minAppVersion": "0.15.0",
-	"description": "Navigate your notes with a beautiful card-based interface. Browse by folder, tag, or search with customizable card layouts.",
-	"author": "wakeyi",
-	"authorUrl": "https://github.com/wakeyi-git",
-	"isDesktopOnly": false
+  "id": "card-navigator",
+  "name": "Card Navigator",
+  "version": "1.6.1",
+  "minAppVersion": "0.15.0",
+  "description": "Navigate your notes with a beautiful card-based interface. Browse by folder, tag, or search with customizable card layouts.",
+  "author": "wakeyi",
+  "authorUrl": "https://github.com/wakeyi-git",
+  "isDesktopOnly": false
 }

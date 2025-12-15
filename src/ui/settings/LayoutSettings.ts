@@ -2,7 +2,7 @@ import { Setting } from 'obsidian';
 import { LAYOUT_LIMITS } from '../../constants';
 import { t } from '../../i18n';
 import CardNavigatorPlugin from '../../main';
-import { DEFAULT_SETTINGS } from '../../types';
+import { DEFAULT_SETTINGS, LayoutOrientationMode } from '../../types';
 import type { CardNavigatorSettingTab } from '../SettingsTab';
 
 /**
@@ -32,6 +32,30 @@ export class LayoutSettings {
 
         const settings = this.plugin.settingsManager.getSettings();
         const defaultLayout = DEFAULT_SETTINGS.layout;
+
+        // 레이아웃 방향 모드 드롭다운
+        new Setting(containerEl)
+            .setName(t().settingsTab.layoutSettings.orientationMode)
+            .setDesc(t().settingsTab.layoutSettings.orientationModeDescription)
+            .addDropdown(dropdown => dropdown
+                .addOption('auto', t().settingsTab.layoutSettings.orientationModeOptions.auto)
+                .addOption('always-vertical', t().settingsTab.layoutSettings.orientationModeOptions.alwaysVertical)
+                .addOption('always-horizontal', t().settingsTab.layoutSettings.orientationModeOptions.alwaysHorizontal)
+                .setValue(settings.layout.orientationMode ?? 'auto')
+                .onChange(async (value) => {
+                    settings.layout.orientationMode = value as LayoutOrientationMode;
+                    await this.plugin.saveSettings();
+                })
+            )
+            .addExtraButton(button => button
+                .setIcon('reset')
+                .setTooltip(t().settingsTab.cardSettings.resetToDefault)
+                .onClick(async () => {
+                    settings.layout.orientationMode = defaultLayout.orientationMode;
+                    await this.plugin.saveSettings();
+                    this.settingsTab.display();
+                })
+            );
 
         // 카드 최소 너비 슬라이더
         new Setting(containerEl)

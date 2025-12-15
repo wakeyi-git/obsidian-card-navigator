@@ -94,8 +94,36 @@ export class OtherSettings {
                 })
             );
 
+        // 사용자 정의 문법 필터
+        this.addCustomSyntaxFilters(containerEl);
+
         // 캐시 통계
         this.addCacheStatistics(containerEl);
+    }
+
+    /**
+     * 사용자 정의 문법 필터 설정을 추가합니다
+     */
+    private addCustomSyntaxFilters(containerEl: HTMLElement): void {
+        const cardTrans = t().settingsTab.cardSettings;
+        const currentFilters = this.plugin.settings.customSyntaxFilters || [];
+
+        new Setting(containerEl)
+            .setName(cardTrans.customSyntaxFilters)
+            .setDesc(cardTrans.customSyntaxFiltersDescription)
+            .addTextArea(text => text
+                .setPlaceholder(cardTrans.customSyntaxFiltersPlaceholder)
+                .setValue(currentFilters.join(', '))
+                .onChange(async (value) => {
+                    // 쉼표 또는 줄바꿈으로 구분
+                    const filters = value
+                        .split(/[,\n]/)
+                        .map(f => f.trim())
+                        .filter(f => f.length > 0);
+                    this.plugin.settings.customSyntaxFilters = filters;
+                    await this.plugin.saveSettings();
+                })
+            );
     }
 
     /**

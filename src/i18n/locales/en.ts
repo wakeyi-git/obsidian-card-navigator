@@ -872,8 +872,12 @@ export const en = {
 			bodyRenderModeDescription: 'Choose how to display body content. In "Markdown HTML" mode, max length limit is not applied',
 			renderModeOptions: {
 				plain: 'Plain Text (Markdown syntax as-is)',
+				plainStripped: 'Plain Text (Markdown syntax removed)',
 				markdownHtml: 'Markdown HTML (Reading view style)',
 			},
+			customSyntaxFilters: 'Custom Syntax Filters',
+			customSyntaxFiltersDescription: 'Enter patterns to remove from card content (comma or newline separated). Useful for plugin-specific syntax like ~=, <u></u>, etc.',
+			customSyntaxFiltersPlaceholder: 'e.g., ~=, <u>, </u>',
 			maxLength: 'Max Length',
 			maxLengthDescription: (isMarkdownHtml: boolean) =>
 				isMarkdownHtml
@@ -1002,6 +1006,13 @@ export const en = {
 			alwaysShowPinnedDescription: 'Show pinned files even when scrolling or changing modes',
 		},
 		layoutSettings: {
+			orientationMode: 'Layout Orientation',
+			orientationModeDescription: 'Choose how the layout switches between horizontal and vertical modes.\n\n• Auto: Automatically switch based on container size (default)\n• Always Vertical: Always use vertical scrolling layout\n• Always Horizontal: Always use horizontal scrolling layout',
+			orientationModeOptions: {
+				auto: 'Auto (based on container size)',
+				alwaysVertical: 'Always Vertical',
+				alwaysHorizontal: 'Always Horizontal',
+			},
 			minWidth: 'Card Minimum Width',
 			minWidthDescription: (min: number, max: number) => `Set the minimum width of cards (${min}-${max}px)`,
 			minHeight: 'Card Minimum Height',

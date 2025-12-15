@@ -243,16 +243,27 @@ export interface CardSectionSettings {
 /**
  * 렌더링 모드
  */
-export type RenderMode = 
+export type RenderMode =
     | 'plain'           // 일반 텍스트 (마크다운 문법 그대로)
+    | 'plain-stripped'  // 일반 텍스트 (마크다운 문법 제거)
     | 'markdown-html';  // 마크다운 완전 렌더링
 
 /**
  * 레이아웃 모드
  */
-export type LayoutMode = 
+export type LayoutMode =
     | 'horizontal'  // 가로 모드 (viewport width > height)
     | 'vertical';   // 세로 모드 (viewport width < height)
+
+/**
+ * 레이아웃 방향 모드
+ *
+ * 수평/수직 레이아웃 전환 방식을 결정합니다.
+ */
+export type LayoutOrientationMode =
+    | 'auto'              // 컨테이너 크기에 따라 자동 전환
+    | 'always-vertical'   // 항상 수직 모드
+    | 'always-horizontal'; // 항상 수평 모드
 
 /**
  * 스크롤 동작 모드
@@ -304,6 +315,8 @@ export interface DragDropSettings {
 export interface LayoutSettings {
     /** 레이아웃 모드 (자동 계산) */
     mode: LayoutMode;
+    /** 레이아웃 방향 모드 (자동/항상 수직/항상 수평) */
+    orientationMode: LayoutOrientationMode;
     /** 카드 최소 너비 (px) */
     cardMinWidth: number;
     /** 카드 최소 높이 (px) */
@@ -673,6 +686,8 @@ export interface CardNavigatorSettings {
     debug: DebugSettings;
     /** ⭐ Section 13.2: 증분 렌더링 청크 크기 (한 번에 렌더링할 카드 수) */
     incrementalRenderChunkSize?: number;
+    /** 사용자 정의 문법 필터 (제거할 패턴 목록) */
+    customSyntaxFilters?: string[];
 }
 
 /**
@@ -1193,6 +1208,7 @@ export const DEFAULT_SETTINGS: CardNavigatorSettings = {
     },
     layout: {
         mode: 'vertical',
+        orientationMode: 'auto',
         cardMinWidth: 200,
         cardMinHeight: 250,
         cardMaxWidth: 400,

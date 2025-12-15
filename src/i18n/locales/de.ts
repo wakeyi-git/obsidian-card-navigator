@@ -874,8 +874,12 @@ export const de = {
 			bodyRenderModeDescription: 'Wählen Sie aus, wie der Hauptteil-Inhalt angezeigt werden soll. Im "Markdown HTML"-Modus wird die maximale Längenbegrenzung nicht angewendet',
 			renderModeOptions: {
 				plain: 'Klartext (Markdown-Syntax wie vorhanden)',
+				plainStripped: 'Klartext (Markdown-Syntax entfernt)',
 				markdownHtml: 'Markdown HTML (Leseansicht-Stil)',
 			},
+			customSyntaxFilters: 'Benutzerdefinierte Syntax-Filter',
+			customSyntaxFiltersDescription: 'Geben Sie Muster ein, die aus dem Karteninhalt entfernt werden sollen (durch Komma oder Zeilenumbruch getrennt). Nützlich für Plugin-spezifische Syntax wie ~=, <u></u>, etc.',
+			customSyntaxFiltersPlaceholder: 'z.B.: ~=, <u>, </u>',
 			maxLength: 'Maximale Länge',
 			maxLengthDescription: (isMarkdownHtml: boolean) =>
 				isMarkdownHtml
@@ -1004,6 +1008,13 @@ export const de = {
 			alwaysShowPinnedDescription: 'Angeheftete Dateien auch beim Scrollen oder Moduswechsel anzeigen',
 		},
 		layoutSettings: {
+			orientationMode: 'Layout-Ausrichtung',
+			orientationModeDescription: 'Wählen Sie, wie das Layout zwischen horizontalem und vertikalem Modus wechselt.\n\n• Auto: Automatischer Wechsel basierend auf Containergröße (Standard)\n• Immer Vertikal: Immer vertikales Scroll-Layout verwenden\n• Immer Horizontal: Immer horizontales Scroll-Layout verwenden',
+			orientationModeOptions: {
+				auto: 'Auto (basierend auf Containergröße)',
+				alwaysVertical: 'Immer Vertikal',
+				alwaysHorizontal: 'Immer Horizontal',
+			},
 			minWidth: 'Karten-Mindestbreite',
 			minWidthDescription: (min: number, max: number) => `Legen Sie die Mindestbreite von Karten fest (${min}-${max}px)`,
 			minHeight: 'Karten-Mindesthöhe',

@@ -21,16 +21,20 @@ describe('LayoutManager', () => {
         // Default settings
         settings = {
             mode: 'horizontal',  // Add mode
+            orientationMode: 'auto',  // Add orientationMode
             cardMinWidth: 200,
             cardMaxWidth: 400,
             cardMinHeight: 150,
             cardMaxHeight: 300,
             gap: 16
         };
-        
+
         // Full settings mock
         mockGetFullSettings.mockReturnValue({
-            debug: { enabled: false }
+            debug: { enabled: false },
+            layout: {
+                orientationMode: 'auto'
+            }
         } as any);
         
         // Container 크기 설정
@@ -146,6 +150,7 @@ describe('LayoutManager', () => {
 
             const tinySettings: LayoutSettings = {
                 mode: 'horizontal',  // Add mode
+                orientationMode: 'auto',  // Add orientationMode
                 cardMinWidth: 1000,  // Larger than container
                 cardMaxWidth: 2000,
                 cardMinHeight: 1000,
@@ -215,6 +220,7 @@ describe('LayoutManager', () => {
         it('should update settings and layout', () => {
             const newSettings: LayoutSettings = {
                 mode: 'horizontal',  // Add mode
+                orientationMode: 'auto',  // Add orientationMode
                 cardMinWidth: 300,
                 cardMaxWidth: 500,
                 cardMinHeight: 200,

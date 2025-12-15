@@ -1,3 +1,32 @@
+## [1.6.1] - 2025-12-15
+
+### Added
+
+#### Layout Orientation Mode
+- **Manual Layout Selection**: Users can now choose between automatic, always-vertical, or always-horizontal layout modes
+  - Auto: Automatically switch based on container size (default behavior)
+  - Always Vertical: Force vertical scrolling layout regardless of container size
+  - Always Horizontal: Force horizontal scrolling layout regardless of container size
+  - Useful for users on wide screens who prefer vertical navigation without horizontal scrolling
+  - Related files: [LayoutManager.ts](src/layout/LayoutManager.ts), [LayoutSettings.ts](src/ui/settings/LayoutSettings.ts), [types.ts](src/types.ts)
+
+#### Markdown Syntax Stripping
+- **New Render Mode**: "Plain Text (Markdown syntax removed)" option for card body content
+  - Removes markdown syntax (headers, bold, italic, links, etc.) for cleaner card display
+  - Preserves actual text content while stripping formatting markers
+  - Related files: [markdownStripper.ts](src/utils/markdownStripper.ts), [CardRenderer.ts](src/card/CardRenderer.ts)
+
+- **Custom Syntax Filters**: User-defined patterns to remove from card content
+  - Configure custom filters in Settings > Other > Custom Syntax Filters
+  - Useful for plugin-specific syntax like `~=`, `<u></u>`, etc.
+  - Comma or newline separated filter patterns
+  - Related files: [OtherSettings.ts](src/ui/settings/OtherSettings.ts)
+
+### Fixed
+
+- **Settings Immediate Apply**: Layout orientation changes now apply immediately without requiring plugin restart
+  - Related files: [LayoutManager.ts](src/layout/LayoutManager.ts)
+
 ## [1.6.0] - 2025-11-29
 
 ### Added

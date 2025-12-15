@@ -6,6 +6,7 @@ import { t } from '../i18n';
 import type { SearchInput } from '../search/SearchInput';
 import { CardDataExtractor } from './CardData';
 import { extractSearchTerms, highlightInElement } from '../utils/highlightUtils';
+import { stripMarkdownSyntax } from '../utils/markdownStripper';
 
 /**
  * View 인터페이스 - 순환 참조 방지
@@ -482,7 +483,21 @@ export class CardRenderer {
             const content = section.content;
             await this.renderMarkdown(content, sectionEl, sourcePath);
             sectionEl.addClass('card-markdown-content');
+        } else if (renderMode === 'plain-stripped') {
+            // 마크다운 문법 제거 후 일반 텍스트로 표시
+            const strippedContent = stripMarkdownSyntax(
+                section.content,
+                this.settings.customSyntaxFilters
+            );
+            // 디버그: 마크다운 제거 전후 비교
+            this.logger.debug('Card', 'stripMarkdownSyntax', {
+                before: section.content.substring(0, 200),
+                after: strippedContent.substring(0, 200),
+                customFilters: this.settings.customSyntaxFilters
+            });
+            this.renderPlainText(strippedContent, sectionEl);
         } else {
+            // plain 모드: 마크다운 문법 그대로 표시
             this.renderPlainText(section.content, sectionEl);
         }
 

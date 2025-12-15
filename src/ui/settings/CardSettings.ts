@@ -1153,10 +1153,11 @@ export class CardSettingsUI {
                 .setDesc(t().settingsTab.cardSettings.bodyRenderModeDescription)
                 .addDropdown(dropdown => dropdown
                     .addOption('plain', t().settingsTab.cardSettings.renderModeOptions.plain)
+                    .addOption('plain-stripped', t().settingsTab.cardSettings.renderModeOptions.plainStripped)
                     .addOption('markdown-html', t().settingsTab.cardSettings.renderModeOptions.markdownHtml)
                     .setValue(sectionSettings.normalContent.contentRenderMode || 'plain')
                     .onChange(async (value) => {
-                        sectionSettings.normalContent.contentRenderMode = value as 'plain' | 'markdown-html';
+                        sectionSettings.normalContent.contentRenderMode = value as 'plain' | 'plain-stripped' | 'markdown-html';
 
                         // 일반 상태 변경 시 상속 중인 활성/포커스 상태도 자동 업데이트
                         if (this.selectedState === 'normal') {

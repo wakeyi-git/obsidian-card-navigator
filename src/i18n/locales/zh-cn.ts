@@ -874,8 +874,12 @@ export const zhCN = {
 			bodyRenderModeDescription: '选择如何显示正文内容。在"Markdown HTML"模式下，不应用最大长度限制',
 			renderModeOptions: {
 				plain: '纯文本（Markdown 语法原样）',
+				plainStripped: '纯文本（移除 Markdown 语法）',
 				markdownHtml: 'Markdown HTML（阅读视图样式）',
 			},
+			customSyntaxFilters: '自定义语法过滤器',
+			customSyntaxFiltersDescription: '输入要从卡片内容中移除的模式（用逗号或换行符分隔）。适用于插件特定语法，如 ~=、<u></u> 等。',
+			customSyntaxFiltersPlaceholder: '例如：~=, <u>, </u>',
 			maxLength: '最大长度',
 			maxLengthDescription: (isMarkdownHtml: boolean) =>
 				isMarkdownHtml
@@ -1004,6 +1008,13 @@ export const zhCN = {
 			alwaysShowPinnedDescription: '即使滚动或更改模式也显示置顶文件',
 		},
 		layoutSettings: {
+			orientationMode: '布局方向',
+			orientationModeDescription: '选择布局在水平和垂直模式之间切换的方式。\n\n• 自动：根据容器大小自动切换（默认）\n• 始终垂直：始终使用垂直滚动布局\n• 始终水平：始终使用水平滚动布局',
+			orientationModeOptions: {
+				auto: '自动（根据容器大小）',
+				alwaysVertical: '始终垂直',
+				alwaysHorizontal: '始终水平',
+			},
 			minWidth: '卡片最小宽度',
 			minWidthDescription: (min: number, max: number) => `设置卡片的最小宽度（${min}-${max}px）`,
 			minHeight: '卡片最小高度',
