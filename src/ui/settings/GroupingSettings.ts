@@ -34,13 +34,19 @@ export class GroupingSettings {
     private addGroupingSettings(containerEl: HTMLElement): void {
         const trans = t().settings.grouping;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans.title);
 
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
         // 그룹화 활성화
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.enableGrouping)
             .setDesc(trans.enableGroupingDescription)
             .addToggle(toggle => toggle
@@ -64,7 +70,7 @@ export class GroupingSettings {
         }
 
         // 그룹화 기준 ('none' 옵션 제거)
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.groupBy)
             .setDesc(trans.groupByDescription)
             .addDropdown(dropdown => dropdown
@@ -87,7 +93,7 @@ export class GroupingSettings {
 
         // 날짜 기준 (date-* 타입일 때만 표시)
         if (this.plugin.settings.grouping.criteria.startsWith('date-')) {
-            new Setting(containerEl)
+            new Setting(itemsEl)
                 .setName(trans.dateBasis)
                 .setDesc(trans.dateBasisDescription)
                 .addDropdown(dropdown => dropdown
@@ -104,7 +110,7 @@ export class GroupingSettings {
 
         // 태그 모드 (tag 타입일 때만 표시)
         if (this.plugin.settings.grouping.criteria === 'tag') {
-            new Setting(containerEl)
+            new Setting(itemsEl)
                 .setName(trans.tagMode)
                 .setDesc(trans.tagModeDescription)
                 .addDropdown(dropdown => dropdown
@@ -121,7 +127,7 @@ export class GroupingSettings {
 
         // 속성명 (property 타입일 때만 표시)
         if (this.plugin.settings.grouping.criteria === 'property') {
-            new Setting(containerEl)
+            new Setting(itemsEl)
                 .setName(trans.propertyName)
                 .setDesc(trans.propertyNameDescription)
                 .addText(text => text
@@ -137,7 +143,7 @@ export class GroupingSettings {
 
         // 폴더 계층 구조 (folder 타입일 때만 표시)
         if (this.plugin.settings.grouping.criteria === 'folder') {
-            new Setting(containerEl)
+            new Setting(itemsEl)
                 .setName(trans.showFullFolderPath)
                 .setDesc(trans.showFullFolderPathDescription)
                 .addToggle(toggle => toggle
@@ -151,7 +157,7 @@ export class GroupingSettings {
         }
 
         // 그룹 정렬
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.sortGroupsBy)
             .setDesc(trans.sortGroupsByDescription)
             .addDropdown(dropdown => dropdown
@@ -168,7 +174,7 @@ export class GroupingSettings {
             );
 
         // 그룹 정렬 순서
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.groupSortOrder)
             .setDesc(trans.groupSortOrderDescription)
             .addDropdown(dropdown => dropdown
@@ -193,14 +199,19 @@ export class GroupingSettings {
         const matrixTrans = t().settings.matrix2D;
         const matrixSettings = this.plugin.settings.grouping.matrix2D;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
-            .setName(matrixTrans.title)
-            // .setDesc(matrixTrans.description);
+            .setName(matrixTrans.title);
+
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
 
         // 2D 매트릭스 활성화
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(matrixTrans.enabled)
             .setDesc(matrixTrans.enabledDescription)
             .addToggle(toggle => toggle
@@ -219,7 +230,7 @@ export class GroupingSettings {
         }
 
         // === 프리셋 선택 ===
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(matrixTrans.presets.title)
             .addDropdown(dropdown => dropdown
                 .addOption('eisenhower', matrixTrans.presets.eisenhowerMatrix)
@@ -238,13 +249,15 @@ export class GroupingSettings {
             );
 
         // === Primary Axis (X축) 설정 ===
-        new Setting(containerEl)
+        const primaryGroupEl = containerEl.createDiv({ cls: 'setting-group' });
+        new Setting(primaryGroupEl)
             .setHeading()
             .setName(matrixTrans.primaryAxis)
             .setDesc(matrixTrans.primaryAxisDescription);
+        const primaryItemsEl = primaryGroupEl.createDiv({ cls: 'setting-items' });
 
         // Primary 속성 이름
-        new Setting(containerEl)
+        new Setting(primaryItemsEl)
             .setName(matrixTrans.propertyName)
             .addText(text => text
                 .setPlaceholder(matrixTrans.propertyNamePlaceholder)
@@ -257,7 +270,7 @@ export class GroupingSettings {
             );
 
         // Primary 속성 값들
-        new Setting(containerEl)
+        new Setting(primaryItemsEl)
             .setName(matrixTrans.propertyValues)
             .setDesc(matrixTrans.propertyValuesDescription)
             .addText(text => text
@@ -272,7 +285,7 @@ export class GroupingSettings {
             );
 
         // Primary 축 레이블 (선택적)
-        new Setting(containerEl)
+        new Setting(primaryItemsEl)
             .setName(matrixTrans.axisLabel)
             .addText(text => text
                 .setPlaceholder(matrixTrans.axisLabelPlaceholder)
@@ -284,13 +297,15 @@ export class GroupingSettings {
             );
 
         // === Secondary Axis (Y축) 설정 ===
-        new Setting(containerEl)
+        const secondaryGroupEl = containerEl.createDiv({ cls: 'setting-group' });
+        new Setting(secondaryGroupEl)
             .setHeading()
             .setName(matrixTrans.secondaryAxis)
             .setDesc(matrixTrans.secondaryAxisDescription);
+        const secondaryItemsEl = secondaryGroupEl.createDiv({ cls: 'setting-items' });
 
         // Secondary 속성 이름
-        new Setting(containerEl)
+        new Setting(secondaryItemsEl)
             .setName(matrixTrans.propertyName)
             .addText(text => text
                 .setPlaceholder(matrixTrans.propertyNamePlaceholder)
@@ -303,7 +318,7 @@ export class GroupingSettings {
             );
 
         // Secondary 속성 값들
-        new Setting(containerEl)
+        new Setting(secondaryItemsEl)
             .setName(matrixTrans.propertyValues)
             .setDesc(matrixTrans.propertyValuesDescription)
             .addText(text => text
@@ -318,7 +333,7 @@ export class GroupingSettings {
             );
 
         // Secondary 축 레이블 (선택적)
-        new Setting(containerEl)
+        new Setting(secondaryItemsEl)
             .setName(matrixTrans.axisLabel)
             .addText(text => text
                 .setPlaceholder(matrixTrans.axisLabelPlaceholder)
@@ -330,12 +345,14 @@ export class GroupingSettings {
             );
 
         // === 추가 옵션 ===
-        new Setting(containerEl)
+        const otherGroupEl = containerEl.createDiv({ cls: 'setting-group' });
+        new Setting(otherGroupEl)
             .setHeading()
             .setName(t().settingsTab.tabs.other);
+        const otherItemsEl = otherGroupEl.createDiv({ cls: 'setting-items' });
 
         // 미분류 섹션 표시
-        new Setting(containerEl)
+        new Setting(otherItemsEl)
             .setName(matrixTrans.showUnclassifiedSection)
             .setDesc(matrixTrans.showUnclassifiedSectionDescription)
             .addToggle(toggle => toggle
@@ -350,7 +367,7 @@ export class GroupingSettings {
 
         // 미분류 섹션 제목 (표시할 때만)
         if (matrixSettings.showUnclassifiedSection) {
-            new Setting(containerEl)
+            new Setting(otherItemsEl)
                 .setName(matrixTrans.unclassifiedSectionTitle)
                 .addText(text => text
                     .setPlaceholder(matrixTrans.unclassifiedSectionTitlePlaceholder)
@@ -364,7 +381,7 @@ export class GroupingSettings {
         }
 
         // 드래그 앤 드롭 속성 변경
-        new Setting(containerEl)
+        new Setting(otherItemsEl)
             .setName(matrixTrans.enableDragDropPropertyChange)
             .setDesc(matrixTrans.enableDragDropPropertyChangeDescription)
             .addToggle(toggle => toggle
@@ -377,7 +394,7 @@ export class GroupingSettings {
             );
 
         // 셀 최소 너비
-        new Setting(containerEl)
+        new Setting(otherItemsEl)
             .setName(matrixTrans.cellMinWidth)
             .setDesc(matrixTrans.cellMinWidthDescription)
             .addSlider(slider => slider
@@ -396,7 +413,7 @@ export class GroupingSettings {
             );
 
         // 셀 최소 높이
-        new Setting(containerEl)
+        new Setting(otherItemsEl)
             .setName(matrixTrans.cellMinHeight)
             .setDesc(matrixTrans.cellMinHeightDescription)
             .addSlider(slider => slider
@@ -415,7 +432,7 @@ export class GroupingSettings {
             );
 
         // 카드 최소 너비
-        new Setting(containerEl)
+        new Setting(otherItemsEl)
             .setName(matrixTrans.cardMinWidth)
             .setDesc(matrixTrans.cardMinWidthDescription)
             .addSlider(slider => slider
@@ -492,13 +509,19 @@ export class GroupingSettings {
         const trans = t().settingsTab.pinSettings;
         const groupTrans = t().settings.grouping;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans?.title || 'Pin Settings');
 
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
         // 핀된 파일 항상 표시 토글
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans?.alwaysShowPinned || 'Always show pinned files')
             .setDesc(trans?.alwaysShowPinnedDescription || 'Show pinned files even when scrolling or changing modes')
             .addToggle(toggle => toggle
@@ -511,7 +534,7 @@ export class GroupingSettings {
             );
 
         // 핀된 파일을 별도 그룹으로 표시
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(groupTrans.showPinnedAsGroup)
             .setDesc(groupTrans.showPinnedAsGroupDescription)
             .addToggle(toggle => toggle
@@ -530,21 +553,22 @@ export class GroupingSettings {
     private addSortSettings(containerEl: HTMLElement): void {
         const trans = t().settingsTab.sortSettings;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans.title);
 
-        // containerEl.createEl('p', {
-        //     text: trans.description,
-        //     cls: 'setting-item-description'
-        // });
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
 
         const settings = this.plugin.settingsManager.getSettings();
         const sortSettings = settings.sort;
 
         // 정렬 기준 선택
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.sortBy)
             .setDesc(trans.sortByDescription)
             .addDropdown(dropdown => {
@@ -564,7 +588,7 @@ export class GroupingSettings {
 
         // 프론트매터 속성 입력 (criteria가 'property'일 때만 표시)
         if (sortSettings.criteria === 'property') {
-            new Setting(containerEl)
+            new Setting(itemsEl)
                 .setName(trans.propertyName)
                 .setDesc(trans.propertyNameDescription)
                 .addText(text => text
@@ -578,7 +602,7 @@ export class GroupingSettings {
         }
 
         // 정렬 순서 선택
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.sortOrder)
             .setDesc(trans.sortOrderDescription)
             .addDropdown(dropdown => {
@@ -593,7 +617,7 @@ export class GroupingSettings {
             });
 
         // 다단계 정렬 활성화
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.enableMultiSort || 'Enable Multi-level Sort')
             .setDesc(trans.enableMultiSortDescription || 'Sort files by multiple criteria in sequence')
             .addToggle(toggle => toggle
@@ -616,11 +640,11 @@ export class GroupingSettings {
 
         // 다단계 정렬 레벨 구성 (인라인)
         if (sortSettings.enableMultiSort) {
-            this.renderMultiSortLevels(containerEl, sortSettings);
+            this.renderMultiSortLevels(itemsEl, sortSettings);
         }
 
         // 정렬 예시 안내
-        this.addSortExamples(containerEl, sortSettings);
+        this.addSortExamples(itemsEl, sortSettings);
     }
 
     /**

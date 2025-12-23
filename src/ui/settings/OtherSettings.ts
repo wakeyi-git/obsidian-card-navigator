@@ -38,14 +38,20 @@ export class OtherSettings {
     private addLanguageSettings(containerEl: HTMLElement): void {
         const trans = t().settings.language;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans.name);
 
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
         const availableLanguages = getAvailableLanguages();
 
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.name)
             .setDesc(trans.description)
             .addDropdown(dropdown => {
@@ -75,13 +81,19 @@ export class OtherSettings {
     private addPerformanceSettings(containerEl: HTMLElement): void {
         const trans = t().settingsTab.performanceSettings;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans.title);
 
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
         // 증분 렌더링 청크 크기
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.chunkSize)
             .setDesc(trans.chunkSizeDescription)
             .addSlider(slider => slider
@@ -95,7 +107,7 @@ export class OtherSettings {
             );
 
         // 사용자 정의 문법 필터
-        this.addCustomSyntaxFilters(containerEl);
+        this.addCustomSyntaxFilters(itemsEl);
 
         // 캐시 통계
         this.addCacheStatistics(containerEl);
@@ -104,11 +116,11 @@ export class OtherSettings {
     /**
      * 사용자 정의 문법 필터 설정을 추가합니다
      */
-    private addCustomSyntaxFilters(containerEl: HTMLElement): void {
+    private addCustomSyntaxFilters(itemsEl: HTMLElement): void {
         const cardTrans = t().settingsTab.cardSettings;
         const currentFilters = this.plugin.settings.customSyntaxFilters || [];
 
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(cardTrans.customSyntaxFilters)
             .setDesc(cardTrans.customSyntaxFiltersDescription)
             .addTextArea(text => text
@@ -132,13 +144,19 @@ export class OtherSettings {
     private addCacheStatistics(containerEl: HTMLElement): void {
         const trans = t().settingsTab.cacheStatistics;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans.title);
 
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
         // 통계 컨테이너
-        const statsContainer = containerEl.createDiv({ cls: 'cache-stats-container' });
+        const statsContainer = itemsEl.createDiv({ cls: 'cache-stats-container' });
         statsContainer.style.padding = '10px';
         statsContainer.style.backgroundColor = 'var(--background-secondary)';
         statsContainer.style.borderRadius = '6px';
@@ -199,7 +217,7 @@ export class OtherSettings {
         createStatRow(trans.totalSize, `${cacheSize.total} / 50`);
 
         // 캐시 클리어 버튼
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.clearCache)
             .setDesc(trans.clearCacheDescription)
             .addButton(button => button
@@ -219,13 +237,19 @@ export class OtherSettings {
     private addDebugSettings(containerEl: HTMLElement): void {
         const trans = t().settingsTab.debugMode;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans.title);
 
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
         // 디버그 모드 활성화/비활성화
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.enable)
             .setDesc(trans.enableDescription)
             .addToggle(toggle => toggle
@@ -240,7 +264,7 @@ export class OtherSettings {
         // 디버그 모드가 활성화되어 있을 때만 카테고리 설정 표시
         if (this.plugin.settings.debug.enabled) {
             // 카테고리 설명
-            const descEl = containerEl.createDiv({ cls: 'setting-item-description' });
+            const descEl = itemsEl.createDiv({ cls: 'setting-item-description' });
             descEl.setText(trans.categoriesDescription);
             descEl.style.marginBottom = '10px';
             descEl.style.fontSize = '0.9em';
@@ -275,7 +299,7 @@ export class OtherSettings {
                 const catInfo = trans.categories[catKey];
                 const currentValue = this.plugin.settings.debug.categories?.[category] ?? true;
 
-                new Setting(containerEl)
+                new Setting(itemsEl)
                     .setName(`[${category}] ${catInfo.label}`)
                     .setDesc(catInfo.description)
                     .addToggle(toggle => toggle
@@ -292,7 +316,7 @@ export class OtherSettings {
             });
 
             // 전체 선택/해제 버튼
-            new Setting(containerEl)
+            new Setting(itemsEl)
                 .setName(trans.allCategories)
                 .setDesc(trans.allCategoriesDescription)
                 .addButton(button => button
@@ -330,13 +354,19 @@ export class OtherSettings {
     private addSettingsManagement(containerEl: HTMLElement): void {
         const trans = t().settingsTab.settingsManagement;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans.title);
 
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
         // 설정 초기화
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.reset)
             .setDesc(trans.resetDescription)
             .addButton(button => button
@@ -374,7 +404,7 @@ export class OtherSettings {
             );
 
         // 설정 내보내기
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.export)
             .setDesc(trans.exportDescription)
             .addButton(button => button
@@ -385,7 +415,7 @@ export class OtherSettings {
             );
 
         // 설정 가져오기
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.import)
             .setDesc(trans.importDescription)
             .addButton(button => button

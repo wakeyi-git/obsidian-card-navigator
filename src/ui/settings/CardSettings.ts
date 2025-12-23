@@ -268,18 +268,27 @@ export class CardSettingsUI {
     private renderCardBaseSettings(container: HTMLElement): void {
         const section = container.createDiv({ cls: 'card-base-settings'});
 
-        section.createEl('h3', { text: t().settingsTab.cardSettings.cardBaseSettings });
+        // setting-group 컨테이너
+        const groupEl = section.createDiv({ cls: 'setting-group' });
 
-        const descEl = section.createDiv({ cls: 'setting-item-description'});
+        // 섹션 헤더
+        new Setting(groupEl)
+            .setHeading()
+            .setName(t().settingsTab.cardSettings.cardBaseSettings);
+
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
+        const descEl = itemsEl.createDiv({ cls: 'setting-item-description'});
         descEl.setText(t().settingsTab.cardSettings.cardBaseSettingsDescription);
         descEl.style.marginBottom = '12px';
         descEl.style.fontSize = '0.9em';
         descEl.style.color = 'var(--text-muted)';
 
-        const currentStateLabel = section.createDiv({ cls: 'current-state-label'});
+        const currentStateLabel = itemsEl.createDiv({ cls: 'current-state-label'});
         currentStateLabel.setText(t().settingsTab.cardSettings.currentState(this.getStateLabel()));
 
-        this.cardBaseSettingsContent = section.createDiv({ cls: 'card-base-settings-content'});
+        this.cardBaseSettingsContent = itemsEl.createDiv({ cls: 'card-base-settings-content'});
         this.updateCardBaseSettings();
     }
     
@@ -937,9 +946,15 @@ export class CardSettingsUI {
         const settings = this.plugin.settings;
         const sectionSettings = settings[this.selectedSection];
 
-        new Setting(container).setHeading().setName(t().settingsTab.cardSettings.sectionContentSettings(this.getSectionLabel()));
+        // setting-group 컨테이너
+        const groupEl = container.createDiv({ cls: 'setting-group' });
 
-        new Setting(container)
+        new Setting(groupEl).setHeading().setName(t().settingsTab.cardSettings.sectionContentSettings(this.getSectionLabel()));
+
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
+        new Setting(itemsEl)
             .setName(t().settingsTab.cardSettings.sectionEnabled(this.getSectionLabel()))
             .setDesc(t().settingsTab.cardSettings.sectionEnabledDescription(this.getSectionLabel()))
             .addToggle(toggle => toggle
@@ -954,7 +969,7 @@ export class CardSettingsUI {
         // 활성/포커스 상태에서만 내용 상속 토글 표시
         const currentContent = this.getCurrentSectionContent();
         if (this.selectedState !== 'normal') {
-            new Setting(container)
+            new Setting(itemsEl)
                 .setName(t().settingsTab.cardSettings.inheritFromNormal)
                 .setDesc(t().settingsTab.cardSettings.inheritFromNormalContentDescription)
                 .addToggle(toggle => toggle
@@ -982,7 +997,7 @@ export class CardSettingsUI {
 
             // 상속 모드일 때는 다른 설정 비활성화
             if (currentContent.inheritFromNormal) {
-                const inheritInfo = container.createDiv({ cls: 'setting-item-description' });
+                const inheritInfo = itemsEl.createDiv({ cls: 'setting-item-description' });
                 inheritInfo.setText(`ℹ️ ${t().settingsTab.cardSettings.inheritingFromNormalContentInfo}`);
                 inheritInfo.style.marginBottom = '12px';
                 inheritInfo.style.fontStyle = 'italic';
@@ -991,7 +1006,7 @@ export class CardSettingsUI {
             }
         }
 
-        new Setting(container)
+        new Setting(itemsEl)
             .setName(t().settingsTab.cardSettings.displayContent)
             .setDesc(t().settingsTab.cardSettings.displayContentDescription)
             .addDropdown(dropdown => dropdown
@@ -1055,16 +1070,16 @@ export class CardSettingsUI {
 
         if (sectionSettings.normalContent.contentType === 'property') {
             const datalistId = `frontmatter-properties-${this.selectedSection}`;
-            let datalist = container.querySelector(`#${datalistId}`);
-            
+            let datalist = itemsEl.querySelector(`#${datalistId}`);
+
             if (!datalist) {
-                datalist = container.createEl('datalist', { attr: { id: datalistId } });
+                datalist = itemsEl.createEl('datalist', { attr: { id: datalistId } });
                 Array.from(this.availableProperties).sort().forEach(prop => {
                     datalist!.createEl('option', { attr: { value: prop } });
                 });
             }
-            
-            new Setting(container)
+
+            new Setting(itemsEl)
                 .setName(t().settingsTab.cardSettings.propertyName)
                 .setDesc(t().settingsTab.cardSettings.propertyNameDescription)
                 .addText(text => {
@@ -1109,11 +1124,11 @@ export class CardSettingsUI {
 
         // 이미지 섬네일 설정
         if (sectionSettings.normalContent.contentType === 'image-thumbnail') {
-            this.addImageThumbnailSettings(container, sectionSettings);
+            this.addImageThumbnailSettings(itemsEl, sectionSettings);
         }
 
         if (sectionSettings.normalContent.contentType === 'content') {
-            new Setting(container)
+            new Setting(itemsEl)
                 .setName(t().settingsTab.cardSettings.includeFirstHeader)
                 .setDesc(t().settingsTab.cardSettings.includeFirstHeaderDescription)
                 .addToggle(toggle => toggle
@@ -1148,7 +1163,7 @@ export class CardSettingsUI {
                     })
                 );
 
-            new Setting(container)
+            new Setting(itemsEl)
                 .setName(t().settingsTab.cardSettings.bodyRenderMode)
                 .setDesc(t().settingsTab.cardSettings.bodyRenderModeDescription)
                 .addDropdown(dropdown => dropdown
@@ -1191,7 +1206,7 @@ export class CardSettingsUI {
         const isMarkdownHtml = sectionSettings.normalContent.contentType === 'content' && sectionSettings.normalContent.contentRenderMode === 'markdown-html';
         const maxLengthDesc = t().settingsTab.cardSettings.maxLengthDescription(isMarkdownHtml);
 
-        new Setting(container)
+        new Setting(itemsEl)
             .setName(t().settingsTab.cardSettings.maxLength)
             .setDesc(maxLengthDesc)
             .addText(text => text
@@ -1237,11 +1252,17 @@ export class CardSettingsUI {
     private addSectionStyleSettings(container: HTMLElement): void {
         const style = this.getCurrentSectionStyle();
 
-        new Setting(container).setHeading().setName(t().settingsTab.cardSettings.sectionStyleSettings(this.getSectionLabel()));
+        // setting-group 컨테이너
+        const groupEl = container.createDiv({ cls: 'setting-group' });
+
+        new Setting(groupEl).setHeading().setName(t().settingsTab.cardSettings.sectionStyleSettings(this.getSectionLabel()));
+
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
 
         // 활성/포커스 상태에서만 상속 토글 표시
         if (this.selectedState !== 'normal') {
-            new Setting(container)
+            new Setting(itemsEl)
                 .setName(t().settingsTab.cardSettings.inheritFromNormal)
                 .setDesc(t().settingsTab.cardSettings.inheritFromNormalDescription)
                 .addToggle(toggle => toggle
@@ -1270,7 +1291,7 @@ export class CardSettingsUI {
 
             // 상속 모드일 때는 다른 설정 비활성화
             if (style.inheritFromNormal) {
-                const inheritInfo = container.createDiv({ cls: 'setting-item-description' });
+                const inheritInfo = itemsEl.createDiv({ cls: 'setting-item-description' });
                 inheritInfo.setText(`ℹ️ ${t().settingsTab.cardSettings.inheritingFromNormalInfo}`);
                 inheritInfo.style.marginBottom = '12px';
                 inheritInfo.style.fontStyle = 'italic';
@@ -1279,7 +1300,7 @@ export class CardSettingsUI {
             }
         }
 
-        new Setting(container)
+        new Setting(itemsEl)
             .setName(t().settingsTab.cardSettings.fontSize)
             .setDesc(t().settingsTab.cardSettings.fontSizeDescription(this.getSectionLabel()))
             .addText(text => text
@@ -1316,7 +1337,7 @@ export class CardSettingsUI {
                 })
             );
 
-        new Setting(container)
+        new Setting(itemsEl)
             .setName(t().settingsTab.cardSettings.backgroundColor)
             .setDesc(t().settingsTab.cardSettings.backgroundColorDescription(this.getSectionLabel()))
             .addColorPicker(color => color
@@ -1351,7 +1372,7 @@ export class CardSettingsUI {
             );
 
         if (this.selectedSection === 'header') {
-            new Setting(container)
+            new Setting(itemsEl)
                 .setName(t().settingsTab.cardSettings.headerBottomBorderColor)
                 .setDesc(t().settingsTab.cardSettings.headerBottomBorderColorDescription)
                 .addColorPicker(color => color
@@ -1377,7 +1398,7 @@ export class CardSettingsUI {
                     })
                 );
 
-            new Setting(container)
+            new Setting(itemsEl)
                 .setName(t().settingsTab.cardSettings.headerBottomBorderThickness)
                 .setDesc(t().settingsTab.cardSettings.headerBottomBorderThicknessDescription)
                 .addText(text => text
@@ -1406,7 +1427,7 @@ export class CardSettingsUI {
                     })
                 );
         } else if (this.selectedSection === 'footer') {
-            new Setting(container)
+            new Setting(itemsEl)
                 .setName(t().settingsTab.cardSettings.footerTopBorderColor)
                 .setDesc(t().settingsTab.cardSettings.footerTopBorderColorDescription)
                 .addColorPicker(color => color
@@ -1432,7 +1453,7 @@ export class CardSettingsUI {
                     })
                 );
 
-            new Setting(container)
+            new Setting(itemsEl)
                 .setName(t().settingsTab.cardSettings.footerTopBorderThickness)
                 .setDesc(t().settingsTab.cardSettings.footerTopBorderThicknessDescription)
                 .addText(text => text

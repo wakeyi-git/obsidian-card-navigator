@@ -29,12 +29,18 @@ export class InteractionSettings {
     private addScrollBehaviorSettings(containerEl: HTMLElement): void {
         const trans = t().settingsTab.scrollBehavior;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans.title);
 
-        new Setting(containerEl)
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
+        new Setting(itemsEl)
             .setName(trans.name)
             .setDesc(trans.description)
             .addDropdown(dropdown => dropdown
@@ -55,12 +61,18 @@ export class InteractionSettings {
     private addTagClickActionSettings(containerEl: HTMLElement): void {
         const trans = t().settingsTab.tagClickAction;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans.title);
 
-        new Setting(containerEl)
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
+        new Setting(itemsEl)
             .setName(trans.name)
             .setDesc(trans.description)
             .addDropdown(dropdown => dropdown
@@ -82,12 +94,18 @@ export class InteractionSettings {
     private addDragDropSettings(containerEl: HTMLElement): void {
         const trans = t().settingsTab.dragDrop;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans.title);
 
-        new Setting(containerEl)
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
+        new Setting(itemsEl)
             .setName(trans.contentType)
             .setDesc(trans.contentTypeDescription)
             .addDropdown(dropdown => dropdown
@@ -105,7 +123,7 @@ export class InteractionSettings {
         // '파일 내용'을 선택한 경우에만 추가 옵션 표시
         if (this.plugin.settings.dragDrop.contentType === 'full-content') {
             // 설명 텍스트
-            const descEl = containerEl.createDiv({ cls: 'setting-item-description' });
+            const descEl = itemsEl.createDiv({ cls: 'setting-item-description' });
             descEl.setText(trans.optionsDescription);
             descEl.style.marginTop = '10px';
             descEl.style.marginBottom = '10px';
@@ -113,7 +131,7 @@ export class InteractionSettings {
             descEl.style.color = 'var(--text-muted)';
 
             // 프론트매터 포함 여부
-            new Setting(containerEl)
+            new Setting(itemsEl)
                 .setName(trans.includeFrontmatter)
                 .setDesc(trans.includeFrontmatterDescription)
                 .addToggle(toggle => toggle
@@ -125,7 +143,7 @@ export class InteractionSettings {
                 );
 
             // 최대 길이 제한 활성화
-            new Setting(containerEl)
+            new Setting(itemsEl)
                 .setName(trans.enableLengthLimit)
                 .setDesc(trans.enableLengthLimitDescription)
                 .addToggle(toggle => toggle
@@ -140,7 +158,7 @@ export class InteractionSettings {
 
             // 최대 글자 수 (최대 길이 제한이 활성화되었을 때만 표시)
             if (this.plugin.settings.dragDrop.fullContentOptions.enableLengthLimit) {
-                new Setting(containerEl)
+                new Setting(itemsEl)
                     .setName(trans.maxLength)
                     .setDesc(trans.maxLengthDescription)
                     .addText(text => text

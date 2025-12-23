@@ -28,21 +28,21 @@ export class SourceSettings {
      */
     private addModeSettings(containerEl: HTMLElement): void {
         const trans = t().settingsTab.modeSettings;
+        const settings = this.plugin.settingsManager.getSettings();
+
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
 
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans.title);
 
-        // containerEl.createEl('p', {
-        //     text: trans.description,
-        //     cls: 'setting-item-description'
-        // });
-
-        const settings = this.plugin.settingsManager.getSettings();
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
 
         // 모드 선택 (폴더 / 태그)
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.mode)
             .setDesc(trans.modeDescription)
             .addDropdown(dropdown => {
@@ -59,30 +59,25 @@ export class SourceSettings {
 
         // 폴더 모드 설정
         if (settings.currentMode === 'folder') {
-            this.addFolderModeSettings(containerEl, settings);
+            this.addFolderModeSettings(itemsEl, settings);
         }
 
         // 태그 모드 설정
         if (settings.currentMode === 'tag') {
-            this.addTagModeSettings(containerEl, settings);
+            this.addTagModeSettings(itemsEl, settings);
         }
     }
 
     /**
      * 폴더 모드 설정을 추가합니다
+     * @param itemsEl - setting-items 컨테이너
      */
-    private addFolderModeSettings(containerEl: HTMLElement, settings: CardNavigatorSettings): void {
+    private addFolderModeSettings(itemsEl: HTMLElement, settings: CardNavigatorSettings): void {
         const trans = t().settingsTab.modeSettings;
-
-        // 서브섹션 구분
-        new Setting(containerEl)
-            .setHeading()
-            .setName(trans.folderModeSettings);
-
         const folderSettings = settings.folderMode;
 
         // 폴더 선택 방식
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.folderSelection)
             .setDesc(trans.folderSelectionDescription)
             .addDropdown(dropdown => {
@@ -99,7 +94,7 @@ export class SourceSettings {
 
         // 폴더 지정 입력 (useActiveFolder가 false일 때만 표시)
         if (!folderSettings.useActiveFolder) {
-            new Setting(containerEl)
+            new Setting(itemsEl)
                 .setName(trans.specifyFolder)
                 .setDesc(trans.specifyFolderDescription)
                 .addText(text => text
@@ -113,7 +108,7 @@ export class SourceSettings {
         }
 
         // 하위 폴더 포함 토글
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.includeSubfolders)
             .setDesc(trans.includeSubfoldersDescription)
             .addToggle(toggle => toggle
@@ -127,19 +122,14 @@ export class SourceSettings {
 
     /**
      * 태그 모드 설정을 추가합니다
+     * @param itemsEl - setting-items 컨테이너
      */
-    private addTagModeSettings(containerEl: HTMLElement, settings: CardNavigatorSettings): void {
+    private addTagModeSettings(itemsEl: HTMLElement, settings: CardNavigatorSettings): void {
         const trans = t().settingsTab.modeSettings;
-
-        // 서브섹션 구분
-        new Setting(containerEl)
-            .setHeading()
-            .setName(trans.tagModeSettings);
-
         const tagSettings = settings.tagMode;
 
         // 태그 선택 방식
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.tagSelection)
             .setDesc(trans.tagSelectionDescription)
             .addDropdown(dropdown => {
@@ -156,7 +146,7 @@ export class SourceSettings {
 
         // 태그 지정 입력 (useActiveFileTags가 false일 때만 표시)
         if (!tagSettings.useActiveFileTags) {
-            new Setting(containerEl)
+            new Setting(itemsEl)
                 .setName(trans.specifyTag)
                 .setDesc(trans.specifyTagDescription)
                 .addText(text => text
@@ -173,7 +163,7 @@ export class SourceSettings {
 
             // 태그 연산자 (여러 태그를 지정했을 때만 표시)
             if (tagSettings.specifiedTags.length > 1) {
-                new Setting(containerEl)
+                new Setting(itemsEl)
                     .setName(trans.tagOperator)
                     .setDesc(trans.tagOperatorDescription)
                     .addDropdown(dropdown => {
@@ -196,12 +186,18 @@ export class SourceSettings {
     private addSearchSettings(containerEl: HTMLElement): void {
         const trans = t().settings;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(trans.searchSection.name);
 
-        new Setting(containerEl)
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
+        new Setting(itemsEl)
             .setName(trans.enableFuzzySearch.name)
             .setDesc(trans.enableFuzzySearch.description)
             .addToggle(toggle => toggle
@@ -215,7 +211,7 @@ export class SourceSettings {
             );
 
         if (this.plugin.settings.enableFuzzySearch) {
-            new Setting(containerEl)
+            new Setting(itemsEl)
                 .setName(trans.fuzzySearchThreshold.name)
                 .setDesc(trans.fuzzySearchThreshold.description)
                 .addSlider(slider => slider
@@ -230,7 +226,7 @@ export class SourceSettings {
         }
 
         // 검색어 하이라이트 설정
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.enableSearchHighlight.name)
             .setDesc(trans.enableSearchHighlight.description)
             .addToggle(toggle => toggle
@@ -242,7 +238,7 @@ export class SourceSettings {
             );
 
         // 대소문자 구분 검색 설정
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(trans.caseSensitiveSearch.name)
             .setDesc(trans.caseSensitiveSearch.description)
             .addToggle(toggle => toggle

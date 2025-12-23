@@ -20,21 +20,22 @@ export class LayoutSettings {
      * 레이아웃 설정을 렌더링합니다
      */
     render(containerEl: HTMLElement): void {
-        // 섹션 헤더
-        new Setting(containerEl)
-            .setHeading()
-            .setName(t().settingsTab.tabs.layout);
-
-        // containerEl.createEl('p', {
-        //     text: t().settings.layoutSection.description,
-        //     cls: 'setting-item-description'
-        // });
-
         const settings = this.plugin.settingsManager.getSettings();
         const defaultLayout = DEFAULT_SETTINGS.layout;
 
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
+        // 섹션 헤더
+        new Setting(groupEl)
+            .setHeading()
+            .setName(t().settingsTab.tabs.layout);
+
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
         // 레이아웃 방향 모드 드롭다운
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(t().settingsTab.layoutSettings.orientationMode)
             .setDesc(t().settingsTab.layoutSettings.orientationModeDescription)
             .addDropdown(dropdown => dropdown
@@ -58,7 +59,7 @@ export class LayoutSettings {
             );
 
         // 카드 최소 너비 슬라이더
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(t().settingsTab.layoutSettings.minWidth)
             .setDesc(t().settingsTab.layoutSettings.minWidthDescription(LAYOUT_LIMITS.cardMinWidth.min, LAYOUT_LIMITS.cardMinWidth.max))
             .addSlider(slider => slider
@@ -81,7 +82,7 @@ export class LayoutSettings {
             );
 
         // 카드 최소 높이 슬라이더
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(t().settingsTab.layoutSettings.minHeight)
             .setDesc(t().settingsTab.layoutSettings.minHeightDescription(LAYOUT_LIMITS.cardMinHeight.min, LAYOUT_LIMITS.cardMinHeight.max))
             .addSlider(slider => slider
@@ -104,7 +105,7 @@ export class LayoutSettings {
             );
 
         // 카드 최대 너비 슬라이더
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(t().settingsTab.layoutSettings.maxWidth)
             .setDesc(t().settingsTab.layoutSettings.maxWidthDescription(LAYOUT_LIMITS.cardMaxWidth.min, LAYOUT_LIMITS.cardMaxWidth.max))
             .addSlider(slider => slider
@@ -127,7 +128,7 @@ export class LayoutSettings {
             );
 
         // 카드 최대 높이 슬라이더
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(t().settingsTab.layoutSettings.maxHeight)
             .setDesc(t().settingsTab.layoutSettings.maxHeightDescription(LAYOUT_LIMITS.cardMaxHeight.min, LAYOUT_LIMITS.cardMaxHeight.max))
             .addSlider(slider => slider
@@ -150,7 +151,7 @@ export class LayoutSettings {
             );
 
         // 카드 간격 슬라이더
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(t().settingsTab.layoutSettings.cardGap)
             .setDesc(t().settingsTab.layoutSettings.cardGapDescription(LAYOUT_LIMITS.gap.min, LAYOUT_LIMITS.gap.max))
             .addSlider(slider => slider

@@ -1,3 +1,21 @@
+## [1.6.2] - 2025-12-24
+
+### Added
+
+#### Settings Tab Icon
+- **Plugin Icon in Settings**: Card Navigator now displays a `layout-grid` icon next to its name in Obsidian's community plugins settings list
+  - Requires Obsidian 1.11.0 or later
+  - Updated `obsidian` package dependency to 1.11.0
+  - Related files: [SettingsTab.ts](src/ui/SettingsTab.ts)
+
+### Improved
+
+#### Settings UI Modernization
+- **Obsidian Setting Structure Alignment**: Updated all settings panels to use Obsidian's new `setting-group` and `setting-items` CSS class structure
+  - Provides visual consistency with Obsidian's native settings UI
+  - Applied to all settings sections: Source, Grouping, Layout, Card, Interaction, Preset, and Other settings
+  - Related files: [SourceSettings.ts](src/ui/settings/SourceSettings.ts), [GroupingSettings.ts](src/ui/settings/GroupingSettings.ts), [LayoutSettings.ts](src/ui/settings/LayoutSettings.ts), [CardSettings.ts](src/ui/settings/CardSettings.ts), [InteractionSettings.ts](src/ui/settings/InteractionSettings.ts), [PresetSettings.ts](src/ui/settings/PresetSettings.ts), [OtherSettings.ts](src/ui/settings/OtherSettings.ts)
+
 ## [1.6.1] - 2025-12-15
 
 ### Added

@@ -28,24 +28,25 @@ export class PresetSettings {
      * 프리셋 설정을 렌더링합니다
      */
     render(containerEl: HTMLElement): void {
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
         // 섹션 헤더
-        new Setting(containerEl)
+        new Setting(groupEl)
             .setHeading()
             .setName(t().settingsTab.presetSettings.title);
 
-        // containerEl.createEl('p', {
-        //     text: t().settingsTab.presetSettings.description,
-        //     cls: 'setting-item-description'
-        // });
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
 
-        this.addEnablePresetsToggle(containerEl);
+        this.addEnablePresetsToggle(itemsEl);
 
         if (this.plugin.settings.enablePresets) {
-            this.addCreatePresetButton(containerEl);
-            this.addPresetList(containerEl);
+            this.addCreatePresetButton(itemsEl);
+            this.addPresetList(itemsEl);
             this.addPresetMapping(containerEl);
         } else {
-            containerEl.createEl('div', {
+            itemsEl.createEl('div', {
                 cls: 'setting-item-description',
                 text: t().settingsTab.presetSettings.enableFeatureDescription
             }).style.marginTop = '20px';
@@ -55,8 +56,8 @@ export class PresetSettings {
     /**
      * 프리셋 기능 활성화/비활성화 토글을 추가합니다
      */
-    private addEnablePresetsToggle(containerEl: HTMLElement): void {
-        new Setting(containerEl)
+    private addEnablePresetsToggle(itemsEl: HTMLElement): void {
+        new Setting(itemsEl)
             .setName(t().settingsTab.presets.enablePresets)
             .setDesc(t().settingsTab.presets.enablePresetsDescription)
             .addToggle(toggle => toggle
@@ -70,19 +71,13 @@ export class PresetSettings {
                     new Notice(t().settingsTab.presetSettings.featureStatusChanged(value));
                 })
             );
-
-        containerEl.createEl('div', { cls: 'setting-item-divider' });
     }
 
     /**
      * 프리셋 생성 버튼을 추가합니다
      */
-    private addCreatePresetButton(containerEl: HTMLElement): void {
-        new Setting(containerEl)
-            .setHeading()
-            .setName(t().settingsTab.presetSettings.createDivider);
-
-        new Setting(containerEl)
+    private addCreatePresetButton(itemsEl: HTMLElement): void {
+        new Setting(itemsEl)
             .setName(t().settingsTab.presets.createPreset)
             .setDesc(t().settingsTab.presets.createPresetDescription)
             .addButton(button => button
@@ -313,15 +308,11 @@ export class PresetSettings {
     /**
      * 프리셋 목록을 추가합니다
      */
-    private addPresetList(containerEl: HTMLElement): void {
-        // new Setting(containerEl)
-        //     .setHeading()
-        //     .setName(t().settingsTab.presetSettings.title);
-
+    private addPresetList(itemsEl: HTMLElement): void {
         const presets = this.plugin.presetManager.getAllPresets();
 
         if (presets.length === 0) {
-            containerEl.createEl('div', {
+            itemsEl.createEl('div', {
                 cls: 'setting-item-description',
                 text: t().settingsTab.presets.createPresetDescription
             });
@@ -329,7 +320,7 @@ export class PresetSettings {
         }
 
         presets.forEach((preset: Preset) => {
-            const presetContainer = containerEl.createDiv({ cls: 'card-navigator-preset-item'});
+            const presetContainer = itemsEl.createDiv({ cls: 'card-navigator-preset-item'});
 
             const infoContainer = presetContainer.createDiv({ cls: 'preset-info'});
 
@@ -471,7 +462,7 @@ export class PresetSettings {
             });
         });
 
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(t().settingsTab.presets.importPreset)
             .setDesc(t().settingsTab.settingsManagement.importDescription)
             .addButton(button => button
@@ -533,25 +524,31 @@ export class PresetSettings {
      * 프리셋 매핑 설정을 추가합니다
      */
     private addPresetMapping(containerEl: HTMLElement): void {
-        new Setting(containerEl)
+        // setting-group 컨테이너
+        const groupEl = containerEl.createDiv({ cls: 'setting-group' });
+
+        new Setting(groupEl)
             .setHeading()
             .setName(t().settingsTab.presetSettings.priorityDivider);
 
+        // setting-items 컨테이너
+        const itemsEl = groupEl.createDiv({ cls: 'setting-items' });
+
         // 우선순위 설정을 가장 먼저 표시
-        this.addPriorityModeSettings(containerEl);
+        this.addPriorityModeSettings(itemsEl);
 
         // 통합된 매핑 목록 표시
-        this.addUnifiedMappingList(containerEl);
+        this.addUnifiedMappingList(itemsEl);
     }
 
     /**
      * 프리셋 우선순위 설정을 추가합니다
      */
-    private addPriorityModeSettings(containerEl: HTMLElement): void {
+    private addPriorityModeSettings(itemsEl: HTMLElement): void {
         const settings = this.plugin.settings.presetPriority;
 
         // 우선순위 모드 선택
-        new Setting(containerEl)
+        new Setting(itemsEl)
             .setName(t().settingsTab.presets.priorityMode)
             .setDesc(t().settingsTab.presets.priorityModeDescription)
             .addDropdown(dropdown => dropdown
@@ -568,7 +565,7 @@ export class PresetSettings {
 
         // 자동 모드 설명
         if (settings.mode === 'auto') {
-            const descEl = containerEl.createDiv({ cls: 'setting-item-description'});
+            const descEl = itemsEl.createDiv({ cls: 'setting-item-description'});
             descEl.style.marginTop = '10px';
             descEl.style.padding = '12px';
             descEl.style.background = 'var(--background-secondary)';
@@ -578,7 +575,7 @@ export class PresetSettings {
 
         // 반자동 모드 설명 및 타입 우선순위 설정
         if (settings.mode === 'semi-auto') {
-            const descEl = containerEl.createDiv({ cls: 'setting-item-description'});
+            const descEl = itemsEl.createDiv({ cls: 'setting-item-description'});
             descEl.style.marginTop = '10px';
             descEl.style.padding = '12px';
             descEl.style.background = 'var(--background-secondary)';
@@ -586,7 +583,7 @@ export class PresetSettings {
             descEl.innerHTML = t().settingsTab.presetSettings.semiAutoModeExplanationHtml;
 
             // 반자동 모드에서 타입 우선순위 설정 표시
-            new Setting(containerEl)
+            new Setting(itemsEl)
                 .setName(t().settingsTab.presets.preferredPriorityType)
                 .setDesc(t().settingsTab.presets.preferredPriorityTypeDescription)
                 .addDropdown(dropdown => dropdown
@@ -605,7 +602,7 @@ export class PresetSettings {
 
         // 수동 모드 설명
         if (settings.mode === 'manual') {
-            const statusEl = containerEl.createDiv({ cls: 'setting-item-description'});
+            const statusEl = itemsEl.createDiv({ cls: 'setting-item-description'});
             statusEl.style.marginTop = '10px';
             statusEl.style.padding = '12px';
             statusEl.style.background = 'var(--background-secondary)';
@@ -617,8 +614,8 @@ export class PresetSettings {
     /**
      * 통합된 프리셋 매핑 목록을 추가합니다
      */
-    private addUnifiedMappingList(containerEl: HTMLElement): void {
-        const mappingContainer = containerEl.createEl('div', {
+    private addUnifiedMappingList(itemsEl: HTMLElement): void {
+        const mappingContainer = itemsEl.createEl('div', {
             cls: 'card-navigator-preset-mapping unified-mapping-list'
         });
 

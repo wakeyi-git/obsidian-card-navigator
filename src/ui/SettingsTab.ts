@@ -53,6 +53,9 @@ export class CardNavigatorSettingTab extends PluginSettingTab {
         super(app, plugin);
         this.plugin = plugin;
 
+        // 설정 탭 아이콘 설정 (Obsidian 1.11.0+)
+        this.icon = 'layout-grid';
+
         // 설정 섹션 초기화
         this.sourceSettings = new SourceSettings(plugin, this);
         this.groupingSettings = new GroupingSettings(plugin, this);
